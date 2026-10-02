@@ -16,6 +16,7 @@
 
 import type { ComponentProps } from "astro/types";
 import Alert from "./components/alert.astro";
+import Badge from "./components/badge.astro";
 import Button from "./components/button.astro";
 import Card from "./components/card.astro";
 import SideHero from "./components/layout/side-hero.astro";
@@ -59,6 +60,7 @@ const story = <T extends Component>(
 ): Story => ({ name, component, props, ...content });
 
 const VARIANTS = ["solid", "outline", "ghost", "link"] as const;
+const BADGE_VARIANTS = ["solid", "outline", "ghost"] as const;
 const TONES = [
 	"primary",
 	"secondary",
@@ -112,6 +114,40 @@ export const groups: StoryGroup[] = [
 				{ slot: "Anchor" },
 			),
 			story("no-shadow", Button, { shadow: false }, { slot: "No lift" }),
+		],
+	},
+	{
+		id: "badge-matrix",
+		title: "Badges — variant × tone",
+		description: "Fill style and colour are independent axes.",
+		min: 10,
+		stories: BADGE_VARIANTS.flatMap((variant) =>
+			TONES.map((tone) =>
+				story(
+					`${variant}-${tone}`,
+					Badge,
+					{ variant, tone },
+					{ slot: title(tone) },
+				),
+			),
+		),
+	},
+	{
+		id: "badge-size",
+		title: "Badges — size",
+		min: 10,
+		stories: [
+			...SIZES.map((size) =>
+				story(size, Badge, { size }, { slot: title(size) }),
+			),
+			...SIZES.map((size) =>
+				story(
+					`icon-${size}`,
+					Badge,
+					{ size },
+					{ icon: "lucide:badge-check", slot: title(size) },
+				),
+			),
 		],
 	},
 	{
