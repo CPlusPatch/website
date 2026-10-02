@@ -14,7 +14,9 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check . --write",
 		"typecheck": "astro check",
-		"check": "biome check . && astro check"
+		"theme": "deno run --allow-read scripts/generate-theme.ts",
+		"theme:check": "deno run --allow-read scripts/generate-theme.ts --check",
+		"check": "biome check . && astro check && deno run --allow-read scripts/generate-theme.ts --check"
 	},
 	"dependencies": {
 		"@astrojs/vue": "^7.0.3",
