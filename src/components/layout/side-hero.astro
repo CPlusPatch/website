@@ -1,0 +1,85 @@
+---
+import { Image } from "astro:assets";
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div"> {
+    /** Which side the image sits on. */
+    side?: "left" | "right";
+    image: {
+        url: ImageMetadata;
+        /**
+         * Omit only for purely decorative imagery -- it renders alt="", which
+         * tells a screen reader to skip the image rather than read its
+         * filename.
+         */
+        alt?: string;
+    };
+}
+
+const { side = "right", image, ...rest } = Astro.props;
+---
+
+<div class:list={["side-hero", `side-hero--${side}`]} {...rest}>
+    <div class="side-hero__content">
+        <slot />
+    </div>
+    <div class="side-hero__media">
+        <Image src={image.url} alt={image.alt ?? ""} />
+    </div>
+</div>
+
+<style>
+.side-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+    align-items: center;
+
+    &.side-hero--left {
+        grid-template-areas: "image content";
+    }
+
+    &.side-hero--right {
+        grid-template-areas: "content image";
+    }
+
+    .side-hero__content {
+        grid-area: content;
+        padding: var(--space-lg);
+        max-width: 30rem;
+        justify-self: center;
+
+        p {
+            color: var(--color-text);
+            font-size: 1.125rem;
+            line-height: 1.75rem;
+        }
+    }
+
+    .side-hero__media {
+        grid-area: image;
+        height: 100%;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    /* Below the fold on narrow screens the two-column split stops working. */
+    @media (max-width: 48rem) {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+
+        &.side-hero--left,
+        &.side-hero--right {
+            grid-template-areas: "image" "content";
+        }
+
+        .side-hero__content {
+            padding: var(--space-md);
+        }
+    }
+}
+</style>

@@ -15,11 +15,11 @@ h1 {
 h2 {
 	font-size: clamp(1.25rem, 2vw + 0.75rem, 1.75rem);
 	font-weight: 700;
-	margin-bottom: var(--space-lg);
+	margin-bottom: var(--space-md);
 }
 
 h3 {
-	font-size: 1.0625rem;
+	font-size: var(--font-size-lg);
 	font-weight: 600;
 	margin-bottom: var(--space-sm);
 }
@@ -42,7 +42,7 @@ a {
 		background-color var(--transition);
 
 	&:hover {
-		color: var(--color-primary-contrast);
+		color: var(--color-on-accent);
 		background-color: var(--color-primary);
 		text-decoration: none;
 	}
@@ -54,7 +54,7 @@ a {
 }
 
 ::selection {
-	color: var(--color-primary-contrast);
+	color: var(--color-on-accent);
 	background-color: var(--color-primary);
 }
 
@@ -64,7 +64,7 @@ code {
 }
 
 .lead {
-	font-size: 1.0625rem;
+	font-size: var(--font-size-lg);
 	color: var(--color-text-muted);
 	margin-block: var(--space-md) var(--space-lg);
 }

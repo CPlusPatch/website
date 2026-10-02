@@ -1,45 +1,67 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 
+export type CardTone =
+    | "primary"
+    | "secondary"
+    | "destructive"
+    | "warning"
+    | "success";
+
 interface Props extends HTMLAttributes<"div"> {
-	shadow?: boolean;
+    tone?: CardTone;
+    /** Lift effect on hover. */
+    shadow?: boolean;
 }
 
-const { shadow = false, ...rest } = Astro.props;
+const { tone = "primary", shadow = true, ...rest } = Astro.props;
 ---
 
-<div class:list={["card", shadow && "card--shadow", rest.class]} {...rest}>
-	<slot />
+<div
+    class:list={["card", "panel", shadow && "lift", `card--tone-${tone}`]}
+    {...rest}
+>
+    <slot />
 </div>
 
 <style>
+/*
+ * Surface, border, top rule and hover lift all come from .panel / .lift in
+ * utilities.css. This file only owns content layout and the tone mapping.
+ */
 .card {
-	padding: var(--space-md);
-	background-color: var(--color-surface);
-	border: var(--border);
-	border-top: 2px solid var(--color-primary);
-	border-radius: var(--radius);
-	transition:
-		border-color var(--transition),
-		box-shadow var(--transition),
-		translate var(--transition);
-	align-items: start;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: var(--space-md);
 
-	&.card--shadow:hover {
-		border-color: var(--color-primary);
-			box-shadow: var(--shadow);
-			translate: calc(var(--shadow-offset) * -1)
-				calc(var(--shadow-offset) * -1);
-		
-	}
+    & p {
+        color: var(--color-text-muted);
+    }
 
-	& p {
-		color: var(--color-text-muted);
-	}
+    & a {
+        align-self: flex-start;
+        font-size: 0.875rem;
+    }
 
-	& a {
-		align-self: flex-start;
-		font-size: 0.875rem;
-	}
+    &.card--tone-secondary {
+        --panel-accent: var(--color-secondary-accent);
+        --shadow-color: var(--color-secondary-accent);
+    }
+
+    &.card--tone-destructive {
+        --panel-accent: var(--color-destructive-accent);
+        --shadow-color: var(--color-destructive-accent);
+    }
+
+    &.card--tone-warning {
+        --panel-accent: var(--color-warning-accent);
+        --shadow-color: var(--color-warning-accent);
+    }
+
+    &.card--tone-success {
+        --panel-accent: var(--color-success-accent);
+        --shadow-color: var(--color-success-accent);
+    }
 }
 </style>

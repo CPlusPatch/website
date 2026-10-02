@@ -1,144 +1,185 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 
-type ButtonVariant =
-	| "default"
-	| "destructive"
-	| "outline"
-	| "secondary"
-	| "ghost"
-	| "link";
 
-type ButtonSize = "default" | "sm" | "lg" | "icon";
+export type ButtonVariant = "solid" | "outline" | "ghost" | "link";
 
-interface Props extends HTMLAttributes<"button"> {
-	variant?: ButtonVariant;
-	size?: ButtonSize;
-	shadow?: boolean;
-}
+export type ButtonTone =
+    | "primary"
+    | "secondary"
+    | "destructive"
+    | "warning"
+    | "success";
+
+export type ButtonSize = "sm" | "default" | "lg" | "icon";
+
+/**
+ * Renders a <button> by default and an <a> when given an href, so the `link`
+ * variant can be an actual link instead of a button that looks like one.
+ */
+type Props = Omit<HTMLAttributes<"button">, "type"> &
+    Omit<HTMLAttributes<"a">, "type"> & {
+        as?: "button" | "a";
+        type?: "button" | "submit" | "reset";
+        variant?: ButtonVariant;
+        tone?: ButtonTone;
+        size?: ButtonSize;
+        shadow?: boolean;
+    };
 
 const {
-	variant = "default",
-	size = "default",
-	shadow = true,
-	...rest
+    as,
+    type,
+    variant = "solid",
+    tone = "primary",
+    size = "default",
+    shadow = true,
+    ...rest
 } = Astro.props;
+
+const isAnchor = as === "a" || (as === undefined && Boolean(rest.href));
+
+// Astro merges a spread `class` into `class:list` on its own, so `rest.class`
+// must not be repeated here or it lands in the output twice.
+const classes = [
+    "button",
+    "lift",
+    `button--${variant}`,
+    `button--tone-${tone}`,
+    `button--size-${size}`,
+    shadow && "button--shadow",
+];
 ---
 
-<button
-	type="button"
-	class:list={["button", `button--${variant}`, `button--size-${size}`, shadow && `button--shadow`, rest.class]}
-	{...rest}
->
-	<slot />
-</button>
+{
+    isAnchor ? (
+        <a class:list={classes} {...rest}>
+            <slot />
+        </a>
+    ) : (
+        <button type={type ?? "button"} class:list={classes} {...rest}>
+            <slot />
+        </button>
+    )
+}
 
 <style>
 .button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 2rem;
-	gap: var(--space-sm);
-	padding: var(--space-sm) var(--space-md);
-	font-size: 0.8125rem;
-	font-weight: 600;
-	line-height: 1.25;
-	text-decoration: none;
-	color: var(--button-color-contrast);
-	background-color: var(--button-color);
-	border: 1px solid var(--button-color);
-	border-radius: var(--radius);
-	cursor: pointer;
-	transition:
-		background-color var(--transition),
-		border-color var(--transition),
-		color var(--transition),
-		box-shadow var(--transition),
-		translate var(--transition);
+    --button-color: var(--color-primary);
+    --button-color-hover: var(--color-primary-hover);
+    --shadow-color: var(--button-color);
 
-	--button-color: var(--color-primary);
-	--button-color-hover: var(--color-primary-hover);
-	--button-color-contrast: var(--color-primary-contrast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2rem;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    line-height: 1.25;
+    text-decoration: none;
+    color: var(--color-on-accent);
+    background-color: var(--button-color);
+    border: 1px solid var(--button-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition:
+        background-color var(--transition),
+        border-color var(--transition),
+        color var(--transition),
+        box-shadow var(--transition),
+        translate var(--transition);
 
-	svg {
-		width: 1em;
-		height: 1em;
-	}
+    svg {
+        width: 1em;
+        height: 1em;
+        flex: none;
+    }
 
-	&:has(svg) {
-		padding: var(--space-sm) var(--space-sm);
-	}
+    &.button--tone-secondary {
+        --button-color: var(--color-secondary);
+        --button-color-hover: var(--color-secondary-hover);
+    }
 
-	&.button--size-sm {
-		padding: var(--space-xs) var(--space-sm);
-		font-size: 0.75rem;
-		height: 1.75rem;
-	}
+    &.button--tone-destructive {
+        --button-color: var(--color-destructive);
+        --button-color-hover: var(--color-destructive-hover);
+    }
 
-	&.button--size-lg {
-		padding: var(--space-sm) calc(var(--space-md) + var(--space-sm));
-		font-size: 0.9375rem;
-		height: 2.25rem;
-	}
+    &.button--tone-warning {
+        --button-color: var(--color-warning);
+        --button-color-hover: var(--color-warning-hover);
+    }
 
-	&.button--size-icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 2rem;
-		height: 2rem;
-		padding: 0;
-	}
+    &.button--tone-success {
+        --button-color: var(--color-success);
+        --button-color-hover: var(--color-success-hover);
+    }
 
-	&:hover {
-		color: var(--button-color-contrast);
-		background-color: var(--button-color-hover);
-		border-color: var(--button-color-hover);
-		
-		&.button--shadow {
-			box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--button-color);
-			translate: calc(var(--shadow-offset) * -1)
-				calc(var(--shadow-offset) * -1);
-		}
-	}
+    &.button--outline,
+    &.button--ghost,
+    &.button--link {
+        color: var(--button-color);
+        background-color: transparent;
+    }
 
-	&.button--destructive {
-		--button-color: var(--color-destructive);
-		--button-color-hover: var(--color-destructive-hover);
-		--button-color-contrast: var(--color-destructive-contrast);
-	}
+    &.button--ghost,
+    &.button--link {
+        border-color: transparent;
+    }
 
-	&.button--outline {
-		color: var(--color-primary);
-		background-color: transparent;
-	}
+    &.button--size-sm {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 0.75rem;
+        height: 1.75rem;
+    }
 
-	&.button--secondary {
-		--button-color: var(--color-secondary);
-		--button-color-hover: var(--color-secondary-hover);
-		--button-color-contrast: var(--color-secondary-contrast);
-	}
+    &.button--size-lg {
+        padding: var(--space-sm) calc(var(--space-md) + var(--space-sm));
+        font-size: var(--font-size-base);
+        height: 2.25rem;
+    }
 
-	&.button--ghost {
-		color: var(--color-primary);
-		background-color: transparent;
-		border-color: transparent;
+    &.button--size-icon {
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+    }
 
-		&:hover {
-			border-color: var(--color-primary);
-		}
-	}
+    &:hover {
+        background-color: var(--button-color-hover);
+        border-color: var(--button-color-hover);
+        color: var(--color-on-accent);
 
-	&.button--link {
-		color: var(--color-primary);
-		background-color: transparent;
-		border-color: transparent;
+        &.button--outline,
+        &.button--ghost,
+        &.button--link {
+            color: var(--color-on-accent);
+            border-color: var(--button-color-hover);
+        }
 
-		&:hover {
-			border-color: var(--color-primary);
-			text-decoration: underline;
-		}
-	}
+        &.button--link {
+            color: var(--button-color-hover);
+            background-color: transparent;
+            border-color: transparent;
+            text-decoration: underline;
+        }
+    }
+
+    /*
+     * .lift supplies the offset block effect on hover
+     */
+    &:not(.button--shadow):hover {
+        box-shadow: none;
+        translate: none;
+    }
+
+    &:disabled,
+    &[aria-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
 }
 </style>

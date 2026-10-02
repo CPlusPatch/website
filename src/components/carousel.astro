@@ -1,76 +1,228 @@
 ---
+import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 import Button from "./button.astro";
 
 /**
- * Carousel shape :
-  [       ]
-< [       ] >
-  [       ]
-  [ ][ ][ ]
+ * Carousel shape:
+ *
+ *     [       ]
+ *   < [       ] >
+ *     [       ]
+ *     [ ][ ][ ]
+ *
+ * A scroll-snapping track of arbitrary content, with optional arrows and an
+ * optional preview row below it.
+ *
+ * Slots:
+ *   default    -- one <CarouselItem> per slide
+ *   previews   -- one <CarouselPreview> per slide, in the same order
+ *
+ * Slide/preview pairing is positional and wired up at runtime, so the two
+ * slots must contain the same number of children.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Names the region for screen readers. */
+    label: string;
+    buttons?: boolean;
+}
 
- * Big rectangle with arbitrary content, with left and right arrows and a preview row below it
- * Subcomponents put in <slot />:
- * - CarouselItem
- * - CarouselPreview
- * - CarouselPreviewGrid
-*/
-
-const { ...rest } = Astro.props;
+const { label, buttons = true, ...rest } = Astro.props;
 ---
 
-<div class:list={["carousel", rest.class]} {...rest}>
-	<Button class="carousel__button--left" size="icon" shadow={false}>
-		<Icon name="lucide:chevron-left" />
-	</Button>
-	<Button class="carousel__button--right" size="icon" shadow={false}>
-		<Icon name="lucide:chevron-right" />
-	</Button>
-	<div class="carousel__items">
-		<slot />
-	</div>
-	<div class="carousel__preview-grid">
-		<slot name="previews" />
-	</div>
-</div>
+<section
+    class:list={["carousel", buttons && "carousel--buttons"]}
+    aria-roledescription="carousel"
+    aria-label={label}
+    {...rest}
+>
+    {
+        buttons && (
+            <>
+                <Button
+                    class="carousel__button carousel__button--left"
+                    size="icon"
+                    variant="outline"
+                    shadow={false}
+                    data-carousel-prev
+                    aria-label="Previous slide"
+                >
+                    <Icon name="lucide:chevron-left" aria-hidden="true" />
+                </Button>
+                <Button
+                    class="carousel__button carousel__button--right"
+                    size="icon"
+                    variant="outline"
+                    shadow={false}
+                    data-carousel-next
+                    aria-label="Next slide"
+                >
+                    <Icon name="lucide:chevron-right" aria-hidden="true" />
+                </Button>
+            </>
+        )
+    }
+    {/*
+     * <section> plus an accessible name gives the track the region role, so a
+     * screen reader can announce it. The tab stop that makes it keyboard
+     * scrollable (WCAG 2.1.1) is added by the script below rather than here --
+     * modern browsers focus overflow containers on their own, and doing it in
+     * script keeps the no-JS markup free of a tab stop that leads nowhere.
+     */}
+    <section
+        class="carousel__items"
+        data-carousel-track
+        aria-label={`${label} slides`}
+    >
+        <slot />
+    </section>
+    <div class="carousel__preview-grid" data-carousel-previews>
+        <slot name="previews" />
+    </div>
+</section>
+
+<script>
+    const carousels =
+        document.querySelectorAll<HTMLElement>("[aria-roledescription='carousel']");
+
+    for (const root of carousels) {
+        const track = root.querySelector<HTMLElement>("[data-carousel-track]");
+        if (!track) continue;
+
+        const slides = Array.from(track.children) as HTMLElement[];
+        if (slides.length === 0) continue;
+
+        const prev = root.querySelector<HTMLButtonElement>("[data-carousel-prev]");
+        const next = root.querySelector<HTMLButtonElement>("[data-carousel-next]");
+        const previews = Array.from(
+            root.querySelector("[data-carousel-previews]")?.children ?? [],
+        ) as HTMLElement[];
+
+        slides.forEach((slide, i) => {
+            slide.setAttribute("role", "group");
+            slide.setAttribute("aria-roledescription", "slide");
+            slide.setAttribute("aria-label", `${i + 1} of ${slides.length}`);
+        });
+
+        // See the markup comment above: the track becomes a tab stop only once
+        // the script that drives it is running.
+        track.tabIndex = 0;
+
+        let current = 0;
+
+        const goTo = (index: number) => {
+            const target = slides[Math.max(0, Math.min(index, slides.length - 1))];
+            track.scrollTo({
+                left: target.offsetLeft - track.offsetLeft,
+                behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                    .matches
+                    ? "auto"
+                    : "smooth",
+            });
+        };
+
+        const sync = () => {
+            prev?.toggleAttribute("disabled", current === 0);
+            next?.toggleAttribute("disabled", current === slides.length - 1);
+            previews.forEach((p, i) => {
+                p.setAttribute("aria-current", String(i === current));
+                p.classList.toggle("is-current", i === current);
+            });
+        };
+
+        prev?.addEventListener("click", () => goTo(current - 1));
+        next?.addEventListener("click", () => goTo(current + 1));
+
+        previews.forEach((preview, i) => {
+            preview.setAttribute("aria-label", `Go to slide ${i + 1}`);
+            preview.addEventListener("click", () => goTo(i));
+        });
+
+        // Derive the active slide from scroll position rather than tracking it
+        // on click, so native swipe and keyboard scrolling stay in sync too.
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) continue;
+                    const index = slides.indexOf(entry.target as HTMLElement);
+                    if (index !== -1) current = index;
+                }
+                sync();
+            },
+            { root: track, threshold: 0.6 },
+        );
+
+        for (const slide of slides) observer.observe(slide);
+        sync();
+    }
+</script>
 
 <style>
 .carousel {
-	position: relative;
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-sm);
-	justify-content: center;
-	width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    justify-content: center;
+    width: 100%;
 
-	.carousel__items {
-		display: flex;
-		width: 100%;
-		height: 38rem;
-		overflow: auto hidden;
-		gap: var(--space-sm);
-		scroll-snap-type: x mandatory;
-	}
+    .carousel__items {
+        display: flex;
+        width: 100%;
+        height: 38rem;
+        overflow: auto hidden;
+        gap: var(--space-sm);
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+    }
 
-	.carousel__button--left {
-		position: absolute;
-		top: 50%;
-		left: -0.5rem;
-		transform: translateY(-50%);
-	}
+    .carousel__items::-webkit-scrollbar {
+        display: none;
+    }
 
-	.carousel__button--right {
-		position: absolute;
-		top: 50%;
-		right: -0.5rem;
-		transform: translateY(-50%);
-	}
+    /*
+     * Inset the track when arrows are present so they do not sit on top of
+     * slide content.
+     */
+    &.carousel--buttons .carousel__items {
+        scroll-padding-inline: var(--space-lg);
+    }
 
-	.carousel__preview-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
-		gap: var(--space-sm);
-		height: 8rem;
-	}
+    .carousel__button {
+        position: absolute;
+        top: calc((38rem / 2));
+        z-index: 1;
+        translate: 0 -50%;
+        background-color: var(--color-surface);
+    }
+
+    .carousel__button--left {
+        left: -0.5rem;
+    }
+
+    .carousel__button--right {
+        right: -0.5rem;
+    }
+
+    .carousel__preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: var(--space-sm);
+        height: 8rem;
+    }
+
+    @media (max-width: 40rem) {
+        .carousel__items {
+            height: 24rem;
+        }
+
+        .carousel__button {
+            top: calc((24rem / 2));
+        }
+
+        .carousel__preview-grid {
+            display: none;
+        }
+    }
 }
 </style>
