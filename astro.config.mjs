@@ -1,9 +1,42 @@
 // @ts-check
 
-import svelte from "@astrojs/svelte";
-import { defineConfig } from "astro/config";
+import vue from "@astrojs/vue";
+import { defineConfig, fontProviders } from "astro/config";
+import browserslist from "browserslist";
+import { browserslistToTargets } from "lightningcss";
+import icon from "astro-icon";
 
 // https://astro.build/config
 export default defineConfig({
-	integrations: [svelte()],
+	integrations: [vue(), icon()],
+	fonts: [
+		{
+			provider: fontProviders.fontsource(),
+			name: "Inter",
+			cssVariable: "--font-inter",
+			styles: ["normal"],
+			weights: ["100 900"],
+			display: "swap",
+			subsets: ["latin", "latin-ext"],
+			fallbacks: ["sans-serif", "system-ui"],
+		},
+		{
+			provider: fontProviders.fontsource(),
+			name: "JetBrains Mono",
+			cssVariable: "--font-jetbrains-mono",
+			styles: ["normal"],
+			weights: ["400"],
+			display: "swap",
+			subsets: ["latin", "latin-ext"],
+			fallbacks: ["monospace", "ui-monospace"],
+		},
+	],
+	vite: {
+		css: {
+			transformer: "lightningcss",
+			lightningcss: {
+				targets: browserslistToTargets(browserslist(">= 2%")),
+			},
+		},
+	},
 });

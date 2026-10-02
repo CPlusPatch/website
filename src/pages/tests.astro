@@ -1,0 +1,106 @@
+---
+import Alert from "../components/alert.astro";
+import Button from "../components/button.astro";
+import Card from "../components/card.astro";
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+
+const buttonVariants = ["default", "secondary", "outline", "destructive", "ghost", "link"] as const;
+const buttonSizes = ["default", "sm", "lg", "icon"] as const;
+---
+
+<Layout>
+<main>
+
+<section class="test">
+	<h1>Buttons</h1>
+	{buttonVariants.map(variant => (
+		<div class="test-container">
+			{buttonSizes.map((size) => (
+				<>
+				<Button variant={variant} size={size}>
+					{size === "icon" ? <Icon name="lucide:star" /> : variant.charAt(0).toUpperCase() + variant.slice(1)}
+				</Button>
+				{size !== "icon" && (
+					<Button variant={variant} size={size}>
+						<Icon name="lucide:star" />
+						{variant.charAt(0).toUpperCase() + variant.slice(1)}
+					</Button>
+				)}
+				</>
+			))}
+		</div>
+	))}
+</section>
+
+<section class="test">
+	<h1>Cards</h1>
+	<div class="test-container">
+		<Card>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+		</Card>
+
+		<Card>
+			<h3>Card title</h3>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+		</Card>
+	</div>
+</section>
+
+<section class="test">
+	<h1>Alerts</h1>
+	<div class="test-container">
+		<Alert>
+			<h3>Alert Title</h3>
+			<p>This is an alert message. It can contain important information for the user.</p>
+		</Alert>
+
+		<Alert icon="lucide:badge-check">
+			<h3>Success Alert</h3>
+			<p>This is a success alert message. It indicates that an action was completed successfully.</p>
+		</Alert>
+
+		<Alert variant="warning" icon="lucide:alert-triangle">
+			<h3>Warning Alert</h3>
+			<p>This is a warning alert message. It indicates that there might be a potential issue.</p>
+		</Alert>
+
+		<Alert variant="destructive" icon="lucide:alert-circle">
+			<h3>Destructive Alert</h3>
+			<p>This is a destructive alert message. It indicates that an action could have serious consequences.</p>
+		</Alert>
+	</div>
+</section>
+
+</main>
+</Layout>
+
+<style>
+	main {
+		padding: 2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+		max-width: 1000px;
+		margin: 0 auto;
+		width: 100%;
+
+		.test {
+			border: 1px solid var(--color-border);
+			border-radius: var(--radius);
+			padding: 1rem;
+
+			&>h1 {
+				font-size: 1rem;
+				margin-bottom: 1rem;
+			}
+
+			.test-container {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 1rem 0;
+				align-items: flex-end;
+			}
+		}
+	}
+</style>
