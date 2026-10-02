@@ -1,0 +1,152 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type ButtonVariant =
+	| "default"
+	| "destructive"
+	| "outline"
+	| "secondary"
+	| "ghost"
+	| "link";
+
+type ButtonSize = "default" | "sm" | "lg" | "icon";
+
+interface Props extends HTMLAttributes<"button"> {
+	variant?: ButtonVariant;
+	size?: ButtonSize;
+}
+
+const {
+	variant = "default",
+	size = "default",
+	...rest
+} = Astro.props;
+---
+
+<button
+	type="button"
+	class:list={["button", `button--${variant}`, `button--size-${size}`]}
+	{...rest}
+>
+	<slot />
+</button>
+
+<style>
+.button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 2rem;
+	gap: var(--space-sm);
+	padding: var(--space-sm) var(--space-md);
+	margin: 0 var(--space-sm) var(--space-sm) 0;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.25;
+	text-decoration: none;
+	color: var(--color-primary-contrast);
+	background-color: var(--color-primary);
+	border: 1px solid var(--color-primary);
+	border-radius: var(--radius);
+	cursor: pointer;
+	transition:
+		background-color var(--transition),
+		border-color var(--transition),
+		color var(--transition),
+		box-shadow var(--transition),
+		translate var(--transition);
+
+	svg {
+		width: 1em;
+		height: 1em;
+	}
+
+	&:has(svg) {
+		padding: var(--space-sm) var(--space-sm);
+	}
+
+	&.button--size-sm {
+		padding: var(--space-xs) var(--space-sm);
+		font-size: 0.75rem;
+		height: 1.75rem;
+	}
+
+	&.button--size-lg {
+		padding: var(--space-sm) calc(var(--space-md) + var(--space-sm));
+		font-size: 0.9375rem;
+		height: 2.25rem;
+	}
+
+	&.button--size-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+	}
+
+	&:hover {
+		color: var(--color-primary-contrast);
+		background-color: var(--color-primary-hover);
+		border-color: var(--color-primary-hover);
+		box-shadow: var(--shadow);
+		translate: calc(var(--shadow-offset) * -1)
+			calc(var(--shadow-offset) * -1);
+	}
+
+	&.button--destructive {
+		color: var(--color-destructive-contrast);
+		background-color: var(--color-destructive);
+		border-color: var(--color-destructive);
+
+		&:hover {
+			color: var(--color-destructive-contrast);
+			background-color: var(--color-destructive-hover);
+			border-color: var(--color-destructive-hover);
+			box-shadow: var(--shadow-offset) var(--shadow-offset) 0
+				var(--color-destructive);
+		}
+	}
+
+	&.button--outline {
+		color: var(--color-primary);
+		background-color: transparent;
+	}
+
+	&.button--secondary {
+		color: var(--color-secondary-contrast);
+		background-color: var(--color-secondary);
+		border-color: var(--color-secondary);
+
+		&:hover {
+			color: var(--color-secondary-contrast);
+			background-color: var(--color-secondary-hover);
+			border-color: var(--color-secondary-hover);
+			box-shadow: var(--shadow-offset) var(--shadow-offset) 0
+				var(--color-secondary);
+		}
+	}
+
+	&.button--ghost {
+		color: var(--color-primary);
+		background-color: transparent;
+		border-color: transparent;
+
+		&:hover {
+			border-color: var(--color-primary);
+		}
+	}
+
+	&.button--link {
+		color: var(--color-primary);
+		background-color: transparent;
+		border-color: transparent;
+
+		&:hover {
+			border-color: var(--color-primary);
+			text-decoration: underline;
+		}
+	}
+}
+</style>

@@ -1,0 +1,17 @@
+.container {
+	width: min(100% - 2 * var(--space-md), var(--container-width));
+	margin-inline: auto;
+}
+
+.section {
+	padding-block: var(--space-xl);
+
+	@media (max-width: 40rem) {
+		padding-block: var(--space-lg);
+	}
+}
+
+.section--alt {
+	background-color: var(--color-bg-alt);
+	border-block: var(--border);
+}

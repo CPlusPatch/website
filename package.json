@@ -14,10 +14,14 @@
 		"check": "biome check . --write"
 	},
 	"dependencies": {
-		"@astrojs/svelte": "^9.0.1",
+		"@astrojs/vue": "^7.0.3",
+		"@iconify-json/lucide": "^1.2.138",
 		"astro": "^7.2.4",
-		"svelte": "^5.56.10",
-		"typescript": "^6.0.3"
+		"astro-icon": "^1.2.0",
+		"browserslist": "^4.28.8",
+		"lightningcss": "^1.33.0",
+		"typescript": "^6.0.3",
+		"vue": "^3.5.43"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.9"
