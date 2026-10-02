@@ -1,0 +1,167 @@
+---
+import { Icon } from "astro-icon/components";
+import Button from "../components/button.astro";
+import Card from "../components/card.astro";
+import CarouselItem from "../components/carousel/carousel-item.astro";
+import CarouselPreview from "../components/carousel/carousel-preview.astro";
+import Carousel from "../components/carousel.astro";
+import SideHero from "../components/layout/side-hero.astro";
+import greg from "../images/greg.jpg";
+import Layout from "../layouts/layout.astro";
+import { groups } from "../stories";
+
+// A development-only gallery. In a production build this becomes a redirect
+// stub rather than shipping the whole component matrix to visitors.
+if (import.meta.env.PROD) {
+    return Astro.redirect("/", 302);
+}
+
+// Everything prop-driven comes from the manifest. The carousel is the one
+// hand-written example, because it nests other components inside its slots.
+const slides = [
+    { title: "Side hero", body: "A slide can hold any component." },
+    { title: "Plain card", body: "This is the second slide." },
+    { title: "Another card", body: "This is the third slide." },
+    { title: "Last one", body: "This is the fourth slide." },
+];
+---
+
+<Layout title="Component gallery" noindex>
+    <main id="main" class="container">
+        {
+            groups.map((group) => (
+                <section class="gallery">
+                    <h2>{group.title}</h2>
+                    {group.description && (
+                        <p class="lead">{group.description}</p>
+                    )}
+                    <div
+                        class="grid"
+                        style={`--cell: ${group.min ?? 16}rem`}
+                    >
+                        {group.stories.map((story) => {
+                            // Dynamic tag, so every story renders the same way.
+                            const Component = story.component;
+                            return (
+                                <figure
+                                    class="cell"
+                                    data-story={`${group.id}/${story.name}`}
+                                >
+                                    <figcaption>{story.name}</figcaption>
+                                    <div class="preview">
+                                        <Component {...story.props}>
+                                            {story.icon && (
+                                                <Icon
+                                                    name={story.icon}
+                                                    aria-hidden="true"
+                                                />
+                                            )}
+                                            {story.slot && (
+                                                <Fragment
+                                                    set:html={story.slot}
+                                                />
+                                            )}
+                                        </Component>
+                                    </div>
+                                </figure>
+                            );
+                        })}
+                    </div>
+                </section>
+            ))
+        }
+
+        <section class="gallery">
+            <h2>Carousel</h2>
+            <p class="lead">
+                Written by hand, since it nests other components.
+            </p>
+            <figure class="cell" data-story="carousel/default">
+                <figcaption>default</figcaption>
+                <div class="preview">
+                    <Carousel label="Component examples">
+                        <CarouselItem>
+                            <SideHero
+                                image={{ url: greg, alt: "Greg Heffley" }}
+                            >
+                                <h2>{slides[0].title}</h2>
+                                <p>{slides[0].body}</p>
+                                <Button>Learn more</Button>
+                            </SideHero>
+                        </CarouselItem>
+                        {
+                            slides.slice(1).map((slide) => (
+                                <CarouselItem>
+                                    <Card>
+                                        <h3>{slide.title}</h3>
+                                        <p>{slide.body}</p>
+                                    </Card>
+                                </CarouselItem>
+                            ))
+                        }
+                        <Fragment slot="previews">
+                            {
+                                slides.map((slide, i) => (
+                                    <CarouselPreview>
+                                        <strong>{i + 1}</strong>
+                                        {slide.title}
+                                    </CarouselPreview>
+                                ))
+                            }
+                        </Fragment>
+                    </Carousel>
+                </div>
+            </figure>
+        </section>
+    </main>
+</Layout>
+
+<style>
+    main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+        padding-block: var(--space-lg);
+    }
+
+    .gallery {
+        padding: var(--space-md);
+        background-color: var(--color-surface);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
+
+        & > h2 {
+            font-size: var(--font-size-lg);
+        }
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
+        gap: var(--space-md);
+        align-items: start;
+        margin-top: var(--space-md);
+    }
+
+    .cell {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        margin: 0;
+    }
+
+    figcaption {
+        font-family: var(--font-mono);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+    }
+
+    .preview {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .preview > :global(*) {
+        max-width: 100%;
+    }
+</style>
