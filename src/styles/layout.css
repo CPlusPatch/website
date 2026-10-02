@@ -13,5 +13,5 @@
 
 .section--alt {
 	background-color: var(--color-bg-alt);
-	border-block: var(--border);
+	border-block: var(--border-width) solid var(--border-color);
 }

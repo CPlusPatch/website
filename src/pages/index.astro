@@ -1,8 +1,58 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Button from "../components/button.astro";
+import Card from "../components/card.astro";
+import Layout from "../layouts/layout.astro";
 ---
 
-<Layout>
-    <h1>Welcome to Astro</h1>
-    <p>This is a sample page using the Layout component.</p>
+<Layout title="Example page" description="Placeholder content.">
+    <main id="main">
+        <section class="section">
+            <div class="container">
+                <h1>Example <span class="accent">headline</span></h1>
+                <p class="lead">
+                    Example lead paragraph. Lorem ipsum dolor sit amet,
+                    consectetur adipiscing elit, sed do eiusmod tempor
+                    incididunt ut labore et dolore magna aliqua.
+                </p>
+                <Button as="a" href="/tests" size="lg">Example action</Button>
+            </div>
+        </section>
+
+        <section class="section section--alt">
+            <div class="container">
+                <h2>Example section</h2>
+                <div class="grid">
+                    <Card>
+                        <h3>Example card</h3>
+                        <p>
+                            Ut enim ad minim veniam, quis nostrud exercitation
+                            ullamco laboris nisi ut aliquip ex ea commodo.
+                        </p>
+                    </Card>
+                    <Card tone="secondary">
+                        <h3>Example card</h3>
+                        <p>
+                            Duis aute irure dolor in reprehenderit in voluptate
+                            velit esse cillum dolore eu fugiat nulla pariatur.
+                        </p>
+                    </Card>
+                    <Card tone="success">
+                        <h3>Example card</h3>
+                        <p>
+                            Excepteur sint occaecat cupidatat non proident, sunt
+                            in culpa qui officia deserunt mollit anim id est.
+                        </p>
+                    </Card>
+                </div>
+            </div>
+        </section>
+    </main>
 </Layout>
+
+<style>
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+        gap: var(--space-md);
+    }
+</style>

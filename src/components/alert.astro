@@ -2,96 +2,105 @@
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 
+export type AlertVariant =
+    | "default"
+    | "success"
+    | "warning"
+    | "destructive";
+
 interface Props extends HTMLAttributes<"div"> {
-	icon?: string;
-	variant?: "default" | "warning" | "destructive";
+    icon?: string;
+    variant?: AlertVariant;
+    /**
+     * Announce the alert to assistive tech when it appears. Use "assertive"
+     * only for content that must interrupt (like an error on submit).
+     */
+    live?: "off" | "polite" | "assertive";
 }
 
-const { icon, variant, ...rest } = Astro.props;
+const { icon, variant = "default", live = "off", ...rest } = Astro.props;
+
+// Otherwise, the only cue that an alert is a warning rather than a success
+// is its colour -- which is invisible to screen readers.
+const label: Record<AlertVariant, string | null> = {
+    default: null,
+    success: "Success:",
+    warning: "Warning:",
+    destructive: "Error:",
+};
+
+const prefix = label[variant];
 ---
 
-<div class:list={["alert", icon && "alert--icon", variant && `alert--${variant}`, rest.class]} {...rest}>
-	{icon && <Icon name={icon} class="icon" />}
-	<div class="content">
-		<slot />
-	</div>
+<div
+    class:list={[
+        "alert",
+        "panel",
+        "lift",
+        icon && "alert--icon",
+        `alert--${variant}`,
+    ]}
+    role={live === "off" ? undefined : "status"}
+    aria-live={live === "off" ? undefined : live}
+    {...rest}
+>
+    {icon && <Icon name={icon} class="icon" aria-hidden="true" />}
+    <div class="content">
+        {prefix && <span class="visually-hidden">{prefix}</span>}
+        <slot />
+    </div>
 </div>
 
 <style>
 .alert {
-	display: grid;
-	grid-template-columns: 1fr;
-	width: 100%;
-	gap: var(--space-md);
-	padding: var(--space-md);
-	background-color: var(--color-surface);
-	border: var(--border);
-	border-top: 2px solid var(--color-primary);
-	border-radius: var(--radius);
-	transition:
-		border-color var(--transition),
-		box-shadow var(--transition),
-		translate var(--transition);
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: var(--space-md);
+    padding: var(--space-md);
 
-	&.alert--icon {
-		grid-template-columns: auto 1fr;
-		align-items: center;
+    &.alert--icon {
+        grid-template-columns: auto 1fr;
+        align-items: center;
+    }
 
-		.icon {
-			width: 1.25rem;
-			height: 1.25rem;
-			color: var(--color-primary);
-		}
-	}
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--icon-color, var(--color-primary));
+    }
 
-	&:hover {
-		border-color: var(--color-primary);
-		box-shadow: var(--shadow);
-		translate: calc(var(--shadow-offset) * -1)
-			calc(var(--shadow-offset) * -1);
-	}
+    &.alert--success {
+        --panel-accent: var(--color-success-accent);
+        --shadow-color: var(--color-success-accent);
+        --icon-color: var(--color-success);
+    }
 
-	&.alert--warning {
-		border-top-color: var(--color-warning);
-		
-		&:hover {
-			border-color: var(--color-warning);
-			box-shadow: var(--shadow-offset) var(--shadow-offset) 0
-				var(--color-warning);
-		}
+    &.alert--warning {
+        --panel-accent: var(--color-warning-accent);
+        --shadow-color: var(--color-warning-accent);
+        --icon-color: var(--color-warning);
+    }
 
-		.icon {
-			color: var(--color-warning);
-		}
-	}
+    &.alert--destructive {
+        --panel-accent: var(--color-destructive-accent);
+        --shadow-color: var(--color-destructive-accent);
+        --icon-color: var(--color-destructive);
+    }
 
-	&.alert--destructive {
-		border-top-color: var(--color-destructive);
-		
-		&:hover {
-			border-color: var(--color-destructive);
-			box-shadow: var(--shadow-offset) var(--shadow-offset) 0
-				var(--color-destructive);
-		}
+    .content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
 
-		.icon {
-			color: var(--color-destructive);
-		}
-	}
+        h3 {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
 
-	.content {
-		display: flex;
-		flex-direction: column;
-		gap: 0;
-		
-		h3 {
-			margin-bottom: 0;
-			font-weight: 600;
-		}
-
-		p {
-			color: var(--color-text-muted);
-		}
-	}
+        p {
+            color: var(--color-text-muted);
+        }
+    }
 }
 </style>

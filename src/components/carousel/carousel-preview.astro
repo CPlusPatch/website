@@ -1,22 +1,46 @@
 ---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"button">;
+
 const { ...rest } = Astro.props;
 ---
 
-<div class:list={["carousel-preview", rest.class]} {...rest}>
-	<slot />
-</div>
+{/*
+ * A real <button>, so previews are keyboard-reachable and announced without
+ * the carousel script having to make up button semantics. Content should
+ * therefore be phrasing content -- short text, an image, a heading -- not a
+ * nested interactive or block component.
+ */}
+<button type="button" class="carousel-preview panel lift" {...rest}>
+    <slot />
+</button>
 
 <style>
 .carousel-preview {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 100%;
-	height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-xs);
+    width: 100%;
+    height: 100%;
+    padding: var(--space-sm);
+    font: inherit;
+    color: inherit;
+    text-align: center;
+    cursor: pointer;
 
-	& > :global(*) {
-		width: 100%;
-		height: 100%;
-	}
+    &[aria-current="true"] {
+        --panel-accent: var(--color-primary);
+
+        border-color: var(--color-primary);
+    }
+
+    & > :global(img) {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 }
 </style>

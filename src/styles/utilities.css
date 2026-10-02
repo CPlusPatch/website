@@ -1,0 +1,66 @@
+/*
+ * Shared primitives used across components.
+ *
+ * These live in global CSS rather than in a component's scoped <style> so that
+ * card, alert and anything else added later share one implementation of the
+ * hover lift instead of each re-deriving it.
+ */
+
+/*
+ * The offset-block hover lift. Driven entirely by --shadow-color, so a variant
+ * recolours the whole effect with a single custom property:
+ *
+ *   .alert--warning { --shadow-color: var(--color-warning-accent); }
+ *
+ * Deliberately does not touch border-color -- consumers own their border, and
+ * .panel below pairs the two.
+ */
+.lift {
+	transition:
+		border-color var(--transition),
+		box-shadow var(--transition),
+		translate var(--transition);
+
+	&:hover {
+		box-shadow: var(--shadow-offset) var(--shadow-offset) 0
+			var(--shadow-color);
+		translate: calc(var(--shadow-offset) * -1)
+			calc(var(--shadow-offset) * -1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lift:hover {
+		translate: none;
+	}
+}
+
+/*
+ * A bordered surface with a coloured top rule. Card and alert are both this
+ * plus their own content layout. --panel-accent recolours the rule,
+ * --border-color the rest of the frame.
+ */
+.panel {
+	--panel-accent: var(--color-primary-accent);
+
+	background-color: var(--color-surface);
+	border: var(--border-width) solid var(--border-color);
+	border-top: 2px solid var(--panel-accent);
+	border-radius: var(--radius);
+
+	&.lift:hover {
+		border-color: var(--shadow-color);
+	}
+}
+
+/* Visually hidden, still announced by screen readers. */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}

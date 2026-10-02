@@ -6,165 +6,203 @@ import Card from "../components/card.astro";
 import CarouselItem from "../components/carousel/carousel-item.astro";
 import CarouselPreview from "../components/carousel/carousel-preview.astro";
 import Carousel from "../components/carousel.astro";
-import Layout from "../layouts/Layout.astro";
+import SideHero from "../components/layout/side-hero.astro";
+import greg from "../images/greg.jpg";
+import Layout from "../layouts/layout.astro";
 
-const buttonVariants = ["default", "secondary", "outline", "destructive", "ghost", "link"] as const;
-const buttonSizes = ["default", "sm", "lg", "icon"] as const;
+// A development-only gallery. In a production build this becomes a redirect
+// stub rather than shipping the whole component matrix to visitors.
+if (import.meta.env.PROD) {
+    return Astro.redirect("/", 302);
+}
+
+const variants = ["solid", "outline", "ghost", "link"] as const;
+const tones = [
+    "primary",
+    "secondary",
+    "destructive",
+    "warning",
+    "success",
+] as const;
+const sizes = ["lg", "default", "sm", "icon"] as const;
+
+const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const slides = [
+    { title: "Side hero", body: "A slide can hold any component." },
+    { title: "Plain card", body: "This is the second slide." },
+    { title: "Another card", body: "This is the third slide." },
+    { title: "Last one", body: "This is the fourth slide." },
+];
 ---
 
-<Layout>
-<main>
+<Layout title="Component gallery" noindex>
+    <main id="main" class="container">
+        <section class="gallery">
+            <h2>Buttons — variant and tone</h2>
+            <p class="lead">
+                Fill style and colour are independent axes, so every cell below
+                is reachable.
+            </p>
+            {
+                variants.map((variant) => (
+                    <div class="row">
+                        {tones.map((tone) => (
+                            <Button variant={variant} tone={tone}>
+                                <Icon name="lucide:star" aria-hidden="true" />
+                                {title(tone)}
+                            </Button>
+                        ))}
+                    </div>
+                ))
+            }
+        </section>
 
-<section>
-	<h1>Buttons</h1>
-	{buttonVariants.map(variant => (
-		<div class="test-container">
-			{buttonSizes.map((size) => (
-				<>
-				<Button variant={variant} size={size}>
-					{size === "icon" ? <Icon name="lucide:star" /> : variant.charAt(0).toUpperCase() + variant.slice(1)}
-				</Button>
-				{size !== "icon" && (
-					<Button variant={variant} size={size}>
-						<Icon name="lucide:star" />
-						{variant.charAt(0).toUpperCase() + variant.slice(1)}
-					</Button>
-				)}
-				</>
-			))}
-		</div>
-	))}
-</section>
+        <section class="gallery">
+            <h2>Buttons — sizes</h2>
+            <div class="row">
+                {
+                    sizes.map((size) =>
+                        size === "icon" ? (
+                            <Button size={size} aria-label="Favourite">
+                                <Icon name="lucide:star" aria-hidden="true" />
+                            </Button>
+                        ) : (
+                            <Button size={size}>{title(size)}</Button>
+                        ),
+                    )
+                }
+                <Button disabled>Disabled</Button>
+                <Button as="a" href="#main">
+                    Anchor
+                </Button>
+            </div>
+        </section>
 
-<section>
-	<h1>Cards</h1>
-	<div class="test-container">
-		<Card>
-			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-		</Card>
+        <section class="gallery">
+            <h2>Cards</h2>
+            <div class="row row--cards">
+                {
+                    tones.map((tone) => (
+                        <Card tone={tone}>
+                            <h3>{title(tone)}</h3>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur
+                                adipiscing elit. Sed do eiusmod tempor
+                                incididunt ut labore.
+                            </p>
+                        </Card>
+                    ))
+                }
+                <Card shadow={false}>
+                    <h3>No lift</h3>
+                    <p>Hover does nothing on this one.</p>
+                </Card>
+            </div>
+        </section>
 
-		<Card shadow={true}>
-			<h3>Card title</h3>
-			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-		</Card>
-	</div>
-</section>
+        <section class="gallery">
+            <h2>Alerts</h2>
+            <div class="stack">
+                <Alert>
+                    <h3>Alert title</h3>
+                    <p>An alert with no icon and no variant.</p>
+                </Alert>
+                <Alert variant="success" icon="lucide:badge-check">
+                    <h3>Success alert</h3>
+                    <p>The action completed successfully.</p>
+                </Alert>
+                <Alert variant="warning" icon="lucide:alert-triangle">
+                    <h3>Warning alert</h3>
+                    <p>Something might need your attention.</p>
+                </Alert>
+                <Alert
+                    variant="destructive"
+                    icon="lucide:alert-circle"
+                    live="assertive"
+                >
+                    <h3>Destructive alert</h3>
+                    <p>This action could have serious consequences.</p>
+                </Alert>
+            </div>
+        </section>
 
-<section>
-	<h1>Alerts</h1>
-	<div class="test-container">
-		<Alert>
-			<h3>Alert Title</h3>
-			<p>This is an alert message. It can contain important information for the user.</p>
-		</Alert>
-
-		<Alert icon="lucide:badge-check">
-			<h3>Success Alert</h3>
-			<p>This is a success alert message. It indicates that an action was completed successfully.</p>
-		</Alert>
-
-		<Alert variant="warning" icon="lucide:alert-triangle">
-			<h3>Warning Alert</h3>
-			<p>This is a warning alert message. It indicates that there might be a potential issue.</p>
-		</Alert>
-
-		<Alert variant="destructive" icon="lucide:alert-circle">
-			<h3>Destructive Alert</h3>
-			<p>This is a destructive alert message. It indicates that an action could have serious consequences.</p>
-		</Alert>
-	</div>
-</section>
-
-<section>
-	<h1>Carousel</h1>
-	<div class="test-container">
-		<Carousel>
-			<CarouselItem>
-				<Card>
-					<h3>Carousel Item 1</h3>
-					<p>This is the first item in the carousel.</p>
-				</Card>
-			</CarouselItem>
-			<CarouselItem>
-				<Card>
-					<h3>Carousel Item 2</h3>
-					<p>This is the second item in the carousel.</p>
-				</Card>
-			</CarouselItem>
-			<CarouselItem>
-				<Card>
-					<h3>Carousel Item 3</h3>
-					<p>This is the third item in the carousel.</p>
-				</Card>
-			</CarouselItem>
-			<CarouselItem>
-				<Card>
-					<h3>Carousel Item 4</h3>
-					<p>This is the fourth item in the carousel.</p>
-				</Card>
-			</CarouselItem>
-			<Fragment slot="previews">
-				<CarouselPreview>
-					<Card>
-						<h3>Preview 1</h3>
-						<p>This is the first preview item.</p>
-					</Card>
-				</CarouselPreview>
-				<CarouselPreview>
-					<Card>
-						<h3>Preview 2</h3>
-						<p>This is the second preview item.</p>
-					</Card>
-				</CarouselPreview>
-				<CarouselPreview>
-					<Card>
-						<h3>Preview 3</h3>
-						<p>This is the third preview item.</p>
-					</Card>
-				</CarouselPreview>
-				<CarouselPreview>
-					<Card>
-						<h3>Preview 4</h3>
-						<p>This is the fourth preview item.</p>
-					</Card>
-				</CarouselPreview>
-			</Fragment>
-		</Carousel>
-	</div>
-</section>
-
-</main>
+        <section class="gallery">
+            <h2>Carousel</h2>
+            <Carousel label="Component examples">
+                <CarouselItem>
+                    <SideHero image={{ url: greg, alt: "A cat called Greg" }}>
+                        <h2>{slides[0].title}</h2>
+                        <p>{slides[0].body}</p>
+                        <Button>Learn more</Button>
+                    </SideHero>
+                </CarouselItem>
+                {
+                    slides.slice(1).map((slide) => (
+                        <CarouselItem>
+                            <Card>
+                                <h3>{slide.title}</h3>
+                                <p>{slide.body}</p>
+                            </Card>
+                        </CarouselItem>
+                    ))
+                }
+                <Fragment slot="previews">
+                    {
+                        slides.map((slide, i) => (
+                            <CarouselPreview>
+                                <strong>{i + 1}</strong>
+                                {slide.title}
+                            </CarouselPreview>
+                        ))
+                    }
+                </Fragment>
+            </Carousel>
+        </section>
+    </main>
 </Layout>
 
 <style>
-	main {
-		padding: 2rem;
-		display: flex;
-		flex-direction: column;
-		gap: 2rem;
-		max-width: 1280px;
-		margin: 0 auto;
-		width: 100%;
+    main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+        padding-block: var(--space-lg);
+    }
 
-		& section {
-			border: 1px solid var(--color-border);
-			border-radius: var(--radius);
-			padding: 1rem;
-			display: flex;
-			flex-direction: column;
-			gap: 1rem;
-			background-color: var(--color-surface);
+    .gallery {
+        padding: var(--space-md);
+        background-color: var(--color-surface);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
 
-			&>h1 {
-				font-size: 1rem;
-			}
+        & > h2 {
+            font-size: var(--font-size-lg);
+        }
+    }
 
-			.test-container {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 1rem 0.25rem;
-				align-items: flex-end;
-			}
-		}
-	}
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        align-items: flex-end;
+
+        & + .row {
+            margin-top: var(--space-sm);
+        }
+    }
+
+    .row--cards {
+        align-items: stretch;
+
+        & > * {
+            flex: 1 1 16rem;
+        }
+    }
+
+    .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
 </style>
