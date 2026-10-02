@@ -8,6 +8,8 @@
  *   role tier (text + fills)   L = 0.45 light / 0.78 dark   hover 0.37 / 0.86
  *   accent tier (decoration)   L = 0.72 light / 0.70 dark
  *   neutrals                   hue 155, chroma <= 0.012
+ *                              (dark surfaces are achromatic -- a green
+ *                               tint reads as a colour cast at low L)
  *
  * Because the role tier has a uniform lightness, a single --color-on-accent
  * works as the foreground for every filled surface. Measured contrast against
@@ -25,9 +27,9 @@
 	color-scheme: light dark;
 
 	/* Neutrals */
-	--color-bg: light-dark(#f2f5f3, #0c0f0d);
-	--color-bg-alt: light-dark(#e7ebe8, #151816);
-	--color-surface: light-dark(#fafcfb, #1a1e1b);
+	--color-bg: light-dark(#f2f5f3, #0e0e0e);
+	--color-bg-alt: light-dark(#e7ebe8, #171717);
+	--color-surface: light-dark(#fafcfb, #1d1d1d);
 	--color-text: light-dark(#131915, #d3d9d5);
 	--color-text-muted: light-dark(#606762, #88908a);
 
@@ -55,7 +57,7 @@
 	--color-success-hover: light-dark(#0f4c27, #58f390);
 
 	/* One foreground for every role, because the role tier has a uniform L */
-	--color-on-accent: light-dark(#f2f5f3, #0c0f0d);
+	--color-on-accent: light-dark(#f2f5f3, #0e0e0e);
 
 	/* Accent tier -- decoration only, never text */
 	--color-primary-accent: light-dark(#f77299, #f76492);
