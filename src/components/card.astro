@@ -5,10 +5,10 @@ interface Props extends HTMLAttributes<"div"> {
 	shadow?: boolean;
 }
 
-const { shadow = true, ...rest } = Astro.props;
+const { shadow = false, ...rest } = Astro.props;
 ---
 
-<div class:list={["card", shadow && "card--shadow"]} {...rest}>
+<div class:list={["card", shadow && "card--shadow", rest.class]} {...rest}>
 	<slot />
 </div>
 
@@ -25,11 +25,12 @@ const { shadow = true, ...rest } = Astro.props;
 		translate var(--transition);
 	align-items: start;
 
-	&:hover {
+	&.card--shadow:hover {
 		border-color: var(--color-primary);
-		box-shadow: var(--shadow);
-		translate: calc(var(--shadow-offset) * -1)
-			calc(var(--shadow-offset) * -1);
+			box-shadow: var(--shadow);
+			translate: calc(var(--shadow-offset) * -1)
+				calc(var(--shadow-offset) * -1);
+		
 	}
 
 	& p {

@@ -1,0 +1,76 @@
+---
+import { Icon } from "astro-icon/components";
+import Button from "./button.astro";
+
+/**
+ * Carousel shape :
+  [       ]
+< [       ] >
+  [       ]
+  [ ][ ][ ]
+
+ * Big rectangle with arbitrary content, with left and right arrows and a preview row below it
+ * Subcomponents put in <slot />:
+ * - CarouselItem
+ * - CarouselPreview
+ * - CarouselPreviewGrid
+*/
+
+const { ...rest } = Astro.props;
+---
+
+<div class:list={["carousel", rest.class]} {...rest}>
+	<Button class="carousel__button--left" size="icon" shadow={false}>
+		<Icon name="lucide:chevron-left" />
+	</Button>
+	<Button class="carousel__button--right" size="icon" shadow={false}>
+		<Icon name="lucide:chevron-right" />
+	</Button>
+	<div class="carousel__items">
+		<slot />
+	</div>
+	<div class="carousel__preview-grid">
+		<slot name="previews" />
+	</div>
+</div>
+
+<style>
+.carousel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-sm);
+	justify-content: center;
+	width: 100%;
+
+	.carousel__items {
+		display: flex;
+		width: 100%;
+		height: 38rem;
+		overflow: auto hidden;
+		gap: var(--space-sm);
+		scroll-snap-type: x mandatory;
+	}
+
+	.carousel__button--left {
+		position: absolute;
+		top: 50%;
+		left: -0.5rem;
+		transform: translateY(-50%);
+	}
+
+	.carousel__button--right {
+		position: absolute;
+		top: 50%;
+		right: -0.5rem;
+		transform: translateY(-50%);
+	}
+
+	.carousel__preview-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
+		gap: var(--space-sm);
+		height: 8rem;
+	}
+}
+</style>

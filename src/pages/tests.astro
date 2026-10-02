@@ -1,9 +1,12 @@
 ---
+import { Icon } from "astro-icon/components";
 import Alert from "../components/alert.astro";
 import Button from "../components/button.astro";
 import Card from "../components/card.astro";
+import CarouselItem from "../components/carousel/carousel-item.astro";
+import CarouselPreview from "../components/carousel/carousel-preview.astro";
+import Carousel from "../components/carousel.astro";
 import Layout from "../layouts/Layout.astro";
-import { Icon } from "astro-icon/components";
 
 const buttonVariants = ["default", "secondary", "outline", "destructive", "ghost", "link"] as const;
 const buttonSizes = ["default", "sm", "lg", "icon"] as const;
@@ -12,7 +15,7 @@ const buttonSizes = ["default", "sm", "lg", "icon"] as const;
 <Layout>
 <main>
 
-<section class="test">
+<section>
 	<h1>Buttons</h1>
 	{buttonVariants.map(variant => (
 		<div class="test-container">
@@ -33,21 +36,21 @@ const buttonSizes = ["default", "sm", "lg", "icon"] as const;
 	))}
 </section>
 
-<section class="test">
+<section>
 	<h1>Cards</h1>
 	<div class="test-container">
 		<Card>
 			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 		</Card>
 
-		<Card>
+		<Card shadow={true}>
 			<h3>Card title</h3>
 			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 		</Card>
 	</div>
 </section>
 
-<section class="test">
+<section>
 	<h1>Alerts</h1>
 	<div class="test-container">
 		<Alert>
@@ -72,6 +75,64 @@ const buttonSizes = ["default", "sm", "lg", "icon"] as const;
 	</div>
 </section>
 
+<section>
+	<h1>Carousel</h1>
+	<div class="test-container">
+		<Carousel>
+			<CarouselItem>
+				<Card>
+					<h3>Carousel Item 1</h3>
+					<p>This is the first item in the carousel.</p>
+				</Card>
+			</CarouselItem>
+			<CarouselItem>
+				<Card>
+					<h3>Carousel Item 2</h3>
+					<p>This is the second item in the carousel.</p>
+				</Card>
+			</CarouselItem>
+			<CarouselItem>
+				<Card>
+					<h3>Carousel Item 3</h3>
+					<p>This is the third item in the carousel.</p>
+				</Card>
+			</CarouselItem>
+			<CarouselItem>
+				<Card>
+					<h3>Carousel Item 4</h3>
+					<p>This is the fourth item in the carousel.</p>
+				</Card>
+			</CarouselItem>
+			<Fragment slot="previews">
+				<CarouselPreview>
+					<Card>
+						<h3>Preview 1</h3>
+						<p>This is the first preview item.</p>
+					</Card>
+				</CarouselPreview>
+				<CarouselPreview>
+					<Card>
+						<h3>Preview 2</h3>
+						<p>This is the second preview item.</p>
+					</Card>
+				</CarouselPreview>
+				<CarouselPreview>
+					<Card>
+						<h3>Preview 3</h3>
+						<p>This is the third preview item.</p>
+					</Card>
+				</CarouselPreview>
+				<CarouselPreview>
+					<Card>
+						<h3>Preview 4</h3>
+						<p>This is the fourth preview item.</p>
+					</Card>
+				</CarouselPreview>
+			</Fragment>
+		</Carousel>
+	</div>
+</section>
+
 </main>
 </Layout>
 
@@ -81,24 +142,27 @@ const buttonSizes = ["default", "sm", "lg", "icon"] as const;
 		display: flex;
 		flex-direction: column;
 		gap: 2rem;
-		max-width: 1000px;
+		max-width: 1280px;
 		margin: 0 auto;
 		width: 100%;
 
-		.test {
+		& section {
 			border: 1px solid var(--color-border);
 			border-radius: var(--radius);
 			padding: 1rem;
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			background-color: var(--color-surface);
 
 			&>h1 {
 				font-size: 1rem;
-				margin-bottom: 1rem;
 			}
 
 			.test-container {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 1rem 0;
+				gap: 1rem 0.25rem;
 				align-items: flex-end;
 			}
 		}

@@ -2,9 +2,9 @@
 
 import vue from "@astrojs/vue";
 import { defineConfig, fontProviders } from "astro/config";
+import icon from "astro-icon";
 import browserslist from "browserslist";
 import { browserslistToTargets } from "lightningcss";
-import icon from "astro-icon";
 
 // https://astro.build/config
 export default defineConfig({

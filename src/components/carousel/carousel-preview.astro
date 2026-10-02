@@ -1,0 +1,22 @@
+---
+const { ...rest } = Astro.props;
+---
+
+<div class:list={["carousel-preview", rest.class]} {...rest}>
+	<slot />
+</div>
+
+<style>
+.carousel-preview {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+
+	& > :global(*) {
+		width: 100%;
+		height: 100%;
+	}
+}
+</style>
