@@ -14,18 +14,20 @@ type ButtonSize = "default" | "sm" | "lg" | "icon";
 interface Props extends HTMLAttributes<"button"> {
 	variant?: ButtonVariant;
 	size?: ButtonSize;
+	shadow?: boolean;
 }
 
 const {
 	variant = "default",
 	size = "default",
+	shadow = true,
 	...rest
 } = Astro.props;
 ---
 
 <button
 	type="button"
-	class:list={["button", `button--${variant}`, `button--size-${size}`]}
+	class:list={["button", `button--${variant}`, `button--size-${size}`, shadow && `button--shadow`, rest.class]}
 	{...rest}
 >
 	<slot />
@@ -39,14 +41,13 @@ const {
 	height: 2rem;
 	gap: var(--space-sm);
 	padding: var(--space-sm) var(--space-md);
-	margin: 0 var(--space-sm) var(--space-sm) 0;
 	font-size: 0.8125rem;
 	font-weight: 600;
 	line-height: 1.25;
 	text-decoration: none;
-	color: var(--color-primary-contrast);
-	background-color: var(--color-primary);
-	border: 1px solid var(--color-primary);
+	color: var(--button-color-contrast);
+	background-color: var(--button-color);
+	border: 1px solid var(--button-color);
 	border-radius: var(--radius);
 	cursor: pointer;
 	transition:
@@ -55,6 +56,10 @@ const {
 		color var(--transition),
 		box-shadow var(--transition),
 		translate var(--transition);
+
+	--button-color: var(--color-primary);
+	--button-color-hover: var(--color-primary-hover);
+	--button-color-contrast: var(--color-primary-contrast);
 
 	svg {
 		width: 1em;
@@ -87,26 +92,21 @@ const {
 	}
 
 	&:hover {
-		color: var(--color-primary-contrast);
-		background-color: var(--color-primary-hover);
-		border-color: var(--color-primary-hover);
-		box-shadow: var(--shadow);
-		translate: calc(var(--shadow-offset) * -1)
-			calc(var(--shadow-offset) * -1);
+		color: var(--button-color-contrast);
+		background-color: var(--button-color-hover);
+		border-color: var(--button-color-hover);
+		
+		&.button--shadow {
+			box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--button-color);
+			translate: calc(var(--shadow-offset) * -1)
+				calc(var(--shadow-offset) * -1);
+		}
 	}
 
 	&.button--destructive {
-		color: var(--color-destructive-contrast);
-		background-color: var(--color-destructive);
-		border-color: var(--color-destructive);
-
-		&:hover {
-			color: var(--color-destructive-contrast);
-			background-color: var(--color-destructive-hover);
-			border-color: var(--color-destructive-hover);
-			box-shadow: var(--shadow-offset) var(--shadow-offset) 0
-				var(--color-destructive);
-		}
+		--button-color: var(--color-destructive);
+		--button-color-hover: var(--color-destructive-hover);
+		--button-color-contrast: var(--color-destructive-contrast);
 	}
 
 	&.button--outline {
@@ -115,17 +115,9 @@ const {
 	}
 
 	&.button--secondary {
-		color: var(--color-secondary-contrast);
-		background-color: var(--color-secondary);
-		border-color: var(--color-secondary);
-
-		&:hover {
-			color: var(--color-secondary-contrast);
-			background-color: var(--color-secondary-hover);
-			border-color: var(--color-secondary-hover);
-			box-shadow: var(--shadow-offset) var(--shadow-offset) 0
-				var(--color-secondary);
-		}
+		--button-color: var(--color-secondary);
+		--button-color-hover: var(--color-secondary-hover);
+		--button-color-contrast: var(--color-secondary-contrast);
 	}
 
 	&.button--ghost {

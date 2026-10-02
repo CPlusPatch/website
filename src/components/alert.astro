@@ -10,7 +10,7 @@ interface Props extends HTMLAttributes<"div"> {
 const { icon, variant, ...rest } = Astro.props;
 ---
 
-<div class:list={["alert", icon && "alert--icon", variant && `alert--${variant}`]} {...rest}>
+<div class:list={["alert", icon && "alert--icon", variant && `alert--${variant}`, rest.class]} {...rest}>
 	{icon && <Icon name={icon} class="icon" />}
 	<div class="content">
 		<slot />
