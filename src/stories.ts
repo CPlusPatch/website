@@ -24,6 +24,7 @@ import Card from "./components/card.astro";
 import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
 import Logos from "./components/logos.astro";
+import Terminal from "./components/terminal.astro";
 import { languages } from "./data/experience.ts";
 import { friends } from "./data/friends.ts";
 import jessew from "./images/88x31s/jessew.png";
@@ -303,5 +304,36 @@ export const groups: StoryGroup[] = [
         title: "Logos",
         min: -1,
         stories: [story("default", Logos, { items: languages, rows: 5 })],
+    },
+    {
+        id: "terminal",
+        title: "Terminal",
+        min: 24,
+        stories: [
+            story("default", Terminal, {
+                entries: [
+                    {
+                        command: "whoami",
+                        output: "jessew",
+                    },
+                    {
+                        command: "uname -a",
+                        output: "Linux web-ng 7.2.8-2-cachyos #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
+                    },
+                    {
+                        command: "ls ~/projects",
+                        output: "web-ng\nversia\ndotfiles",
+                    },
+                    {
+                        command: "cat motd.txt",
+                        output: "Welcome! Type a command below.\nTry `help` for a list of commands.",
+                    },
+                ],
+            }),
+            story("empty", Terminal, { data: {} }),
+            story("interactive", Terminal, {
+                interactive: true,
+            }),
+        ],
     },
 ];

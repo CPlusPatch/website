@@ -1,0 +1,44 @@
+---
+/**
+ * An interactive terminal widget
+ */
+
+import type { Entry } from "../lib/terminal.ts";
+import TerminalVue from "./terminal/terminal.vue";
+
+interface Props {
+    entries?: Entry[];
+    cwd?: string;
+    interactive?: boolean;
+}
+const { entries = [], cwd, interactive = false } = Astro.props;
+---
+
+{interactive ? (
+    <TerminalVue client:load entries={entries} cwd={cwd} interactive />
+) : (
+    <TerminalVue entries={entries} cwd={cwd} />
+)}
+
+<script>
+import type { Entry, SubmitDetail } from "../lib/terminal.ts";
+
+const run = (command: string): string => `Command not found: ${command}`;
+
+// Per-instance state, keyed by the terminal's root element (the event target)
+const state = new WeakMap<EventTarget, Entry[]>();
+
+document.addEventListener("terminal:submit", (e) => {
+    const { command, entries } = (e as CustomEvent<SubmitDetail>).detail;
+    const root = e.target as HTMLElement;
+
+    // First event for this instance: adopt Vue's initial entries
+    const next = [
+        ...(state.get(root) ?? entries),
+        { command, output: run(command) },
+    ];
+    state.set(root, next);
+
+    root.dispatchEvent(new CustomEvent("terminal:set", { detail: next }));
+});
+</script>
