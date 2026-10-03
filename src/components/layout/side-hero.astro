@@ -19,33 +19,31 @@ interface Props extends HTMLAttributes<"div"> {
 const { side = "right", image, ...rest } = Astro.props;
 ---
 
-<div class:list={["side-hero", `side-hero--${side}`]} {...rest}>
-    <div class="side-hero__content">
-        <slot />
-    </div>
+<div class:list={["side-hero", rest.class]} {...rest}>
+    {side === "right" && (
+        <div class="side-hero__content">
+            <slot />
+        </div>
+    )}
     <div class="side-hero__media">
         <Image src={image.url} alt={image.alt ?? ""} />
     </div>
+    {side === "left" && (
+        <div class="side-hero__content">
+            <slot />
+        </div>
+    )}
 </div>
 
 <style>
 .side-hero {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
     gap: var(--space-lg);
     align-items: center;
     width: 100%;
 
-    &.side-hero--left {
-        grid-template-areas: "image content";
-    }
-
-    &.side-hero--right {
-        grid-template-areas: "content image";
-    }
-
     .side-hero__content {
-        grid-area: content;
         padding: var(--space-lg);
         max-width: 30rem;
         justify-self: center;
@@ -58,29 +56,10 @@ const { side = "right", image, ...rest } = Astro.props;
     }
 
     .side-hero__media {
-        grid-area: image;
         height: 100%;
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-    }
-
-    /* Below the fold on narrow screens the two-column split stops working. */
-    @media (max-width: 48rem) {
-        grid-template-columns: 1fr;
-        gap: var(--space-md);
-
-        &.side-hero--left,
-        &.side-hero--right {
-            grid-template-areas: "image" "content";
-        }
-
-        .side-hero__content {
-            padding: var(--space-md);
-        }
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 }
 </style>

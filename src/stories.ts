@@ -117,7 +117,7 @@ export const groups: StoryGroup[] = [
 				{ as: "a", href: "#main" },
 				{ slot: "Anchor" },
 			),
-			story("no-shadow", Button, { shadow: false }, { slot: "No lift" }),
+			story("no-shadow", Button, { lift: false }, { slot: "No lift" }),
 		],
 	},
 	{
@@ -157,7 +157,7 @@ export const groups: StoryGroup[] = [
 	{
 		id: "88x31",
 		title: "88x31s",
-		min: 10,
+		min: 8,
 		stories: [
 			...friends.map((friend) =>
 				story(friend.name.toLowerCase(), EightEightThreeOne, {
@@ -237,7 +237,7 @@ export const groups: StoryGroup[] = [
 	{
 		id: "side-hero",
 		title: "Side hero",
-		min: 36,
+		min: -1,
 		stories: (["right", "left"] as const).map((side) =>
 			story(
 				side,
@@ -250,7 +250,7 @@ export const groups: StoryGroup[] = [
 	{
 		id: "footer",
 		title: "Footer",
-		min: 36,
+		min: -1,
 		stories: [
 			story("default", Footer, {
 				copyright: {
@@ -269,6 +269,21 @@ export const groups: StoryGroup[] = [
 						name: "Twitter",
 						url: "https://twitter.com/grok",
 						icon: "logos:twitter",
+					},
+					{
+						name: "Mastodon",
+						url: "https://mastodon.social/@grok",
+						icon: "logos:mastodon-icon",
+					},
+					{
+						name: "LinkedIn",
+						url: "https://www.linkedin.com/in/grok",
+						icon: "logos:linkedin-icon",
+					},
+					{
+						name: "Email",
+						url: "mailto:grok@example.com",
+						icon: "lucide:at-sign",
 					},
 				],
 				eightyEightThirtyOne: {

@@ -23,7 +23,7 @@ type Props = Omit<HTMLAttributes<"button">, "type"> &
         variant?: ButtonVariant;
         tone?: ButtonTone;
         size?: ButtonSize;
-        shadow?: boolean;
+        lift?: boolean;
     };
 
 const {
@@ -32,7 +32,7 @@ const {
     variant = "solid",
     tone = "primary",
     size = "default",
-    shadow = true,
+    lift = true,
     ...rest
 } = Astro.props;
 
@@ -42,11 +42,10 @@ const isAnchor = as === "a" || (as === undefined && Boolean(rest.href));
 // must not be repeated here or it lands in the output twice.
 const classes = [
     "button",
-    "lift",
+    (lift && variant !== "link") && "lift",
     `button--${variant}`,
     `button--tone-${tone}`,
     `button--size-${size}`,
-    shadow && "button--shadow",
 ];
 ---
 
@@ -91,8 +90,9 @@ const classes = [
         translate var(--transition);
 
     svg {
-        width: 1em;
-        height: 1em;
+        width: 1.2em;
+        height: 1.2em;
+        margin-bottom: 0.1em;
         flex: none;
     }
 
@@ -144,6 +144,10 @@ const classes = [
         width: 2rem;
         height: 2rem;
         padding: 0;
+
+        svg {
+            margin-bottom: 0;
+        }
     }
 
     &:hover {
@@ -164,14 +168,6 @@ const classes = [
             border-color: transparent;
             text-decoration: underline;
         }
-    }
-
-    /*
-     * .lift supplies the offset block effect on hover
-     */
-    &:not(.button--shadow):hover {
-        box-shadow: none;
-        translate: none;
     }
 
     &:disabled,

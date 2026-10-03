@@ -31,9 +31,25 @@ const slides = [
         {
             groups.map((group) => (
                 <section class="gallery">
-                    <h2>{group.title}</h2>
+                    <div class="gallery__header">
+                        <h2>{group.title}</h2>
+                        <div class="gallery__controls">
+                            <Button size="icon" variant="outline" lift={false} data-size="desktop">
+                                <Icon name="lucide:monitor" />
+                            </Button>
+                            <Button size="icon" variant="outline" lift={false} data-size="tablet">
+                                <Icon name="lucide:tablet" />
+                            </Button>
+                            <Button size="icon" variant="outline" lift={false} data-size="phone">
+                                <Icon name="lucide:smartphone" />
+                            </Button>
+                            <Button size="icon" variant="outline" lift={false} data-size="tiny">
+                                <Icon name="lucide:watch" />
+                            </Button>
+                        </div>
+                    </div>
                     {group.description && (
-                        <p class="lead">{group.description}</p>
+                        <p>{group.description}</p>
                     )}
                     <div
                         class="grid"
@@ -129,25 +145,60 @@ const slides = [
         background-color: var(--color-surface);
         border: var(--border-width) solid var(--border-color);
         border-radius: var(--radius);
-
-        & > h2 {
-            font-size: var(--font-size-lg);
-        }
-    }
-
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
-        gap: var(--space-md);
-        align-items: start;
-        margin-top: var(--space-md);
-    }
-
-    .cell {
         display: flex;
         flex-direction: column;
-        gap: var(--space-xs);
-        margin: 0;
+        gap: var(--space-md);
+
+        .gallery__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            h2 {
+                font-size: var(--font-size-lg);
+            }
+
+            .gallery__controls {
+                display: flex;
+                gap: var(--space-xs);
+            }
+
+        }
+        
+        & > p {
+	        color: var(--color-text-muted);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
+            gap: var(--space-md);
+            align-items: start;
+            width: 100%;
+            margin: 0 auto;
+
+            &.tablet {
+                max-width: 48rem;
+                border-inline: var(--border-width) dotted var(--border-color);
+            }
+
+            &.phone {
+                max-width: 32rem;
+                border-inline: var(--border-width) dotted var(--border-color);
+            }
+
+            &.tiny {
+                max-width: 24rem;
+                border-inline: var(--border-width) dotted var(--border-color);
+            }
+
+            .cell {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-xs);
+                margin: 0;
+            }
+        }
     }
 
     figcaption {
@@ -165,3 +216,21 @@ const slides = [
         max-width: 100%;
     }
 </style>
+
+<script>
+    // When the sizing buttons are clicked, toggle class on the grid to change its max-width.
+
+    const controls = document.querySelectorAll(".gallery__controls button");
+
+    for (const control of controls) {
+        control.addEventListener("click", () => {
+            const grid = control.closest(".gallery")?.querySelector(".grid");
+            const size = control.getAttribute("data-size");
+
+            if (!grid || !size) return;
+
+            grid.classList.remove("desktop", "tablet", "phone", "tiny");
+            grid.classList.add(size);
+        });
+    }
+</script>
