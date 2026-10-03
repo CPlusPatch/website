@@ -32,6 +32,7 @@
 	"devDependencies": {
 		"@astrojs/check": "^0.9.10",
 		"@biomejs/biome": "^2.5.15",
+		"@iconify-json/logos": "^1.2.15",
 		"@types/deno": "^2.7.0"
 	}
 }

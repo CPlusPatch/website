@@ -1,0 +1,43 @@
+---
+import { Image } from 'astro:assets';
+import type { HTMLAttributes } from 'astro/types';
+
+/**
+ * Component to display a classic 88x31 button image with a link.
+ */
+
+interface Props extends HTMLAttributes<'a'> {
+    image: ImageMetadata;
+    url: string;
+    alt?: string;
+    /** Defaults to "pixelated" */
+    rendering?: "pixelated" | "smooth";
+}
+
+const { image, url, alt, rendering = "pixelated", ...rest } = Astro.props;
+---
+
+<a
+    href={url}
+    target="_blank"
+    rel="noopener noreferrer"
+    class:list={["button-88x31 lift", rest.class]}
+    {...rest}
+>
+    <Image src={image} alt={alt ?? ""} class="button-88x31__image" style={{ imageRendering: rendering }} />
+</a>
+
+<style>
+.button-88x31 {
+    display: inline-block;
+    width: 88px;
+    height: 31px;
+    text-decoration: none;
+    cursor: pointer;
+
+    .button-88x31__image {
+        width: 100%;
+        height: 100%;
+    }
+}
+</style>
