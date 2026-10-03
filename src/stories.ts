@@ -334,6 +334,15 @@ export const groups: StoryGroup[] = [
             story("interactive", Terminal, {
                 interactive: true,
             }),
+            story("interactive with history", Terminal, {
+                interactive: true,
+                entries: [
+                    {
+                        command: "whoami",
+                        output: "jessew",
+                    },
+                ],
+            }),
         ],
     },
 ];

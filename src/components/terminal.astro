@@ -3,42 +3,211 @@
  * An interactive terminal widget
  */
 
-import type { Entry } from "../lib/terminal.ts";
-import TerminalVue from "./terminal/terminal.vue";
+import { type Entry, promptFor } from "../lib/terminal.ts";
 
 interface Props {
     entries?: Entry[];
     cwd?: string;
     interactive?: boolean;
 }
-const { entries = [], cwd, interactive = false } = Astro.props;
+const { entries = [], cwd = "~", interactive = false } = Astro.props;
+const prompt = promptFor(cwd);
 ---
 
-{interactive ? (
-    <TerminalVue client:load entries={entries} cwd={cwd} interactive />
-) : (
-    <TerminalVue entries={entries} cwd={cwd} />
-)}
+<div
+    class="terminal panel"
+    data-terminal={interactive ? "" : undefined}
+    style={`--prompt: ${JSON.stringify(prompt)}`}
+>
+    {entries.map(({ command, output }) => (
+        <div class="terminal__pair">
+            <div class="terminal__command">{command}</div>
+            <div class="terminal__output">{output}</div>
+        </div>
+    ))}
+    {interactive ? (
+        <>
+            {/* Row blueprint: markup inside carries Astro's scope attribute, so scoped CSS applies to clones */}
+            <template>
+                <div class="terminal__pair">
+                    <div class="terminal__command"></div>
+                    <div class="terminal__output"></div>
+                </div>
+            </template>
+            <div class="terminal__input">
+                <span class="terminal__prompt">{prompt}</span>
+                <input
+                    type="text"
+                    class="terminal__input-field"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+            </div>
+        </>
+    ) : (
+        <div class="terminal__input">
+            <span class="terminal__prompt">{prompt}</span>
+        </div>
+    )}
+</div>
+
+<style>
+.terminal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    width: 100%;
+    max-height: 24rem;
+    overflow-y: auto;
+    padding: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    transition: border-color var(--transition);
+
+    /* The input has no outline of its own, so the whole frame shows focus. */
+    &:focus-within {
+        border-color: var(--color-primary);
+    }
+
+    .terminal__pair {
+        display: flex;
+        flex-direction: column;
+
+        .terminal__command {
+            color: var(--color-text);
+            overflow-wrap: anywhere;
+
+            &::before {
+                content: var(--prompt);
+                color: var(--color-primary);
+            }
+        }
+
+        .terminal__output {
+            color: var(--color-text-muted);
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    .terminal__input {
+        display: flex;
+        align-items: baseline;
+        gap: 1ch;
+
+        .terminal__prompt {
+            flex: none;
+            color: var(--color-primary);
+        }
+
+        .terminal__input-field {
+            flex: 1;
+            min-width: 0;
+            padding: 0;
+            font: inherit;
+            color: var(--color-text);
+            caret-color: var(--color-primary);
+            background: transparent;
+            border: none;
+
+            &:focus-visible {
+                outline: none;
+            }
+        }
+    }
+}
+</style>
 
 <script>
-import type { Entry, SubmitDetail } from "../lib/terminal.ts";
+import { run } from "../lib/terminal";
 
-const run = (command: string): string => `Command not found: ${command}`;
+interface TerminalState {
+    history: string[];
+    cursor: number; // Index into history; history.length = live input
+    draft: string; // In-progress input saved while browsing history
+    cwd: string;
+}
 
-// Per-instance state, keyed by the terminal's root element (the event target)
-const state = new WeakMap<EventTarget, Entry[]>();
+// Keyed by root element so multiple terminals on the page can have independent state
+const states = new WeakMap<HTMLElement, TerminalState>();
 
-document.addEventListener("terminal:submit", (e) => {
-    const { command, entries } = (e as CustomEvent<SubmitDetail>).detail;
-    const root = e.target as HTMLElement;
+const stateOf = (root: HTMLElement): TerminalState => {
+    let state = states.get(root);
+    if (!state) {
+        // Seed from SSR'd rows so pre-rendered commands are navigable
+        const history = Array.from(
+            root.querySelectorAll(".terminal__command"),
+            (el) => el.textContent ?? "",
+        );
+        state = {
+            history,
+            cursor: history.length,
+            draft: "",
+            cwd: root.dataset.cwd ?? "~",
+        };
+        states.set(root, state);
+    }
+    return state;
+};
 
-    // First event for this instance: adopt Vue's initial entries
-    const next = [
-        ...(state.get(root) ?? entries),
-        { command, output: run(command) },
-    ];
-    state.set(root, next);
+const appendRow = (root: HTMLElement, command: string, output: string) => {
+    const row = (
+        root.querySelector<HTMLTemplateElement>(
+            ":scope > template",
+        ) as HTMLTemplateElement
+    ).content.cloneNode(true) as DocumentFragment;
+    (row.querySelector(".terminal__command") as HTMLElement).textContent =
+        command;
+    (row.querySelector(".terminal__output") as HTMLElement).textContent =
+        output;
+    (root.querySelector(".terminal__input") as HTMLElement).before(row);
+    root.scrollTop = root.scrollHeight;
+};
 
-    root.dispatchEvent(new CustomEvent("terminal:set", { detail: next }));
+document.addEventListener("keydown", (e) => {
+    if (e.isComposing) return;
+
+    const field = e.target;
+    if (!(field instanceof HTMLInputElement)) return;
+
+    const root = field.closest<HTMLElement>("[data-terminal]");
+    if (!root) return;
+
+    const state = stateOf(root);
+
+    switch (e.key) {
+        case "Enter": {
+            const command = field.value.trim();
+            if (!command) return;
+            field.value = "";
+
+            const output = run(command);
+            appendRow(root, command, output);
+
+            state.history.push(command);
+            state.cursor = state.history.length;
+            state.draft = "";
+            break;
+        }
+        case "ArrowUp": {
+            if (state.cursor === 0) return;
+            if (state.cursor === state.history.length)
+                state.draft = field.value;
+            field.value = state.history[--state.cursor];
+            e.preventDefault(); // Keeps the caret at the end
+            break;
+        }
+        case "ArrowDown": {
+            if (state.cursor >= state.history.length) return;
+            state.cursor++;
+            field.value =
+                state.cursor === state.history.length
+                    ? state.draft
+                    : state.history[state.cursor];
+            e.preventDefault();
+            break;
+        }
+    }
 });
 </script>
