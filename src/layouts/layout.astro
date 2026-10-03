@@ -24,23 +24,25 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 <!doctype html>
 <html lang="en">
     <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="generator" content={Astro.generator} />
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="icon" href="/favicon.ico">
+        <meta name="generator" content={Astro.generator}>
 
         <title>{pageTitle}</title>
         {description && <meta name="description" content={description} />}
         {noindex && <meta name="robots" content="noindex, nofollow" />}
-        <link rel="canonical" href={canonical.href} />
+        <link rel="canonical" href={canonical.href}>
 
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content={siteName} />
-        <meta property="og:title" content={pageTitle} />
-        {description && <meta property="og:description" content={description} />}
-        <meta property="og:url" content={canonical.href} />
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content={siteName}>
+        <meta property="og:title" content={pageTitle}>
+        {description && (
+            <meta property="og:description" content={description} />
+        )}
+        <meta property="og:url" content={canonical.href}>
+        <meta name="twitter:card" content="summary_large_image">
 
         <Font cssVariable="--font-inter" />
         <Font cssVariable="--font-jetbrains-mono" />
@@ -52,36 +54,36 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 </html>
 
 <style>
-    body {
-        min-height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        font-family: var(--font-base);
-        font-optical-sizing: auto;
-        font-size: var(--font-size-base);
-        line-height: var(--line-height);
-        color: var(--color-text);
-        background-color: var(--color-bg);
-        background-image:
-            linear-gradient(var(--color-grid) 1px, transparent 1px),
-            linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
-        background-size: var(--grid-size) var(--grid-size);
-        -webkit-font-smoothing: antialiased;
-    }
+body {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-base);
+    font-optical-sizing: auto;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    background-image:
+        linear-gradient(var(--color-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    -webkit-font-smoothing: antialiased;
+}
 
-    .skip-link {
-        position: absolute;
-        left: var(--space-md);
-        top: var(--space-md);
-        z-index: 10;
-        padding: var(--space-sm) var(--space-md);
-        color: var(--color-on-accent);
-        background-color: var(--color-primary);
-        text-decoration: none;
-        translate: 0 -200%;
+.skip-link {
+    position: absolute;
+    left: var(--space-md);
+    top: var(--space-md);
+    z-index: 10;
+    padding: var(--space-sm) var(--space-md);
+    color: var(--color-on-accent);
+    background-color: var(--color-primary);
+    text-decoration: none;
+    translate: 0 -200%;
 
-        &:focus-visible {
-            translate: 0 0;
-        }
+    &:focus-visible {
+        translate: 0 0;
     }
+}
 </style>

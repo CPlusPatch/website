@@ -39,107 +39,107 @@ const {
 </span>
 
 <style>
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 500;
-        line-height: 1.2;
-        border-radius: var(--radius-pill);
-        gap: var(--space-xs);
-        text-decoration: none;
-        white-space: nowrap;
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    line-height: 1.2;
+    border-radius: var(--radius-pill);
+    gap: var(--space-xs);
+    text-decoration: none;
+    white-space: nowrap;
 
-        svg {
-            width: 1em;
-            height: 1em;
-            flex: none;
+    svg {
+        width: 1em;
+        height: 1em;
+        flex: none;
+    }
+
+    &.badge--size-sm {
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-xs);
+        height: 1.25rem;
+    }
+
+    &.badge--size-default {
+        font-size: var(--font-size-sm);
+        padding: 0 var(--space-sm);
+        height: 1.5rem;
+    }
+
+    &.badge--size-lg {
+        font-size: var(--font-size-md);
+        padding: 0 var(--space-md);
+        height: 2rem;
+    }
+
+    &.badge--solid {
+        color: var(--color-on-accent);
+        background-color: var(--color-primary);
+
+        &.badge--tone-secondary {
+            background-color: var(--color-secondary);
         }
 
-        &.badge--size-sm {
-            font-size: var(--font-size-xs);
-            padding: 0 var(--space-xs);
-            height: 1.25rem;
+        &.badge--tone-destructive {
+            background-color: var(--color-destructive);
         }
 
-        &.badge--size-default {
-            font-size: var(--font-size-sm);
-            padding: 0 var(--space-sm);
-            height: 1.5rem;
+        &.badge--tone-warning {
+            background-color: var(--color-warning);
         }
 
-        &.badge--size-lg {
-            font-size: var(--font-size-md);
-            padding: 0 var(--space-md);
-            height: 2rem;
-        }
-
-        &.badge--solid {
-            color: var(--color-on-accent);
-            background-color: var(--color-primary);
-
-            &.badge--tone-secondary {
-                background-color: var(--color-secondary);
-            }
-
-            &.badge--tone-destructive {
-                background-color: var(--color-destructive);
-            }
-
-            &.badge--tone-warning {
-                background-color: var(--color-warning);
-            }
-
-            &.badge--tone-success {
-                background-color: var(--color-success);
-            }
-        }
-
-        &.badge--outline {
-            color: var(--color-primary);
-            background-color: transparent;
-            border: 1px solid var(--color-primary);
-
-            &.badge--tone-secondary {
-                color: var(--color-secondary);
-                border-color: var(--color-secondary);
-            }
-
-            &.badge--tone-destructive {
-                color: var(--color-destructive);
-                border-color: var(--color-destructive);
-            }
-
-            &.badge--tone-warning {
-                color: var(--color-warning);
-                border-color: var(--color-warning);
-            }
-
-            &.badge--tone-success {
-                color: var(--color-success);
-                border-color: var(--color-success);
-            }
-        }
-
-        &.badge--ghost {
-            color: var(--color-primary);
-            background-color: transparent;
-
-            &.badge--tone-secondary {
-                color: var(--color-secondary);
-            }
-
-            &.badge--tone-destructive {
-                color: var(--color-destructive);
-            }
-
-            &.badge--tone-warning {
-                color: var(--color-warning);
-            }
-
-            &.badge--tone-success {
-                color: var(--color-success);
-            }
+        &.badge--tone-success {
+            background-color: var(--color-success);
         }
     }
+
+    &.badge--outline {
+        color: var(--color-primary);
+        background-color: transparent;
+        border: 1px solid var(--color-primary);
+
+        &.badge--tone-secondary {
+            color: var(--color-secondary);
+            border-color: var(--color-secondary);
+        }
+
+        &.badge--tone-destructive {
+            color: var(--color-destructive);
+            border-color: var(--color-destructive);
+        }
+
+        &.badge--tone-warning {
+            color: var(--color-warning);
+            border-color: var(--color-warning);
+        }
+
+        &.badge--tone-success {
+            color: var(--color-success);
+            border-color: var(--color-success);
+        }
+    }
+
+    &.badge--ghost {
+        color: var(--color-primary);
+        background-color: transparent;
+
+        &.badge--tone-secondary {
+            color: var(--color-secondary);
+        }
+
+        &.badge--tone-destructive {
+            color: var(--color-destructive);
+        }
+
+        &.badge--tone-warning {
+            color: var(--color-warning);
+        }
+
+        &.badge--tone-success {
+            color: var(--color-success);
+        }
+    }
+}
 </style>
