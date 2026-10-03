@@ -14,78 +14,78 @@ import virkunnen from "../images/88x31s/virkunnen.png";
 import yassie from "../images/88x31s/yassie.gif";
 
 export const friends: {
-	name: string;
-	image: ImageMetadata;
-	href: string;
+    name: string;
+    image: ImageMetadata;
+    href: string;
 }[] = [
-	{
-		name: "Alex",
-		href: "https://gra.phite.ro",
-		image: alex,
-	},
-	{
-		name: "Astrid Yu",
-		href: "https://astrid.tech",
-		image: astrid,
-	},
-	{
-		name: "Lily",
-		href: "https://lunahd.neocities.org/",
-		image: lunahd,
-	},
-	{
-		name: "Sophari",
-		href: "https://sophari.org",
-		image: sophari,
-	},
-	{
-		name: "Yassie",
-		href: "https://labyrinth.zone/@yassie_j",
-		image: yassie,
-	},
-	{
-		name: "Lexi",
-		href: "https://softkittypa.ws",
-		image: lexi,
-	},
-	{
-		name: "Ari",
-		href: "https://ari.lt",
-		image: ari,
-	},
-	{
-		name: "Nexy",
-		href: "https://nexy7574.co.uk",
-		image: nexy,
-	},
-	{
-		name: "June",
-		href: "https://f.dog",
-		image: june,
-	},
-	{
-		name: "Noohance",
-		href: "https://example.com",
-		image: nhat,
-	},
-	{
-		name: "Austin Huang",
-		href: "https://austinhuang.me",
-		image: austin,
-	},
-	{
-		name: "Virkunnen",
-		href: "https://vrkknn.net",
-		image: virkunnen,
-	},
-	{
-		name: "Nelson",
-		href: "https://n.cyrneko.eu",
-		image: nelson,
-	},
-	{
-		name: "Abigail",
-		href: "https://thegail.site",
-		image: gail,
-	},
+    {
+        name: "Alex",
+        href: "https://gra.phite.ro",
+        image: alex,
+    },
+    {
+        name: "Astrid Yu",
+        href: "https://astrid.tech",
+        image: astrid,
+    },
+    {
+        name: "Lily",
+        href: "https://lunahd.neocities.org/",
+        image: lunahd,
+    },
+    {
+        name: "Sophari",
+        href: "https://sophari.org",
+        image: sophari,
+    },
+    {
+        name: "Yassie",
+        href: "https://labyrinth.zone/@yassie_j",
+        image: yassie,
+    },
+    {
+        name: "Lexi",
+        href: "https://softkittypa.ws",
+        image: lexi,
+    },
+    {
+        name: "Ari",
+        href: "https://ari.lt",
+        image: ari,
+    },
+    {
+        name: "Nexy",
+        href: "https://nexy7574.co.uk",
+        image: nexy,
+    },
+    {
+        name: "June",
+        href: "https://f.dog",
+        image: june,
+    },
+    {
+        name: "Noohance",
+        href: "https://example.com",
+        image: nhat,
+    },
+    {
+        name: "Austin Huang",
+        href: "https://austinhuang.me",
+        image: austin,
+    },
+    {
+        name: "Virkunnen",
+        href: "https://vrkknn.net",
+        image: virkunnen,
+    },
+    {
+        name: "Nelson",
+        href: "https://n.cyrneko.eu",
+        image: nelson,
+    },
+    {
+        name: "Abigail",
+        href: "https://thegail.site",
+        image: gail,
+    },
 ];

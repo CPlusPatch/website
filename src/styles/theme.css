@@ -24,70 +24,70 @@
  */
 
 :root {
-	color-scheme: light dark;
+    color-scheme: light dark;
 
-	/* Neutrals */
-	--color-bg: light-dark(#f2f5f3, #0e0e0e);
-	--color-bg-alt: light-dark(#e7ebe8, #171717);
-	--color-surface: light-dark(#fafcfb, #1d1d1d);
-	--color-text: light-dark(#131915, #d3d9d5);
-	--color-text-muted: light-dark(#606762, #88908a);
+    /* Neutrals */
+    --color-bg: light-dark(#f2f5f3, #0e0e0e);
+    --color-bg-alt: light-dark(#e7ebe8, #171717);
+    --color-surface: light-dark(#fafcfb, #1d1d1d);
+    --color-text: light-dark(#131915, #d3d9d5);
+    --color-text-muted: light-dark(#606762, #88908a);
 
-	/*
+    /*
 	 * --color-border is 2.2:1 -- deliberately below the 3:1 of WCAG 1.4.11,
 	 * because it only ever outlines surfaces that are already distinguished by
 	 * their background colour. Anything where the border itself carries the
 	 * affordance (form controls, in particular) must use --color-border-strong,
 	 * which is measured at 3.0:1.
 	 */
-	--color-border: light-dark(#a3a8a4, #474c48);
-	--color-border-strong: light-dark(#898f8b, #5b605c);
-	--color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-border: light-dark(#a3a8a4, #474c48);
+    --color-border-strong: light-dark(#898f8b, #5b605c);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
 
-	/* Role tier -- safe for text and for fills paired with --color-on-accent */
-	--color-primary: light-dark(#98194b, #f995af);
-	--color-primary-hover: light-dark(#741138, #fbbecc);
-	--color-secondary: light-dark(#6d2aa8, #c8a3f8);
-	--color-secondary-hover: light-dark(#551488, #dbc5fb);
-	--color-destructive: light-dark(#9d1a1a, #f99a8f);
-	--color-destructive-hover: light-dark(#781211, #fbc1b9);
-	--color-warning: light-dark(#665313, #d8b434);
-	--color-warning-hover: light-dark(#4d3e0c, #f6cd3d);
-	--color-success: light-dark(#176636, #3cd879);
-	--color-success-hover: light-dark(#0f4c27, #58f390);
+    /* Role tier -- safe for text and for fills paired with --color-on-accent */
+    --color-primary: light-dark(#98194b, #f995af);
+    --color-primary-hover: light-dark(#741138, #fbbecc);
+    --color-secondary: light-dark(#6d2aa8, #c8a3f8);
+    --color-secondary-hover: light-dark(#551488, #dbc5fb);
+    --color-destructive: light-dark(#9d1a1a, #f99a8f);
+    --color-destructive-hover: light-dark(#781211, #fbc1b9);
+    --color-warning: light-dark(#665313, #d8b434);
+    --color-warning-hover: light-dark(#4d3e0c, #f6cd3d);
+    --color-success: light-dark(#176636, #3cd879);
+    --color-success-hover: light-dark(#0f4c27, #58f390);
 
-	/* One foreground for every role, because the role tier has a uniform L */
-	--color-on-accent: light-dark(#f2f5f3, #0e0e0e);
+    /* One foreground for every role, because the role tier has a uniform L */
+    --color-on-accent: light-dark(#f2f5f3, #0e0e0e);
 
-	/* Accent tier -- decoration only, never text */
-	--color-primary-accent: light-dark(#f77299, #f76492);
-	--color-secondary-accent: light-dark(#bb88f6, #b67ff6);
-	--color-destructive-accent: light-dark(#f7796d, #f76d61);
-	--color-warning-accent: light-dark(#c3a12e, #bb9b2c);
-	--color-success-accent: light-dark(#35c26c, #32bb68);
+    /* Accent tier -- decoration only, never text */
+    --color-primary-accent: light-dark(#f77299, #f76492);
+    --color-secondary-accent: light-dark(#bb88f6, #b67ff6);
+    --color-destructive-accent: light-dark(#f7796d, #f76d61);
+    --color-warning-accent: light-dark(#c3a12e, #bb9b2c);
+    --color-success-accent: light-dark(#35c26c, #32bb68);
 
-	/* Typography */
-	--font-base: var(--font-inter);
-	--font-mono: var(--font-jetbrains-mono);
-	--font-size-base: 0.9375rem;
-	--font-size-sm: 0.8125rem;
-	--font-size-xs: 0.75rem;
-	--font-size-lg: 1.0625rem;
-	--line-height: 1.7;
+    /* Typography */
+    --font-base: var(--font-inter);
+    --font-mono: var(--font-jetbrains-mono);
+    --font-size-base: 0.9375rem;
+    --font-size-sm: 0.8125rem;
+    --font-size-xs: 0.75rem;
+    --font-size-lg: 1.0625rem;
+    --line-height: 1.7;
 
-	/* Spacing scale */
-	--space-xs: 0.25rem;
-	--space-sm: 0.5rem;
-	--space-md: 1rem;
-	--space-lg: 2rem;
-	--space-xl: 4rem;
+    /* Spacing scale */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 2rem;
+    --space-xl: 4rem;
 
-	/* Layout */
-	--container-width: 70rem;
-	--header-height: 3.5rem;
-	--grid-size: 2rem;
+    /* Layout */
+    --container-width: 70rem;
+    --header-height: 3.5rem;
+    --grid-size: 2rem;
 
-	/*
+    /*
 	 * Misc.
 	 *
 	 * Border and shadow are exposed as *parts*, not as pre-composed shorthand
@@ -101,32 +101,32 @@
      *
      * tldr ; don't pre-compose the shadow and border or the color can't be overridden.
 	 */
-	--radius: 0;
-	--border-width: 1px;
-	--border-color: var(--color-border);
-	--shadow-offset: 4px;
-	--shadow-color: var(--color-primary-accent);
-	--transition: 120ms ease-out;
+    --radius: 0;
+    --border-width: 1px;
+    --border-color: var(--color-border);
+    --shadow-offset: 4px;
+    --shadow-color: var(--color-primary-accent);
+    --transition: 120ms ease-out;
 
-	--breakpoint-sm: 40rem;
-	--breakpoint-md: 48rem;
-	--breakpoint-lg: 64rem;
-	--breakpoint-xl: 80rem;
-	--breakpoint-2xl: 96rem;
+    --breakpoint-sm: 40rem;
+    --breakpoint-md: 48rem;
+    --breakpoint-lg: 64rem;
+    --breakpoint-xl: 80rem;
+    --breakpoint-2xl: 96rem;
 
-	/*
+    /*
 	 * Custom media queries for responsive design. These are transpiled by LightningCSS
 	 * into standard media queries for browsers that don't support them.
 	 */
-	@custom-media --sm (max-width: 40rem);
-	@custom-media --md (max-width: 48rem);
-	@custom-media --lg (max-width: 64rem);
-	@custom-media --xl (max-width: 80rem);
-	@custom-media --2xl (max-width: 96rem);
+    @custom-media --sm (max-width: 40rem);
+    @custom-media --md (max-width: 48rem);
+    @custom-media --lg (max-width: 64rem);
+    @custom-media --xl (max-width: 80rem);
+    @custom-media --2xl (max-width: 96rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	:root {
-		--transition: 0s;
-	}
+    :root {
+        --transition: 0s;
+    }
 }

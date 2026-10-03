@@ -28,64 +28,75 @@ const slides = [
 
 <Layout title="Component gallery" noindex>
     <main id="main" class="container">
-        {
-            groups.map((group) => (
-                <section class="gallery">
-                    <div class="gallery__header">
-                        <h2>{group.title}</h2>
-                        <div class="gallery__controls">
-                            <Button size="icon" variant="outline" lift={false} data-size="desktop">
-                                <Icon name="lucide:monitor" />
-                            </Button>
-                            <Button size="icon" variant="outline" lift={false} data-size="tablet">
-                                <Icon name="lucide:tablet" />
-                            </Button>
-                            <Button size="icon" variant="outline" lift={false} data-size="phone">
-                                <Icon name="lucide:smartphone" />
-                            </Button>
-                            <Button size="icon" variant="outline" lift={false} data-size="tiny">
-                                <Icon name="lucide:watch" />
-                            </Button>
-                        </div>
+        {groups.map((group) => (
+            <section class="gallery">
+                <div class="gallery__header">
+                    <h2>{group.title}</h2>
+                    <div class="gallery__controls">
+                        <Button
+                            size="icon"
+                            variant="outline"
+                            lift={false}
+                            data-size="desktop"
+                        >
+                            <Icon name="lucide:monitor" />
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="outline"
+                            lift={false}
+                            data-size="tablet"
+                        >
+                            <Icon name="lucide:tablet" />
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="outline"
+                            lift={false}
+                            data-size="phone"
+                        >
+                            <Icon name="lucide:smartphone" />
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="outline"
+                            lift={false}
+                            data-size="tiny"
+                        >
+                            <Icon name="lucide:watch" />
+                        </Button>
                     </div>
-                    {group.description && (
-                        <p>{group.description}</p>
-                    )}
-                    <div
-                        class="grid"
-                        style={`--cell: ${group.min ?? 16}rem`}
-                    >
-                        {group.stories.map((story) => {
-                            // Dynamic tag, so every story renders the same way.
-                            const Component = story.component;
-                            return (
-                                <figure
-                                    class="cell"
-                                    data-story={`${group.id}/${story.name}`}
-                                >
-                                    <figcaption>{story.name}</figcaption>
-                                    <div class="preview">
-                                        <Component {...story.props}>
-                                            {story.icon && (
-                                                <Icon
-                                                    name={story.icon}
-                                                    aria-hidden="true"
-                                                />
-                                            )}
-                                            {story.slot && (
-                                                <Fragment
-                                                    set:html={story.slot}
-                                                />
-                                            )}
-                                        </Component>
-                                    </div>
-                                </figure>
-                            );
-                        })}
-                    </div>
-                </section>
-            ))
-        }
+                </div>
+                {group.description && <p>{group.description}</p>}
+                <div class="grid" style={`--cell: ${group.min ?? 16}rem`}>
+                    {group.stories.map((story) => {
+                        // Dynamic tag, so every story renders the same way.
+                        const Component = story.component;
+                        return (
+                            <figure
+                                class="cell"
+                                data-story={`${group.id}/${story.name}`}
+                            >
+                                <figcaption>{story.name}</figcaption>
+                                <div class="preview">
+                                    <Component {...story.props}>
+                                        {story.icon && (
+                                            <Icon
+                                                name={story.icon}
+                                                aria-hidden="true"
+                                            />
+                                        )}
+                                        {story.slot && (
+                                            <Fragment set:html={story.slot} />
+                                        )}
+                                    </Component>
+                                </div>
+                            </figure>
+                        );
+                    })}
+                </div>
+            </section>
+        ))}
 
         <section class="gallery">
             <h2>Carousel</h2>
@@ -105,25 +116,21 @@ const slides = [
                                 <Button>Learn more</Button>
                             </SideHero>
                         </CarouselItem>
-                        {
-                            slides.slice(1).map((slide) => (
-                                <CarouselItem>
-                                    <Card>
-                                        <h3>{slide.title}</h3>
-                                        <p>{slide.body}</p>
-                                    </Card>
-                                </CarouselItem>
-                            ))
-                        }
+                        {slides.slice(1).map((slide) => (
+                            <CarouselItem>
+                                <Card>
+                                    <h3>{slide.title}</h3>
+                                    <p>{slide.body}</p>
+                                </Card>
+                            </CarouselItem>
+                        ))}
                         <Fragment slot="previews">
-                            {
-                                slides.map((slide, i) => (
-                                    <CarouselPreview>
-                                        <strong>{i + 1}</strong>
-                                        {slide.title}
-                                    </CarouselPreview>
-                                ))
-                            }
+                            {slides.map((slide, i) => (
+                                <CarouselPreview>
+                                    <strong>{i + 1}</strong>
+                                    {slide.title}
+                                </CarouselPreview>
+                            ))}
                         </Fragment>
                     </Carousel>
                 </div>
@@ -133,104 +140,103 @@ const slides = [
 </Layout>
 
 <style>
-    main {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-lg);
-        padding-block: var(--space-lg);
-    }
+main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding-block: var(--space-lg);
+}
 
-    .gallery {
-        padding: var(--space-md);
-        background-color: var(--color-surface);
-        border: var(--border-width) solid var(--border-color);
-        border-radius: var(--radius);
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-md);
+.gallery {
+    padding: var(--space-md);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
 
-        .gallery__header {
+    .gallery__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h2 {
+            font-size: var(--font-size-lg);
+        }
+
+        .gallery__controls {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            h2 {
-                font-size: var(--font-size-lg);
-            }
-
-            .gallery__controls {
-                display: flex;
-                gap: var(--space-xs);
-            }
-
-        }
-        
-        & > p {
-	        color: var(--color-text-muted);
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
-            gap: var(--space-md);
-            align-items: start;
-            width: 100%;
-            margin: 0 auto;
-
-            &.tablet {
-                max-width: 48rem;
-                border-inline: var(--border-width) dotted var(--border-color);
-            }
-
-            &.phone {
-                max-width: 32rem;
-                border-inline: var(--border-width) dotted var(--border-color);
-            }
-
-            &.tiny {
-                max-width: 24rem;
-                border-inline: var(--border-width) dotted var(--border-color);
-            }
-
-            .cell {
-                display: flex;
-                flex-direction: column;
-                gap: var(--space-xs);
-                margin: 0;
-            }
+            gap: var(--space-xs);
         }
     }
 
-    figcaption {
-        font-family: var(--font-mono);
-        font-size: var(--font-size-sm);
+    & > p {
         color: var(--color-text-muted);
     }
 
-    .preview {
-        display: flex;
-        align-items: flex-start;
-    }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
+        gap: var(--space-md);
+        align-items: start;
+        width: 100%;
+        margin: 0 auto;
 
-    .preview > :global(*) {
-        max-width: 100%;
+        &.tablet {
+            max-width: 48rem;
+            border-inline: var(--border-width) dotted var(--border-color);
+        }
+
+        &.phone {
+            max-width: 32rem;
+            border-inline: var(--border-width) dotted var(--border-color);
+        }
+
+        &.tiny {
+            max-width: 24rem;
+            border-inline: var(--border-width) dotted var(--border-color);
+        }
+
+        .cell {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            margin: 0;
+        }
     }
+}
+
+figcaption {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.preview {
+    display: flex;
+    align-items: flex-start;
+}
+
+.preview > :global(*) {
+    max-width: 100%;
+}
 </style>
 
 <script>
-    // When the sizing buttons are clicked, toggle class on the grid to change its max-width.
+// When the sizing buttons are clicked, toggle class on the grid to change its max-width.
 
-    const controls = document.querySelectorAll(".gallery__controls button");
+const controls = document.querySelectorAll(".gallery__controls button");
 
-    for (const control of controls) {
-        control.addEventListener("click", () => {
-            const grid = control.closest(".gallery")?.querySelector(".grid");
-            const size = control.getAttribute("data-size");
+for (const control of controls) {
+    control.addEventListener("click", () => {
+        const grid = control.closest(".gallery")?.querySelector(".grid");
+        const size = control.getAttribute("data-size");
 
-            if (!grid || !size) return;
+        if (!grid || !size) return;
 
-            grid.classList.remove("desktop", "tablet", "phone", "tiny");
-            grid.classList.add(size);
-        });
-    }
+        grid.classList.remove("desktop", "tablet", "phone", "tiny");
+        grid.classList.add(size);
+    });
+}
 </script>

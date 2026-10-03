@@ -25,12 +25,11 @@ interface Props {
     }[];
 }
 
-const { copyright, tagline, socials, eightyEightThirtyOne, friends } = Astro.props;
+const { copyright, tagline, socials, eightyEightThirtyOne, friends } =
+    Astro.props;
 ---
 
-<footer
-    class="footer"
->
+<footer class="footer">
     <div class="footer__content">
         {tagline && <p class="footer__tagline">{tagline}</p>}
         {socials && socials.length > 0 && (
@@ -68,9 +67,10 @@ const { copyright, tagline, socials, eightyEightThirtyOne, friends } = Astro.pro
             </Button>
         </div>
     </div>
-    <hr />
+    <hr>
     <div class="footer__copyright">
-        &copy; {copyright.holder} {new Date().getFullYear()}. Licensed under {copyright.license}.
+        &copy; {copyright.holder} {new Date().getFullYear()}. Licensed under
+        {copyright.license}.
     </div>
     <div class="footer__friends">
         {friends && friends.length > 0 && (

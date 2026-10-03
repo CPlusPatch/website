@@ -42,24 +42,22 @@ const isAnchor = as === "a" || (as === undefined && Boolean(rest.href));
 // must not be repeated here or it lands in the output twice.
 const classes = [
     "button",
-    (lift && variant !== "link") && "lift",
+    lift && variant !== "link" && "lift",
     `button--${variant}`,
     `button--tone-${tone}`,
     `button--size-${size}`,
 ];
 ---
 
-{
-    isAnchor ? (
-        <a class:list={classes} {...rest}>
-            <slot />
-        </a>
-    ) : (
-        <button type={type ?? "button"} class:list={classes} {...rest}>
-            <slot />
-        </button>
-    )
-}
+{isAnchor ? (
+    <a class:list={classes} {...rest}>
+        <slot />
+    </a>
+) : (
+    <button type={type ?? "button"} class:list={classes} {...rest}>
+        <slot />
+    </button>
+)}
 
 <style>
 .button {

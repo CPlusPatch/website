@@ -2,11 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 
-export type AlertVariant =
-    | "default"
-    | "success"
-    | "warning"
-    | "destructive";
+export type AlertVariant = "default" | "success" | "warning" | "destructive";
 
 interface Props extends HTMLAttributes<"div"> {
     icon?: string;
