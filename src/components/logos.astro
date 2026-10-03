@@ -1,0 +1,93 @@
+---
+import { Icon } from "astro-icon/components";
+import Card from "./card.astro";
+import Marquee from "./marquee.astro";
+
+/**
+ * Logo marquee. Items are distributed round-robin across rows,
+ * odd rows scroll in the opposite direction.
+ */
+
+interface Item {
+    logo: string;
+    name: string;
+    showName?: boolean;
+}
+
+interface Props {
+    items: Item[];
+    rows?: number;
+    duration?: number;
+}
+
+const { items, rows = 2, duration = 15 } = Astro.props;
+
+const rowCount = Math.max(1, Math.min(rows, items.length));
+const lanes = Array.from({ length: rowCount }, (_, r) =>
+    items.filter((_, i) => i % rowCount === r),
+);
+---
+
+<div class="logo-marquee">
+    {lanes.map((lane, r) => (
+        <Marquee
+            class="logo-marquee__lane"
+            reverse={r % 2 === 1}
+            duration={duration}
+        >
+            {lane.map((item) => (
+                <div>
+                    <Card class="logo-marquee__logo">
+                        <Icon name={item.logo} />
+                        <h3>{item.name}</h3>
+                    </Card>
+                </div>
+            ))}
+        </Marquee>
+    ))}
+</div>
+
+<style>
+.logo-marquee {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-md);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    /* Padding to prevent cutting off card lift */
+    padding-block: var(--space-xs);
+    contain: inline-size;
+    /* Fade out the edges */
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 30%,
+        #000 70%,
+        transparent
+    );
+
+    .logo-marquee__logo {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-md);
+        width: max-content;
+        min-width: 0;
+        white-space: nowrap;
+
+        svg {
+            height: 2rem;
+            width: 2rem;
+        }
+
+        h3 {
+            font-size: var(--font-size-xl);
+            margin: 0;
+        }
+    }
+}
+</style>
