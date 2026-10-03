@@ -1,0 +1,166 @@
+---
+import { Icon } from "astro-icon/components";
+import EightyEightThirtyOne from "./8831.astro";
+
+interface Props {
+    copyright: {
+        license: string;
+        holder: string;
+    };
+    tagline?: string;
+    socials?: {
+        name: string;
+        url: string;
+        icon: string;
+    }[];
+    eightyEightThirtyOne: {
+        image: ImageMetadata;
+        alt?: string;
+    };
+    friends?: {
+        image: ImageMetadata;
+        url: string;
+        alt?: string;
+    }[];
+}
+
+const { copyright, tagline, socials, eightyEightThirtyOne, friends } = Astro.props;
+---
+
+<footer
+    class="footer"
+>
+    <div class="footer__content">
+        <div class="footer__branding">
+            {tagline && <p class="footer__tagline">{tagline}</p>}
+            <EightyEightThirtyOne
+                image={eightyEightThirtyOne.image}
+                url="/"
+                alt={eightyEightThirtyOne.alt}
+                class="footer__badge"
+            />
+        </div>
+        {socials && socials.length > 0 && (
+            <ul class="footer__socials">
+                {socials.map((social) => (
+                    <li>
+                        <a
+                            href={social.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={social.name}
+                        >
+                            <Icon name={social.icon} aria-hidden="true" />
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        )}
+    </div>
+    <hr />
+    <div class="footer__copyright">
+        &copy; {copyright.holder} {new Date().getFullYear()}. Licensed under {copyright.license}.
+    </div>
+    <div class="footer__friends">
+        {friends && friends.length > 0 && (
+            <ul class="footer__friends-list">
+                {friends.map((friend) => (
+                    <li>
+                        <EightyEightThirtyOne
+                            image={friend.image}
+                            url={friend.url}
+                            alt={friend.alt}
+                            class="footer__friend"
+                        />
+                    </li>
+                ))}
+            </ul>
+        )}
+    </div>
+</footer>
+
+<style>
+.footer {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background-color: var(--color-surface);
+    border-top: var(--border-width) solid var(--border-color);
+
+    & > :global(*) {
+        max-width: 80rem;
+        width: 100%;
+    }
+
+    .footer__content {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
+
+        .footer__branding {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: var(--space-lg);
+
+            .footer__badge {
+                width: 88px;
+                height: 31px;
+            }
+
+            .footer__tagline {
+                font-size: var(--font-size-sm);
+                color: var(--color-text-muted);
+                white-space: pre;
+            }
+        }
+
+        .footer__socials {
+            display: flex;
+            gap: var(--space-sm);
+            list-style: none;
+            padding: 0;
+
+            li {
+                filter: grayscale(100%);
+                transition: filter 0.3s ease;
+
+                &:hover,
+                &:focus {
+                    filter: grayscale(0%);
+                }
+
+                a {
+                    color: var(--color-text);
+                    font-size: 1.5rem;
+
+                    &:hover,
+                    &:focus {
+                        color: var(--color-primary);
+                    }
+                }
+            }
+        }
+    }
+
+    .footer__copyright {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+    }
+
+    .footer__friends {
+        .footer__friends-list {
+            display: grid;
+            width: 100%;
+            grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+            gap: var(--space-xs);
+        }
+    }
+}
+</style>

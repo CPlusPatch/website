@@ -15,11 +15,15 @@
  */
 
 import type { ComponentProps } from "astro/types";
+import EightEightThreeOne from "./components/8831.astro";
 import Alert from "./components/alert.astro";
 import Badge from "./components/badge.astro";
 import Button from "./components/button.astro";
 import Card from "./components/card.astro";
+import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
+import { friends } from "./data/friends.ts";
+import jessew from "./images/88x31s/jessew.png";
 import greg from "./images/greg.jpg";
 
 /** Any `.astro` component. */
@@ -151,6 +155,20 @@ export const groups: StoryGroup[] = [
 		],
 	},
 	{
+		id: "88x31",
+		title: "88x31s",
+		min: 10,
+		stories: [
+			...friends.map((friend) =>
+				story(friend.name.toLowerCase(), EightEightThreeOne, {
+					image: friend.image,
+					url: friend.href,
+					alt: `A small icon representing ${friend.name}'s website`,
+				}),
+			),
+		],
+	},
+	{
 		id: "card",
 		title: "Cards",
 		min: 16,
@@ -228,5 +246,38 @@ export const groups: StoryGroup[] = [
 				{ slot: `<h2>Image on the ${side}</h2>${BODY}` },
 			),
 		),
+	},
+	{
+		id: "footer",
+		title: "Footer",
+		min: 36,
+		stories: [
+			story("default", Footer, {
+				copyright: {
+					license: "CC BY-SA 4.0",
+					holder: "Testy McTestface",
+				},
+				tagline:
+					"This was a triumph\nI'm making a note here\nHuge success",
+				socials: [
+					{
+						name: "GitHub",
+						url: "https://github.com/cpluspatch",
+						icon: "logos:github-icon",
+					},
+					{
+						name: "Twitter",
+						url: "https://twitter.com/grok",
+						icon: "logos:twitter",
+					},
+				],
+				eightyEightThirtyOne: {
+					image: jessew,
+					title: "Hotlinking allowed, alt text included for accessibility.",
+					alt: "A cool badge with a cool description.",
+				},
+				friends,
+			}),
+		],
 	},
 ];

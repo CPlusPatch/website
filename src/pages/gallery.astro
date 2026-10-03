@@ -16,8 +16,8 @@ if (import.meta.env.PROD) {
     return Astro.redirect("/", 302);
 }
 
-// Everything prop-driven comes from the manifest. The carousel is the one
-// hand-written example, because it nests other components inside its slots.
+// Everything prop-driven comes from the manifest. The carousel and footer are the only
+// hand-written examples, because they nests other components inside their slots.
 const slides = [
     { title: "Side hero", body: "A slide can hold any component." },
     { title: "Plain card", body: "This is the second slide." },
