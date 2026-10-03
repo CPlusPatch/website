@@ -36,6 +36,9 @@ export default defineConfig({
 			transformer: "lightningcss",
 			lightningcss: {
 				targets: browserslistToTargets(browserslist(">= 2%")),
+                drafts: {
+                    customMedia: true,
+                },
 			},
 		},
 	},

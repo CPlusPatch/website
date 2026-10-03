@@ -107,6 +107,22 @@
 	--shadow-offset: 4px;
 	--shadow-color: var(--color-primary-accent);
 	--transition: 120ms ease-out;
+
+	--breakpoint-sm: 40rem;
+	--breakpoint-md: 48rem;
+	--breakpoint-lg: 64rem;
+	--breakpoint-xl: 80rem;
+	--breakpoint-2xl: 96rem;
+
+	/*
+	 * Custom media queries for responsive design. These are transpiled by LightningCSS
+	 * into standard media queries for browsers that don't support them.
+	 */
+	@custom-media --sm (max-width: 40rem);
+	@custom-media --md (max-width: 48rem);
+	@custom-media --lg (max-width: 64rem);
+	@custom-media --xl (max-width: 80rem);
+	@custom-media --2xl (max-width: 96rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
