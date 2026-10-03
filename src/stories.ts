@@ -13,6 +13,7 @@
  * stay hand-written in tests.astro, otherwise this file would become a mess of
  * nested props and slots.
  */
+// deno-lint-ignore-file no-explicit-any
 
 import type { ComponentProps } from "astro/types";
 import EightEightThreeOne from "./components/8831.astro";
