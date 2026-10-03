@@ -1,0 +1,105 @@
+---
+// marquee.astro
+/**
+ * Seamless marquee. Slot content is rendered twice (the second copy is
+ * aria-hidden/inert); both copies translate by their own width + gap.
+ */
+
+interface Props {
+    /* Scroll direction: false = left, true = right */
+    reverse?: boolean;
+    /* Seconds for one full loop */
+    duration?: number;
+    /* Any CSS length; used between items and between the two copies */
+    gap?: string;
+    pauseOnHover?: boolean;
+    class?: string;
+}
+
+const {
+    reverse = false,
+    duration = 30,
+    gap = "var(--space-sm)",
+    class: className,
+} = Astro.props;
+---
+
+<div
+    class:list={["marquee", className]}
+    data-reverse={reverse ? "" : undefined}
+    style={`--duration:${duration}s; --gap:${gap}`}
+>
+    <div class="marquee__definitions" aria-hidden="true" inert><slot /></div>
+    <div class="marquee__track">
+        <div class="marquee__group"><slot /></div>
+        {/* Duplicate for a seamless loop */}
+        <div class="marquee__group" aria-hidden="true" tabindex="-1">
+            <slot />
+        </div>
+        <div class="marquee__group" aria-hidden="true" tabindex="-1">
+            <slot />
+        </div>
+    </div>
+</div>
+
+<style>
+.marquee {
+    .marquee__definitions {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        visibility: hidden;
+    }
+
+    .marquee__track {
+        display: flex;
+        gap: var(--gap);
+        width: max-content;
+        animation: marquee-scroll var(--duration) linear infinite;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+
+        .marquee__group {
+            display: flex;
+            flex: none;
+            align-items: center;
+            justify-content: space-around;
+            gap: var(--gap);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+    }
+
+    &[data-reverse] .marquee__track {
+        animation: marquee-scroll-reverse var(--duration) linear infinite;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
+}
+
+@keyframes marquee-scroll {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: translate3d(calc(-33.333333% - var(--gap) / 3), 0, 0);
+    }
+}
+
+@keyframes marquee-scroll-reverse {
+    from {
+        transform: translate3d(calc(-33.333333% - var(--gap) / 3), 0, 0);
+    }
+
+    to {
+        transform: translate3d(0, 0, 0);
+    }
+}
+</style>

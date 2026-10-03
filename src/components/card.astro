@@ -18,7 +18,13 @@ const { tone = "primary", shadow = true, ...rest } = Astro.props;
 ---
 
 <div
-    class:list={["card", "panel", shadow && "lift", `card--tone-${tone}`]}
+    class:list={[
+        "card",
+        "panel",
+        shadow && "lift",
+        `card--tone-${tone}`,
+        rest.class,
+    ]}
     {...rest}
 >
     <slot />

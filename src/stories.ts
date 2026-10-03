@@ -23,6 +23,8 @@ import Button from "./components/button.astro";
 import Card from "./components/card.astro";
 import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
+import Logos from "./components/logos.astro";
+import { languages } from "./data/experience.ts";
 import { friends } from "./data/friends.ts";
 import jessew from "./images/88x31s/jessew.png";
 import greg from "./images/greg.jpg";
@@ -295,5 +297,11 @@ export const groups: StoryGroup[] = [
                 friends,
             }),
         ],
+    },
+    {
+        id: "logos",
+        title: "Logos",
+        min: -1,
+        stories: [story("default", Logos, { items: languages, rows: 5 })],
     },
 ];
