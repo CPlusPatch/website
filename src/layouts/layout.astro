@@ -6,6 +6,8 @@ import "../styles/typography.css";
 import "../styles/utilities.css";
 
 import { Font } from "astro:assets";
+import Crosshair from "../components/effects/crosshair.astro";
+import Scanlines from "../components/effects/scanlines.astro";
 
 interface Props {
     title: string;
@@ -48,6 +50,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
         <Font cssVariable="--font-jetbrains-mono" />
     </head>
     <body>
+        <Scanlines />
+        <Crosshair />
         <a class="skip-link" href="#main">Skip to content</a>
         <slot />
     </body>

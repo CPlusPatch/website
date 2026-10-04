@@ -25,6 +25,7 @@ const { tone = "primary", shadow = true, ...rest } = Astro.props;
         `card--tone-${tone}`,
         rest.class,
     ]}
+    data-snap
     {...rest}
 >
     <slot />

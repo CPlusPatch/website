@@ -1,0 +1,206 @@
+---
+interface Props {
+    snap?: string | false;
+}
+
+const DEFAULT_SNAP =
+    'a[href], button, summary, label, select, textarea, input, h1, h2, h3, p, [role="button"], [data-snap]';
+
+const { snap = DEFAULT_SNAP } = Astro.props;
+---
+
+<div
+    class="fx-crosshair"
+    data-snap-selector={snap === false ? undefined : snap}
+    aria-hidden="true"
+>
+    <span class="fx-crosshair__ret"></span>
+    <span class="fx-crosshair__coord"></span>
+</div>
+
+<style is:global>
+@media (hover: hover) and (pointer: fine) {
+    /* Two methods of enabling the crosshair */
+    html[data-crosshair] .fx-crosshair,
+    html:has([data-crosshair-toggle] > input:checked) .fx-crosshair {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: var(--fx-z, 100);
+        pointer-events: none;
+        contain: strict;
+        color: var(--fx-crosshair-color, var(--color-text));
+        font: var(--font-size-xs) / 1 var(--font-mono);
+        --pad: 0.25rem;
+
+        /* Free-follow state. Off-screen (-100) until the first pointermove. No transition on translate. */
+        .fx-crosshair__ret {
+            position: absolute;
+            left: 0;
+            top: 0;
+            box-sizing: border-box;
+            width: var(--fx-size, 1.25rem);
+            height: var(--fx-size, 1.25rem);
+            translate: calc(var(--fx-x, -100) * 1px - 50%)
+                calc(var(--fx-y, -100) * 1px - 50%);
+            will-change: translate;
+            transition:
+                width var(--transition),
+                height var(--transition);
+
+            &::before,
+            &::after {
+                content: "";
+                position: absolute;
+                background: currentColor;
+                transition: opacity var(--transition);
+            }
+
+            &::before {
+                inset: 50% 0 auto;
+                height: 1px;
+            }
+
+            &::after {
+                inset: 0 auto 0 50%;
+                width: 1px;
+            }
+        }
+
+        /* Snapped state: outline of the target rect (+ padding). translate transitions only here. */
+        &[data-snap] .fx-crosshair__ret {
+            width: calc(var(--fx-sw) * 1px + var(--pad) * 2);
+            height: calc(var(--fx-sh) * 1px + var(--pad) * 2);
+            translate: calc(var(--fx-sx) * 1px - var(--pad))
+                calc(var(--fx-sy) * 1px - var(--pad));
+            border: var(--border-width) solid currentColor;
+            transition:
+                translate var(--transition),
+                width var(--transition),
+                height var(--transition);
+        }
+
+        &[data-snap] .fx-crosshair__ret::before,
+        &[data-snap] .fx-crosshair__ret::after {
+            opacity: 0;
+        }
+
+        .fx-crosshair__coord {
+            position: absolute;
+            left: 0;
+            top: 0;
+            translate: calc(var(--fx-x, -100) * 1px + 14px)
+                calc(var(--fx-y, -100) * 1px + 14px);
+            will-change: translate;
+            counter-reset: x var(--fx-x, 0) y var(--fx-y, 0);
+            white-space: nowrap;
+            color: var(--color-text-muted);
+
+            &::after {
+                content: "x:" counter(x) " y:" counter(y);
+            }
+        }
+    }
+
+    html[data-crosshair],
+    html:has([data-crosshair-toggle] > input:checked) * {
+        cursor: none;
+    }
+}
+</style>
+
+<script>
+const root = document.querySelector<HTMLElement>(
+    ".fx-crosshair",
+) as HTMLElement;
+
+const selector = root.dataset.snapSelector; // undefined => snapping disabled
+const style = root.style;
+let x = -100;
+let y = -100;
+let hover: Element | null = null; // Snap target under the pointer
+let rectDirty = false; // Target changed, or its rect may be stale
+let raf = 0;
+
+const active = () => !root.hasAttribute("data-off");
+const schedule = () => {
+    raf ||= requestAnimationFrame(flush);
+};
+
+function flush() {
+    raf = 0;
+
+    // 1. Read (single rect, only when needed), before any write.
+    let r: DOMRect | undefined;
+    if (rectDirty) {
+        rectDirty = false;
+        if (hover?.isConnected) r = hover.getBoundingClientRect();
+        else hover = null;
+    }
+
+    // 2. Write.
+    if (r) {
+        style.setProperty("--fx-sx", String(r.left));
+        style.setProperty("--fx-sy", String(r.top));
+        style.setProperty("--fx-sw", String(r.width));
+        style.setProperty("--fx-sh", String(r.height));
+        root.setAttribute("data-snap", "");
+    } else if (!hover) {
+        root.removeAttribute("data-snap");
+    }
+    style.setProperty("--fx-x", String(x));
+    style.setProperty("--fx-y", String(y));
+}
+
+addEventListener(
+    "pointermove",
+    (e) => {
+        if (e.pointerType !== "mouse" || !active()) return;
+        x = e.clientX | 0;
+        y = e.clientY | 0;
+        schedule();
+    },
+    { passive: true },
+);
+
+if (selector) {
+    // Fires when the pointer enters a different element, not on every move.
+    addEventListener(
+        "pointerover",
+        (e) => {
+            if (
+                e.pointerType !== "mouse" ||
+                !active() ||
+                !(e.target instanceof Element)
+            )
+                return;
+
+            const next = e.target.closest(selector);
+            if (next === hover) return;
+            hover = next;
+            rectDirty = true;
+            schedule();
+        },
+        { passive: true },
+    );
+
+    // Stale rect while snapped: re-read at most once per frame. `capture` catches nested scrollers.
+    const invalidate = () => {
+        if (!hover) return;
+        rectDirty = true;
+        schedule();
+    };
+    addEventListener("scroll", invalidate, {
+        passive: true,
+        capture: true,
+    });
+    addEventListener("resize", invalidate, { passive: true });
+}
+
+document.documentElement.addEventListener("mouseleave", () => {
+    x = y = -100;
+    hover = null;
+    rectDirty = true;
+    schedule();
+});
+</script>

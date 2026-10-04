@@ -18,6 +18,17 @@
 .lift {
     transition:
         border-color var(--transition),
+        translate var(--transition);
+
+    &:hover {
+        translate: 0 -0.125rem;
+    }
+}
+
+html[data-lift-shadow] .lift,
+html:has([data-lift-shadow-toggle] > input:checked) .lift {
+    transition:
+        border-color var(--transition),
         box-shadow var(--transition),
         translate var(--transition);
 

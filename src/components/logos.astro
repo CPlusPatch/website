@@ -38,7 +38,7 @@ const lanes = Array.from({ length: rowCount }, (_, r) =>
             {lane.map((item) => (
                 <div>
                     <Card class="logo-marquee__logo">
-                        <Icon name={item.logo} />
+                        <Icon name={item.logo} aria-hidden="true" />
                         <h3>{item.name}</h3>
                     </Card>
                 </div>
@@ -52,7 +52,7 @@ const lanes = Array.from({ length: rowCount }, (_, r) =>
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: var(--space-md);
+    gap: var(--space-sm);
     width: 100%;
     max-width: 100%;
     min-width: 0;
