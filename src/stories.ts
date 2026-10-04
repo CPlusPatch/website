@@ -24,6 +24,7 @@ import Card from "./components/card.astro";
 import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
 import Logos from "./components/logos.astro";
+import Select from "./components/select.astro";
 import Terminal from "./components/terminal.astro";
 import Toggle from "./components/toggle.astro";
 import { languages } from "./data/experience.ts";
@@ -81,6 +82,12 @@ const SIZES = ["lg", "default", "sm"] as const;
 
 const BODY =
     "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>";
+
+const SELECT_OPTIONS = [
+    { value: "one", label: "Option one" },
+    { value: "two", label: "Option two" },
+    { value: "three", label: "Option three" },
+];
 
 const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -185,6 +192,22 @@ export const groups: StoryGroup[] = [
             story("disabled", Toggle, { disabled: true }),
             story("checked-disabled", Toggle, {
                 checked: true,
+                disabled: true,
+            }),
+        ],
+    },
+    {
+        id: "select",
+        title: "Selects",
+        min: 10,
+        stories: [
+            story("default", Select, { options: SELECT_OPTIONS }),
+            story("selected", Select, {
+                options: SELECT_OPTIONS,
+                value: "two",
+            }),
+            story("disabled", Select, {
+                options: SELECT_OPTIONS,
                 disabled: true,
             }),
         ],
