@@ -100,6 +100,14 @@ const { snap = DEFAULT_SNAP } = Astro.props;
                 content: "x:" counter(x) " y:" counter(y);
             }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fx-crosshair__ret,
+            .fx-crosshair__ret::before,
+            .fx-crosshair__ret::after {
+                transition: none;
+            }
+        }
     }
 
     html[data-crosshair],
