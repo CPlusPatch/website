@@ -315,7 +315,6 @@ export const groups: StoryGroup[] = [
     {
         id: "navbar",
         title: "Navbar",
-        description: "Reflows via auto-fit grid columns, so resize to check.",
         min: -1,
         stories: [
             story("default", Navbar, { title: "Jesse", links: NAV_LINKS }),
