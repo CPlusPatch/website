@@ -19,10 +19,6 @@
     transition:
         border-color var(--transition),
         translate var(--transition);
-
-    &:hover {
-        translate: 0 -0.125rem;
-    }
 }
 
 html[data-lift-shadow] .lift,
@@ -40,10 +36,61 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift {
     }
 }
 
+/* Pressing a lifted element sinks it back onto its shadow. */
+html[data-lift-shadow] .lift:active,
+html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
+    box-shadow: none;
+    translate: 0 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .lift:hover {
+    html[data-lift-shadow] .lift:hover,
+    html:has([data-lift-shadow-toggle] > input:checked) .lift:hover {
         translate: none;
     }
+}
+
+/*
+ * Tones. One set of hooks for every toneable component: --tone is the text and
+ * fill colour, --tone-hover its hover step, --tone-accent the decorative one.
+ * Declared here as classes (not pre-composed) so they resolve on the element
+ * that consumes them -- see the note in theme.css.
+ */
+.tone-primary {
+    --tone: var(--color-primary);
+    --tone-hover: var(--color-primary-hover);
+    --tone-accent: var(--color-primary-accent);
+}
+
+.tone-secondary {
+    --tone: var(--color-secondary);
+    --tone-hover: var(--color-secondary-hover);
+    --tone-accent: var(--color-secondary-accent);
+}
+
+.tone-destructive {
+    --tone: var(--color-destructive);
+    --tone-hover: var(--color-destructive-hover);
+    --tone-accent: var(--color-destructive-accent);
+}
+
+.tone-warning {
+    --tone: var(--color-warning);
+    --tone-hover: var(--color-warning-hover);
+    --tone-accent: var(--color-warning-accent);
+}
+
+.tone-success {
+    --tone: var(--color-success);
+    --tone-hover: var(--color-success-hover);
+    --tone-accent: var(--color-success-accent);
+}
+
+/* Not a brand colour: for chrome that should not compete with content. */
+.tone-neutral {
+    --tone: var(--color-text-muted);
+    --tone-hover: var(--color-text);
+    --tone-accent: var(--color-border-strong);
 }
 
 /*
@@ -52,9 +99,10 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift {
  * --border-color the rest of the frame.
  */
 .panel {
-    --panel-accent: var(--color-primary-accent);
+    --panel-accent: var(--tone-accent, var(--color-primary-accent));
+    --shadow-color: var(--panel-accent);
 
-    background-color: var(--color-surface);
+    background-color: var(--color-surface-raised);
     border: var(--border-width) solid var(--border-color);
     border-top: 2px solid var(--panel-accent);
     border-radius: var(--radius);

@@ -1,0 +1,31 @@
+---
+import { Icon } from "astro-icon/components";
+import type { Story } from "../stories";
+import Self from "./story-node.astro";
+
+/**
+ * Renders one story, and recursively any stories nested in its slots. Kept
+ * out of the gallery page so a nested component renders exactly like a
+ * top-level one.
+ */
+interface Props {
+    story: Story;
+}
+
+const { story } = Astro.props;
+// Dynamic tag, so every story renders the same way.
+const Component = story.component;
+---
+
+<Component {...story.props}>
+    {story.icon && <Icon name={story.icon} aria-hidden="true" />}
+    {story.slot && <Fragment set:html={story.slot} />}
+    {story.children?.map((child) => <Self story={child} />)}
+    {Object.entries(story.slots ?? {}).map(([name, children]) => (
+        <Fragment slot={name}>
+            {children.map((child) => (
+                <Self story={child} />
+            ))}
+        </Fragment>
+    ))}
+</Component>

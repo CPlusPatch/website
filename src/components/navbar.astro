@@ -165,8 +165,8 @@ const { title, links, finalLink, ...rest } = Astro.props;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 2rem;
-            height: 2rem;
+            width: var(--control-height-md);
+            height: var(--control-height-md);
             color: var(--color-text);
             border: var(--border-width) solid var(--color-border-strong);
             border-radius: var(--radius);
@@ -238,7 +238,7 @@ const { title, links, finalLink, ...rest } = Astro.props;
 
                 :global(.navbar__link) {
                     justify-content: flex-start;
-                    height: 2.25rem;
+                    height: var(--control-height-lg);
                     padding-inline: var(--space-md);
                 }
             }
@@ -246,7 +246,7 @@ const { title, links, finalLink, ...rest } = Astro.props;
             /* Rendered by Button, so it carries Button's scope, not ours */
             :global(.navbar__final-link) {
                 align-self: stretch;
-                height: 2.25rem;
+                height: var(--control-height-lg);
             }
 
             /* Margin, not padding, so it collapses away with the row */

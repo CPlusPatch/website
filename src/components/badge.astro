@@ -30,7 +30,7 @@ const {
     class:list={[
         "badge",
         `badge--${variant}`,
-        `badge--tone-${tone}`,
+        `tone-${tone}`,
         `badge--size-${size}`,
     ]}
     data-snap
@@ -45,8 +45,9 @@ const {
     align-items: center;
     justify-content: center;
     font-weight: 500;
-    line-height: 1.2;
-    border-radius: var(--radius-pill);
+    line-height: var(--leading-tight);
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius);
     gap: var(--space-xs);
     text-decoration: none;
     white-space: nowrap;
@@ -70,77 +71,24 @@ const {
     }
 
     &.badge--size-lg {
-        font-size: var(--font-size-md);
+        font-size: var(--font-size-base);
         padding: 0 var(--space-md);
-        height: 2rem;
+        height: 1.75rem;
     }
 
     &.badge--solid {
         color: var(--color-on-accent);
-        background-color: var(--color-primary);
-
-        &.badge--tone-secondary {
-            background-color: var(--color-secondary);
-        }
-
-        &.badge--tone-destructive {
-            background-color: var(--color-destructive);
-        }
-
-        &.badge--tone-warning {
-            background-color: var(--color-warning);
-        }
-
-        &.badge--tone-success {
-            background-color: var(--color-success);
-        }
+        background-color: var(--tone);
+        border-color: var(--tone);
     }
 
     &.badge--outline {
-        color: var(--color-primary);
-        background-color: transparent;
-        border: 1px solid var(--color-primary);
-
-        &.badge--tone-secondary {
-            color: var(--color-secondary);
-            border-color: var(--color-secondary);
-        }
-
-        &.badge--tone-destructive {
-            color: var(--color-destructive);
-            border-color: var(--color-destructive);
-        }
-
-        &.badge--tone-warning {
-            color: var(--color-warning);
-            border-color: var(--color-warning);
-        }
-
-        &.badge--tone-success {
-            color: var(--color-success);
-            border-color: var(--color-success);
-        }
+        color: var(--tone);
+        border-color: var(--tone);
     }
 
     &.badge--ghost {
-        color: var(--color-primary);
-        background-color: transparent;
-
-        &.badge--tone-secondary {
-            color: var(--color-secondary);
-        }
-
-        &.badge--tone-destructive {
-            color: var(--color-destructive);
-        }
-
-        &.badge--tone-warning {
-            color: var(--color-warning);
-        }
-
-        &.badge--tone-success {
-            color: var(--color-success);
-        }
+        color: var(--tone);
     }
 }
 </style>

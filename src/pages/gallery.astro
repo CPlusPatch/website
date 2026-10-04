@@ -1,12 +1,8 @@
 ---
 import { Icon } from "astro-icon/components";
 import Button from "../components/button.astro";
-import Card from "../components/card.astro";
-import CarouselItem from "../components/carousel/carousel-item.astro";
-import CarouselPreview from "../components/carousel/carousel-preview.astro";
-import Carousel from "../components/carousel.astro";
-import SideHero from "../components/layout/side-hero.astro";
-import greg from "../images/greg.jpg";
+import ButtonGroup from "../components/button-group.astro";
+import StoryNode from "../components/story-node.astro";
 import Layout from "../layouts/layout.astro";
 import { groups } from "../stories";
 
@@ -16,14 +12,8 @@ if (import.meta.env.PROD) {
     return Astro.redirect("/", 302);
 }
 
-// Everything prop-driven comes from the manifest. The carousel and footer are the only
-// hand-written examples, because they nests other components inside their slots.
-const slides = [
-    { title: "Side hero", body: "A slide can hold any component." },
-    { title: "Plain card", body: "This is the second slide." },
-    { title: "Another card", body: "This is the third slide." },
-    { title: "Last one", body: "This is the fourth slide." },
-];
+// A negative `min` means one full-width cell per row.
+const cell = (min = 16) => (min < 0 ? "100%" : `${min}rem`);
 ---
 
 <Layout title="Component gallery" noindex>
@@ -32,12 +22,17 @@ const slides = [
             <section class="gallery">
                 <div class="gallery__header">
                     <h2>{group.title}</h2>
-                    <div class="gallery__controls">
+                    <ButtonGroup
+                        class="gallery__controls"
+                        label="Preview width"
+                    >
                         <Button
                             size="icon"
                             variant="outline"
+                            tone="neutral"
                             lift={false}
                             data-size="desktop"
+                            aria-pressed="true"
                             aria-label="Show desktop layout"
                         >
                             <Icon name="lucide:monitor" aria-hidden="true" />
@@ -45,8 +40,10 @@ const slides = [
                         <Button
                             size="icon"
                             variant="outline"
+                            tone="neutral"
                             lift={false}
                             data-size="tablet"
+                            aria-pressed="false"
                             aria-label="Show tablet layout"
                         >
                             <Icon name="lucide:tablet" aria-hidden="true" />
@@ -54,8 +51,10 @@ const slides = [
                         <Button
                             size="icon"
                             variant="outline"
+                            tone="neutral"
                             lift={false}
                             data-size="phone"
+                            aria-pressed="false"
                             aria-label="Show phone layout"
                         >
                             <Icon name="lucide:smartphone" aria-hidden="true" />
@@ -63,19 +62,19 @@ const slides = [
                         <Button
                             size="icon"
                             variant="outline"
+                            tone="neutral"
                             lift={false}
                             data-size="tiny"
+                            aria-pressed="false"
                             aria-label="Show tiny layout"
                         >
                             <Icon name="lucide:watch" aria-hidden="true" />
                         </Button>
-                    </div>
+                    </ButtonGroup>
                 </div>
                 {group.description && <p>{group.description}</p>}
-                <div class="grid" style={`--cell: ${group.min ?? 16}rem`}>
+                <div class="grid" style={`--cell: ${cell(group.min)}`}>
                     {group.stories.map((story) => {
-                        // Dynamic tag, so every story renders the same way.
-                        const Component = story.component;
                         return (
                             <figure
                                 class="cell"
@@ -83,17 +82,7 @@ const slides = [
                             >
                                 <figcaption>{story.name}</figcaption>
                                 <div class="preview">
-                                    <Component {...story.props}>
-                                        {story.icon && (
-                                            <Icon
-                                                name={story.icon}
-                                                aria-hidden="true"
-                                            />
-                                        )}
-                                        {story.slot && (
-                                            <Fragment set:html={story.slot} />
-                                        )}
-                                    </Component>
+                                    <StoryNode {story} />
                                 </div>
                             </figure>
                         );
@@ -101,45 +90,6 @@ const slides = [
                 </div>
             </section>
         ))}
-
-        <section class="gallery">
-            <h2>Carousel</h2>
-            <p class="lead">
-                Written by hand, since it nests other components.
-            </p>
-            <figure class="cell" data-story="carousel/default">
-                <figcaption>default</figcaption>
-                <div class="preview">
-                    <Carousel label="Component examples">
-                        <CarouselItem>
-                            <SideHero
-                                image={{ url: greg, alt: "Greg Heffley" }}
-                            >
-                                <h2>{slides[0].title}</h2>
-                                <p>{slides[0].body}</p>
-                                <Button>Learn more</Button>
-                            </SideHero>
-                        </CarouselItem>
-                        {slides.slice(1).map((slide) => (
-                            <CarouselItem>
-                                <Card>
-                                    <h3>{slide.title}</h3>
-                                    <p>{slide.body}</p>
-                                </Card>
-                            </CarouselItem>
-                        ))}
-                        <Fragment slot="previews">
-                            {slides.map((slide, i) => (
-                                <CarouselPreview>
-                                    <strong>{i + 1}</strong>
-                                    {slide.title}
-                                </CarouselPreview>
-                            ))}
-                        </Fragment>
-                    </Carousel>
-                </div>
-            </figure>
-        </section>
     </main>
 </Layout>
 
@@ -168,20 +118,24 @@ main {
         h2 {
             font-size: var(--font-size-lg);
         }
-
-        .gallery__controls {
-            display: flex;
-            gap: var(--space-xs);
-        }
     }
 
     & > p {
         color: var(--color-text-muted);
     }
 
+    .gallery__controls :global(.button[aria-pressed="true"]) {
+        color: var(--color-text);
+        border-color: var(--color-text);
+        background-color: var(--color-bg-alt);
+    }
+
     .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
+        grid-template-columns: repeat(
+                auto-fill,
+                minmax(min(var(--cell), 100%), 1fr)
+            );
         gap: var(--space-md);
         align-items: start;
         width: 100%;
@@ -227,7 +181,7 @@ figcaption {
 <script>
 // When the sizing buttons are clicked, toggle class on the grid to change its max-width.
 
-const controls = document.querySelectorAll(".gallery__controls button");
+const controls = document.querySelectorAll(".gallery__controls .button");
 
 for (const control of controls) {
     control.addEventListener("click", () => {
@@ -238,6 +192,10 @@ for (const control of controls) {
 
         grid.classList.remove("desktop", "tablet", "phone", "tiny");
         grid.classList.add(size);
+
+        for (const other of control.parentElement?.children ?? []) {
+            other.setAttribute("aria-pressed", String(other === control));
+        }
     });
 }
 </script>

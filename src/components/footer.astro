@@ -144,16 +144,16 @@ const { copyright, tagline, socials, eightyEightThirtyOne, friends } =
                 transition: filter 0.3s ease;
 
                 &:hover,
-                &:focus {
+                &:focus-within {
                     filter: grayscale(0%);
                 }
 
                 a {
                     color: var(--color-text);
-                    font-size: 1.5rem;
+                    font-size: var(--font-size-2xl);
 
                     &:hover,
-                    &:focus {
+                    &:focus-visible {
                         color: var(--color-primary);
                     }
                 }

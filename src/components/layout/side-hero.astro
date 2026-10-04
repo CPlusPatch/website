@@ -38,7 +38,7 @@ const { side = "right", image, ...rest } = Astro.props;
 <style>
 .side-hero {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
     gap: var(--space-lg);
     align-items: center;
     width: 100%;

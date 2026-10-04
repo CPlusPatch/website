@@ -5,7 +5,7 @@
  * contrast automatically works.
  * Every role shares the same lightness; only hue and chroma change.
  *
- *   role tier (text + fills)   L = 0.45 light / 0.78 dark   hover 0.37 / 0.86
+ *   role tier (text + fills)   L = 0.45 light / 0.78 dark   hover 0.37 / 0.84
  *   accent tier (decoration)   L = 0.72 light / 0.70 dark
  *   neutrals                   hue 155, chroma <= 0.012
  *                              (dark surfaces are achromatic -- a green
@@ -20,7 +20,8 @@
  * carrier of meaning in it.
  *
  * Hues are inherited from the previous hand-picked palette so the brand reads
- * the same: pink 3.8, violet 303.7, red 27.3, yellow 91.9, green 152.
+ * the same: pink 3.8, violet 303.7, red 27.3, green 152; warning moved
+ * from 91.9 to 84 (amber), because yellow at the role tier read as olive.
  */
 
 :root {
@@ -30,6 +31,7 @@
     --color-bg: light-dark(#f2f5f3, #0e0e0e);
     --color-bg-alt: light-dark(#e7ebe8, #171717);
     --color-surface: light-dark(#fafcfb, #1d1d1d);
+    --color-surface-raised: light-dark(#ffffff, #252525);
     --color-text: light-dark(#131915, #d3d9d5);
     --color-text-muted: light-dark(#606762, #88908a);
 
@@ -43,18 +45,19 @@
     --color-border: light-dark(#a3a8a4, #474c48);
     --color-border-strong: light-dark(#898f8b, #5b605c);
     --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
 
     /* Role tier -- safe for text and for fills paired with --color-on-accent */
     --color-primary: light-dark(#98194b, #f995af);
-    --color-primary-hover: light-dark(#741138, #fbbecc);
+    --color-primary-hover: light-dark(#790037, #ffb1c4);
     --color-secondary: light-dark(#6d2aa8, #c8a3f8);
-    --color-secondary-hover: light-dark(#551488, #dbc5fb);
+    --color-secondary-hover: light-dark(#57048e, #d8bbff);
     --color-destructive: light-dark(#9d1a1a, #f99a8f);
-    --color-destructive-hover: light-dark(#781211, #fbc1b9);
-    --color-warning: light-dark(#665313, #d8b434);
-    --color-warning-hover: light-dark(#4d3e0c, #f6cd3d);
+    --color-destructive-hover: light-dark(#7d0007, #ffb5ab);
+    --color-warning: light-dark(#6b5113, #e3ae34);
+    --color-warning-hover: light-dark(#533b00, #ffbf00);
     --color-success: light-dark(#176636, #3cd879);
-    --color-success-hover: light-dark(#0f4c27, #58f390);
+    --color-success-hover: light-dark(#004e24, #4fed8a);
 
     /* One foreground for every role, because the role tier has a uniform L */
     --color-on-accent: light-dark(#f2f5f3, #0e0e0e);
@@ -63,7 +66,7 @@
     --color-primary-accent: light-dark(#f77299, #f76492);
     --color-secondary-accent: light-dark(#bb88f6, #b67ff6);
     --color-destructive-accent: light-dark(#f7796d, #f76d61);
-    --color-warning-accent: light-dark(#c3a12e, #bb9b2c);
+    --color-warning-accent: light-dark(#cc9c2e, #c4972c);
     --color-success-accent: light-dark(#35c26c, #32bb68);
 
     /* Typography */
@@ -75,14 +78,34 @@
     --font-size-lg: 1.0625rem;
     --font-size-xl: 1.25rem;
     --font-size-2xl: 1.5rem;
-    --line-height: 1.7;
+    --font-size-3xl: clamp(1.25rem, 2vw + 0.75rem, 1.75rem);
+    --font-size-4xl: clamp(2rem, 4vw + 1rem, 3.25rem);
+    --font-size-code: 0.9em;
+
+    --leading-tight: 1.2;
+    --leading-snug: 1.25;
+    --leading-code: 1.6;
+    --leading-body: 1.7;
+    --line-height: var(--leading-body);
 
     /* Spacing scale */
+    --space-2xs: 0.125rem;
     --space-xs: 0.25rem;
     --space-sm: 0.5rem;
     --space-md: 1rem;
+    --space-md-lg: 1.5rem;
     --space-lg: 2rem;
+    --space-lg-xl: 3rem;
     --space-xl: 4rem;
+
+    /*
+     * Interactive control heights. They grow under a coarse pointer (see
+     * below) so every button, select and nav link stays a comfortable touch
+     * target without each component carrying its own media query.
+     */
+    --control-height-sm: 1.75rem;
+    --control-height-md: 2rem;
+    --control-height-lg: 2.25rem;
 
     /* Layout */
     --container-width: 70rem;
@@ -127,8 +150,30 @@
     @custom-media --2xl (max-width: 96rem);
 }
 
+/*
+ * Theme toggle, JS-free like the other effect toggles. The page cannot know
+ * the system scheme without script, so a checked toggle flips whichever one
+ * the system prefers: forced light by default, forced dark on a light system.
+ */
+html:has([data-theme-toggle] > input:checked) {
+    color-scheme: light;
+
+    @media (prefers-color-scheme: light) {
+        color-scheme: dark;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     :root {
         --transition: 0s;
+    }
+}
+
+/* 44px is the usual minimum touch target; sm sits a little under it on purpose. */
+@media (pointer: coarse) {
+    :root {
+        --control-height-sm: 2.5rem;
+        --control-height-md: 2.75rem;
+        --control-height-lg: 3rem;
     }
 }
