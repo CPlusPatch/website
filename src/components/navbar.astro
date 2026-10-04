@@ -34,6 +34,7 @@ const { title, links, finalLink, ...rest } = Astro.props;
             <input
                 type="checkbox"
                 class="navbar__toggle-input"
+                data-navbar-toggle
                 aria-label="Toggle navigation"
             >
             <Icon
@@ -48,7 +49,7 @@ const { title, links, finalLink, ...rest } = Astro.props;
             />
         </label>
 
-        <div class="navbar__menu">
+        <div class="navbar__menu" data-navbar-menu>
             <div class="navbar__menu-inner">
                 <nav class="navbar__nav">
                     {links.map((link) => (
@@ -94,6 +95,28 @@ const { title, links, finalLink, ...rest } = Astro.props;
         </div>
     </div>
 </header>
+
+<script>
+// The checkbox keeps the menu working without JS; script only exposes its
+// state, since aria-expanded can't follow :checked from CSS.
+let nextId = 0;
+
+for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
+    const toggle = navbar.querySelector<HTMLInputElement>(
+        "[data-navbar-toggle]",
+    );
+    const menu = navbar.querySelector<HTMLElement>("[data-navbar-menu]");
+    if (!toggle || !menu) continue;
+
+    menu.id ||= `navbar-menu-${nextId++}`;
+    toggle.setAttribute("aria-controls", menu.id);
+
+    const sync = () =>
+        toggle.setAttribute("aria-expanded", String(toggle.checked));
+    toggle.addEventListener("change", sync);
+    sync();
+}
+</script>
 
 <style>
 .navbar {

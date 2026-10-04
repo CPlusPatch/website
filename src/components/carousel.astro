@@ -61,19 +61,21 @@ const { label, buttons = true, ...rest } = Astro.props;
         </>
     )}
     {/*
-     * <section> plus an accessible name gives the track the region role, so a
-     * screen reader can announce it. The tab stop that makes it keyboard
+     * A named group gives the track a role, so a screen reader can announce it
+     * without it becoming a second region nested in the carousel. The tab stop that makes it keyboard
      * scrollable (WCAG 2.1.1) is added by the script below rather than here --
      * modern browsers focus overflow containers on their own, and doing it in
      * script keeps the no-JS markup free of a tab stop that leads nowhere.
      */}
-    <section
+    {/* biome-ignore lint/a11y/useSemanticElements: a second <section> would announce as a second region inside the carousel */}
+    <div
         class="carousel__items"
+        role="group"
         data-carousel-track
         aria-label={`${label} slides`}
     >
         <slot />
-    </section>
+    </div>
     <div class="carousel__preview-grid" data-carousel-previews>
         <slot name="previews" />
     </div>
@@ -121,8 +123,17 @@ for (const root of carousels) {
     };
 
     const sync = () => {
-        prev?.toggleAttribute("disabled", current === 0);
-        next?.toggleAttribute("disabled", current === slides.length - 1);
+        // aria-disabled, not disabled: a disabled button drops focus to <body>
+        // the moment the user reaches either end.
+        prev?.setAttribute("aria-disabled", String(current === 0));
+        next?.setAttribute(
+            "aria-disabled",
+            String(current === slides.length - 1),
+        );
+        // Slides that are off-screen must not be reachable by keyboard.
+        slides.forEach((slide, i) => {
+            slide.inert = i !== current;
+        });
         previews.forEach((p, i) => {
             p.setAttribute("aria-current", String(i === current));
             p.classList.toggle("is-current", i === current);

@@ -143,11 +143,11 @@
 	 * Custom media queries for responsive design. These are transpiled by LightningCSS
 	 * into standard media queries for browsers that don't support them.
 	 */
-    @custom-media --sm (max-width: 40rem);
+    /* @custom-media --sm (max-width: 40rem);
     @custom-media --md (max-width: 48rem);
     @custom-media --lg (max-width: 64rem);
     @custom-media --xl (max-width: 80rem);
-    @custom-media --2xl (max-width: 96rem);
+    @custom-media --2xl (max-width: 96rem); */
 }
 
 /*
