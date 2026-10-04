@@ -8,7 +8,8 @@ export type ButtonTone =
     | "secondary"
     | "destructive"
     | "warning"
-    | "success";
+    | "success"
+    | "neutral";
 
 export type ButtonSize = "sm" | "default" | "lg" | "icon";
 
@@ -42,7 +43,7 @@ const classes = [
     "button",
     lift && variant !== "link" && "lift",
     `button--${variant}`,
-    `button--tone-${tone}`,
+    `tone-${tone}`,
     `button--size-${size}`,
     rest.class,
 ];
@@ -60,19 +61,19 @@ const classes = [
 
 <style>
 .button {
-    --button-color: var(--color-primary);
-    --button-color-hover: var(--color-primary-hover);
+    --button-color: var(--tone);
+    --button-color-hover: var(--tone-hover);
     --shadow-color: var(--button-color);
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 2rem;
+    height: var(--control-height-md);
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
     font-size: var(--font-size-sm);
     font-weight: 600;
-    line-height: 1.25;
+    line-height: var(--leading-snug);
     text-decoration: none;
     color: var(--color-on-accent);
     background-color: var(--button-color);
@@ -93,26 +94,6 @@ const classes = [
         flex: none;
     }
 
-    &.button--tone-secondary {
-        --button-color: var(--color-secondary);
-        --button-color-hover: var(--color-secondary-hover);
-    }
-
-    &.button--tone-destructive {
-        --button-color: var(--color-destructive);
-        --button-color-hover: var(--color-destructive-hover);
-    }
-
-    &.button--tone-warning {
-        --button-color: var(--color-warning);
-        --button-color-hover: var(--color-warning-hover);
-    }
-
-    &.button--tone-success {
-        --button-color: var(--color-success);
-        --button-color-hover: var(--color-success-hover);
-    }
-
     &.button--outline,
     &.button--ghost,
     &.button--link {
@@ -127,19 +108,19 @@ const classes = [
 
     &.button--size-sm {
         padding: var(--space-xs) var(--space-sm);
-        font-size: 0.75rem;
-        height: 1.75rem;
+        font-size: var(--font-size-xs);
+        height: var(--control-height-sm);
     }
 
     &.button--size-lg {
-        padding: var(--space-sm) calc(var(--space-md) + var(--space-sm));
+        padding: var(--space-sm) var(--space-md-lg);
         font-size: var(--font-size-base);
-        height: 2.25rem;
+        height: var(--control-height-lg);
     }
 
     &.button--size-icon {
-        width: 2rem;
-        height: 2rem;
+        width: var(--control-height-md);
+        height: var(--control-height-md);
         padding: 0;
 
         svg {
@@ -165,6 +146,10 @@ const classes = [
             border-color: transparent;
             text-decoration: underline;
         }
+    }
+
+    &:active:where(:not(:disabled, [aria-disabled="true"])) {
+        translate: 0 1px;
     }
 
     &:disabled,

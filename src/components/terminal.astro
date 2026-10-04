@@ -62,7 +62,7 @@ const prompt = promptFor(cwd);
     padding: var(--space-md);
     font-family: var(--font-mono);
     font-size: var(--font-size-sm);
-    line-height: 1.6;
+    line-height: var(--leading-code);
     transition: border-color var(--transition);
 
     /* The input has no outline of its own, so the whole frame shows focus. */
@@ -113,6 +113,10 @@ const prompt = promptFor(cwd);
 
             &:focus-visible {
                 outline: none;
+            }
+
+            @media (pointer: coarse) {
+                min-height: var(--control-height-md);
             }
         }
     }

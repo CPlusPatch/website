@@ -18,13 +18,7 @@ const { tone = "primary", shadow = true, ...rest } = Astro.props;
 ---
 
 <div
-    class:list={[
-        "card",
-        "panel",
-        shadow && "lift",
-        `card--tone-${tone}`,
-        rest.class,
-    ]}
+    class:list={["card", "panel", shadow && "lift", `tone-${tone}`, rest.class]}
     data-snap
     {...rest}
 >
@@ -34,7 +28,7 @@ const { tone = "primary", shadow = true, ...rest } = Astro.props;
 <style>
 /*
  * Surface, border, top rule and hover lift all come from .panel / .lift in
- * utilities.css. This file only owns content layout and the tone mapping.
+ * utilities.css. Tone colours come from .tone-* there too. This file only owns content layout.
  */
 .card {
     display: flex;
@@ -49,27 +43,7 @@ const { tone = "primary", shadow = true, ...rest } = Astro.props;
 
     & a {
         align-self: flex-start;
-        font-size: 0.875rem;
-    }
-
-    &.card--tone-secondary {
-        --panel-accent: var(--color-secondary-accent);
-        --shadow-color: var(--color-secondary-accent);
-    }
-
-    &.card--tone-destructive {
-        --panel-accent: var(--color-destructive-accent);
-        --shadow-color: var(--color-destructive-accent);
-    }
-
-    &.card--tone-warning {
-        --panel-accent: var(--color-warning-accent);
-        --shadow-color: var(--color-warning-accent);
-    }
-
-    &.card--tone-success {
-        --panel-accent: var(--color-success-accent);
-        --shadow-color: var(--color-success-accent);
+        font-size: var(--font-size-sm);
     }
 }
 </style>

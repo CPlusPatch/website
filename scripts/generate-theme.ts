@@ -32,7 +32,7 @@ const HUES = {
     primary: 3.8, // pink
     secondary: 303.7, // violet
     destructive: 27.3, // red
-    warning: 91.9, // yellow
+    warning: 84, // amber (was 91.9: read as olive/brown at the role tier)
     success: 152, // green
 } as const;
 
@@ -51,7 +51,7 @@ const HUES = {
  */
 const TIERS = {
     role: { light: 0.45, dark: 0.78 },
-    hover: { light: 0.37, dark: 0.86 },
+    hover: { light: 0.37, dark: 0.84 },
     accent: { light: 0.72, dark: 0.7 },
 } as const;
 
@@ -63,6 +63,13 @@ const TIERS = {
  */
 const CHROMA_RATIO = 0.9;
 const CHROMA_CAP = 0.19;
+
+/**
+ * Hover uses the full in-gamut chroma instead of CHROMA_RATIO. At the hover
+ * lightness (0.84 dark) there is very little chroma headroom, and backing off
+ * further turns a pink button near-white on hover.
+ */
+const HOVER_CHROMA_RATIO = 1;
 
 /**
  * Neutrals are specified directly rather than derived -- they are tuned by eye
@@ -77,6 +84,9 @@ const NEUTRALS = {
     bg: { light: [0.9673, 0.0041, 157.2], dark: [0.1642, 0, 0] },
     "bg-alt": { light: [0.9362, 0.0058, 153.8], dark: [0.205, 0, 0] },
     surface: { light: [0.9893, 0.0025, 165.1], dark: [0.2297, 0, 0] },
+    // One step above surface, for panels that sit on a surface (cards in a
+    // surface-coloured container, terminals in cards).
+    "surface-raised": { light: [1, 0, 0], dark: [0.2662, 0, 0] },
     text: { light: [0.2056, 0.012, 156.0], dark: [0.8795, 0.0084, 157.1] },
     "text-muted": {
         light: [0.5061, 0.0116, 154.9],
@@ -214,7 +224,8 @@ function solveLightness(
 /** A role colour: fixed lightness for the tier, hue for the role, chroma per policy. */
 function role(tier: keyof typeof TIERS, hue: number, scheme: Scheme): string {
     const l = TIERS[tier][scheme];
-    return hex(l, Math.min(CHROMA_CAP, CHROMA_RATIO * maxChroma(l, hue)), hue);
+    const ratio = tier === "hover" ? HOVER_CHROMA_RATIO : CHROMA_RATIO;
+    return hex(l, Math.min(CHROMA_CAP, ratio * maxChroma(l, hue)), hue);
 }
 
 const pair = (light: string, dark: string) => `light-dark(${light}, ${dark})`;
@@ -249,6 +260,8 @@ for (const [name, spec] of Object.entries(BORDERS)) {
 }
 
 set("--color-grid", pair("rgb(0 0 0 / 0.04)", "rgb(255 255 255 / 0.03)"));
+// Scanlines are their own token: reusing the grid colour made them invisible.
+set("--color-scanline", pair("rgb(0 0 0 / 0.07)", "rgb(255 255 255 / 0.07)"));
 
 for (const [name, hue] of Object.entries(HUES)) {
     set(

@@ -1,0 +1,60 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * Fuses adjacent <Button>s into one segmented control: shared borders, and
+ * only the outer corners keep the radius.
+ *
+ * Pass `lift={false}` to the buttons. A lifted button moves on hover in
+ * shadow mode, which would tear the joined edge apart.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Names the group for screen readers. */
+    label: string;
+}
+
+const { label, class: className, ...rest } = Astro.props;
+---
+
+{/* biome-ignore lint/a11y/useSemanticElements: <fieldset> brings default box styling that would need undoing */}
+<div
+    role="group"
+    aria-label={label}
+    {...rest}
+    class:list={["button-group", className]}
+>
+    <slot />
+</div>
+
+<style>
+.button-group {
+    display: inline-flex;
+
+    & > :global(.button) {
+        border-radius: 0;
+
+        /* Overlap by one border so neighbours share a single line. */
+        &:not(:first-child) {
+            margin-inline-start: calc(var(--border-width) * -1);
+        }
+
+        &:first-child {
+            border-start-start-radius: var(--radius);
+            border-end-start-radius: var(--radius);
+        }
+
+        &:last-child {
+            border-start-end-radius: var(--radius);
+            border-end-end-radius: var(--radius);
+        }
+
+        /* The overlapped edge belongs to whichever button is being used. */
+        &:hover,
+        &:focus-visible,
+        &[aria-pressed="true"] {
+            position: relative;
+            z-index: 1;
+        }
+    }
+}
+</style>

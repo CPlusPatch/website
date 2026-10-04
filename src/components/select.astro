@@ -28,12 +28,12 @@ const { options, value, ...rest } = Astro.props;
 .select {
     --select-chevron: var(--color-text-muted);
     appearance: none;
-    height: 2rem;
+    height: var(--control-height-md);
     padding: var(--space-xs) calc(var(--space-md) + 1.25rem) var(--space-xs)
         var(--space-sm);
     font-family: inherit;
     font-size: var(--font-size-sm);
-    line-height: 1.25;
+    line-height: var(--leading-snug);
     color: var(--color-text);
     background-color: var(--color-surface);
     /* Chevron drawn from two gradients so it follows the theme colours */
@@ -62,9 +62,27 @@ const { options, value, ...rest } = Astro.props;
         outline-offset: 2px;
     }
 
+    &:active:not(:disabled) {
+        background-color: var(--color-bg-alt);
+    }
+
     &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+
+    @media (forced-colors: active) {
+        /* Otherwise the gradient chevron is dropped. */
+        forced-color-adjust: none;
+        --select-chevron: ButtonText;
+        color: ButtonText;
+        background-color: Canvas;
+        border-color: ButtonText;
+
+        &:hover {
+            --select-chevron: Highlight;
+            border-color: Highlight;
+        }
     }
 
     .select__option {

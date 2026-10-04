@@ -9,9 +9,8 @@
  * It does not attempt to express every possible prop combination, only the ones that
  * are likely to be useful to a developer.
  *
- * Composite examples that nest components inside each other (the carousel)
- * stay hand-written in tests.astro, otherwise this file would become a mess of
- * nested props and slots.
+ * Composites nest through `children` (the default slot) and `slots` (named
+ * slots), each holding more stories -- see the carousel.
  */
 // deno-lint-ignore-file no-explicit-any
 
@@ -20,7 +19,11 @@ import EightEightThreeOne from "./components/8831.astro";
 import Alert from "./components/alert.astro";
 import Badge from "./components/badge.astro";
 import Button from "./components/button.astro";
+import ButtonGroup from "./components/button-group.astro";
 import Card from "./components/card.astro";
+import CarouselItem from "./components/carousel/carousel-item.astro";
+import CarouselPreview from "./components/carousel/carousel-preview.astro";
+import Carousel from "./components/carousel.astro";
 import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
 import Logos from "./components/logos.astro";
@@ -46,6 +49,10 @@ export interface Story {
     icon?: string;
     /** Slot content, as raw HTML. */
     slot?: string;
+    /** Stories rendered in the default slot, after `slot`. */
+    children?: Story[];
+    /** Stories rendered in named slots. */
+    slots?: Record<string, Story[]>;
 }
 
 export interface StoryGroup {
@@ -67,7 +74,7 @@ const story = <T extends Component>(
     name: string,
     component: T,
     props: ComponentProps<T>,
-    content: Pick<Story, "icon" | "slot"> = {},
+    content: Omit<Story, "name" | "component" | "props"> = {},
 ): Story => ({ name, component, props, ...content });
 
 const VARIANTS = ["solid", "outline", "ghost", "link"] as const;
@@ -96,6 +103,13 @@ const NAV_LINKS = [
     { href: "/blog", label: "Blog" },
 ];
 
+const SLIDES = [
+    { title: "Side hero", body: "A slide can hold any component." },
+    { title: "Plain card", body: "This is the second slide." },
+    { title: "Another card", body: "This is the third slide." },
+    { title: "Last one", body: "This is the fourth slide." },
+];
+
 const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export const groups: StoryGroup[] = [
@@ -112,6 +126,9 @@ export const groups: StoryGroup[] = [
             }),
             story("lift-shadow", Toggle, {
                 "data-lift-shadow-toggle": true,
+            }),
+            story("theme", Toggle, {
+                "data-theme-toggle": true,
             }),
         ],
     },
@@ -153,6 +170,71 @@ export const groups: StoryGroup[] = [
                 { slot: "Anchor" },
             ),
             story("no-shadow", Button, { lift: false }, { slot: "No lift" }),
+        ],
+    },
+    {
+        id: "button-group",
+        title: "Button groups",
+        min: 16,
+        stories: [
+            story(
+                "default",
+                ButtonGroup,
+                { label: "Alignment" },
+                {
+                    children: ["Left", "Centre", "Right"].map((label) =>
+                        story(
+                            label.toLowerCase(),
+                            Button,
+                            { variant: "outline", lift: false },
+                            { slot: label },
+                        ),
+                    ),
+                },
+            ),
+            story(
+                "icons",
+                ButtonGroup,
+                { label: "View" },
+                {
+                    children: ["list", "layout-grid", "columns-2"].map((icon) =>
+                        story(
+                            icon,
+                            Button,
+                            {
+                                size: "icon",
+                                variant: "outline",
+                                tone: "neutral",
+                                lift: false,
+                                "aria-label": icon,
+                            },
+                            { icon: `lucide:${icon}` },
+                        ),
+                    ),
+                },
+            ),
+            story(
+                "disabled-member",
+                ButtonGroup,
+                { label: "Actions" },
+                {
+                    children: [
+                        story("one", Button, { lift: false }, { slot: "One" }),
+                        story(
+                            "two",
+                            Button,
+                            { lift: false, disabled: true },
+                            { slot: "Two" },
+                        ),
+                        story(
+                            "three",
+                            Button,
+                            { lift: false },
+                            { slot: "Three" },
+                        ),
+                    ],
+                },
+            ),
         ],
     },
     {
@@ -408,6 +490,83 @@ export const groups: StoryGroup[] = [
         title: "Logos",
         min: -1,
         stories: [story("default", Logos, { items: languages, rows: 5 })],
+    },
+    {
+        id: "carousel",
+        title: "Carousel",
+        min: -1,
+        stories: [
+            story(
+                "default",
+                Carousel,
+                { label: "Component examples" },
+                {
+                    children: [
+                        story(
+                            "slide-1",
+                            CarouselItem,
+                            {},
+                            {
+                                children: [
+                                    story(
+                                        "hero",
+                                        SideHero,
+                                        {
+                                            image: {
+                                                url: greg,
+                                                alt: "Greg Heffley",
+                                            },
+                                        },
+                                        {
+                                            slot: `<h2>${SLIDES[0].title}</h2><p>${SLIDES[0].body}</p>`,
+                                            children: [
+                                                story(
+                                                    "cta",
+                                                    Button,
+                                                    {},
+                                                    { slot: "Learn more" },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                        ...SLIDES.slice(1).map((slide, i) =>
+                            story(
+                                `slide-${i + 2}`,
+                                CarouselItem,
+                                {},
+                                {
+                                    children: [
+                                        story(
+                                            "card",
+                                            Card,
+                                            {},
+                                            {
+                                                slot: `<h3>${slide.title}</h3><p>${slide.body}</p>`,
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                        ),
+                    ],
+                    slots: {
+                        previews: SLIDES.map((slide, i) =>
+                            story(
+                                `preview-${i + 1}`,
+                                CarouselPreview,
+                                {},
+                                {
+                                    slot: `<strong>${i + 1}</strong>${slide.title}`,
+                                },
+                            ),
+                        ),
+                    },
+                },
+            ),
+        ],
     },
     {
         id: "terminal",

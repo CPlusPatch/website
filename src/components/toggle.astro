@@ -77,8 +77,21 @@ const { checked = false, disabled = false, name, value, ...rest } = Astro.props;
         }
     }
 
+    /* Coarse pointers: grow the hit area without growing the switch. */
+    @media (pointer: coarse) {
+        &::after {
+            content: "";
+            position: absolute;
+            inset: -0.5rem;
+        }
+    }
+
     .toggle__input:hover + .toggle__slider {
         border-color: var(--color-primary);
+    }
+
+    .toggle__input:active:where(:not(:disabled)) + .toggle__slider {
+        translate: 0 1px;
     }
 
     .toggle__input:focus-visible + .toggle__slider {
@@ -108,6 +121,35 @@ const { checked = false, disabled = false, name, value, ...rest } = Astro.props;
     .toggle__input:checked:hover + .toggle__slider {
         background: var(--color-primary-hover);
         border-color: var(--color-primary-hover);
+    }
+
+    /*
+     * Forced colours drop background colours, which would erase the knob, so
+     * spell the states out with system colours.
+     */
+    @media (forced-colors: active) {
+        .toggle__slider {
+            background: Canvas;
+            border-color: ButtonText;
+
+            &::before {
+                background: ButtonText;
+            }
+        }
+
+        .toggle__input:hover + .toggle__slider {
+            border-color: Highlight;
+        }
+
+        .toggle__input:checked + .toggle__slider,
+        .toggle__input:checked:hover + .toggle__slider {
+            background: Highlight;
+            border-color: Highlight;
+
+            &::before {
+                background: HighlightText;
+            }
+        }
     }
 }
 </style>
