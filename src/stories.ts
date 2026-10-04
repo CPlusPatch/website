@@ -119,15 +119,19 @@ export const groups: StoryGroup[] = [
         min: 10,
         stories: [
             story("crosshair", Toggle, {
+                label: "Crosshair",
                 "data-crosshair-toggle": true,
             }),
             story("scanlines", Toggle, {
+                label: "Scanlines",
                 "data-scanlines-toggle": true,
             }),
             story("lift-shadow", Toggle, {
+                label: "Lift shadow",
                 "data-lift-shadow-toggle": true,
             }),
             story("theme", Toggle, {
+                label: "Invert theme",
                 "data-theme-toggle": true,
             }),
         ],
@@ -276,10 +280,11 @@ export const groups: StoryGroup[] = [
         title: "Toggles",
         min: 10,
         stories: [
-            story("default", Toggle, {}),
-            story("checked", Toggle, { checked: true }),
-            story("disabled", Toggle, { disabled: true }),
+            story("default", Toggle, { label: "Example" }),
+            story("checked", Toggle, { label: "Example", checked: true }),
+            story("disabled", Toggle, { label: "Example", disabled: true }),
             story("checked-disabled", Toggle, {
+                label: "Example",
                 checked: true,
                 disabled: true,
             }),
@@ -290,12 +295,17 @@ export const groups: StoryGroup[] = [
         title: "Selects",
         min: 10,
         stories: [
-            story("default", Select, { options: SELECT_OPTIONS }),
+            story("default", Select, {
+                label: "Example",
+                options: SELECT_OPTIONS,
+            }),
             story("selected", Select, {
+                label: "Example",
                 options: SELECT_OPTIONS,
                 value: "two",
             }),
             story("disabled", Select, {
+                label: "Example",
                 options: SELECT_OPTIONS,
                 disabled: true,
             }),

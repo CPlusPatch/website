@@ -6,24 +6,36 @@ import type { HTMLAttributes } from "astro/types";
  */
 
 interface Props extends HTMLAttributes<"label"> {
+    /** Accessible name. The switch has no visible text of its own. */
+    label: string;
     checked?: boolean;
     disabled?: boolean;
     name?: string;
     value?: string;
 }
-const { checked = false, disabled = false, name, value, ...rest } = Astro.props;
+const {
+    label,
+    checked = false,
+    disabled = false,
+    name,
+    value,
+    ...rest
+} = Astro.props;
 ---
 
-{/* biome-ignore lint/a11y/noLabelWithoutControl: Incorrectly flagged */}
 <label class:list={["toggle", rest.class]} {...rest}>
+    {/* biome-ignore-start lint/a11y/useAriaPropsForRole: A native checkbox exposes its own checked state, so the switch role needs no aria-checked */}
     <input
         type="checkbox"
+        role="switch"
+        aria-label={label}
         class="toggle__input"
         checked={checked}
         disabled={disabled}
         name={name}
         value={value}
     >
+    {/* biome-ignore-end lint/a11y/useAriaPropsForRole: A native checkbox exposes its own checked state, so the switch role needs no aria-checked */}
     <span class="toggle__slider" aria-hidden="true"></span>
 </label>
 
@@ -50,7 +62,7 @@ const { checked = false, disabled = false, name, value, ...rest } = Astro.props;
         display: block;
         width: var(--toggle-width);
         height: var(--toggle-height);
-        border: var(--border-width) solid var(--color-border);
+        border: var(--border-width) solid var(--color-border-strong);
         border-radius: var(--radius);
         background: var(--color-bg-alt);
         transition:

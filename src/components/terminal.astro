@@ -16,6 +16,8 @@ const prompt = promptFor(cwd);
 
 <div
     class="terminal panel"
+    role="log"
+    aria-label="Terminal"
     data-terminal={interactive ? "" : undefined}
     style={`--prompt: ${JSON.stringify(prompt)}`}
 >
@@ -39,6 +41,7 @@ const prompt = promptFor(cwd);
                 <input
                     type="text"
                     class="terminal__input-field"
+                    aria-label="Terminal command"
                     autocomplete="off"
                     spellcheck="false"
                 />

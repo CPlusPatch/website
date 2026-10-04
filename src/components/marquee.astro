@@ -1,4 +1,7 @@
 ---
+import { Icon } from "astro-icon/components";
+import Button from "./button.astro";
+
 // marquee.astro
 /**
  * Seamless marquee. Slot content is rendered twice (the second copy is
@@ -13,6 +16,11 @@ interface Props {
     /* Any CSS length; used between items and between the two copies */
     gap?: string;
     pauseOnHover?: boolean;
+    /**
+     * Render a pause button. Turn off when a parent supplies one control for
+     * several marquees; it then sets `data-paused` on each `.marquee`.
+     */
+    controls?: boolean;
     class?: string;
 }
 
@@ -20,6 +28,7 @@ const {
     reverse = false,
     duration = 30,
     gap = "var(--space-sm)",
+    controls = true,
     class: className,
 } = Astro.props;
 ---
@@ -29,6 +38,29 @@ const {
     data-reverse={reverse ? "" : undefined}
     style={`--duration:${duration}s; --gap:${gap}`}
 >
+    {controls && (
+        <Button
+            class="marquee__pause"
+            size="icon"
+            variant="outline"
+            tone="neutral"
+            lift={false}
+            data-marquee-pause
+            aria-pressed="false"
+            aria-label="Pause scrolling"
+        >
+            <Icon
+                name="lucide:pause"
+                class="marquee__pause-icon"
+                aria-hidden="true"
+            />
+            <Icon
+                name="lucide:play"
+                class="marquee__play-icon"
+                aria-hidden="true"
+            />
+        </Button>
+    )}
     <div class="marquee__definitions" aria-hidden="true" inert><slot /></div>
     <div class="marquee__track">
         <div class="marquee__group"><slot /></div>
@@ -42,8 +74,69 @@ const {
     </div>
 </div>
 
+<script>
+// WCAG 2.2.2: anything that moves for more than five seconds needs a pause
+// control. The duplicate groups are aria-hidden but deliberately not inert
+// (inert would stop them reacting to hover), so take any focusable content
+// inside them out of the tab order instead.
+for (const marquee of document.querySelectorAll<HTMLElement>(".marquee")) {
+    for (const el of marquee.querySelectorAll<HTMLElement>(
+        '.marquee__group[aria-hidden="true"] :is(a[href], button, input, select, textarea, summary, [tabindex])',
+    )) {
+        el.tabIndex = -1;
+    }
+
+    const pause = marquee.querySelector<HTMLButtonElement>(
+        "[data-marquee-pause]",
+    );
+    pause?.addEventListener("click", () => {
+        const paused = pause.getAttribute("aria-pressed") !== "true";
+        pause.setAttribute("aria-pressed", String(paused));
+        marquee.toggleAttribute("data-paused", paused);
+    });
+}
+</script>
+
 <style>
 .marquee {
+    position: relative;
+
+    /*
+     * Hidden until the marquee is hovered or focused, but always reachable:
+     * focus-within reveals it for keyboard users, and touch screens (no hover)
+     * keep it visible.
+     */
+    :global(.marquee__pause) {
+        position: absolute;
+        top: var(--space-xs);
+        right: var(--space-xs);
+        z-index: 1;
+        background-color: var(--color-surface);
+        opacity: 0;
+        transition: opacity var(--transition);
+
+        :global(.marquee__play-icon),
+        &[aria-pressed="true"] :global(.marquee__pause-icon) {
+            display: none;
+        }
+
+        &[aria-pressed="true"] :global(.marquee__play-icon) {
+            display: block;
+        }
+    }
+
+    &:hover :global(.marquee__pause),
+    &:focus-within :global(.marquee__pause),
+    :global(.marquee__pause[aria-pressed="true"]) {
+        opacity: 1;
+    }
+
+    @media (hover: none) {
+        :global(.marquee__pause) {
+            opacity: 1;
+        }
+    }
+
     .marquee__definitions {
         position: absolute;
         width: 0;
@@ -80,6 +173,10 @@ const {
         @media (prefers-reduced-motion: reduce) {
             animation: none;
         }
+    }
+
+    &[data-paused] .marquee__track {
+        animation-play-state: paused;
     }
 }
 

@@ -2,6 +2,8 @@
 import type { HTMLAttributes } from "astro/types";
 
 interface Props extends HTMLAttributes<"select"> {
+    /** Accessible name. Selects have no visible label of their own. */
+    label: string;
     options: {
         value: string;
         label: string;
@@ -9,10 +11,10 @@ interface Props extends HTMLAttributes<"select"> {
     value?: string;
 }
 
-const { options, value, ...rest } = Astro.props;
+const { label, options, value, ...rest } = Astro.props;
 ---
 
-<select class="select" {...rest}>
+<select class="select" aria-label={label} {...rest}>
     {options.map((option) => (
         <option
             class="select__option"
