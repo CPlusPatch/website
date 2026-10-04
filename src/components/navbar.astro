@@ -1,0 +1,280 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import Button from "./button.astro";
+
+interface Props extends HTMLAttributes<"header"> {
+    title: string;
+    links: {
+        href: string;
+        label: string;
+        active?: boolean;
+        external?: boolean;
+    }[];
+    finalLink?: {
+        href: string;
+        label: string;
+        external?: boolean;
+    };
+}
+
+const { title, links, finalLink, ...rest } = Astro.props;
+---
+
+<header class:list={["navbar", rest.class]} {...rest}>
+    <div class="container">
+        <a class="navbar__brand" href="/">
+            <span class="navbar__brand-text">{title}</span>
+        </a>
+
+        {/*
+          * State kept through checkbox (no JS)
+          */}
+        <label class="navbar__toggle">
+            <input
+                type="checkbox"
+                class="navbar__toggle-input"
+                aria-label="Toggle navigation"
+            >
+            <Icon
+                name="lucide:menu"
+                class="navbar__toggle-icon navbar__toggle-icon--open"
+                aria-hidden="true"
+            />
+            <Icon
+                name="lucide:x"
+                class="navbar__toggle-icon navbar__toggle-icon--close"
+                aria-hidden="true"
+            />
+        </label>
+
+        <div class="navbar__menu">
+            <div class="navbar__menu-inner">
+                <nav class="navbar__nav">
+                    {links.map((link) => (
+                        <Button
+                            class:list={[
+                                "navbar__link",
+                                link.active && "navbar__link--active",
+                            ]}
+                            as="a"
+                            variant="link"
+                            href={link.href}
+                            aria-current={link.active ? "page" : undefined}
+                        >
+                            {link.label}
+                            {link.external && (
+                                <Icon
+                                    name="lucide:external-link"
+                                    aria-hidden="true"
+                                />
+                            )}
+                        </Button>
+                    ))}
+                </nav>
+
+                {finalLink && (
+                    <Button
+                        class="navbar__final-link"
+                        as="a"
+                        variant="outline"
+                        size="sm"
+                        href={finalLink.href}
+                    >
+                        {finalLink.label}
+                        {finalLink.external && (
+                            <Icon
+                                name="lucide:external-link"
+                                aria-hidden="true"
+                            />
+                        )}
+                    </Button>
+                )}
+            </div>
+        </div>
+    </div>
+</header>
+
+<style>
+.navbar {
+    --navbar-transition: 240ms ease-out;
+    width: 100%;
+    background-color: var(--color-surface);
+    border-bottom: var(--border-width) solid var(--border-color);
+
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-lg);
+        width: 100%;
+        max-width: var(--breakpoint-xl);
+        min-height: var(--header-height);
+        margin-inline: auto;
+        padding-inline: var(--space-lg);
+    }
+
+    .navbar__brand {
+        color: var(--color-text);
+        font-size: var(--font-size-lg);
+        font-weight: 700;
+        text-decoration: none;
+        transition: color var(--transition);
+
+        &:hover,
+        &:focus-visible {
+            color: var(--color-primary);
+        }
+    }
+
+    /* Desktop: the wrappers vanish so brand, nav and final link share one row */
+    .navbar__menu,
+    .navbar__menu-inner {
+        display: contents;
+    }
+
+    .navbar__toggle {
+        display: none;
+    }
+
+    .navbar__nav {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+
+        /* Rendered by Button, so it carries Button's scope, not ours */
+        :global(.navbar__link--active) {
+            text-decoration: underline;
+            text-underline-offset: 0.35em;
+        }
+    }
+
+    @container (max-width: 48rem) {
+        .container {
+            gap: 0;
+            padding-inline: var(--space-md);
+        }
+
+        .navbar__brand {
+            padding-block: var(--space-sm);
+        }
+
+        .navbar__toggle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            color: var(--color-text);
+            border: var(--border-width) solid var(--color-border-strong);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition:
+                border-color var(--transition),
+                color var(--transition);
+
+            &:hover {
+                color: var(--color-primary);
+                border-color: var(--color-primary);
+            }
+
+            &:has(.navbar__toggle-input:focus-visible) {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 2px;
+            }
+
+            .navbar__toggle-input {
+                position: absolute;
+                inset: 0;
+                margin: 0;
+                opacity: 0;
+                cursor: pointer;
+            }
+
+            .navbar__toggle-icon {
+                position: absolute;
+                width: 1.25rem;
+                height: 1.25rem;
+                transition:
+                    opacity var(--navbar-transition),
+                    rotate var(--navbar-transition);
+            }
+
+            .navbar__toggle-icon--close {
+                opacity: 0;
+                rotate: -90deg;
+            }
+        }
+
+        /*
+         * Collapsed state animates grid-template-rows 0fr -> 1fr, which is the
+         * only way to transition to an intrinsic height without JS. visibility
+         * keeps the hidden links out of the tab order once the row has closed.
+         */
+        .navbar__menu {
+            display: grid;
+            grid-template-rows: 0fr;
+            flex-basis: 100%;
+            visibility: hidden;
+            transition:
+                grid-template-rows var(--navbar-transition),
+                visibility var(--navbar-transition);
+
+            .navbar__menu-inner {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-sm);
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .navbar__nav {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+
+                :global(.navbar__link) {
+                    justify-content: flex-start;
+                    height: 2.25rem;
+                    padding-inline: var(--space-md);
+                }
+            }
+
+            /* Rendered by Button, so it carries Button's scope, not ours */
+            :global(.navbar__final-link) {
+                align-self: stretch;
+                height: 2.25rem;
+            }
+
+            /* Margin, not padding, so it collapses away with the row */
+            .navbar__menu-inner > :global(:last-child) {
+                margin-bottom: var(--space-md);
+            }
+        }
+
+        &:has(.navbar__toggle-input:checked) {
+            .navbar__menu {
+                grid-template-rows: 1fr;
+                visibility: visible;
+            }
+
+            .navbar__toggle-icon--open {
+                opacity: 0;
+                rotate: 90deg;
+            }
+
+            .navbar__toggle-icon--close {
+                opacity: 1;
+                rotate: 0deg;
+            }
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        --navbar-transition: 0s;
+    }
+}
+</style>

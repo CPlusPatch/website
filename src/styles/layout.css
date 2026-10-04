@@ -6,7 +6,7 @@
 .section {
     padding-block: var(--space-xl);
 
-    @media (max-width: 40rem) {
+    @container (max-width: 40rem) {
         padding-block: var(--space-lg);
     }
 }

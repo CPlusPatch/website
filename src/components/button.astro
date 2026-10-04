@@ -38,14 +38,13 @@ const {
 
 const isAnchor = as === "a" || (as === undefined && Boolean(rest.href));
 
-// Astro merges a spread `class` into `class:list` on its own, so `rest.class`
-// must not be repeated here or it lands in the output twice.
 const classes = [
     "button",
     lift && variant !== "link" && "lift",
     `button--${variant}`,
     `button--tone-${tone}`,
     `button--size-${size}`,
+    rest.class,
 ];
 ---
 
