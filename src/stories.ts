@@ -24,6 +24,7 @@ import Card from "./components/card.astro";
 import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
 import Logos from "./components/logos.astro";
+import Navbar from "./components/navbar.astro";
 import Select from "./components/select.astro";
 import Terminal from "./components/terminal.astro";
 import Toggle from "./components/toggle.astro";
@@ -87,6 +88,12 @@ const SELECT_OPTIONS = [
     { value: "one", label: "Option one" },
     { value: "two", label: "Option two" },
     { value: "three", label: "Option three" },
+];
+
+const NAV_LINKS = [
+    { href: "/", label: "Home", active: true },
+    { href: "/projects", label: "Projects" },
+    { href: "/blog", label: "Blog" },
 ];
 
 const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -304,6 +311,46 @@ export const groups: StoryGroup[] = [
                 { slot: `<h2>Image on the ${side}</h2>${BODY}` },
             ),
         ),
+    },
+    {
+        id: "navbar",
+        title: "Navbar",
+        description: "Reflows via auto-fit grid columns, so resize to check.",
+        min: -1,
+        stories: [
+            story("default", Navbar, { title: "Jesse", links: NAV_LINKS }),
+            story("final-link", Navbar, {
+                title: "Jesse",
+                links: NAV_LINKS,
+                finalLink: { href: "/contact", label: "Contact" },
+            }),
+            story("external", Navbar, {
+                title: "Jesse",
+                links: [
+                    ...NAV_LINKS,
+                    {
+                        href: "https://github.com/cpluspatch",
+                        label: "GitHub",
+                        external: true,
+                    },
+                ],
+                finalLink: {
+                    href: "https://example.com",
+                    label: "Elsewhere",
+                    external: true,
+                },
+            }),
+            story("no-links", Navbar, { title: "Jesse", links: [] }),
+            story("many-links", Navbar, {
+                title: "A rather long site title",
+                links: Array.from({ length: 8 }, (_, i) => ({
+                    href: `/page-${i + 1}`,
+                    label: `Page ${i + 1}`,
+                    active: i === 0,
+                })),
+                finalLink: { href: "/contact", label: "Contact" },
+            }),
+        ],
     },
     {
         id: "footer",
