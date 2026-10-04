@@ -1,0 +1,27 @@
+<div class="fx-scanlines" aria-hidden="true"></div>
+
+<style is:global>
+html[data-scanlines] .fx-scanlines,
+html:has([data-scanlines-toggle] > input:checked) .fx-scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: var(--fx-z, 60);
+    pointer-events: none;
+    opacity: var(--fx-opacity, 1);
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            var(--scan-color, var(--color-grid)) 0 1px,
+            transparent 1px var(--scan-pitch, 3px)
+        ),
+        radial-gradient(
+            ellipse at center,
+            transparent var(--vignette-start, 55%),
+            var(
+                    --vignette-color,
+                    light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.5))
+                )
+                100%
+        );
+}
+</style>

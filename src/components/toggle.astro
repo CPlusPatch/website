@@ -1,0 +1,113 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * Simple toggle switch component using the native checkbox input, styled to look like a switch
+ */
+
+interface Props extends HTMLAttributes<"label"> {
+    checked?: boolean;
+    disabled?: boolean;
+    name?: string;
+    value?: string;
+}
+const { checked = false, disabled = false, name, value, ...rest } = Astro.props;
+---
+
+{/* biome-ignore lint/a11y/noLabelWithoutControl: Incorrectly flagged */}
+<label class:list={["toggle", rest.class]} {...rest}>
+    <input
+        type="checkbox"
+        class="toggle__input"
+        checked={checked}
+        disabled={disabled}
+        name={name}
+        value={value}
+    >
+    <span class="toggle__slider" aria-hidden="true"></span>
+</label>
+
+<style>
+.toggle {
+    --toggle-width: 2.75rem;
+    --toggle-height: 1.5rem;
+    --toggle-knob: calc(var(--toggle-height) - 0.375rem);
+    position: relative;
+    display: inline-block;
+    user-select: none;
+    cursor: pointer;
+
+    .toggle__input {
+        position: absolute;
+        inset: 0;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .toggle__slider {
+        position: relative;
+        display: block;
+        width: var(--toggle-width);
+        height: var(--toggle-height);
+        border: var(--border-width) solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-bg-alt);
+        transition:
+            background-color var(--transition),
+            border-color var(--transition),
+            box-shadow var(--transition);
+
+        &::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0.1875rem;
+            width: var(--toggle-knob);
+            height: var(--toggle-knob);
+            border-radius: var(--radius);
+            background: var(--color-primary);
+            box-shadow:
+                0 0 0 1px rgb(0 0 0 / 0.04),
+                0 1px 0 rgb(0 0 0 / 0.06);
+            transform: translateY(-50%);
+            transition:
+                transform var(--transition),
+                background-color var(--transition);
+        }
+    }
+
+    .toggle__input:hover + .toggle__slider {
+        border-color: var(--color-primary);
+    }
+
+    .toggle__input:focus-visible + .toggle__slider {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+
+    .toggle__input:checked + .toggle__slider {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+
+        &::before {
+            background: var(--color-on-accent);
+            transform: translate(
+                calc(var(--toggle-width) - var(--toggle-height)),
+                -50%
+            );
+        }
+    }
+
+    .toggle__input:disabled + .toggle__slider,
+    .toggle__input[aria-disabled="true"] + .toggle__slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .toggle__input:checked:hover + .toggle__slider {
+        background: var(--color-primary-hover);
+        border-color: var(--color-primary-hover);
+    }
+}
+</style>

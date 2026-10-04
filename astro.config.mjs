@@ -1,6 +1,6 @@
 // @ts-check
 
-import vue from "@astrojs/vue";
+/* import vue from "@astrojs/vue"; */
 import { defineConfig, fontProviders } from "astro/config";
 import icon from "astro-icon";
 import browserslist from "browserslist";
@@ -8,7 +8,7 @@ import { browserslistToTargets } from "lightningcss";
 
 // https://astro.build/config
 export default defineConfig({
-    integrations: [vue(), icon()],
+    integrations: [/* vue() */ icon()],
     fonts: [
         {
             provider: fontProviders.fontsource(),

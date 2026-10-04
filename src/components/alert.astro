@@ -38,6 +38,7 @@ const prefix = label[variant];
     ]}
     role={live === "off" ? undefined : "status"}
     aria-live={live === "off" ? undefined : live}
+    data-snap
     {...rest}
 >
     {icon && <Icon name={icon} class="icon" aria-hidden="true" />}

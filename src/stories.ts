@@ -25,6 +25,7 @@ import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
 import Logos from "./components/logos.astro";
 import Terminal from "./components/terminal.astro";
+import Toggle from "./components/toggle.astro";
 import { languages } from "./data/experience.ts";
 import { friends } from "./data/friends.ts";
 import jessew from "./images/88x31s/jessew.png";
@@ -84,6 +85,22 @@ const BODY =
 const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export const groups: StoryGroup[] = [
+    {
+        id: "effects",
+        title: "Effects",
+        min: 10,
+        stories: [
+            story("crosshair", Toggle, {
+                "data-crosshair-toggle": true,
+            }),
+            story("scanlines", Toggle, {
+                "data-scanlines-toggle": true,
+            }),
+            story("lift-shadow", Toggle, {
+                "data-lift-shadow-toggle": true,
+            }),
+        ],
+    },
     {
         id: "button-matrix",
         title: "Buttons — variant × tone",
@@ -156,6 +173,20 @@ export const groups: StoryGroup[] = [
                     { icon: "lucide:badge-check", slot: title(size) },
                 ),
             ),
+        ],
+    },
+    {
+        id: "toggle",
+        title: "Toggles",
+        min: 10,
+        stories: [
+            story("default", Toggle, {}),
+            story("checked", Toggle, { checked: true }),
+            story("disabled", Toggle, { disabled: true }),
+            story("checked-disabled", Toggle, {
+                checked: true,
+                disabled: true,
+            }),
         ],
     },
     {
@@ -292,10 +323,14 @@ export const groups: StoryGroup[] = [
                 ],
                 eightyEightThirtyOne: {
                     image: jessew,
-                    title: "Hotlinking allowed, alt text included for accessibility.",
                     alt: "A cool badge with a cool description.",
                 },
-                friends,
+                friends: friends.map((friend) => ({
+                    name: friend.name,
+                    url: friend.href,
+                    image: friend.image,
+                    alt: `A small icon representing ${friend.name}'s website`,
+                })),
             }),
         ],
     },
@@ -330,7 +365,7 @@ export const groups: StoryGroup[] = [
                     },
                 ],
             }),
-            story("empty", Terminal, { data: {} }),
+            story("empty", Terminal, { entries: [] }),
             story("interactive", Terminal, {
                 interactive: true,
             }),
