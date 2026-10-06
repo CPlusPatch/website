@@ -3,9 +3,13 @@ import type { HTMLAttributes } from "astro/types";
 
 /**
  * A switch built on a native checkbox, so it works and submits without JS.
+ * Visible text, if any, goes in the default slot and sits after the switch.
  */
 interface Props extends HTMLAttributes<"label"> {
-    /** Accessible name. The switch has no visible text of its own. */
+    /**
+     * Accessible name. Without slot text it is the only name the switch has;
+     * with slot text, keep the two the same.
+     */
     label: string;
     checked?: boolean;
     disabled?: boolean;
@@ -21,9 +25,11 @@ const {
     class: className,
     ...rest
 } = Astro.props;
+
+const hasText = Astro.slots.has("default");
 ---
 
-<label class:list={["toggle", className]} {...rest}>
+<label class:list={["toggle", hasText && "toggle--text", className]} {...rest}>
     {/* A range, because Biome reports this on the `role` line, not the element. */}
     {/* biome-ignore-start lint/a11y/useAriaPropsForRole: A native checkbox exposes its own checked state, so the switch role needs no aria-checked */}
     <input
@@ -38,6 +44,12 @@ const {
     >
     {/* biome-ignore-end lint/a11y/useAriaPropsForRole: see above */}
     <span class="toggle__slider" aria-hidden="true"></span>
+    {/* Hidden from assistive tech: the input's aria-label already says it. */}
+    {hasText && (
+        <span class="toggle__text" aria-hidden="true">
+            <slot />
+        </span>
+    )}
 </label>
 
 <style>
@@ -49,6 +61,17 @@ const {
     display: inline-block;
     user-select: none;
     cursor: pointer;
+
+    /* The input covers the whole label, so the text is clickable too. */
+    &.toggle--text {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .toggle__text {
+        font-size: var(--font-size-sm);
+    }
 
     .toggle__input {
         position: absolute;

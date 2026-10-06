@@ -128,29 +128,6 @@ const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export const groups: StoryGroup[] = [
     {
-        id: "effects",
-        title: "Effects",
-        min: 10,
-        stories: [
-            story("crosshair", Toggle, {
-                label: "Crosshair",
-                "data-crosshair-toggle": true,
-            }),
-            story("scanlines", Toggle, {
-                label: "Scanlines",
-                "data-scanlines-toggle": true,
-            }),
-            story("lift-shadow", Toggle, {
-                label: "Lift shadow",
-                "data-lift-shadow-toggle": true,
-            }),
-            story("theme", Toggle, {
-                label: "Invert theme",
-                "data-theme-toggle": true,
-            }),
-        ],
-    },
-    {
         id: "button-matrix",
         title: "Buttons — variant × tone",
         description: "Fill style and colour are independent axes.",
@@ -323,6 +300,12 @@ export const groups: StoryGroup[] = [
                 checked: true,
                 disabled: true,
             }),
+            story(
+                "with-text",
+                Toggle,
+                { label: "Example" },
+                { slot: "Example" },
+            ),
         ],
     },
     {
