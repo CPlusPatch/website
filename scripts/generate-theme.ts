@@ -20,9 +20,6 @@
  * explanatory comments that a generator would trample.
  */
 
-// developer note: i didn't write this and have no fucking idea how it works,
-// but it produces decent colours so i'm using it
-
 // ---------------------------------------------------------------------------
 // CONFIG -- this is the part you edit
 // ---------------------------------------------------------------------------

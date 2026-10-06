@@ -14,8 +14,9 @@ export type ButtonTone =
 export type ButtonSize = "sm" | "default" | "lg" | "icon";
 
 /**
- * Renders a <button> by default and an <a> when given an href, so the `link`
- * variant can be an actual link instead of a button that looks like one.
+ * Renders an <a> when `as="a"` or an `href` is given, otherwise a <button>.
+ * Choose the element by what the control does (navigate vs. act); `variant`
+ * only changes how it looks, so a `link`-variant button is still a <button>.
  */
 type Props = Omit<HTMLAttributes<"button">, "type"> &
     Omit<HTMLAttributes<"a">, "type"> & {

@@ -80,8 +80,8 @@ body {
     position: absolute;
     left: var(--space-md);
     top: var(--space-md);
-    /* Above the fx overlays (60, 100), so the scanlines never dim it */
-    z-index: 200;
+    /* Above the fx overlays, so the scanlines never dim it */
+    z-index: var(--z-skip-link);
     padding: var(--space-sm) var(--space-md);
     color: var(--color-on-accent);
     background-color: var(--color-primary);

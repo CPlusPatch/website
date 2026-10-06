@@ -7,10 +7,12 @@
  */
 
 /*
- * The offset-block hover lift. Driven entirely by --shadow-color, so a variant
- * recolours the whole effect with a single custom property:
+ * The offset-block hover lift. Off by default: without the effect enabled
+ * (html[data-lift-shadow], or the gallery's lift toggle) .lift only sets up
+ * the transition.
  *
- *   .alert--warning { --shadow-color: var(--color-warning-accent); }
+ * Driven entirely by --shadow-color, so one custom property recolours the
+ * whole effect. .panel sets it from the element's tone.
  *
  * Deliberately does not touch border-color -- consumers own their border, and
  * .panel below pairs the two.
