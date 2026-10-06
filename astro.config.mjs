@@ -7,6 +7,12 @@ import browserslist from "browserslist";
 import { browserslistToTargets } from "lightningcss";
 
 export default defineConfig({
+    // Alpha deployment. Used for canonical and og:url links.
+    site: "https://test.cpluspatch.com",
+    // Until the content pages exist, the site is a UI toolkit showcase.
+    redirects: {
+        "/": "/gallery/",
+    },
     integrations: [/* vue() */ icon()],
     fonts: [
         {
