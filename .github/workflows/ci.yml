@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: deno install --frozen
 
-      # Biome (format and lint) then astro check (types)
+      # Biome (format and lint), astro check (types), then theme drift check
       - name: Check
         run: deno run check
 

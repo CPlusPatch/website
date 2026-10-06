@@ -2,12 +2,12 @@
  * The component matrix.
  *
  * This file is the single list of every component state worth looking at.
- * /gallery renders it as a gallery; automated tests can just look at it, so
- * adding a state here is the only step needed to get it covered everywhere.
+ * /gallery renders it; keeping it as plain data means anything else that
+ * needs the matrix (visual or a11y tests, say) can import it directly.
  *
  * This is simplistic on purpose to avoid the complexity of a full storybook.
- * It does not attempt to express every possible prop combination, only the ones that
- * are likely to be useful to a developer.
+ * It does not attempt to express every possible prop combination, only the
+ * ones that are likely to be useful to a developer.
  *
  * Composites nest through `children` (the default slot) and `slots` (named
  * slots), each holding more stories -- see the carousel.

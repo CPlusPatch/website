@@ -13,7 +13,7 @@ interface Props {
 }
 
 const { story } = Astro.props;
-// Dynamic tag, so every story renders the same way.
+// Astro only renders a capitalised binding as a dynamic component.
 const Component = story.component;
 ---
 

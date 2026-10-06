@@ -2,10 +2,10 @@
 import { Icon } from "astro-icon/components";
 import Button from "./button.astro";
 
-// marquee.astro
 /**
- * Seamless marquee. Slot content is rendered twice (the second copy is
- * aria-hidden/inert); both copies translate by their own width + gap.
+ * Seamless marquee. The track holds three copies of the slot (the last two
+ * aria-hidden) and slides left by exactly one copy's width + gap per loop,
+ * so the jump back to the start is invisible.
  */
 
 interface Props {
@@ -61,10 +61,15 @@ const {
             />
         </Button>
     )}
+    {/*
+     * astro-icon emits an icon's <symbol> only on its first render; every
+     * later use is a bare <use href="#id">. This hidden copy takes that first
+     * render, so the symbols live outside the animated track.
+     */}
     <div class="marquee__definitions" aria-hidden="true" inert><slot /></div>
     <div class="marquee__track">
         <div class="marquee__group"><slot /></div>
-        {/* Duplicate for a seamless loop */}
+        {/* Two more copies, so the track never runs out while scrolling */}
         <div class="marquee__group" aria-hidden="true" tabindex="-1">
             <slot />
         </div>

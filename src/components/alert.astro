@@ -16,8 +16,9 @@ interface Props extends HTMLAttributes<"div"> {
 
 const { icon, variant = "default", live = "off", ...rest } = Astro.props;
 
-// Otherwise, the only cue that an alert is a warning rather than a success
-// is its colour -- which is invisible to screen readers.
+// Visually hidden prefix naming the variant. Without it, the only cue that an
+// alert is a warning rather than a success is its colour, which screen
+// readers can't convey.
 const label: Record<AlertVariant, string | null> = {
     default: null,
     success: "Success:",
