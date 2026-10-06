@@ -28,6 +28,7 @@ import Carousel from "./components/carousel.astro";
 import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
 import Logos from "./components/logos.astro";
+import MediaCard from "./components/media-card.astro";
 import Navbar from "./components/navbar.astro";
 import Quote from "./components/quote.astro";
 import Select from "./components/select.astro";
@@ -100,6 +101,20 @@ const NAV_LINKS = [
     { href: "/", label: "Home", active: true },
     { href: "/projects", label: "Projects" },
     { href: "/blog", label: "Blog" },
+];
+
+const MEDIA_LINKS = [
+    {
+        href: "https://github.com/cpluspatch",
+        icon: "lucide:github",
+        label: "Source",
+    },
+    { href: "https://example.com", icon: "lucide:globe", label: "Website" },
+    {
+        href: "https://example.com/docs",
+        icon: "lucide:book-open",
+        label: "Docs",
+    },
 ];
 
 const SLIDES = [
@@ -365,6 +380,48 @@ export const groups: StoryGroup[] = [
                 {
                     slot: "<h3>No lift</h3><p>Hover does nothing on this one.</p>",
                 },
+            ),
+        ],
+    },
+    {
+        id: "media-card",
+        title: "Media cards",
+        min: 18,
+        stories: [
+            story(
+                "default",
+                MediaCard,
+                {
+                    title: "Diary of a Wimpy Kid",
+                    header: { src: greg, alt: "Greg Heffley" },
+                    links: MEDIA_LINKS,
+                },
+                { slot: BODY },
+            ),
+            story(
+                "no-header",
+                MediaCard,
+                { title: "No header", links: MEDIA_LINKS },
+                { slot: BODY },
+            ),
+            story(
+                "no-links",
+                MediaCard,
+                {
+                    title: "No links",
+                    header: { src: greg, alt: "Greg Heffley" },
+                },
+                { slot: BODY },
+            ),
+            story(
+                "secondary",
+                MediaCard,
+                {
+                    title: "Secondary tone",
+                    tone: "secondary",
+                    links: MEDIA_LINKS,
+                },
+                { slot: "<p>Tone and lift pass straight through to Card.</p>" },
             ),
         ],
     },
