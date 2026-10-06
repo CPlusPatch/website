@@ -29,6 +29,7 @@ import Footer from "./components/footer.astro";
 import SideHero from "./components/layout/side-hero.astro";
 import Logos from "./components/logos.astro";
 import Navbar from "./components/navbar.astro";
+import Quote from "./components/quote.astro";
 import Select from "./components/select.astro";
 import Terminal from "./components/terminal.astro";
 import Toggle from "./components/toggle.astro";
@@ -277,7 +278,7 @@ export const groups: StoryGroup[] = [
         id: "avatar",
         title: "Avatars",
         description: "Initials stand in when there is no image.",
-        min: 8,
+        min: 10,
         stories: [
             ...SIZES.map((size) =>
                 story(size, Avatar, { src: greg, alt: "Greg Heffley", size }),
@@ -407,6 +408,46 @@ export const groups: StoryGroup[] = [
                 {
                     slot: "<h3>Destructive alert</h3><p>This action could have serious consequences.</p>",
                 },
+            ),
+        ],
+    },
+    {
+        id: "quote",
+        title: "Quotes",
+        min: 24,
+        stories: [
+            story(
+                "default",
+                Quote,
+                {
+                    author: {
+                        name: "Greg Heffley",
+                        title: "Author of a diary, not a journal",
+                        avatar: greg,
+                    },
+                },
+                { slot: "<p>It's not a diary, it's a journal.</p>" },
+            ),
+            story(
+                "no-avatar",
+                Quote,
+                { author: { name: "Greg Heffley", title: "Middle schooler" } },
+                { slot: "<p>A quote with no avatar.</p>" },
+            ),
+            story(
+                "name-only",
+                Quote,
+                { author: { name: "Greg Heffley" } },
+                { slot: "<p>A quote with just a name.</p>" },
+            ),
+            story(
+                "long",
+                Quote,
+                {
+                    author: { name: "Greg Heffley", avatar: greg },
+                    cite: "https://example.com",
+                },
+                { slot: `${BODY}${BODY}` },
             ),
         ],
     },
