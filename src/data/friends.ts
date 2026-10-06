@@ -12,6 +12,7 @@ import nhat from "../images/88x31s/nhat.jpg";
 import sophari from "../images/88x31s/sophari.gif";
 import virkunnen from "../images/88x31s/virkunnen.png";
 import yassie from "../images/88x31s/yassie.gif";
+import ginger from "../images/88x31s/ginger.png";
 
 export const friends: {
     name: string;
@@ -87,5 +88,10 @@ export const friends: {
         name: "Abigail",
         href: "https://thegail.site",
         image: gail,
+    },
+    {
+        name: "Ginger",
+        href: "https://gingershaped.computer",
+        image: ginger,
     },
 ];
