@@ -1,24 +1,23 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-
-export type CardTone =
-    | "primary"
-    | "secondary"
-    | "destructive"
-    | "warning"
-    | "success";
+import type { Tone } from "../lib/tone";
 
 interface Props extends HTMLAttributes<"div"> {
-    tone?: CardTone;
+    tone?: Tone;
     /** Lift effect on hover. */
     shadow?: boolean;
 }
 
-const { tone = "primary", shadow = true, ...rest } = Astro.props;
+const {
+    tone = "primary",
+    shadow = true,
+    class: className,
+    ...rest
+} = Astro.props;
 ---
 
 <div
-    class:list={["card", "panel", shadow && "lift", `tone-${tone}`, rest.class]}
+    class:list={["card", "panel", shadow && "lift", `tone-${tone}`, className]}
     data-snap
     {...rest}
 >

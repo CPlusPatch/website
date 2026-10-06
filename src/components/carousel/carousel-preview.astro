@@ -3,7 +3,7 @@ import type { HTMLAttributes } from "astro/types";
 
 type Props = HTMLAttributes<"button">;
 
-const { ...rest } = Astro.props;
+const { class: className, ...rest } = Astro.props;
 ---
 
 {/*
@@ -12,7 +12,11 @@ const { ...rest } = Astro.props;
  * therefore be phrasing content -- short text, an image, a heading -- not a
  * nested interactive or block component.
  */}
-<button type="button" class="carousel-preview panel lift" {...rest}>
+<button
+    type="button"
+    class:list={["carousel-preview panel lift", className]}
+    {...rest}
+>
     <slot />
 </button>
 

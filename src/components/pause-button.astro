@@ -1,0 +1,55 @@
+---
+import { Icon } from "astro-icon/components";
+import Button from "./button.astro";
+
+/**
+ * Pause/play control for moving content (WCAG 2.2.2). On click it toggles
+ * `data-paused` on the closest ancestor matching `target`; the animated
+ * component styles its own paused state from that attribute.
+ */
+interface Props {
+    /** Selector for the ancestor to pause, e.g. ".marquee". */
+    target: string;
+    class?: string;
+}
+
+const { target, class: className } = Astro.props;
+---
+
+<Button
+    class:list={["pause-button", className]}
+    size="icon"
+    variant="outline"
+    tone="neutral"
+    lift={false}
+    data-pause-target={target}
+    aria-pressed="false"
+    aria-label="Pause scrolling"
+>
+    <Icon name="lucide:pause" class="pause-button__pause" aria-hidden="true" />
+    <Icon name="lucide:play" class="pause-button__play" aria-hidden="true" />
+</Button>
+
+<script>
+for (const button of document.querySelectorAll<HTMLElement>(
+    "[data-pause-target]",
+)) {
+    const target = button.closest(button.dataset.pauseTarget ?? "");
+    button.addEventListener("click", () => {
+        const paused = button.getAttribute("aria-pressed") !== "true";
+        button.setAttribute("aria-pressed", String(paused));
+        target?.toggleAttribute("data-paused", paused);
+    });
+}
+</script>
+
+<style is:global>
+.pause-button__play,
+.pause-button[aria-pressed="true"] .pause-button__pause {
+    display: none;
+}
+
+.pause-button[aria-pressed="true"] .pause-button__play {
+    display: block;
+}
+</style>

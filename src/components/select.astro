@@ -11,10 +11,10 @@ interface Props extends HTMLAttributes<"select"> {
     value?: string;
 }
 
-const { label, options, value, ...rest } = Astro.props;
+const { label, options, value, class: className, ...rest } = Astro.props;
 ---
 
-<select class="select" aria-label={label} {...rest}>
+<select class:list={["select", className]} aria-label={label} {...rest}>
     {options.map((option) => (
         <option
             class="select__option"

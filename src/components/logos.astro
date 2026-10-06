@@ -1,8 +1,8 @@
 ---
 import { Icon } from "astro-icon/components";
-import Button from "./button.astro";
 import Card from "./card.astro";
 import Marquee from "./marquee.astro";
+import PauseButton from "./pause-button.astro";
 
 /**
  * Logo marquee. Items are distributed round-robin across rows,
@@ -30,26 +30,8 @@ const lanes = Array.from({ length: rowCount }, (_, r) =>
 
 <div class="logos">
     <div class="logos__controls">
-        <Button
-            size="icon"
-            variant="outline"
-            tone="neutral"
-            lift={false}
-            data-logos-pause
-            aria-pressed="false"
-            aria-label="Pause scrolling"
-        >
-            <Icon
-                name="lucide:pause"
-                class="logos__pause-icon"
-                aria-hidden="true"
-            />
-            <Icon
-                name="lucide:play"
-                class="logos__play-icon"
-                aria-hidden="true"
-            />
-        </Button>
+        {/* One control for every lane */}
+        <PauseButton target=".logos" />
     </div>
     <div class="logo-marquee">
         {lanes.map((lane, r) => (
@@ -72,21 +54,6 @@ const lanes = Array.from({ length: rowCount }, (_, r) =>
     </div>
 </div>
 
-<script>
-// One pause control for every lane (WCAG 2.2.2). Marquee honours data-paused.
-for (const pause of document.querySelectorAll<HTMLElement>(
-    "[data-logos-pause]",
-)) {
-    const root = pause.closest(".logos");
-    pause.addEventListener("click", () => {
-        const paused = pause.getAttribute("aria-pressed") !== "true";
-        pause.setAttribute("aria-pressed", String(paused));
-        for (const lane of root?.querySelectorAll(".marquee") ?? [])
-            lane.toggleAttribute("data-paused", paused);
-    });
-}
-</script>
-
 <style>
 .logos {
     display: flex;
@@ -98,15 +65,6 @@ for (const pause of document.querySelectorAll<HTMLElement>(
     .logos__controls {
         display: flex;
         justify-content: flex-end;
-
-        :global(.logos__play-icon),
-        :global([aria-pressed="true"] .logos__pause-icon) {
-            display: none;
-        }
-
-        :global([aria-pressed="true"] .logos__play-icon) {
-            display: block;
-        }
     }
 
     .logo-marquee {

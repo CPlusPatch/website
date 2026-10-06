@@ -225,11 +225,14 @@ function role(tier: keyof typeof TIERS, hue: number, scheme: Scheme): string {
     return hex(l, Math.min(CHROMA_CAP, ratio * maxChroma(l, hue)), hue);
 }
 
-const pair = (light: string, dark: string) => `light-dark(${light}, ${dark})`;
-const bySchemes = (fn: (s: Scheme) => string) => pair(fn("light"), fn("dark"));
+type Pair = Record<Scheme, string>;
 
-const tokens = new Map<string, string>();
-const set = (name: string, value: string) => tokens.set(name, value);
+const pair = (light: string, dark: string): Pair => ({ light, dark });
+const bySchemes = (fn: (s: Scheme) => string) => pair(fn("light"), fn("dark"));
+const toCss = ({ light, dark }: Pair) => `light-dark(${light}, ${dark})`;
+
+const tokens = new Map<string, Pair>();
+const set = (name: string, value: Pair) => tokens.set(name, value);
 
 for (const [name, spec] of Object.entries(NEUTRALS)) {
     set(
@@ -273,7 +276,7 @@ for (const [name, hue] of Object.entries(HUES)) {
 
 // One foreground for every filled surface -- valid precisely because the role
 // tier shares a lightness. If you break that invariant, this breaks too.
-set("--color-on-accent", pair(bgOf("light"), bgOf("dark")));
+set("--color-on-accent", bySchemes(bgOf));
 
 for (const [name, hue] of Object.entries(HUES)) {
     set(
@@ -291,10 +294,9 @@ const THEME = new URL("../src/styles/theme.css", import.meta.url);
 function audit(): string[] {
     const lines: string[] = [];
     const resolve = (name: string, s: Scheme) => {
-        const v = tokens.get(name) as string;
-        const m = v.match(/light-dark\((.+), (.+)\)/);
-        if (!m) throw new Error(`${name} is not a light-dark() pair`);
-        return s === "light" ? m[1] : m[2];
+        const value = tokens.get(name);
+        if (!value) throw new Error(`${name} was never generated`);
+        return value[s];
     };
     for (const s of SCHEMES) {
         const bg = resolve("--color-bg", s);
@@ -333,11 +335,12 @@ function audit(): string[] {
     return lines;
 }
 
-const block = [...tokens].map(([k, v]) => `\t${k}: ${v};`).join("\n");
+const lines = [...tokens].map(([name, value]) => [name, toCss(value)]);
+const block = lines.map(([k, v]) => `\t${k}: ${v};`).join("\n");
 
 if (Deno.args.includes("--check")) {
     const css = await Deno.readTextFile(THEME);
-    const drift = [...tokens].filter(([name, value]) => {
+    const drift = lines.filter(([name, value]) => {
         const m = css.match(new RegExp(`^\\s*${name}:\\s*(.+);`, "m"));
         return !m || m[1].trim() !== value;
     });

@@ -16,23 +16,16 @@ interface Props extends HTMLAttributes<"div"> {
     };
 }
 
-const { side = "right", image, ...rest } = Astro.props;
+const { side = "right", image, class: className, ...rest } = Astro.props;
 ---
 
-<div class:list={["side-hero", rest.class]} {...rest}>
-    {side === "right" && (
-        <div class="side-hero__content">
-            <slot />
-        </div>
-    )}
+<div class:list={["side-hero", `side-hero--${side}`, className]} {...rest}>
+    <div class="side-hero__content">
+        <slot />
+    </div>
     <div class="side-hero__media">
         <Image src={image.url} alt={image.alt ?? ""} />
     </div>
-    {side === "left" && (
-        <div class="side-hero__content">
-            <slot />
-        </div>
-    )}
 </div>
 
 <style>
@@ -60,6 +53,11 @@ const { side = "right", image, ...rest } = Astro.props;
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    /* Also puts the image first when the columns stack. */
+    &.side-hero--left .side-hero__media {
+        order: -1;
     }
 }
 </style>

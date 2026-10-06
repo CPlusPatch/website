@@ -1,6 +1,5 @@
 ---
-import { Icon } from "astro-icon/components";
-import Button from "./button.astro";
+import PauseButton from "./pause-button.astro";
 
 /**
  * Seamless marquee. The track holds three copies of the slot (the last two
@@ -17,7 +16,7 @@ interface Props {
     gap?: string;
     /**
      * Render a pause button. Turn off when a parent supplies one control for
-     * several marquees; it then sets `data-paused` on each `.marquee`.
+     * several marquees: a `data-paused` on any ancestor pauses them all.
      */
     controls?: boolean;
     class?: string;
@@ -37,29 +36,7 @@ const {
     data-reverse={reverse ? "" : undefined}
     style={`--duration:${duration}s; --gap:${gap}`}
 >
-    {controls && (
-        <Button
-            class="marquee__pause"
-            size="icon"
-            variant="outline"
-            tone="neutral"
-            lift={false}
-            data-marquee-pause
-            aria-pressed="false"
-            aria-label="Pause scrolling"
-        >
-            <Icon
-                name="lucide:pause"
-                class="marquee__pause-icon"
-                aria-hidden="true"
-            />
-            <Icon
-                name="lucide:play"
-                class="marquee__play-icon"
-                aria-hidden="true"
-            />
-        </Button>
-    )}
+    {controls && <PauseButton class="marquee__pause" target=".marquee" />}
     {/*
      * astro-icon emits an icon's <symbol> only on its first render; every
      * later use is a bare <use href="#id">. This hidden copy takes that first
@@ -79,25 +56,13 @@ const {
 </div>
 
 <script>
-// WCAG 2.2.2: anything that moves for more than five seconds needs a pause
-// control. The duplicate groups are aria-hidden but deliberately not inert
-// (inert would stop them reacting to hover), so take any focusable content
-// inside them out of the tab order instead.
-for (const marquee of document.querySelectorAll<HTMLElement>(".marquee")) {
-    for (const el of marquee.querySelectorAll<HTMLElement>(
-        '.marquee__group[aria-hidden="true"] :is(a[href], button, input, select, textarea, summary, [tabindex])',
-    )) {
-        el.tabIndex = -1;
-    }
-
-    const pause = marquee.querySelector<HTMLButtonElement>(
-        "[data-marquee-pause]",
-    );
-    pause?.addEventListener("click", () => {
-        const paused = pause.getAttribute("aria-pressed") !== "true";
-        pause.setAttribute("aria-pressed", String(paused));
-        marquee.toggleAttribute("data-paused", paused);
-    });
+// The duplicate groups are aria-hidden but deliberately not inert (inert
+// would stop them reacting to hover), so take any focusable content inside
+// them out of the tab order instead.
+for (const el of document.querySelectorAll<HTMLElement>(
+    '.marquee__group[aria-hidden="true"] :is(a[href], button, input, select, textarea, summary, [tabindex])',
+)) {
+    el.tabIndex = -1;
 }
 </script>
 
@@ -118,15 +83,6 @@ for (const marquee of document.querySelectorAll<HTMLElement>(".marquee")) {
         background-color: var(--color-surface);
         opacity: 0;
         transition: opacity var(--transition);
-
-        :global(.marquee__play-icon),
-        &[aria-pressed="true"] :global(.marquee__pause-icon) {
-            display: none;
-        }
-
-        &[aria-pressed="true"] :global(.marquee__play-icon) {
-            display: block;
-        }
     }
 
     &:hover :global(.marquee__pause),
@@ -178,10 +134,16 @@ for (const marquee of document.querySelectorAll<HTMLElement>(".marquee")) {
             animation: none;
         }
     }
+}
 
-    &[data-paused] .marquee__track {
-        animation-play-state: paused;
-    }
+/*
+ * Paused by a PauseButton on the marquee itself, or on an ancestor (Logos
+ * pauses every lane at once). Kept after the [data-reverse] rule, which has
+ * equal specificity and would otherwise reset the play state.
+ */
+.marquee[data-paused] .marquee__track,
+:global([data-paused]) .marquee .marquee__track {
+    animation-play-state: paused;
 }
 
 @keyframes marquee-scroll {

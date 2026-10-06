@@ -3,10 +3,10 @@ import type { HTMLAttributes } from "astro/types";
 
 type Props = HTMLAttributes<"div">;
 
-const { ...rest } = Astro.props;
+const { class: className, ...rest } = Astro.props;
 ---
 
-<div class="carousel-item" {...rest}>
+<div class:list={["carousel-item", className]} {...rest}>
     <slot />
 </div>
 
