@@ -79,13 +79,11 @@
     --line-height: var(--leading-body);
 
     /* Spacing scale */
-    --space-2xs: 0.125rem;
     --space-xs: 0.25rem;
     --space-sm: 0.5rem;
     --space-md: 1rem;
     --space-md-lg: 1.5rem;
     --space-lg: 2rem;
-    --space-lg-xl: 3rem;
     --space-xl: 4rem;
 
     /*
@@ -122,11 +120,7 @@
     --shadow-color: var(--color-primary-accent);
     --transition: 120ms ease-out;
 
-    --breakpoint-sm: 40rem;
-    --breakpoint-md: 48rem;
-    --breakpoint-lg: 64rem;
     --breakpoint-xl: 80rem;
-    --breakpoint-2xl: 96rem;
 }
 
 /*

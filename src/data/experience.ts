@@ -6,7 +6,7 @@ export const languages: {
         name: "TypeScript",
         logo: "logos:typescript-icon",
     },
-    // has no logos
+    // Hidden until the `logos` icon set has a correct NixOS logo.
     /* {
         name: "NixOS",
         logo: "logos:nixos",
@@ -111,7 +111,7 @@ export const languages: {
         name: "Raspberry Pi",
         logo: "logos:raspberry-pi",
     },
-    // has no icon-sized logo
+    // Hidden until the `logos` icon set has a correct jQuery logo.
     /* {
         name: "JQuery",
         logo: "logos:jquery",
