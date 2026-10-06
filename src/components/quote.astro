@@ -1,0 +1,80 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Avatar from "./avatar.astro";
+
+/**
+ * A pull quote with its attribution. The quote goes in the default slot.
+ *
+ * The root is a <figure> rather than the <blockquote> itself, because
+ * attribution is not part of the quoted text and belongs in a <figcaption>
+ * beside it.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    author: {
+        name: string;
+        /** Role, affiliation, or anything else shown under the name. */
+        title?: string;
+        avatar?: ImageMetadata;
+    };
+    /** URL of the quote's source, for the blockquote's `cite` attribute. */
+    cite?: string;
+}
+
+const { author, cite, class: className, ...rest } = Astro.props;
+---
+
+<figure class:list={["quote", "panel", className]} data-snap {...rest}>
+    <blockquote class="quote__body" cite={cite}>
+        <slot />
+    </blockquote>
+    <figcaption class="quote__author">
+        {/* The name is right beside it, so the avatar would only repeat it. */}
+        {author.avatar && (
+            <Avatar src={author.avatar} alt={author.name} aria-hidden="true" />
+        )}
+        <span class="quote__byline">
+            <span class="quote__name">{author.name}</span>
+            {author.title && <span class="quote__title">{author.title}</span>}
+        </span>
+    </figcaption>
+</figure>
+
+<style>
+.quote {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+    margin: 0;
+    padding: var(--space-md);
+
+    .quote__body {
+        margin: 0;
+    }
+
+    .quote__author {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        min-width: 0;
+        padding-top: var(--space-md);
+        border-top: var(--border-width) solid var(--border-color);
+
+        .quote__byline {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            line-height: var(--leading-snug);
+
+            .quote__name {
+                font-weight: 600;
+            }
+
+            .quote__title {
+                font-size: var(--font-size-sm);
+                color: var(--color-text-muted);
+            }
+        }
+    }
+}
+</style>
