@@ -58,7 +58,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
         {/* No og:image yet, so the small card; use summary_large_image once one exists. */}
         <meta name="twitter:card" content="summary">
 
-        <Font cssVariable="--font-inter" />
+        {/*
+         * Body text font, so fetch it with the HTML instead of after the CSS.
+         * Latin only: the latin-ext file is larger and rarely needed.
+         */}
+        <Font cssVariable="--font-inter" preload={[{ subset: "latin" }]} />
         <Font cssVariable="--font-jetbrains-mono" />
         {/*
          * Ocean theme fonts. Only @font-face rules, with no preload: browsers

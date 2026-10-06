@@ -24,7 +24,13 @@ const { side = "right", image, class: className, ...rest } = Astro.props;
         <slot />
     </div>
     <div class="side-hero__media">
-        <Image src={image.src} alt={image.alt ?? ""} />
+        {/* Half the container beside the content, full width once stacked. */}
+        <Image
+            src={image.src}
+            alt={image.alt ?? ""}
+            widths={[480, 640, 960, 1280]}
+            sizes="(min-width: 70rem) 35rem, (min-width: 50rem) 50vw, 100vw"
+        />
     </div>
 </div>
 

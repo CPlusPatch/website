@@ -21,6 +21,11 @@ type Props = ComponentProps<typeof Card> & {
     header?: {
         src: ImageMetadata;
         alt: string;
+        /**
+         * How wide the card is shown, as an `<img sizes>` value, so the
+         * browser picks the right file. Defaults to a card in a grid.
+         */
+        sizes?: string;
     };
 };
 
@@ -29,7 +34,13 @@ const { title, links = [], header, class: className, ...rest } = Astro.props;
 
 <Card class:list={["media-card", className]} {...rest}>
     {header && (
-        <Image class="media-card__header" src={header.src} alt={header.alt} />
+        <Image
+            class="media-card__header"
+            src={header.src}
+            alt={header.alt}
+            widths={[400, 800]}
+            sizes={header.sizes ?? "(min-width: 48rem) 24rem, 100vw"}
+        />
     )}
     <div class="media-card__body">
         <h3>{title}</h3>
