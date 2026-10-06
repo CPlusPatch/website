@@ -27,11 +27,11 @@ interface Props extends HTMLAttributes<"div"> {
     buttons?: boolean;
 }
 
-const { label, buttons = true, ...rest } = Astro.props;
+const { label, buttons = true, class: className, ...rest } = Astro.props;
 ---
 
 <section
-    class:list={["carousel", buttons && "carousel--buttons"]}
+    class:list={["carousel", buttons && "carousel--buttons", className]}
     aria-roledescription="carousel"
     aria-label={label}
     {...rest}
@@ -62,10 +62,7 @@ const { label, buttons = true, ...rest } = Astro.props;
     )}
     {/*
      * A named group gives the track a role, so a screen reader can announce it
-     * without it becoming a second region nested in the carousel. The tab stop that makes it keyboard
-     * scrollable (WCAG 2.1.1) is added by the script below rather than here --
-     * modern browsers focus overflow containers on their own, and doing it in
-     * script keeps the no-JS markup free of a tab stop that leads nowhere.
+     * without it becoming a second region nested in the carousel.
      */}
     {/* biome-ignore lint/a11y/useSemanticElements: a second <section> would announce as a second region inside the carousel */}
     <div
@@ -105,8 +102,9 @@ for (const root of carousels) {
         slide.setAttribute("aria-label", `${i + 1} of ${slides.length}`);
     });
 
-    // See the markup comment above: the track becomes a tab stop only once
-    // the script that drives it is running.
+    // Makes the track keyboard-scrollable (WCAG 2.1.1). Set here rather than
+    // in the markup: modern browsers already focus overflow containers, and
+    // without this script there are no arrows or previews for it to drive.
     track.tabIndex = 0;
 
     let current = 0;
@@ -169,6 +167,8 @@ for (const root of carousels) {
 
 <style>
 .carousel {
+    --carousel-height: 38rem;
+
     position: relative;
     display: flex;
     flex-direction: column;
@@ -179,7 +179,7 @@ for (const root of carousels) {
     .carousel__items {
         display: flex;
         width: 100%;
-        height: 38rem;
+        height: var(--carousel-height);
         overflow: auto hidden;
         gap: var(--space-sm);
         scroll-snap-type: x mandatory;
@@ -200,7 +200,7 @@ for (const root of carousels) {
 
     .carousel__button {
         position: absolute;
-        top: calc((38rem / 2));
+        top: calc(var(--carousel-height) / 2);
         z-index: 1;
         translate: 0 -50%;
         background-color: var(--color-surface);
@@ -222,13 +222,7 @@ for (const root of carousels) {
     }
 
     @container (max-width: 40rem) {
-        .carousel__items {
-            height: 24rem;
-        }
-
-        .carousel__button {
-            top: calc((24rem / 2));
-        }
+        --carousel-height: 24rem;
 
         .carousel__preview-grid {
             display: none;

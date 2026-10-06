@@ -14,14 +14,21 @@ interface Props extends HTMLAttributes<"a"> {
     rendering?: "pixelated" | "smooth";
 }
 
-const { image, url, alt, rendering = "pixelated", ...rest } = Astro.props;
+const {
+    image,
+    url,
+    alt,
+    rendering = "pixelated",
+    class: className,
+    ...rest
+} = Astro.props;
 ---
 
 <a
     href={url}
     target="_blank"
     rel="noopener noreferrer"
-    class:list={["button-88x31 lift", rest.class]}
+    class:list={["button-88x31 lift", className]}
     {...rest}
 >
     <Image

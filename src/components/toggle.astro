@@ -19,11 +19,13 @@ const {
     disabled = false,
     name,
     value,
+    class: className,
     ...rest
 } = Astro.props;
 ---
 
-<label class:list={["toggle", rest.class]} {...rest}>
+<label class:list={["toggle", className]} {...rest}>
+    {/* A range, because Biome reports this on the `role` line, not the element. */}
     {/* biome-ignore-start lint/a11y/useAriaPropsForRole: A native checkbox exposes its own checked state, so the switch role needs no aria-checked */}
     <input
         type="checkbox"
@@ -35,7 +37,7 @@ const {
         name={name}
         value={value}
     >
-    {/* biome-ignore-end lint/a11y/useAriaPropsForRole: A native checkbox exposes its own checked state, so the switch role needs no aria-checked */}
+    {/* biome-ignore-end lint/a11y/useAriaPropsForRole: see above */}
     <span class="toggle__slider" aria-hidden="true"></span>
 </label>
 

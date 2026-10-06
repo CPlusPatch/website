@@ -12,8 +12,16 @@ if (import.meta.env.PROD) {
     return Astro.redirect("/", 302);
 }
 
-// A negative `min` means one full-width cell per row.
-const cell = (min = 16) => (min < 0 ? "100%" : `${min}rem`);
+const cell = (min: number | "full" = 16) =>
+    min === "full" ? "100%" : `${min}rem`;
+
+// "desktop" has no class rule: it is the unconstrained width.
+const SIZES = [
+    { size: "desktop", icon: "lucide:monitor" },
+    { size: "tablet", icon: "lucide:tablet" },
+    { size: "phone", icon: "lucide:smartphone" },
+    { size: "tiny", icon: "lucide:watch" },
+];
 ---
 
 <Layout title="Component gallery" noindex>
@@ -26,67 +34,34 @@ const cell = (min = 16) => (min < 0 ? "100%" : `${min}rem`);
                         class="gallery__controls"
                         label="Preview width"
                     >
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            tone="neutral"
-                            lift={false}
-                            data-size="desktop"
-                            aria-pressed="true"
-                            aria-label="Show desktop layout"
-                        >
-                            <Icon name="lucide:monitor" aria-hidden="true" />
-                        </Button>
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            tone="neutral"
-                            lift={false}
-                            data-size="tablet"
-                            aria-pressed="false"
-                            aria-label="Show tablet layout"
-                        >
-                            <Icon name="lucide:tablet" aria-hidden="true" />
-                        </Button>
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            tone="neutral"
-                            lift={false}
-                            data-size="phone"
-                            aria-pressed="false"
-                            aria-label="Show phone layout"
-                        >
-                            <Icon name="lucide:smartphone" aria-hidden="true" />
-                        </Button>
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            tone="neutral"
-                            lift={false}
-                            data-size="tiny"
-                            aria-pressed="false"
-                            aria-label="Show tiny layout"
-                        >
-                            <Icon name="lucide:watch" aria-hidden="true" />
-                        </Button>
+                        {SIZES.map(({ size, icon }, i) => (
+                            <Button
+                                size="icon"
+                                variant="outline"
+                                tone="neutral"
+                                lift={false}
+                                data-size={size}
+                                aria-pressed={i === 0 ? "true" : "false"}
+                                aria-label={`Show ${size} layout`}
+                            >
+                                <Icon name={icon} aria-hidden="true" />
+                            </Button>
+                        ))}
                     </ButtonGroup>
                 </div>
                 {group.description && <p>{group.description}</p>}
                 <div class="grid" style={`--cell: ${cell(group.min)}`}>
-                    {group.stories.map((story) => {
-                        return (
-                            <figure
-                                class="cell"
-                                data-story={`${group.id}/${story.name}`}
-                            >
-                                <figcaption>{story.name}</figcaption>
-                                <div class="preview">
-                                    <StoryNode {story} />
-                                </div>
-                            </figure>
-                        );
-                    })}
+                    {group.stories.map((story) => (
+                        <figure
+                            class="cell"
+                            data-story={`${group.id}/${story.name}`}
+                        >
+                            <figcaption>{story.name}</figcaption>
+                            <div class="preview">
+                                <StoryNode {story} />
+                            </div>
+                        </figure>
+                    ))}
                 </div>
             </section>
         ))}

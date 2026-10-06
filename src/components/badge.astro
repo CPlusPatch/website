@@ -1,27 +1,22 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../lib/tone";
 
 export type BadgeVariant = "solid" | "outline" | "ghost";
 
-export type BadgeTone =
-    | "primary"
-    | "secondary"
-    | "destructive"
-    | "warning"
-    | "success";
-
 export type BadgeSize = "sm" | "default" | "lg";
 
-type Props = Omit<HTMLAttributes<"span">, "type"> & {
+interface Props extends HTMLAttributes<"span"> {
     variant?: BadgeVariant;
-    tone?: BadgeTone;
+    tone?: Tone;
     size?: BadgeSize;
-};
+}
 
 const {
     variant = "solid",
     tone = "primary",
     size = "default",
+    class: className,
     ...rest
 } = Astro.props;
 ---
@@ -32,6 +27,7 @@ const {
         `badge--${variant}`,
         `tone-${tone}`,
         `badge--size-${size}`,
+        className,
     ]}
     data-snap
     {...rest}

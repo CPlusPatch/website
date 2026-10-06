@@ -14,7 +14,13 @@ interface Props extends HTMLAttributes<"div"> {
     live?: "off" | "polite" | "assertive";
 }
 
-const { icon, variant = "default", live = "off", ...rest } = Astro.props;
+const {
+    icon,
+    variant = "default",
+    live = "off",
+    class: className,
+    ...rest
+} = Astro.props;
 
 // Visually hidden prefix naming the variant. Without it, the only cue that an
 // alert is a warning rather than a success is its colour, which screen
@@ -37,6 +43,7 @@ const prefix = label[variant];
         icon && "alert--icon",
         `alert--${variant}`,
         `tone-${variant === "default" ? "primary" : variant}`,
+        className,
     ]}
     role={live === "off" ? undefined : "status"}
     aria-live={live === "off" ? undefined : live}

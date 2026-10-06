@@ -35,6 +35,7 @@ import { languages } from "./data/experience.ts";
 import { friends } from "./data/friends.ts";
 import jessew from "./images/88x31s/jessew.png";
 import greg from "./images/greg.jpg";
+import { TONES } from "./lib/tone.ts";
 
 /** Any `.astro` component. */
 // biome-ignore lint/suspicious/noExplicitAny: matches astro's own ComponentProps constraint
@@ -60,8 +61,11 @@ export interface StoryGroup {
     id: string;
     title: string;
     description?: string;
-    /** Minimum gallery cell width, in rem. Wider components need more. */
-    min?: number;
+    /**
+     * Minimum gallery cell width, in rem, or "full" for one full-width cell
+     * per row. Wider components need more. Defaults to 16.
+     */
+    min?: number | "full";
     stories: Story[];
 }
 
@@ -79,13 +83,6 @@ const story = <T extends Component>(
 
 const VARIANTS = ["solid", "outline", "ghost", "link"] as const;
 const BADGE_VARIANTS = ["solid", "outline", "ghost"] as const;
-const TONES = [
-    "primary",
-    "secondary",
-    "destructive",
-    "warning",
-    "success",
-] as const;
 const SIZES = ["lg", "default", "sm"] as const;
 
 const BODY =
@@ -394,7 +391,7 @@ export const groups: StoryGroup[] = [
     {
         id: "side-hero",
         title: "Side hero",
-        min: -1,
+        min: "full",
         stories: (["right", "left"] as const).map((side) =>
             story(
                 side,
@@ -407,7 +404,7 @@ export const groups: StoryGroup[] = [
     {
         id: "navbar",
         title: "Navbar",
-        min: -1,
+        min: "full",
         stories: [
             story("default", Navbar, { title: "Jesse", links: NAV_LINKS }),
             story("final-link", Navbar, {
@@ -446,7 +443,7 @@ export const groups: StoryGroup[] = [
     {
         id: "footer",
         title: "Footer",
-        min: -1,
+        min: "full",
         stories: [
             story("default", Footer, {
                 copyright: {
@@ -498,13 +495,13 @@ export const groups: StoryGroup[] = [
     {
         id: "logos",
         title: "Logos",
-        min: -1,
+        min: "full",
         stories: [story("default", Logos, { items: languages, rows: 5 })],
     },
     {
         id: "carousel",
         title: "Carousel",
-        min: -1,
+        min: "full",
         stories: [
             story(
                 "default",

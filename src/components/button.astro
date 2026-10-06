@@ -1,15 +1,11 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../lib/tone";
 
 export type ButtonVariant = "solid" | "outline" | "ghost" | "link";
 
-export type ButtonTone =
-    | "primary"
-    | "secondary"
-    | "destructive"
-    | "warning"
-    | "success"
-    | "neutral";
+/** `neutral` is for chrome that should not compete with content. */
+export type ButtonTone = Tone | "neutral";
 
 export type ButtonSize = "sm" | "default" | "lg" | "icon";
 
@@ -35,6 +31,7 @@ const {
     tone = "primary",
     size = "default",
     lift = true,
+    class: className,
     ...rest
 } = Astro.props;
 
@@ -46,7 +43,7 @@ const classes = [
     `button--${variant}`,
     `tone-${tone}`,
     `button--size-${size}`,
-    rest.class,
+    className,
 ];
 ---
 

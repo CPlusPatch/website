@@ -14,15 +14,25 @@ const { snap = DEFAULT_SNAP } = Astro.props;
     data-snap-selector={snap === false ? undefined : snap}
     aria-hidden="true"
 >
-    <span class="fx-crosshair__ret"></span>
+    <span class="fx-crosshair__reticle"></span>
     <span class="fx-crosshair__coord"></span>
 </div>
 
 <style is:global>
 @media (hover: hover) and (pointer: fine) {
-    /* Two methods of enabling the crosshair */
+    /* Enabled by html[data-crosshair], or by a checked [data-crosshair-toggle] */
     html[data-crosshair] .fx-crosshair,
     html:has([data-crosshair-toggle] > input:checked) .fx-crosshair {
+        /*
+         * Pointer position in px, written inline by the script below. Starts
+         * off-screen so nothing shows before the first pointermove.
+         */
+        --fx-x: -100;
+        --fx-y: -100;
+        --pad: 0.25rem;
+        /* Distance of the coordinate readout from the pointer */
+        --coord-offset: 14px;
+
         display: block;
         position: fixed;
         inset: 0;
@@ -31,18 +41,17 @@ const { snap = DEFAULT_SNAP } = Astro.props;
         contain: strict;
         color: var(--color-text);
         font: var(--font-size-xs) / 1 var(--font-mono);
-        --pad: 0.25rem;
 
-        /* Free-follow state. Off-screen (-100) until the first pointermove. No transition on translate. */
-        .fx-crosshair__ret {
+        /* Free-follow state: no transition on translate, so it tracks the pointer exactly. */
+        .fx-crosshair__reticle {
             position: absolute;
             left: 0;
             top: 0;
             box-sizing: border-box;
             width: 1.25rem;
             height: 1.25rem;
-            translate: calc(var(--fx-x, -100) * 1px - 50%)
-                calc(var(--fx-y, -100) * 1px - 50%);
+            translate: calc(var(--fx-x) * 1px - 50%)
+                calc(var(--fx-y) * 1px - 50%);
             will-change: translate;
             transition:
                 width var(--transition),
@@ -68,7 +77,7 @@ const { snap = DEFAULT_SNAP } = Astro.props;
         }
 
         /* Snapped state: outline of the target rect (+ padding). translate transitions only here. */
-        &[data-snap] .fx-crosshair__ret {
+        &[data-snap] .fx-crosshair__reticle {
             width: calc(var(--fx-sw) * 1px + var(--pad) * 2);
             height: calc(var(--fx-sh) * 1px + var(--pad) * 2);
             translate: calc(var(--fx-sx) * 1px - var(--pad))
@@ -80,8 +89,8 @@ const { snap = DEFAULT_SNAP } = Astro.props;
                 height var(--transition);
         }
 
-        &[data-snap] .fx-crosshair__ret::before,
-        &[data-snap] .fx-crosshair__ret::after {
+        &[data-snap] .fx-crosshair__reticle::before,
+        &[data-snap] .fx-crosshair__reticle::after {
             opacity: 0;
         }
 
@@ -89,10 +98,10 @@ const { snap = DEFAULT_SNAP } = Astro.props;
             position: absolute;
             left: 0;
             top: 0;
-            translate: calc(var(--fx-x, -100) * 1px + 14px)
-                calc(var(--fx-y, -100) * 1px + 14px);
+            translate: calc(var(--fx-x) * 1px + var(--coord-offset))
+                calc(var(--fx-y) * 1px + var(--coord-offset));
             will-change: translate;
-            counter-reset: x var(--fx-x, 0) y var(--fx-y, 0);
+            counter-reset: x var(--fx-x) y var(--fx-y);
             white-space: nowrap;
             color: var(--color-text-muted);
 
@@ -102,15 +111,16 @@ const { snap = DEFAULT_SNAP } = Astro.props;
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .fx-crosshair__ret,
-            .fx-crosshair__ret::before,
-            .fx-crosshair__ret::after {
+            .fx-crosshair__reticle,
+            .fx-crosshair__reticle::before,
+            .fx-crosshair__reticle::after {
                 transition: none;
             }
         }
     }
 
-    html[data-crosshair],
+    /* Every element, so components that set cursor: pointer don't show through */
+    html[data-crosshair] *,
     html:has([data-crosshair-toggle] > input:checked) * {
         cursor: none;
     }
@@ -124,8 +134,9 @@ const root = document.querySelector<HTMLElement>(
 
 const selector = root.dataset.snapSelector; // undefined => snapping disabled
 const style = root.style;
-let x = -100;
-let y = -100;
+const OFFSCREEN = -100; // Matches the CSS starting value of --fx-x/--fx-y
+let x = OFFSCREEN;
+let y = OFFSCREEN;
 let hover: Element | null = null; // Snap target under the pointer
 let rectDirty = false; // Target changed, or its rect may be stale
 let raf = 0;
@@ -163,8 +174,8 @@ addEventListener(
     "pointermove",
     (e) => {
         if (e.pointerType !== "mouse") return;
-        x = e.clientX | 0;
-        y = e.clientY | 0;
+        x = Math.trunc(e.clientX);
+        y = Math.trunc(e.clientY);
         schedule();
     },
     { passive: true },
@@ -201,7 +212,7 @@ if (selector) {
 }
 
 document.documentElement.addEventListener("mouseleave", () => {
-    x = y = -100;
+    x = y = OFFSCREEN;
     hover = null;
     rectDirty = true;
     schedule();
