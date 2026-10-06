@@ -64,6 +64,8 @@ const { title, links = [], header, class: className, ...rest } = Astro.props;
 .media-card.card {
     align-items: stretch;
     padding: 0;
+    /* Clip the header image to the card's corners when --radius is set. */
+    overflow: hidden;
 
     .media-card__header {
         display: block;

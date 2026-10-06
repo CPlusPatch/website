@@ -2,6 +2,7 @@
 import { Icon } from "astro-icon/components";
 import Button from "../components/button.astro";
 import ButtonGroup from "../components/button-group.astro";
+import Select from "../components/select.astro";
 import StoryNode from "../components/story-node.astro";
 import Layout from "../layouts/layout.astro";
 import { groups } from "../stories";
@@ -11,6 +12,13 @@ import { groups } from "../stories";
 if (import.meta.env.PROD) {
     return Astro.redirect("/", 302);
 }
+
+// Each value other than "default" needs a matching stylesheet in
+// src/styles/themes/, which switches on while its option is selected.
+const THEMES = [
+    { value: "default", label: "Default" },
+    { value: "ocean", label: "Ocean" },
+];
 
 const cell = (min: number | "full" = 16) =>
     min === "full" ? "100%" : `${min}rem`;
@@ -26,6 +34,19 @@ const SIZES = [
 
 <Layout title="Component gallery" noindex>
     <main id="main" class="container">
+        <div class="toolbar">
+            <h1>Component gallery</h1>
+            {/* Works without JS: themes key off the selected <option> via :has(). */}
+            <div class="toolbar__theme">
+                <label for="theme-select">Theme</label>
+                <Select
+                    id="theme-select"
+                    label="Theme"
+                    options={THEMES}
+                    data-theme-select
+                />
+            </div>
+        </div>
         {groups.map((group) => (
             <section class="gallery">
                 <div class="gallery__header">
@@ -74,6 +95,26 @@ main {
     flex-direction: column;
     gap: var(--space-lg);
     padding-block: var(--space-lg);
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+
+    h1 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .toolbar__theme {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+    }
 }
 
 .gallery {
