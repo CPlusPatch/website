@@ -2,9 +2,8 @@
 import type { HTMLAttributes } from "astro/types";
 
 /**
- * Simple toggle switch component using the native checkbox input, styled to look like a switch
+ * A switch built on a native checkbox, so it works and submits without JS.
  */
-
 interface Props extends HTMLAttributes<"label"> {
     /** Accessible name. The switch has no visible text of its own. */
     label: string;

@@ -16,11 +16,16 @@ export type ButtonSize = "sm" | "default" | "lg" | "icon";
  */
 type Props = Omit<HTMLAttributes<"button">, "type"> &
     Omit<HTMLAttributes<"a">, "type"> & {
+        /** Force the element. Defaults to "a" when `href` is set, else "button". */
         as?: "button" | "a";
         type?: "button" | "submit" | "reset";
         variant?: ButtonVariant;
         tone?: ButtonTone;
         size?: ButtonSize;
+        /**
+         * Opt in to the hover lift (see `.lift` in utilities.css). Ignored
+         * for the `link` variant. Turn off for buttons inside a ButtonGroup.
+         */
         lift?: boolean;
     };
 

@@ -4,16 +4,15 @@ import Card from "./card.astro";
 import Marquee from "./marquee.astro";
 import PauseButton from "./pause-button.astro";
 
-/**
- * Logo marquee. Items are distributed round-robin across rows,
- * odd rows scroll in the opposite direction.
- */
-
 interface Item {
     logo: string;
     name: string;
 }
 
+/**
+ * Logo marquee. Items are distributed round-robin across rows,
+ * odd rows scroll in the opposite direction.
+ */
 interface Props {
     items: Item[];
     rows?: number;

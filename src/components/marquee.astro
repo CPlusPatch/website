@@ -6,13 +6,12 @@ import PauseButton from "./pause-button.astro";
  * aria-hidden) and slides left by exactly one copy's width + gap per loop,
  * so the jump back to the start is invisible.
  */
-
 interface Props {
-    /* Scroll direction: false = left, true = right */
+    /** Scroll direction: false = left, true = right */
     reverse?: boolean;
-    /* Seconds for one full loop */
+    /** Seconds for one full loop */
     duration?: number;
-    /* Any CSS length; used between items and between the two copies */
+    /** Any CSS length; used between items and between the copies */
     gap?: string;
     /**
      * Render a pause button. Turn off when a parent supplies one control for
