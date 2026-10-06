@@ -4,6 +4,7 @@ import Button from "../components/button.astro";
 import ButtonGroup from "../components/button-group.astro";
 import Select from "../components/select.astro";
 import StoryNode from "../components/story-node.astro";
+import Toggle from "../components/toggle.astro";
 import Layout from "../layouts/layout.astro";
 import { groups } from "../stories";
 
@@ -20,6 +21,15 @@ const THEMES = [
     { value: "ocean", label: "Ocean" },
 ];
 
+// Site-wide effects. Each is switched on by CSS that looks for its checked
+// [data-*-toggle] anywhere on the page, so these need no JS either.
+const EFFECTS = [
+    { label: "Crosshair", attr: "data-crosshair-toggle" },
+    { label: "Scanlines", attr: "data-scanlines-toggle" },
+    { label: "Lift shadow", attr: "data-lift-shadow-toggle" },
+    { label: "Invert theme", attr: "data-theme-toggle" },
+];
+
 const cell = (min: number | "full" = 16) =>
     min === "full" ? "100%" : `${min}rem`;
 
@@ -34,19 +44,31 @@ const SIZES = [
 
 <Layout title="Component gallery" noindex>
     <main id="main" class="container">
-        <div class="toolbar">
-            <h1>Component gallery</h1>
-            {/* Works without JS: themes key off the selected <option> via :has(). */}
-            <div class="toolbar__theme">
-                <label for="theme-select">Theme</label>
-                <Select
-                    id="theme-select"
-                    label="Theme"
-                    options={THEMES}
-                    data-theme-select
-                />
+        <header class="toolbar">
+            <div class="toolbar__layout">
+                <h1>Component gallery</h1>
+                <div class="toolbar__controls">
+                    <fieldset class="toolbar__effects">
+                        <legend class="visually-hidden">Effects</legend>
+                        {EFFECTS.map(({ label, attr }) => (
+                            <Toggle {label} {...{ [attr]: true }}>
+                                {label}
+                            </Toggle>
+                        ))}
+                    </fieldset>
+                    {/* Works without JS: themes key off the selected <option> via :has(). */}
+                    <div class="toolbar__theme">
+                        <label for="theme-select">Theme</label>
+                        <Select
+                            id="theme-select"
+                            label="Theme"
+                            options={THEMES}
+                            data-theme-select
+                        />
+                    </div>
+                </div>
             </div>
-        </div>
+        </header>
         {groups.map((group) => (
             <section class="gallery">
                 <div class="gallery__header">
@@ -97,15 +119,42 @@ main {
     padding-block: var(--space-lg);
 }
 
+/*
+ * One row when there is room for it (it needs about 58rem). Below that, the
+ * controls move into a panel under the title instead of wrapping piecemeal:
+ * effects in a grid of 4, 2 or 1 columns so rows always fill evenly, and
+ * theme on its own row.
+ */
 .toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-md);
+    container-type: inline-size;
 
     h1 {
         font-size: var(--font-size-2xl);
+    }
+
+    .toolbar__layout {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .toolbar__controls,
+    .toolbar__effects {
+        display: flex;
+        align-items: center;
+    }
+
+    .toolbar__controls {
+        gap: var(--space-lg);
+    }
+
+    .toolbar__effects {
+        gap: var(--space-md);
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-width: 0;
     }
 
     .toolbar__theme {
@@ -114,6 +163,47 @@ main {
         gap: var(--space-sm);
         font-size: var(--font-size-sm);
         color: var(--color-text-muted);
+    }
+
+    @container (width < 59rem) {
+        .toolbar__layout {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .toolbar__controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background-color: var(--color-surface);
+            border: var(--border-width) solid var(--border-color);
+            border-radius: var(--radius);
+        }
+
+        .toolbar__effects {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-sm) var(--space-md);
+        }
+
+        .toolbar__theme {
+            justify-content: space-between;
+            padding-top: var(--space-md);
+            border-top: var(--border-width) solid var(--border-color);
+        }
+    }
+
+    @container (width < 40rem) {
+        .toolbar__effects {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @container (width < 21rem) {
+        .toolbar__effects {
+            grid-template-columns: 1fr;
+        }
     }
 }
 
