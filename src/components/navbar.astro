@@ -27,9 +27,6 @@ const { title, links, finalLink, class: className, ...rest } = Astro.props;
             <span class="navbar__brand-text">{title}</span>
         </a>
 
-        {/*
-          * State kept through checkbox (no JS)
-          */}
         <label class="navbar__toggle">
             <input
                 type="checkbox"
@@ -166,7 +163,10 @@ for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
         align-items: center;
         gap: var(--space-xs);
 
-        /* Rendered by Button, so it carries Button's scope, not ours */
+        /*
+         * Links are rendered by Button, so they carry Button's scope, not
+         * ours -- hence :global() here and in the mobile rules below.
+         */
         :global(.navbar__link--active) {
             text-decoration: underline;
             text-underline-offset: 0.35em;
@@ -266,7 +266,6 @@ for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
                 }
             }
 
-            /* Rendered by Button, so it carries Button's scope, not ours */
             :global(.navbar__final-link) {
                 align-self: stretch;
                 height: var(--control-height-lg);

@@ -4,20 +4,23 @@ import type { Tone } from "../lib/tone";
 
 interface Props extends HTMLAttributes<"div"> {
     tone?: Tone;
-    /** Lift effect on hover. */
-    shadow?: boolean;
+    /**
+     * Opt in to the hover lift (see `.lift` in utilities.css). The effect
+     * itself only shows while it is enabled site-wide.
+     */
+    lift?: boolean;
 }
 
 const {
     tone = "primary",
-    shadow = true,
+    lift = true,
     class: className,
     ...rest
 } = Astro.props;
 ---
 
 <div
-    class:list={["card", "panel", shadow && "lift", `tone-${tone}`, className]}
+    class:list={["card", "panel", lift && "lift", `tone-${tone}`, className]}
     data-snap
     {...rest}
 >

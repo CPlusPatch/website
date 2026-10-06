@@ -1,6 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
-import EightyEightThirtyOne from "./8831.astro";
+import Badge88x31 from "./badge-88x31.astro";
 import Button from "./button.astro";
 
 interface Props {
@@ -8,25 +8,29 @@ interface Props {
         license: string;
         holder: string;
     };
+    /** Line breaks (`\n`) are kept as written. */
     tagline?: string;
     socials?: {
         name: string;
-        url: string;
+        href: string;
         icon: string;
     }[];
-    eightyEightThirtyOne: {
+    /**
+     * This site's own badge. It links to its own image as a download, so
+     * visitors can grab it to link back.
+     */
+    badge88x31: {
         image: ImageMetadata;
         alt?: string;
     };
     friends?: {
         image: ImageMetadata;
-        url: string;
+        href: string;
         alt?: string;
     }[];
 }
 
-const { copyright, tagline, socials, eightyEightThirtyOne, friends } =
-    Astro.props;
+const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
 ---
 
 <footer class="footer">
@@ -37,7 +41,7 @@ const { copyright, tagline, socials, eightyEightThirtyOne, friends } =
                 {socials.map((social) => (
                     <li>
                         <a
-                            href={social.url}
+                            href={social.href}
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={`${social.name} (opens in new tab)`}
@@ -49,10 +53,10 @@ const { copyright, tagline, socials, eightyEightThirtyOne, friends } =
             </ul>
         )}
         <div class="footer__branding">
-            <EightyEightThirtyOne
-                image={eightyEightThirtyOne.image}
-                url={eightyEightThirtyOne.image.src}
-                alt={eightyEightThirtyOne.alt}
+            <Badge88x31
+                image={badge88x31.image}
+                href={badge88x31.image.src}
+                alt={badge88x31.alt}
                 download
                 class="footer__badge"
             />
@@ -77,9 +81,9 @@ const { copyright, tagline, socials, eightyEightThirtyOne, friends } =
             <ul class="footer__friends-list">
                 {friends.map((friend) => (
                     <li>
-                        <EightyEightThirtyOne
+                        <Badge88x31
                             image={friend.image}
-                            url={friend.url}
+                            href={friend.href}
                             alt={friend.alt}
                             class="footer__friend"
                         />
@@ -118,6 +122,7 @@ const { copyright, tagline, socials, eightyEightThirtyOne, friends } =
         .footer__tagline {
             font-size: var(--font-size-sm);
             color: var(--color-text-muted);
+            /* Keeps the tagline's \n line breaks */
             white-space: pre;
         }
 

@@ -6,7 +6,7 @@ interface Props extends HTMLAttributes<"div"> {
     /** Which side the image sits on. */
     side?: "left" | "right";
     image: {
-        url: ImageMetadata;
+        src: ImageMetadata;
         /**
          * Omit only for purely decorative imagery -- it renders alt="", which
          * tells a screen reader to skip the image rather than read its
@@ -24,7 +24,7 @@ const { side = "right", image, class: className, ...rest } = Astro.props;
         <slot />
     </div>
     <div class="side-hero__media">
-        <Image src={image.url} alt={image.alt ?? ""} />
+        <Image src={image.src} alt={image.alt ?? ""} />
     </div>
 </div>
 

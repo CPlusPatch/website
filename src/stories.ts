@@ -15,9 +15,9 @@
 // deno-lint-ignore-file no-explicit-any
 
 import type { ComponentProps } from "astro/types";
-import EightEightThreeOne from "./components/8831.astro";
 import Alert from "./components/alert.astro";
 import Badge from "./components/badge.astro";
+import Badge88x31 from "./components/badge-88x31.astro";
 import Button from "./components/button.astro";
 import ButtonGroup from "./components/button-group.astro";
 import Card from "./components/card.astro";
@@ -31,7 +31,7 @@ import Navbar from "./components/navbar.astro";
 import Select from "./components/select.astro";
 import Terminal from "./components/terminal.astro";
 import Toggle from "./components/toggle.astro";
-import { languages } from "./data/experience.ts";
+import { technologies } from "./data/experience.ts";
 import { friends } from "./data/friends.ts";
 import jessew from "./images/88x31s/jessew.png";
 import greg from "./images/greg.jpg";
@@ -170,7 +170,7 @@ export const groups: StoryGroup[] = [
                 { as: "a", href: "#main" },
                 { slot: "Anchor" },
             ),
-            story("no-shadow", Button, { lift: false }, { slot: "No lift" }),
+            story("no-lift", Button, { lift: false }, { slot: "No lift" }),
         ],
     },
     {
@@ -314,9 +314,9 @@ export const groups: StoryGroup[] = [
         min: 8,
         stories: [
             ...friends.map((friend) =>
-                story(friend.name.toLowerCase(), EightEightThreeOne, {
+                story(friend.name.toLowerCase(), Badge88x31, {
                     image: friend.image,
-                    url: friend.href,
+                    href: friend.href,
                     alt: `A small icon representing ${friend.name}'s website`,
                 }),
             ),
@@ -336,9 +336,9 @@ export const groups: StoryGroup[] = [
                 ),
             ),
             story(
-                "no-shadow",
+                "no-lift",
                 Card,
-                { shadow: false },
+                { lift: false },
                 {
                     slot: "<h3>No lift</h3><p>Hover does nothing on this one.</p>",
                 },
@@ -396,7 +396,7 @@ export const groups: StoryGroup[] = [
             story(
                 side,
                 SideHero,
-                { side, image: { url: greg, alt: "Greg Heffley" } },
+                { side, image: { src: greg, alt: "Greg Heffley" } },
                 { slot: `<h2>Image on the ${side}</h2>${BODY}` },
             ),
         ),
@@ -455,37 +455,37 @@ export const groups: StoryGroup[] = [
                 socials: [
                     {
                         name: "GitHub",
-                        url: "https://github.com/cpluspatch",
+                        href: "https://github.com/cpluspatch",
                         icon: "logos:github-icon",
                     },
                     {
                         name: "Twitter",
-                        url: "https://twitter.com/grok",
+                        href: "https://twitter.com/grok",
                         icon: "logos:twitter",
                     },
                     {
                         name: "Mastodon",
-                        url: "https://mastodon.social/@grok",
+                        href: "https://mastodon.social/@grok",
                         icon: "logos:mastodon-icon",
                     },
                     {
                         name: "LinkedIn",
-                        url: "https://www.linkedin.com/in/grok",
+                        href: "https://www.linkedin.com/in/grok",
                         icon: "logos:linkedin-icon",
                     },
                     {
                         name: "Email",
-                        url: "mailto:grok@example.com",
+                        href: "mailto:grok@example.com",
                         icon: "lucide:at-sign",
                     },
                 ],
-                eightyEightThirtyOne: {
+                badge88x31: {
                     image: jessew,
                     alt: "A cool badge with a cool description.",
                 },
                 friends: friends.map((friend) => ({
                     name: friend.name,
-                    url: friend.href,
+                    href: friend.href,
                     image: friend.image,
                     alt: `A small icon representing ${friend.name}'s website`,
                 })),
@@ -496,7 +496,7 @@ export const groups: StoryGroup[] = [
         id: "logos",
         title: "Logos",
         min: "full",
-        stories: [story("default", Logos, { items: languages, rows: 5 })],
+        stories: [story("default", Logos, { items: technologies, rows: 5 })],
     },
     {
         id: "carousel",
@@ -520,7 +520,7 @@ export const groups: StoryGroup[] = [
                                         SideHero,
                                         {
                                             image: {
-                                                url: greg,
+                                                src: greg,
                                                 alt: "Greg Heffley",
                                             },
                                         },

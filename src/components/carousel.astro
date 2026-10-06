@@ -24,6 +24,10 @@ import Button from "./button.astro";
 interface Props extends HTMLAttributes<"div"> {
     /** Names the region for screen readers. */
     label: string;
+    /**
+     * Show prev/next arrows beside the track, and inset the track so they
+     * don't cover slide content. Defaults to true.
+     */
     buttons?: boolean;
 }
 

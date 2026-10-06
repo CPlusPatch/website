@@ -3,20 +3,20 @@ import { Image } from "astro:assets";
 import type { HTMLAttributes } from "astro/types";
 
 /**
- * Component to display a classic 88x31 button image with a link.
+ * A 88x31 web badge: a small image linking to a site, opened in a
+ * new tab.
  */
-
 interface Props extends HTMLAttributes<"a"> {
+    href: string;
     image: ImageMetadata;
-    url: string;
     alt?: string;
     /** Defaults to "pixelated" */
     rendering?: "pixelated" | "smooth";
 }
 
 const {
+    href,
     image,
-    url,
     alt,
     rendering = "pixelated",
     class: className,
@@ -25,29 +25,29 @@ const {
 ---
 
 <a
-    href={url}
+    href={href}
     target="_blank"
     rel="noopener noreferrer"
-    class:list={["button-88x31 lift", className]}
+    class:list={["badge-88x31 lift", className]}
     {...rest}
 >
     <Image
         src={image}
         alt={alt ?? null}
-        class="button-88x31__image"
+        class="badge-88x31__image"
         style={{ imageRendering: rendering }}
     />
 </a>
 
 <style>
-.button-88x31 {
+.badge-88x31 {
     display: inline-block;
     width: 88px;
     height: 31px;
     text-decoration: none;
     cursor: pointer;
 
-    .button-88x31__image {
+    .badge-88x31__image {
         width: 100%;
         height: 100%;
     }

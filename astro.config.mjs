@@ -6,7 +6,6 @@ import icon from "astro-icon";
 import browserslist from "browserslist";
 import { browserslistToTargets } from "lightningcss";
 
-// https://astro.build/config
 export default defineConfig({
     integrations: [/* vue() */ icon()],
     fonts: [

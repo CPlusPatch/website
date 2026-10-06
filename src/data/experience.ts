@@ -1,4 +1,4 @@
-export const languages: {
+export const technologies: {
     name: string;
     logo: string;
 }[] = [
