@@ -15,9 +15,19 @@ interface Props {
     description?: string;
     /** Keep the page out of search results (used by the component gallery). */
     noindex?: boolean;
+    /**
+     * Whether the page has a canonical URL of its own. Turn off for pages
+     * served at many addresses, like the 404.
+     */
+    canonical?: boolean;
 }
 
-const { title, description, noindex = false } = Astro.props;
+const {
+    title,
+    description,
+    noindex = false,
+    canonical: hasCanonical = true,
+} = Astro.props;
 
 const siteName = "web-ng";
 const pageTitle = title === siteName ? title : `${title} — ${siteName}`;
@@ -36,7 +46,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
         <title>{pageTitle}</title>
         {description && <meta name="description" content={description} />}
         {noindex && <meta name="robots" content="noindex, nofollow" />}
-        <link rel="canonical" href={canonical.href}>
+        {hasCanonical && <link rel="canonical" href={canonical.href} />}
 
         <meta property="og:type" content="website">
         <meta property="og:site_name" content={siteName}>
@@ -44,8 +54,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
         {description && (
             <meta property="og:description" content={description} />
         )}
-        <meta property="og:url" content={canonical.href}>
-        <meta name="twitter:card" content="summary_large_image">
+        {hasCanonical && <meta property="og:url" content={canonical.href} />}
+        {/* No og:image yet, so the small card; use summary_large_image once one exists. */}
+        <meta name="twitter:card" content="summary">
 
         <Font cssVariable="--font-inter" />
         <Font cssVariable="--font-jetbrains-mono" />

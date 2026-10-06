@@ -1,0 +1,19 @@
+---
+import Button from "../components/button.astro";
+import Layout from "../layouts/layout.astro";
+---
+
+<Layout title="Page not found" noindex canonical={false}>
+    <main id="main">
+        <section class="section">
+            <div class="container">
+                <h1>Page <span class="accent">not found</span></h1>
+                <p class="lead">
+                    Nothing lives at this address. The site is a UI toolkit
+                    showcase for now, so the gallery is the place to look.
+                </p>
+                <Button href="/gallery/" size="lg">Go to the gallery</Button>
+            </div>
+        </section>
+    </main>
+</Layout>

@@ -8,12 +8,6 @@ import Toggle from "../components/toggle.astro";
 import Layout from "../layouts/layout.astro";
 import { groups } from "../stories";
 
-// A development-only gallery. In a production build this becomes a redirect
-// stub rather than shipping the whole component matrix to visitors.
-if (import.meta.env.PROD) {
-    return Astro.redirect("/", 302);
-}
-
 // Each value other than "default" needs a matching stylesheet in
 // src/styles/themes/, which switches on while its option is selected.
 const THEMES = [
@@ -42,7 +36,11 @@ const SIZES = [
 ];
 ---
 
-<Layout title="Component gallery" noindex>
+<Layout
+    title="Component gallery"
+    description="Every component in the web-ng UI toolkit, in each of its states and themes."
+    noindex
+>
     <main id="main" class="container">
         <header class="toolbar">
             <div class="toolbar__layout">
