@@ -3,6 +3,7 @@ import ari from "../images/88x31s/ari.png";
 import astrid from "../images/88x31s/astrid.png";
 import austin from "../images/88x31s/austin.svg";
 import gail from "../images/88x31s/gail.gif";
+import ginger from "../images/88x31s/ginger.png";
 import june from "../images/88x31s/june.png";
 import lexi from "../images/88x31s/lexi.png";
 import lunahd from "../images/88x31s/lunahd.png";
@@ -12,7 +13,6 @@ import nhat from "../images/88x31s/nhat.jpg";
 import sophari from "../images/88x31s/sophari.gif";
 import virkunnen from "../images/88x31s/virkunnen.png";
 import yassie from "../images/88x31s/yassie.gif";
-import ginger from "../images/88x31s/ginger.png";
 
 export const friends: {
     name: string;
