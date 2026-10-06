@@ -1,6 +1,7 @@
 ---
 import "../styles/preflight.css";
 import "../styles/theme.css";
+import "../styles/themes/ocean.css";
 import "../styles/layout.css";
 import "../styles/typography.css";
 import "../styles/utilities.css";
@@ -48,6 +49,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 
         <Font cssVariable="--font-inter" />
         <Font cssVariable="--font-jetbrains-mono" />
+        {/*
+         * Ocean theme fonts. Only @font-face rules, with no preload: browsers
+         * download a face the first time text uses it, so these cost nothing
+         * until the theme is on.
+         */}
+        <Font cssVariable="--font-nunito" />
+        <Font cssVariable="--font-fira-code" />
     </head>
     <body>
         <Scanlines />

@@ -1,0 +1,66 @@
+/*
+ * Ocean: an example second theme.
+ *
+ * The first block is the colour tokens. Like the default, they are generated
+ * by scripts/generate-theme.ts (see THEMES there) -- do not edit them by
+ * hand. The second block is the hand-written shape, motion and type: rounded
+ * corners, a deeper, springier lift, a looser background grid and rounder
+ * fonts.
+ *
+ * Applied by `data-theme="ocean"` on <html>, or -- without any JS -- while
+ * a [data-theme-select] has "ocean" selected (see the gallery). Every token
+ * is a light-dark() pair, so it follows color-scheme and the invert toggle
+ * like the default does.
+ */
+
+:root[data-theme="ocean"],
+html:has([data-theme-select] option[value="ocean"]:checked) {
+    --color-bg: light-dark(#eff4f8, #091018);
+    --color-bg-alt: light-dark(#e1e9ef, #101822);
+    --color-surface: light-dark(#f7fbfd, #141e29);
+    --color-surface-raised: light-dark(#ffffff, #1b2634);
+    --color-text: light-dark(#101c28, #d2dde3);
+    --color-text-muted: light-dark(#556574, #8898a3);
+    --color-border: light-dark(#9ea7af, #444d53);
+    --color-border-strong: light-dark(#858e96, #576167);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#155892, #83bdf8);
+    --color-primary-hover: light-dark(#004174, #a2cfff);
+    --color-secondary: light-dark(#176161, #3ccfcf);
+    --color-secondary-hover: light-dark(#004a4a, #00e7e7);
+    --color-destructive: light-dark(#9d1a1a, #f99a8f);
+    --color-destructive-hover: light-dark(#7d0007, #ffb5ab);
+    --color-warning: light-dark(#6b5113, #e3ae34);
+    --color-warning-hover: light-dark(#533b00, #ffbf00);
+    --color-success: light-dark(#176636, #3cd879);
+    --color-success-hover: light-dark(#004e24, #4fed8a);
+    --color-on-accent: light-dark(#eff4f8, #091018);
+    --color-primary-accent: light-dark(#5caaf6, #4da3f6);
+    --color-secondary-accent: light-dark(#35baba, #32b3b3);
+    --color-destructive-accent: light-dark(#f7796d, #f76d61);
+    --color-warning-accent: light-dark(#cc9c2e, #c4972c);
+    --color-success-accent: light-dark(#35c26c, #32bb68);
+}
+
+:root[data-theme="ocean"],
+html:has([data-theme-select] option[value="ocean"]:checked) {
+    --radius: 0.625rem;
+    --shadow-offset: 6px;
+    /* Overshoots slightly, so lifts and presses land with a little bounce. */
+    --transition: 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --grid-size: 3rem;
+
+    /*
+     * Rounded type to match the corners. Registered in astro.config.mjs and
+     * rendered by the layout without preload, so the files only download
+     * while this theme is on.
+     */
+    --font-base: var(--font-nunito);
+    --font-mono: var(--font-fira-code);
+
+    /* This selector outranks theme.css's :root, so repeat its motion opt-out. */
+    @media (prefers-reduced-motion: reduce) {
+        --transition: 0s;
+    }
+}

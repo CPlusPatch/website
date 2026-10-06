@@ -29,6 +29,28 @@ export default defineConfig({
             subsets: ["latin", "latin-ext"],
             fallbacks: ["monospace", "ui-monospace"],
         },
+        // Ocean theme only (src/styles/themes/ocean.css). Not preloaded, so
+        // the files are only fetched once text is drawn with them.
+        {
+            provider: fontProviders.fontsource(),
+            name: "Nunito",
+            cssVariable: "--font-nunito",
+            styles: ["normal"],
+            weights: ["200 900"],
+            display: "swap",
+            subsets: ["latin", "latin-ext"],
+            fallbacks: ["sans-serif", "system-ui"],
+        },
+        {
+            provider: fontProviders.fontsource(),
+            name: "Fira Code",
+            cssVariable: "--font-fira-code",
+            styles: ["normal"],
+            weights: ["300 700"],
+            display: "swap",
+            subsets: ["latin", "latin-ext"],
+            fallbacks: ["monospace", "ui-monospace"],
+        },
     ],
     vite: {
         css: {

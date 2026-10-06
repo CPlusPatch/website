@@ -108,6 +108,68 @@ const BORDERS = {
 type Scheme = "light" | "dark";
 const SCHEMES: Scheme[] = ["light", "dark"];
 
+type Lch = readonly [number, number, number];
+
+/**
+ * What a theme may change. TIERS and the chroma policy are shared on purpose:
+ * they are what keeps every theme's role colours at the same contrast, so a
+ * theme only picks hues and neutrals.
+ */
+interface ThemeConfig {
+    hues: Record<keyof typeof HUES, number>;
+    neutrals: Record<keyof typeof NEUTRALS, Record<Scheme, Lch>>;
+    borders: Record<
+        keyof typeof BORDERS,
+        { ratio: number; chroma: number; hue: number }
+    >;
+}
+
+/**
+ * Every theme, and the stylesheet (relative to src/styles/) that holds its
+ * tokens. The first is the default in theme.css; the others override it.
+ */
+const THEMES: { name: string; file: string; config: ThemeConfig }[] = [
+    {
+        name: "default",
+        file: "theme.css",
+        config: { hues: HUES, neutrals: NEUTRALS, borders: BORDERS },
+    },
+    {
+        // An example second theme: blue and teal on navy-tinted neutrals.
+        // Unlike the default, the dark backgrounds are tinted -- here the
+        // cast is the point.
+        name: "ocean",
+        file: "themes/ocean.css",
+        config: {
+            hues: { ...HUES, primary: 250, secondary: 195 },
+            neutrals: {
+                bg: { light: [0.965, 0.008, 235], dark: [0.17, 0.02, 255] },
+                "bg-alt": {
+                    light: [0.93, 0.012, 235],
+                    dark: [0.205, 0.024, 255],
+                },
+                surface: {
+                    light: [0.985, 0.005, 235],
+                    dark: [0.23, 0.027, 255],
+                },
+                "surface-raised": {
+                    light: [1, 0, 0],
+                    dark: [0.265, 0.03, 255],
+                },
+                text: { light: [0.22, 0.03, 250], dark: [0.89, 0.015, 235] },
+                "text-muted": {
+                    light: [0.5, 0.03, 245],
+                    dark: [0.67, 0.025, 240],
+                },
+            },
+            borders: {
+                border: { ratio: 2.2, chroma: 0.015, hue: 240 },
+                "border-strong": { ratio: 3.0, chroma: 0.016, hue: 240 },
+            },
+        },
+    },
+];
+
 // ---------------------------------------------------------------------------
 // Colour maths -- OKLCH <-> sRGB, plus WCAG contrast
 // ---------------------------------------------------------------------------
@@ -231,67 +293,71 @@ const pair = (light: string, dark: string): Pair => ({ light, dark });
 const bySchemes = (fn: (s: Scheme) => string) => pair(fn("light"), fn("dark"));
 const toCss = ({ light, dark }: Pair) => `light-dark(${light}, ${dark})`;
 
-const tokens = new Map<string, Pair>();
-const set = (name: string, value: Pair) => tokens.set(name, value);
+function generate({ hues, neutrals, borders }: ThemeConfig): Map<string, Pair> {
+    const tokens = new Map<string, Pair>();
+    const set = (name: string, value: Pair) => tokens.set(name, value);
 
-for (const [name, spec] of Object.entries(NEUTRALS)) {
-    set(
-        `--color-${name}`,
-        bySchemes((s) => hex(...(spec[s] as [number, number, number]))),
-    );
-}
+    for (const [name, spec] of Object.entries(neutrals)) {
+        set(
+            `--color-${name}`,
+            bySchemes((s) => hex(...spec[s])),
+        );
+    }
 
-// Backgrounds have to exist before borders can be solved against them.
-const bgOf = (s: Scheme) =>
-    hex(...(NEUTRALS.bg[s] as [number, number, number]));
-for (const [name, spec] of Object.entries(BORDERS)) {
-    set(
-        `--color-${name}`,
-        bySchemes((s) =>
-            solveLightness(
-                spec.ratio,
-                bgOf(s),
-                spec.chroma,
-                spec.hue,
-                s === "light",
+    // Backgrounds have to exist before borders can be solved against them.
+    const bgOf = (s: Scheme) => hex(...neutrals.bg[s]);
+    for (const [name, spec] of Object.entries(borders)) {
+        set(
+            `--color-${name}`,
+            bySchemes((s) =>
+                solveLightness(
+                    spec.ratio,
+                    bgOf(s),
+                    spec.chroma,
+                    spec.hue,
+                    s === "light",
+                ),
             ),
-        ),
-    );
-}
+        );
+    }
 
-set("--color-grid", pair("rgb(0 0 0 / 0.04)", "rgb(255 255 255 / 0.03)"));
-// Scanlines are their own token: reusing the grid colour made them invisible.
-set("--color-scanline", pair("rgb(0 0 0 / 0.07)", "rgb(255 255 255 / 0.07)"));
-
-for (const [name, hue] of Object.entries(HUES)) {
+    set("--color-grid", pair("rgb(0 0 0 / 0.04)", "rgb(255 255 255 / 0.03)"));
+    // Scanlines are their own token: reusing the grid colour made them invisible.
     set(
-        `--color-${name}`,
-        bySchemes((s) => role("role", hue, s)),
+        "--color-scanline",
+        pair("rgb(0 0 0 / 0.07)", "rgb(255 255 255 / 0.07)"),
     );
-    set(
-        `--color-${name}-hover`,
-        bySchemes((s) => role("hover", hue, s)),
-    );
-}
 
-// One foreground for every filled surface -- valid precisely because the role
-// tier shares a lightness. If you break that invariant, this breaks too.
-set("--color-on-accent", bySchemes(bgOf));
+    for (const [name, hue] of Object.entries(hues)) {
+        set(
+            `--color-${name}`,
+            bySchemes((s) => role("role", hue, s)),
+        );
+        set(
+            `--color-${name}-hover`,
+            bySchemes((s) => role("hover", hue, s)),
+        );
+    }
 
-for (const [name, hue] of Object.entries(HUES)) {
-    set(
-        `--color-${name}-accent`,
-        bySchemes((s) => role("accent", hue, s)),
-    );
+    // One foreground for every filled surface -- valid precisely because the
+    // role tier shares a lightness. If you break that invariant, this breaks too.
+    set("--color-on-accent", bySchemes(bgOf));
+
+    for (const [name, hue] of Object.entries(hues)) {
+        set(
+            `--color-${name}-accent`,
+            bySchemes((s) => role("accent", hue, s)),
+        );
+    }
+
+    return tokens;
 }
 
 // ---------------------------------------------------------------------------
 // Output
 // ---------------------------------------------------------------------------
 
-const THEME = new URL("../src/styles/theme.css", import.meta.url);
-
-function audit(): string[] {
+function audit(tokens: Map<string, Pair>): string[] {
     const lines: string[] = [];
     const resolve = (name: string, s: Scheme) => {
         const value = tokens.get(name);
@@ -335,26 +401,40 @@ function audit(): string[] {
     return lines;
 }
 
-const lines = [...tokens].map(([name, value]) => [name, toCss(value)]);
-const block = lines.map(([k, v]) => `\t${k}: ${v};`).join("\n");
+let drifted = false;
 
-if (Deno.args.includes("--check")) {
-    const css = await Deno.readTextFile(THEME);
-    const drift = lines.filter(([name, value]) => {
-        const m = css.match(new RegExp(`^\\s*${name}:\\s*(.+);`, "m"));
-        return !m || m[1].trim() !== value;
-    });
-    if (drift.length > 0) {
-        console.error(
-            "theme.css has drifted from scripts/generate-theme.ts:\n",
-        );
-        for (const [name, value] of drift)
-            console.error(`  ${name}\n    expected ${value}`);
-        console.error("\nRe-run `deno run theme` and paste the block back in.");
-        Deno.exit(1);
+for (const theme of THEMES) {
+    const tokens = generate(theme.config);
+    const lines = [...tokens].map(([name, value]) => [name, toCss(value)]);
+    const file = new URL(`../src/styles/${theme.file}`, import.meta.url);
+
+    if (Deno.args.includes("--check")) {
+        const css = await Deno.readTextFile(file);
+        const drift = lines.filter(([name, value]) => {
+            const m = css.match(new RegExp(`^\\s*${name}:\\s*(.+);`, "m"));
+            return !m || m[1].trim() !== value;
+        });
+        if (drift.length > 0) {
+            drifted = true;
+            console.error(
+                `${theme.file} has drifted from scripts/generate-theme.ts:\n`,
+            );
+            for (const [name, value] of drift)
+                console.error(`  ${name}\n    expected ${value}`);
+            console.error(
+                "\nRe-run `deno run theme` and paste the block back in.\n",
+            );
+        } else {
+            console.log(
+                `✓ ${theme.file} matches the generator (${tokens.size} tokens).`,
+            );
+        }
+    } else {
+        const block = lines.map(([k, v]) => `\t${k}: ${v};`).join("\n");
+        console.log(`/* ${theme.name} -> src/styles/${theme.file} */`);
+        console.log(block);
+        console.log(`\n/* Contrast audit\n${audit(tokens).join("\n")}\n*/\n`);
     }
-    console.log(`✓ theme.css matches the generator (${tokens.size} tokens).`);
-} else {
-    console.log(block);
-    console.log(`\n/* Contrast audit\n${audit().join("\n")}\n*/`);
 }
+
+if (drifted) Deno.exit(1);
