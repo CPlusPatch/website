@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Redeploy by hand, e.g. after changing the Pages settings.
+  workflow_dispatch:
+
+# Read-only by default; the deploy job asks for what it needs.
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -24,3 +30,29 @@ jobs:
 
       - name: Build
         run: deno run build
+
+      # Only builds of main are published; PR builds just have to succeed.
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: check
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # One deploy at a time, and never cancel one halfway through.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
