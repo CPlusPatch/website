@@ -16,6 +16,7 @@
 
 import type { ComponentProps } from "astro/types";
 import Alert from "./components/alert.astro";
+import Avatar from "./components/avatar.astro";
 import Badge from "./components/badge.astro";
 import Badge88x31 from "./components/badge-88x31.astro";
 import Button from "./components/button.astro";
@@ -270,6 +271,27 @@ export const groups: StoryGroup[] = [
                     { icon: "lucide:badge-check", slot: title(size) },
                 ),
             ),
+        ],
+    },
+    {
+        id: "avatar",
+        title: "Avatars",
+        description: "Initials stand in when there is no image.",
+        min: 8,
+        stories: [
+            ...SIZES.map((size) =>
+                story(size, Avatar, { src: greg, alt: "Greg Heffley", size }),
+            ),
+            ...SIZES.map((size) =>
+                story(`initials-${size}`, Avatar, {
+                    alt: "Greg Heffley",
+                    size,
+                }),
+            ),
+            story("initials-single-word", Avatar, { alt: "Greg" }),
+            story("initials-long-name", Avatar, {
+                alt: "Gregory Hamilton Heffley",
+            }),
         ],
     },
     {
