@@ -1,0 +1,95 @@
+---
+import { Image } from "astro:assets";
+import type { ComponentProps } from "astro/types";
+import { Icon } from "astro-icon/components";
+import Button from "./button.astro";
+import Card from "./card.astro";
+
+/**
+ * A <Card> with a title, an optional full-bleed header image, and a row of
+ * icon links -- for projects, posts, or anything else worth showcasing. The
+ * description goes in the default slot.
+ */
+type Props = ComponentProps<typeof Card> & {
+    title: string;
+    links?: {
+        href: string;
+        icon: string;
+        /** Accessible name and tooltip. The link has no visible text. */
+        label: string;
+    }[];
+    header?: {
+        src: ImageMetadata;
+        alt: string;
+    };
+};
+
+const { title, links = [], header, class: className, ...rest } = Astro.props;
+---
+
+<Card class:list={["media-card", className]} {...rest}>
+    {header && (
+        <Image class="media-card__header" src={header.src} alt={header.alt} />
+    )}
+    <div class="media-card__body">
+        <h3>{title}</h3>
+        <slot />
+    </div>
+    {links.length > 0 && (
+        <ul class="media-card__links">
+            {links.map((link) => (
+                <li>
+                    <Button
+                        href={link.href}
+                        size="icon"
+                        variant="ghost"
+                        tone="neutral"
+                        lift={false}
+                        aria-label={link.label}
+                        title={link.label}
+                    >
+                        <Icon name={link.icon} aria-hidden="true" />
+                    </Button>
+                </li>
+            ))}
+        </ul>
+    )}
+</Card>
+
+<style>
+/*
+ * Surface, border and tone come from <Card>. This file only lays out the
+ * header, body and links. `.card` is repeated to outrank Card's own padding.
+ */
+.media-card.card {
+    align-items: stretch;
+    padding: 0;
+
+    .media-card__header {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        border-bottom: var(--border-width) solid var(--border-color);
+    }
+
+    .media-card__body {
+        padding: var(--space-md);
+
+        :global(p) {
+            color: var(--color-text-muted);
+        }
+    }
+
+    .media-card__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        margin: auto 0 0;
+        padding: var(--space-sm) var(--space-md);
+        list-style: none;
+        border-top: var(--border-width) solid var(--border-color);
+    }
+}
+</style>
