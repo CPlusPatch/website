@@ -133,16 +133,16 @@ for (const el of document.querySelectorAll<HTMLElement>(
             animation: none;
         }
     }
-}
 
-/*
- * Paused by a PauseButton on the marquee itself, or on an ancestor (Logos
- * pauses every lane at once). Kept after the [data-reverse] rule, which has
- * equal specificity and would otherwise reset the play state.
- */
-.marquee[data-paused] .marquee__track,
-:global([data-paused]) .marquee .marquee__track {
-    animation-play-state: paused;
+    /*
+     * Paused by a PauseButton on the marquee itself, or on an ancestor (Logos
+     * pauses every lane at once). Kept after the [data-reverse] rule, which
+     * has equal specificity and would otherwise reset the play state.
+     */
+    &[data-paused] .marquee__track,
+    :global([data-paused]) & .marquee__track {
+        animation-play-state: paused;
+    }
 }
 
 @keyframes marquee-scroll {

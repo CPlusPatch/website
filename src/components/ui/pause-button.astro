@@ -44,12 +44,14 @@ for (const button of document.querySelectorAll<HTMLElement>(
 </script>
 
 <style is:global>
-.pause-button__play,
-.pause-button[aria-pressed="true"] .pause-button__pause {
-    display: none;
-}
+.pause-button {
+    .pause-button__play,
+    &[aria-pressed="true"] .pause-button__pause {
+        display: none;
+    }
 
-.pause-button[aria-pressed="true"] .pause-button__play {
-    display: block;
+    &[aria-pressed="true"] .pause-button__play {
+        display: block;
+    }
 }
 </style>

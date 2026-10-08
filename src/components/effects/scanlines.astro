@@ -1,22 +1,24 @@
 <div class="fx-scanlines" aria-hidden="true"></div>
 
 <style is:global>
-html[data-scanlines] .fx-scanlines,
-html:has([data-scanlines-toggle] > input:checked) .fx-scanlines {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-scanlines);
-    pointer-events: none;
-    background:
-        repeating-linear-gradient(
-            to bottom,
-            var(--color-scanline) 0 1px,
-            transparent 1px 3px
-        ),
-        radial-gradient(
-            ellipse at center,
-            transparent 55%,
-            light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.5)) 100%
-        );
+.fx-scanlines {
+    html[data-scanlines] &,
+    html:has([data-scanlines-toggle] > input:checked) & {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-scanlines);
+        pointer-events: none;
+        background:
+            repeating-linear-gradient(
+                to bottom,
+                var(--color-scanline) 0 1px,
+                transparent 1px 3px
+            ),
+            radial-gradient(
+                ellipse at center,
+                transparent 55%,
+                light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.5)) 100%
+            );
+    }
 }
 </style>
