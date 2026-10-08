@@ -1,0 +1,12 @@
+import Logos from "../../components/blocks/logos.astro";
+import { technologies } from "../../data/experience.ts";
+import { type StoryGroup, story } from "../story.ts";
+
+export const logos: StoryGroup[] = [
+    {
+        id: "logos",
+        title: "Logos",
+        min: "full",
+        stories: [story("default", Logos, { items: technologies, rows: 5 })],
+    },
+];
