@@ -1,0 +1,20 @@
+---
+import SidebarGroup from "../components/sections/sidebar/sidebar-group.astro";
+import SidebarLink from "../components/sections/sidebar/sidebar-link.astro";
+import { categories } from "./stories/index.ts";
+
+/**
+ * The gallery's index: a SidebarGroup per category, a scroll-tracking link
+ * per story group. Used in both the wide sidebar and the narrow bar menu.
+ */
+---
+
+{categories.map((category) => (
+    <SidebarGroup title={category.title} icon={category.icon}>
+        {category.groups.map((group) => (
+            <SidebarLink href={`#${group.id}`} section={group.id}>
+                {group.title}
+            </SidebarLink>
+        ))}
+    </SidebarGroup>
+))}

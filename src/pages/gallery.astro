@@ -1,15 +1,25 @@
 ---
 import { Icon } from "astro-icon/components";
 import Sidebar from "../components/sections/sidebar/sidebar.astro";
-import SidebarGroup from "../components/sections/sidebar/sidebar-group.astro";
 import SidebarLayout from "../components/sections/sidebar/sidebar-layout.astro";
-import SidebarLink from "../components/sections/sidebar/sidebar-link.astro";
+import SidebarNav from "../components/sections/sidebar/sidebar-nav.astro";
+import Dropdown from "../components/ui/dropdown.astro";
 import DisplaySettings from "../gallery/display-settings.astro";
+import GalleryNav from "../gallery/gallery-nav.astro";
 import { categories, groups } from "../gallery/stories/index.ts";
+import type { StoryGroup as Group } from "../gallery/story.ts";
 import StoryGroup from "../gallery/story-group.astro";
+import { PREVIEW_CSS } from "../gallery/widths.ts";
 import Layout from "../layouts/base.astro";
 
+// Some components have several groups (buttons, badges): count them once.
+const components = (list: Group[]) =>
+    new Set(list.map((group) => group.source)).size;
+const count = (n: number, one: string, many = `${one}s`) =>
+    `${n} ${n === 1 ? one : many}`;
+
 const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
+const summary = `${count(components(groups), "component")} · ${count(storyCount, "story", "stories")}`;
 ---
 
 <Layout
@@ -17,29 +27,31 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
     description="Every component in the web-ng UI toolkit, in each of its states and themes."
     noindex
 >
-    <div class="gallery">
+    <style is:inline set:html={PREVIEW_CSS} />
+
+    <div class="gallery" id="top">
         <header class="gallery__bar">
-            <h1 class="gallery__title">Component gallery</h1>
-            <p class="gallery__count">
-                {`${groups.length} components · ${storyCount} stories`}
-            </p>
+            <h1 class="gallery__title text-title">
+                <a href="#top">Component gallery</a>
+            </h1>
+            <p class="gallery__count text-meta">{summary}</p>
+            {/* The sidebar's links, for when there is no room for the sidebar. */}
+            <Dropdown
+                class="gallery__menu"
+                id="gallery-menu"
+                label="Components"
+                icon="lucide:menu"
+            >
+                <SidebarNav label="Components">
+                    <GalleryNav />
+                </SidebarNav>
+            </Dropdown>
             <DisplaySettings />
         </header>
 
         <SidebarLayout>
             <Sidebar slot="sidebar" class="gallery__sidebar" label="Components">
-                {categories.map((category) => (
-                    <SidebarGroup title={category.title} icon={category.icon}>
-                        {category.groups.map((group) => (
-                            <SidebarLink
-                                href={`#${group.id}`}
-                                section={group.id}
-                            >
-                                {group.title}
-                            </SidebarLink>
-                        ))}
-                    </SidebarGroup>
-                ))}
+                <GalleryNav />
             </Sidebar>
 
             <main id="main" class="gallery__main">
@@ -50,14 +62,17 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
                     >
                         <header class="gallery__category-header">
                             <h2
-                                class="gallery__category-title"
+                                class="gallery__category-title text-heading"
                                 id={category.id}
                             >
                                 <Icon name={category.icon} aria-hidden="true" />
                                 {category.title}
                             </h2>
-                            <p class="gallery__category-count">
-                                {`${category.groups.length} components`}
+                            <p class="text-meta">
+                                {count(
+                                    components(category.groups),
+                                    "component",
+                                )}
                             </p>
                         </header>
                         {category.groups.map((group) => (
@@ -65,6 +80,11 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
                         ))}
                     </section>
                 ))}
+
+                <footer class="gallery__end text-meta">
+                    <span>{summary}</span>
+                    <a href="#top">Back to top</a>
+                </footer>
             </main>
         </SidebarLayout>
     </div>
@@ -75,15 +95,21 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
     width: min(100% - 2 * var(--space-md), 90rem);
     margin-inline: auto;
 
+    /* Focus and in-page jumps stop clear of the sticky bar. */
+    :global(html):has(&) {
+        scroll-padding-top: calc(var(--header-height) + var(--space-md));
+    }
+
     /* Sticky, so the settings stay in reach; the sidebar sticks just below it. */
     .gallery__bar {
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: var(--z-sticky);
         display: flex;
         align-items: center;
         gap: var(--space-sm) var(--space-md);
-        min-height: var(--header-height);
+        /* A fixed height, which the offsets above and below rely on. */
+        height: var(--header-height);
         margin-bottom: var(--space-md);
         /* Bleed to the viewport edges, so content never shows beside it. */
         padding-inline: var(--space-md);
@@ -94,31 +120,43 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
     }
 
     .gallery__title {
+        min-width: 0;
         margin: 0;
-        font-size: var(--font-size-lg);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            /* Not the global link hover's highlighter fill. */
+            &:hover {
+                color: inherit;
+                background-color: transparent;
+            }
+        }
     }
 
     .gallery__count {
         flex: 1;
         margin: 0;
-        font-family: var(--font-mono);
-        font-size: var(--font-size-xs);
-        color: var(--color-text-muted);
+        white-space: nowrap;
     }
 
     .gallery__sidebar {
         --sidebar-top: calc(var(--header-height) + var(--space-md));
     }
 
-    /*
-     * The page's bottom padding lives here, inside the sidebar's column:
-     * outside it, the column would end short of the page and push the
-     * sticky sidebar up at the bottom.
-     */
     .gallery__main {
         display: flex;
         flex-direction: column;
         gap: var(--space-xl);
+        /*
+         * The page's bottom padding lives here, inside the sidebar's column:
+         * outside it, the column would end short of the page and push the
+         * sticky sidebar up at the bottom.
+         */
         padding-bottom: var(--space-xl);
     }
 
@@ -139,6 +177,10 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
         gap: var(--space-md);
         padding-bottom: var(--space-sm);
         border-bottom: 2px solid var(--color-border-strong);
+
+        p {
+            margin: 0;
+        }
     }
 
     .gallery__category-title {
@@ -146,21 +188,46 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
         align-items: center;
         gap: var(--space-sm);
         margin: 0;
-        font-size: var(--font-size-xl);
-        scroll-margin-top: calc(var(--header-height) + var(--space-md));
 
         svg {
             color: var(--color-primary);
         }
     }
 
-    .gallery__category-count {
-        margin: 0;
-        font-family: var(--font-mono);
-        font-size: var(--font-size-xs);
-        color: var(--color-text-muted);
+    .gallery__end {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-md);
+        padding-top: var(--space-md);
+        border-top: var(--border-width) solid var(--border-color);
+
+        a {
+            color: inherit;
+        }
     }
 
+    /*
+     * Narrow: the sidebar gives way to the Components menu in the bar, so
+     * the links stay in reach while scrolling. The two queries meet at the
+     * same width: the layout is the page less its 2 × space-md gutter.
+     */
+    .gallery__menu {
+        display: none;
+    }
+
+    @container (width < 58rem) {
+        .gallery__menu {
+            display: inline-block;
+        }
+    }
+
+    @container sidebar-layout (width < 56rem) {
+        .gallery__sidebar {
+            display: none;
+        }
+    }
+
+    /* Tiny: drop the counts, and the buttons' words and chevrons. */
     @container (width < 30rem) {
         .gallery__count {
             display: none;
@@ -168,6 +235,28 @@ const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
 
         .gallery__title {
             flex: 1;
+        }
+
+        .gallery__bar {
+            gap: var(--space-sm);
+        }
+
+        .gallery__bar :global(.dropdown__chevron) {
+            display: none;
+        }
+
+        /* Icon-only now, so as compact as an icon button. */
+        .gallery__bar :global(.dropdown__trigger) {
+            padding-inline: var(--space-sm);
+        }
+
+        .gallery__bar :global(.dropdown__label) {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
         }
     }
 }
