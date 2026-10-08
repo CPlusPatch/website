@@ -59,7 +59,7 @@ html:has([data-theme-select] option[value="ocean"]:checked) {
     --font-base: var(--font-nunito);
     --font-mono: var(--font-fira-code);
 
-    /* This selector outranks theme.css's :root, so repeat its motion opt-out. */
+    /* This selector outranks tokens.css's :root, so repeat its motion opt-out. */
     @media (prefers-reduced-motion: reduce) {
         --transition: 0s;
     }

@@ -56,7 +56,7 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
  * Tones. One set of hooks for every toneable component: --tone is the text and
  * fill colour, --tone-hover its hover step, --tone-accent the decorative one.
  * Declared here as classes (not pre-composed) so they resolve on the element
- * that consumes them -- see the note in theme.css.
+ * that consumes them -- see the note on border and shadow in tokens.css.
  */
 .tone-primary {
     --tone: var(--color-primary);
