@@ -14,7 +14,7 @@ const { title, icon, class: className, ...rest } = Astro.props;
 
 <div class:list={["sidebar-group", className]} {...rest}>
     {/* The list's own label names it for screen readers, so this is visual only. */}
-    <p class="sidebar-group__title" aria-hidden="true">
+    <p class="sidebar-group__title text-label" aria-hidden="true">
         {icon && <Icon name={icon} class="sidebar-group__icon" />}
         {title}
     </p>
@@ -36,9 +36,6 @@ const { title, icon, class: className, ...rest } = Astro.props;
         align-items: center;
         gap: var(--space-sm);
         margin: 0 0 var(--space-sm);
-        font-size: var(--font-size-sm);
-        font-weight: 600;
-        line-height: var(--leading-snug);
         color: var(--color-text);
     }
 

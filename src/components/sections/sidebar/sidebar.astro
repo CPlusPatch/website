@@ -1,17 +1,15 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
+import SidebarNav from "./sidebar-nav.astro";
 
 /**
- * Navigation built from <SidebarGroup>s of <SidebarLink>s.
+ * A <SidebarNav> in a collapsible frame.
  *
  * A native <details>, so on its own, or in a narrow <SidebarLayout>, it is a
  * collapsed menu that opens without JS. In a wide SidebarLayout it is always
- * open and sticks beside the content; set --sidebar-top to clear a sticky
- * header above it.
- *
- * Links with a `section` light up while that section is being read: the
- * one small script on the page, below. Without JS they are plain links.
+ * open and sticks beside the content, its links scrolling within it; set
+ * --sidebar-top to clear a sticky header above it.
  */
 interface Props extends HTMLAttributes<"details"> {
     /** Names the navigation, and labels the toggle on narrow screens. */
@@ -22,7 +20,7 @@ const { label, class: className, ...rest } = Astro.props;
 ---
 
 <details class:list={["sidebar", className]} {...rest}>
-    <summary class="sidebar__toggle">
+    <summary class="sidebar__toggle text-label">
         <Icon name="lucide:menu" aria-hidden="true" />
         <span class="sidebar__label">{label}</span>
         <Icon
@@ -31,9 +29,9 @@ const { label, class: className, ...rest } = Astro.props;
             aria-hidden="true"
         />
     </summary>
-    <nav class="sidebar__nav" aria-label={label}>
+    <SidebarNav class="sidebar__nav" {label}>
         <slot />
-    </nav>
+    </SidebarNav>
 </details>
 
 <style>
@@ -48,8 +46,6 @@ const { label, class: className, ...rest } = Astro.props;
         gap: var(--space-sm);
         min-height: var(--control-height-lg);
         padding: var(--space-sm) var(--space-md);
-        font-size: var(--font-size-sm);
-        font-weight: 600;
         cursor: pointer;
         list-style: none;
 
@@ -78,9 +74,6 @@ const { label, class: className, ...rest } = Astro.props;
     }
 
     .sidebar__nav {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-lg);
         padding: var(--space-md);
         border-top: var(--border-width) solid var(--border-color);
     }
@@ -88,7 +81,8 @@ const { label, class: className, ...rest } = Astro.props;
     /*
      * Beside the content: always open and sticky, on the same surface as the
      * panels it sits next to, with a gap below so it never touches the
-     * bottom of the viewport. Keep the query in step with
+     * bottom of the viewport. The nav scrolls inside the frame, so its
+     * fading edges leave the border whole. Keep the query in step with
      * sidebar-layout.astro. Only for the sidebar in the layout's own slot,
      * not one nested in its content. Gated on ::details-content, as without
      * it a closed <details> cannot be shown, and hiding the toggle would
@@ -99,20 +93,6 @@ const { label, class: className, ...rest } = Astro.props;
             :global(.sidebar-layout__aside) > & {
                 position: sticky;
                 top: var(--sidebar-top, 0px);
-                max-height: calc(
-                    100dvh -
-                    var(--sidebar-top, 0px) -
-                    var(--space-md)
-                );
-                overflow-y: auto;
-                overscroll-behavior: contain;
-                scrollbar-width: thin;
-                /* Only shown while in use, so the edge stays clean. */
-                scrollbar-color: transparent transparent;
-                &:hover,
-                &:focus-within {
-                    scrollbar-color: var(--color-border-strong) transparent;
-                }
 
                 &::details-content {
                     content-visibility: visible;
@@ -124,6 +104,13 @@ const { label, class: className, ...rest } = Astro.props;
 
                 /* No toggle above it, so no rule either. */
                 .sidebar__nav {
+                    max-height: calc(
+                        100dvh -
+                        var(--sidebar-top, 0px) -
+                        var(--space-md) -
+                        2 *
+                        var(--border-width)
+                    );
                     border-top: 0;
                 }
             }
@@ -131,78 +118,3 @@ const { label, class: className, ...rest } = Astro.props;
     }
 }
 </style>
-
-<script>
-/*
- * Scroll spy. A link with data-section gets aria-current="location" while
- * its section is the one being read: the last whose top has passed a line a
- * third of the way down the viewport, or, once scrolled to the bottom, the
- * last one in view (short final sections never reach the line). Links the
- * page marked aria-current="page" are left alone.
- */
-const LINE = 1 / 3;
-
-const spies = [...document.querySelectorAll<HTMLElement>(".sidebar")]
-    .map((sidebar) => ({
-        sidebar,
-        entries: [
-            ...sidebar.querySelectorAll<HTMLAnchorElement>("a[data-section]"),
-        ].flatMap((link) => {
-            const section = document.getElementById(link.dataset.section ?? "");
-            return section ? [{ link, section }] : [];
-        }),
-        active: null as HTMLAnchorElement | null,
-    }))
-    .filter((spy) => spy.entries.length > 0);
-
-/** Scrolls the sidebar itself, not the page, to show the link. */
-const reveal = (sidebar: HTMLElement, link: HTMLElement) => {
-    if (sidebar.scrollHeight <= sidebar.clientHeight) return;
-    const box = sidebar.getBoundingClientRect();
-    const row = link.getBoundingClientRect();
-    const pad = row.height * 2;
-    if (row.top < box.top + pad) sidebar.scrollTop -= box.top + pad - row.top;
-    else if (row.bottom > box.bottom - pad)
-        sidebar.scrollTop += row.bottom - (box.bottom - pad);
-};
-
-let raf = 0;
-
-function update() {
-    raf = 0;
-    const line = innerHeight * LINE;
-    const atBottom =
-        scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
-
-    for (const spy of spies) {
-        // Read every position first, then write.
-        const tops = spy.entries.map(
-            ({ section }) => section.getBoundingClientRect().top,
-        );
-        let index = -1;
-        tops.forEach((top, i) => {
-            if (top <= line || (atBottom && top < innerHeight)) index = i;
-        });
-        const next = index >= 0 ? spy.entries[index].link : null;
-        if (next === spy.active) continue;
-
-        if (spy.active?.getAttribute("aria-current") === "location")
-            spy.active.removeAttribute("aria-current");
-        if (next && !next.hasAttribute("aria-current")) {
-            next.setAttribute("aria-current", "location");
-            reveal(spy.sidebar, next);
-        }
-        spy.active = next;
-    }
-}
-
-const schedule = () => {
-    if (!raf) raf = requestAnimationFrame(update);
-};
-
-if (spies.length) {
-    addEventListener("scroll", schedule, { passive: true });
-    addEventListener("resize", schedule, { passive: true });
-    update();
-}
-</script>

@@ -1,0 +1,185 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * The navigation itself: <SidebarGroup>s of <SidebarLink>s, with a scroll
+ * spy. <Sidebar> wraps it in a collapsible frame; use it bare to put the
+ * same links somewhere else, such as in a <Dropdown>.
+ *
+ * Scrolls on its own once something caps its height, with the edges fading
+ * where there is more to see. Links with a `section` light up while that
+ * section is being read (the script below); without JS they are plain links.
+ */
+interface Props extends HTMLAttributes<"nav"> {
+    /** Names the navigation for screen readers. */
+    label: string;
+}
+
+const { label, class: className, ...rest } = Astro.props;
+---
+
+<nav class:list={["sidebar-nav", className]} aria-label={label} {...rest}>
+    <slot />
+</nav>
+
+<style>
+/* Registered, so the fade lengths can animate. */
+@property --sidebar-fade-start {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --sidebar-fade-end {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+.sidebar-nav {
+    --sidebar-fade: 2rem;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Keyboard focus scrolls links clear of the faded edges. */
+    scroll-padding-block: var(--sidebar-fade);
+    scrollbar-width: thin;
+    /* Only shown while in use, so the edge stays clean. */
+    scrollbar-color: transparent transparent;
+
+    &:hover,
+    &:focus-within {
+        scrollbar-color: var(--color-border-strong) transparent;
+    }
+
+    /*
+     * Each edge fades only while there is more to scroll towards it: the
+     * fade lengths follow the scroll position. Without overflow there is no
+     * timeline, so both stay at 0 and nothing fades.
+     */
+    @supports (animation-timeline: scroll()) {
+        mask-image: linear-gradient(
+            to bottom,
+            transparent,
+            #000 var(--sidebar-fade-start),
+            #000 calc(100% - var(--sidebar-fade-end)),
+            transparent
+        );
+        animation: sidebar-nav-fade linear both;
+        animation-timeline: scroll(self);
+    }
+}
+
+@keyframes sidebar-nav-fade {
+    0% {
+        --sidebar-fade-start: 0px;
+        --sidebar-fade-end: var(--sidebar-fade);
+    }
+
+    8% {
+        --sidebar-fade-start: var(--sidebar-fade);
+    }
+
+    92% {
+        --sidebar-fade-end: var(--sidebar-fade);
+    }
+
+    100% {
+        --sidebar-fade-start: var(--sidebar-fade);
+        --sidebar-fade-end: 0px;
+    }
+}
+</style>
+
+<script>
+/*
+ * Scroll spy. A link with data-section gets aria-current="location" while
+ * its section is the one being read: the last whose top has passed a line a
+ * third of the way down the viewport, or, once scrolled to the bottom, the
+ * last one in view (short final sections never reach the line). Links the
+ * page marked aria-current="page" are left alone.
+ */
+const LINE = 1 / 3;
+
+const spies = [...document.querySelectorAll<HTMLElement>(".sidebar-nav")]
+    .map((nav) => ({
+        entries: [
+            ...nav.querySelectorAll<HTMLAnchorElement>("a[data-section]"),
+        ].flatMap((link) => {
+            const section = document.getElementById(link.dataset.section ?? "");
+            return section ? [{ link, section }] : [];
+        }),
+        active: null as HTMLAnchorElement | null,
+    }))
+    .filter((spy) => spy.entries.length > 0);
+
+/** The nearest box the link scrolls within, short of the page itself. */
+const scrollerOf = (link: HTMLElement) => {
+    for (
+        let el = link.parentElement;
+        el && el !== document.body;
+        el = el.parentElement
+    ) {
+        if (el.scrollHeight > el.clientHeight) {
+            const { overflowY } = getComputedStyle(el);
+            if (overflowY === "auto" || overflowY === "scroll") return el;
+        }
+    }
+    return null;
+};
+
+/** Scrolls the nav (or whatever it sits in), never the page, to show the link. */
+const reveal = (link: HTMLElement) => {
+    const scroller = scrollerOf(link);
+    if (!scroller) return;
+    const box = scroller.getBoundingClientRect();
+    const row = link.getBoundingClientRect();
+    const pad = row.height * 2;
+    if (row.top < box.top + pad) scroller.scrollTop -= box.top + pad - row.top;
+    else if (row.bottom > box.bottom - pad)
+        scroller.scrollTop += row.bottom - (box.bottom - pad);
+};
+
+let raf = 0;
+
+function update() {
+    raf = 0;
+    const line = innerHeight * LINE;
+    const atBottom =
+        scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+
+    for (const spy of spies) {
+        // Read every position first, then write.
+        const tops = spy.entries.map(
+            ({ section }) => section.getBoundingClientRect().top,
+        );
+        let index = -1;
+        tops.forEach((top, i) => {
+            if (top <= line || (atBottom && top < innerHeight)) index = i;
+        });
+        const next = index >= 0 ? spy.entries[index].link : null;
+        if (next === spy.active) continue;
+
+        if (spy.active?.getAttribute("aria-current") === "location")
+            spy.active.removeAttribute("aria-current");
+        if (next && !next.hasAttribute("aria-current")) {
+            next.setAttribute("aria-current", "location");
+            reveal(next);
+        }
+        spy.active = next;
+    }
+}
+
+const schedule = () => {
+    if (!raf) raf = requestAnimationFrame(update);
+};
+
+if (spies.length) {
+    addEventListener("scroll", schedule, { passive: true });
+    addEventListener("resize", schedule, { passive: true });
+    update();
+}
+</script>
