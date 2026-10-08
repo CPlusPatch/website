@@ -7,10 +7,12 @@
     "npm:@iconify-json/lucide@^1.2.138": "1.2.138",
     "npm:@jsr/std__assert@1": "1.0.19",
     "npm:@types/deno@^2.7.0": "2.7.0",
+    "npm:@types/matter-js@0.20": "0.20.2",
     "npm:astro-icon@^1.2.0": "1.2.0",
     "npm:astro@^7.3.5": "7.3.5",
     "npm:browserslist@^4.29.3": "4.29.3",
     "npm:lightningcss@^1.33.0": "1.33.0",
+    "npm:matter-js@0.20": "0.20.0",
     "npm:sharp@~0.35.5": "0.35.5",
     "npm:typescript@^6.0.3": "6.0.3"
   },
@@ -928,6 +930,9 @@
         "@types/unist"
       ]
     },
+    "@types/matter-js@0.20.2": {
+      "integrity": "sha512-3PPKy3QxvZ89h9+wdBV2488I1JLVs7DEpIkPvgO8JC1mUdiVSO37ZIvVctOTD7hIq8OAL2gJ3ugGSuUip6DhCw=="
+    },
     "@types/mdast@4.0.4": {
       "integrity": "sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==",
       "dependencies": [
@@ -1597,6 +1602,9 @@
         "@babel/types",
         "source-map-js"
       ]
+    },
+    "matter-js@0.20.0": {
+      "integrity": "sha512-iC9fYR7zVT3HppNnsFsp9XOoQdQN2tUyfaKg4CHLH8bN+j6GT4Gw7IH2rP0tflAebrHFw730RR3DkVSZRX8hwA=="
     },
     "mdast-util-to-hast@13.2.1": {
       "integrity": "sha512-cctsq2wp5vTsLIcaymblUriiTcZd0CwWtCbLvrOzYCDZoWyMNV8sZ7krj09FSnsiJi3WVsHLM4k6Dq/yaPyCXA==",
@@ -2348,6 +2356,15 @@
       ]
     },
     "members": {
+      "packages/destructor": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@jsr/std__assert@1",
+            "npm:@types/matter-js@0.20",
+            "npm:matter-js@0.20"
+          ]
+        }
+      },
       "packages/palette": {
         "packageJson": {
           "dependencies": [
