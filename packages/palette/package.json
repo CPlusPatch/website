@@ -5,5 +5,8 @@
     "type": "module",
     "exports": {
         ".": "./src/index.ts"
+    },
+    "devDependencies": {
+        "@std/assert": "jsr:^1.0.0"
     }
 }

@@ -5,6 +5,7 @@
     "npm:@biomejs/biome@^2.5.15": "2.5.15",
     "npm:@iconify-json/logos@^1.2.15": "1.2.15",
     "npm:@iconify-json/lucide@^1.2.138": "1.2.138",
+    "npm:@jsr/std__assert@1": "1.0.19",
     "npm:@types/deno@^2.7.0": "2.7.0",
     "npm:astro-icon@^1.2.0": "1.2.0",
     "npm:astro@^7.3.5": "7.3.5",
@@ -738,6 +739,17 @@
     },
     "@jridgewell/sourcemap-codec@1.5.5": {
       "integrity": "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="
+    },
+    "@jsr/std__assert@1.0.19": {
+      "integrity": "sha512-pEj6RPkGbqlgRmyKwATp4cUs6+ijxtdrv3bq8v1d2I2CEcMEyPaO8cVKro61wGRDH4cNg8Zx6haztvK/9m7gkA==",
+      "dependencies": [
+        "@jsr/std__internal"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__assert/1.0.19.tgz"
+    },
+    "@jsr/std__internal@1.0.14": {
+      "integrity": "sha512-JT8b/t40WcR9q0GDwRZUooY7aXeXnFal8iidE/5TckdAFtvpVAsaJ71/Xgf1SfoChs41s6CZkuCYM8toaNgdvA==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__internal/1.0.14.tgz"
     },
     "@napi-rs/wasm-runtime@1.2.4_@emnapi+core@1.11.1_@emnapi+runtime@1.11.1": {
       "integrity": "sha512-AJxoUD2/15ESHbvpcyjU274nsAPLuOtPHCk0vKJM5pj//Fg/B1FXNWjPnXTT9PymCYYiHo4zPj0ZomXBKhoy7g==",
@@ -2334,6 +2346,15 @@
         "npm:sharp@~0.35.5",
         "npm:typescript@^6.0.3"
       ]
+    },
+    "members": {
+      "packages/palette": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@jsr/std__assert@1"
+          ]
+        }
+      }
     }
   }
 }
