@@ -50,71 +50,71 @@ const { ground, class: className, ...rest } = Astro.props;
     flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
-}
 
-/* aria-pressed, data-hint and data-wiggle are written by the package */
-.destructor__trigger {
-    width: 180px;
-    aspect-ratio: 360 / 187;
-    padding: 0;
-    border: 0;
-    background:
-        url("../../images/destructor/gravgun-outline.png") center / contain
-        no-repeat;
-    cursor: pointer;
-    transition: scale var(--transition);
+    /* aria-pressed, data-hint and data-wiggle are written by the package */
+    .destructor__trigger {
+        width: 180px;
+        aspect-ratio: 360 / 187;
+        padding: 0;
+        border: 0;
+        background:
+            url("../../images/destructor/gravgun-outline.png") center / contain
+            no-repeat;
+        cursor: pointer;
+        transition: scale var(--transition);
 
-    /* Sprite swaps are instant, like in the game */
-    &:hover,
-    &[data-hint] {
-        background-image: url("../../images/destructor/gravgun-hover.png");
-    }
+        /* Sprite swaps are instant, like in the game */
+        &:hover,
+        &[data-hint] {
+            background-image: url("../../images/destructor/gravgun-hover.png");
+        }
 
-    &[aria-pressed="true"] {
-        background-image: url("../../images/destructor/gravgun-inset.png");
+        &[aria-pressed="true"] {
+            background-image: url("../../images/destructor/gravgun-inset.png");
 
-        &:hover {
-            background-image: url("../../images/destructor/gravgun-inset-hover.png");
+            &:hover {
+                background-image: url("../../images/destructor/gravgun-inset-hover.png");
+            }
+        }
+
+        &:active {
+            scale: 0.97;
+        }
+
+        &[data-wiggle] {
+            animation: destructor-wiggle 0.5s ease-in-out;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+
+        /* It does nothing without JS, so it shouldn't look like it would */
+        @media (scripting: none) {
+            pointer-events: none;
         }
     }
 
-    &:active {
-        scale: 0.97;
-    }
+    /*
+     * The gun needs a mouse; shown after a touch press, until it is equipped.
+     * Without JS, the <noscript> message shows instead.
+     */
+    .destructor__hint {
+        min-height: 1lh;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-xs);
+        line-height: var(--leading-tight);
+        text-align: center;
 
-    &[data-wiggle] {
-        animation: destructor-wiggle 0.5s ease-in-out;
-
-        @media (prefers-reduced-motion: reduce) {
-            animation: none;
+        span {
+            display: none;
         }
     }
 
-    /* It does nothing without JS, so it shouldn't look like it would */
-    @media (scripting: none) {
-        pointer-events: none;
+    &:has([data-hint="mouse"]) [data-hint-for="mouse"],
+    &:has([data-hint="desktop"]) [data-hint-for="desktop"] {
+        display: inline;
     }
-}
-
-/*
- * The gun needs a mouse; shown after a touch press, until it is equipped.
- * Without JS, the <noscript> message shows instead.
- */
-.destructor__hint {
-    min-height: 1lh;
-    color: var(--color-text-muted);
-    font-size: var(--font-size-xs);
-    line-height: var(--leading-tight);
-    text-align: center;
-
-    span {
-        display: none;
-    }
-}
-
-.destructor:has([data-hint="mouse"]) [data-hint-for="mouse"],
-.destructor:has([data-hint="desktop"]) [data-hint-for="desktop"] {
-    display: inline;
 }
 
 @keyframes destructor-wiggle {

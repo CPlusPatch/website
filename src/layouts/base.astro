@@ -144,22 +144,22 @@ body {
             calc(var(--grid-offset) + 0.5px) / var(--grid-marks-size)
             var(--grid-marks-size);
     }
-}
 
-.skip-link {
-    position: absolute;
-    left: var(--space-md);
-    top: var(--space-md);
-    /* Above the fx overlays, so the scanlines never dim it */
-    z-index: var(--z-skip-link);
-    padding: var(--space-sm) var(--space-md);
-    color: var(--color-on-accent);
-    background-color: var(--color-primary);
-    text-decoration: none;
-    translate: 0 -200%;
+    .skip-link {
+        position: absolute;
+        left: var(--space-md);
+        top: var(--space-md);
+        /* Above the fx overlays, so the scanlines never dim it */
+        z-index: var(--z-skip-link);
+        padding: var(--space-sm) var(--space-md);
+        color: var(--color-on-accent);
+        background-color: var(--color-primary);
+        text-decoration: none;
+        translate: 0 -200%;
 
-    &:focus-visible {
-        translate: 0 0;
+        &:focus-visible {
+            translate: 0 0;
+        }
     }
 }
 </style>
