@@ -1,9 +1,9 @@
 #!/usr/bin/env -S deno run --allow-read
 /**
- * Palette generator for src/styles/theme.css.
+ * Palette generator for src/styles/themes/*.css.
  *
  *   deno run theme          print the token block + a contrast audit
- *   deno run theme:check    verify theme.css still matches this file (CI-safe)
+ *   deno run theme:check    verify the theme files still match this file (CI-safe)
  *
  * Why this exists
  * ---------------
@@ -13,10 +13,10 @@
  * rather than something to re-audit per colour, and it is what lets a single
  * --color-on-accent work as the foreground for every filled surface.
  *
- * Editing theme.css by hand breaks that guarantee silently. Change the CONFIG
+ * Editing the colour tokens by hand breaks that guarantee silently. Change the CONFIG
  * below instead, re-run, and paste the output back.
  *
- * This script deliberately does not write theme.css itself: the file carries
+ * This script deliberately does not write the theme files itself: the file carries
  * explanatory comments that a generator would trample.
  */
 
@@ -126,12 +126,12 @@ interface ThemeConfig {
 
 /**
  * Every theme, and the stylesheet (relative to src/styles/) that holds its
- * tokens. The first is the default in theme.css; the others override it.
+ * tokens. The first is the default; the others override it.
  */
 const THEMES: { name: string; file: string; config: ThemeConfig }[] = [
     {
         name: "default",
-        file: "theme.css",
+        file: "themes/default.css",
         config: { hues: HUES, neutrals: NEUTRALS, borders: BORDERS },
     },
     {
