@@ -39,7 +39,13 @@ const {
     padding: var(--space-md);
     width: 100%;
 
+    /* Slotted, so the roles come by token. A compact panel: small text, a hair under its heading. */
+    & h3 {
+        margin-bottom: var(--space-xs);
+    }
+
     & p {
+        font: var(--type-body-sm);
         color: var(--color-text-muted);
     }
 
