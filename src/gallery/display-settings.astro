@@ -3,11 +3,12 @@ import Dropdown from "../components/ui/dropdown.astro";
 import SegmentedControl from "../components/ui/segmented-control.astro";
 import Select from "../components/ui/select.astro";
 import Toggle from "../components/ui/toggle.astro";
+import { OVERRIDES, overrideOptions } from "./overrides.ts";
 import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 
 /**
- * The gallery's page-wide settings: theme, default preview width and
- * effects. None of it needs JS -- each control is read through :has()
+ * The gallery's page-wide settings: theme, default preview width,
+ * spacing, radius and font size overrides, and effects. None of it needs JS -- each control is read through :has()
  * wherever it lives, so it keeps working while the dropdown is closed.
  */
 
@@ -60,6 +61,20 @@ const EFFECTS = [
         />
     </div>
 
+    {OVERRIDES.map((override) => (
+        <div class="display-settings__row text-ui">
+            <span>{override.label}</span>
+            <SegmentedControl
+                name={override.name}
+                label={override.label}
+                options={overrideOptions(override)}
+                value="default"
+                size="sm"
+                variant="subtle"
+            />
+        </div>
+    ))}
+
     <fieldset class="display-settings__effects">
         <legend class="text-ui">Effects</legend>
         {EFFECTS.map(({ label, attr }) => (
@@ -97,3 +112,58 @@ const EFFECTS = [
     }
 }
 </style>
+
+<script>
+/*
+ * Theme and overrides reflow the whole page, so what the reader was looking
+ * at moves. Keep track of the element under the sticky bar as they scroll
+ * (a change's reflow can't be measured after the fact, as reading layout
+ * flushes it), and put it back after each change. Fonts a theme loads late
+ * reflow again, so repeat once they land.
+ */
+const settings = document.getElementById("display-settings");
+const bar = document.querySelector(".gallery__bar");
+const main = document.querySelector(".gallery__main");
+
+let anchor: Element | null = null;
+let anchorTop = 0;
+let pending = false;
+
+const remember = () => {
+    pending = false;
+    if (!bar || !main) return;
+    // elementsFromPoint, as the open dropdown's panel can be on top of the page.
+    const y = bar.getBoundingClientRect().bottom + 8;
+    const hit = document
+        .elementsFromPoint(window.innerWidth / 2, y)
+        .find((el) => main.contains(el));
+    if (!hit) return;
+    anchor = hit;
+    anchorTop = hit.getBoundingClientRect().top;
+};
+
+const schedule = () => {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(remember);
+};
+
+remember();
+window.addEventListener("scroll", schedule, { passive: true });
+window.addEventListener("resize", schedule);
+
+settings?.addEventListener("change", () => {
+    const target = anchor;
+    const top = anchorTop;
+    if (!target?.isConnected) return;
+
+    const restore = () => {
+        const drift = target.getBoundingClientRect().top - top;
+        if (drift) window.scrollBy({ top: drift, behavior: "instant" });
+    };
+
+    restore();
+    requestAnimationFrame(restore);
+    document.fonts.addEventListener("loadingdone", restore, { once: true });
+});
+</script>

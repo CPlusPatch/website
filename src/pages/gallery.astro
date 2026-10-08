@@ -6,6 +6,7 @@ import SidebarNav from "../components/sections/sidebar/sidebar-nav.astro";
 import Dropdown from "../components/ui/dropdown.astro";
 import DisplaySettings from "../gallery/display-settings.astro";
 import GalleryNav from "../gallery/gallery-nav.astro";
+import { OVERRIDES_CSS } from "../gallery/overrides.ts";
 import { categories, groups } from "../gallery/stories/index.ts";
 import type { StoryGroup as Group } from "../gallery/story.ts";
 import StoryGroup from "../gallery/story-group.astro";
@@ -28,6 +29,7 @@ const summary = `${count(components(groups), "component")} · ${count(storyCount
     noindex
 >
     <style is:inline set:html={PREVIEW_CSS} />
+    <style is:inline set:html={OVERRIDES_CSS} />
 
     <div class="gallery" id="top">
         <header class="gallery__bar">

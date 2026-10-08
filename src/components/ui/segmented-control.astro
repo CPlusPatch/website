@@ -142,6 +142,11 @@ const {
     &.segmented--size-sm .segmented__option {
         padding-inline: var(--space-xs);
         font-size: var(--font-size-xs);
+
+        /* Text needs more room than an icon, which min-width already centres. */
+        &:has(.segmented__text) {
+            padding-inline: var(--space-sm);
+        }
     }
 
     &.segmented--subtle .segmented__option:has(:checked) {
