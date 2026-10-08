@@ -11,6 +11,7 @@ const { snap = DEFAULT_SNAP } = Astro.props;
 
 <div
     class="fx-crosshair"
+    data-pointer
     data-snap-selector={snap === false ? undefined : snap}
     aria-hidden="true"
 >
@@ -24,11 +25,11 @@ const { snap = DEFAULT_SNAP } = Astro.props;
     html[data-crosshair] .fx-crosshair,
     html:has([data-crosshair-toggle] > input:checked) .fx-crosshair {
         /*
-         * Pointer position in px, written inline by the script below. Starts
+         * Pointer position in px, written inline by lib/pointer.ts. Starts
          * off-screen so nothing shows before the first pointermove.
          */
-        --fx-x: -100;
-        --fx-y: -100;
+        --pointer-x: -9999;
+        --pointer-y: -9999;
         --pad: 0.25rem;
         /* Distance of the coordinate readout from the pointer */
         --coord-offset: 14px;
@@ -50,8 +51,8 @@ const { snap = DEFAULT_SNAP } = Astro.props;
             box-sizing: border-box;
             width: 1.25rem;
             height: 1.25rem;
-            translate: calc(var(--fx-x) * 1px - 50%)
-                calc(var(--fx-y) * 1px - 50%);
+            translate: calc(var(--pointer-x) * 1px - 50%)
+                calc(var(--pointer-y) * 1px - 50%);
             will-change: translate;
             transition:
                 width var(--transition),
@@ -98,10 +99,10 @@ const { snap = DEFAULT_SNAP } = Astro.props;
             position: absolute;
             left: 0;
             top: 0;
-            translate: calc(var(--fx-x) * 1px + var(--coord-offset))
-                calc(var(--fx-y) * 1px + var(--coord-offset));
+            translate: calc(var(--pointer-x) * 1px + var(--coord-offset))
+                calc(var(--pointer-y) * 1px + var(--coord-offset));
             will-change: translate;
-            counter-reset: x var(--fx-x) y var(--fx-y);
+            counter-reset: x var(--pointer-x) y var(--pointer-y);
             white-space: nowrap;
             color: var(--color-text-muted);
 
@@ -128,15 +129,15 @@ const { snap = DEFAULT_SNAP } = Astro.props;
 </style>
 
 <script>
+// Writes --pointer-x/--pointer-y on the [data-pointer] root; this script only snaps.
+import "../../lib/pointer.ts";
+
 const root = document.querySelector<HTMLElement>(
     ".fx-crosshair",
 ) as HTMLElement;
 
 const selector = root.dataset.snapSelector; // undefined => snapping disabled
 const style = root.style;
-const OFFSCREEN = -100; // Matches the CSS starting value of --fx-x/--fx-y
-let x = OFFSCREEN;
-let y = OFFSCREEN;
 let hover: Element | null = null; // Snap target under the pointer
 let rectDirty = false; // Target changed, or its rect may be stale
 let raf = 0;
@@ -166,20 +167,7 @@ function flush() {
     } else if (!hover) {
         root.removeAttribute("data-snap");
     }
-    style.setProperty("--fx-x", String(x));
-    style.setProperty("--fx-y", String(y));
 }
-
-addEventListener(
-    "pointermove",
-    (e) => {
-        if (e.pointerType !== "mouse") return;
-        x = Math.trunc(e.clientX);
-        y = Math.trunc(e.clientY);
-        schedule();
-    },
-    { passive: true },
-);
 
 if (selector) {
     // Fires when the pointer enters a different element, not on every move.
@@ -212,7 +200,6 @@ if (selector) {
 }
 
 document.documentElement.addEventListener("mouseleave", () => {
-    x = y = OFFSCREEN;
     hover = null;
     rectDirty = true;
     schedule();
