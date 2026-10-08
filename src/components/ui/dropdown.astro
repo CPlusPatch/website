@@ -1,0 +1,153 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import Button, { type ButtonTone, type ButtonVariant } from "./button.astro";
+
+/**
+ * A button that opens a panel of anything in the default slot. Built on the
+ * native popover attribute, so it opens, closes on Esc or an outside click,
+ * and returns focus without JS.
+ *
+ * Anchored under its button where CSS anchor positioning is supported, and
+ * centred on screen elsewhere.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Unique on the page: ties the button to its panel (which gets this id). */
+    id: string;
+    /** The button's text. */
+    label: string;
+    /** Shown before the label. */
+    icon?: string;
+    /** Heading inside the panel, with a close button beside it. */
+    title?: string;
+    /** Which edge of the button the panel lines up with. */
+    align?: "start" | "end";
+    variant?: ButtonVariant;
+    tone?: ButtonTone;
+}
+
+const {
+    id,
+    label,
+    icon,
+    title,
+    align = "start",
+    variant = "outline",
+    tone = "neutral",
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<div class:list={["dropdown", className]} {...rest}>
+    <Button
+        class="dropdown__trigger"
+        {variant}
+        {tone}
+        lift={false}
+        popovertarget={id}
+    >
+        {icon && <Icon name={icon} aria-hidden="true" />}
+        {label}
+        <Icon
+            name="lucide:chevron-down"
+            class="dropdown__chevron"
+            aria-hidden="true"
+        />
+    </Button>
+
+    <div
+        class:list={["dropdown__panel", `dropdown__panel--align-${align}`]}
+        {id}
+        popover
+    >
+        {title && (
+            <div class="dropdown__header">
+                <p class="dropdown__title">{title}</p>
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    tone="neutral"
+                    lift={false}
+                    popovertarget={id}
+                    popovertargetaction="hide"
+                    aria-label={`Close ${title}`}
+                >
+                    <Icon name="lucide:x" aria-hidden="true" />
+                </Button>
+            </div>
+        )}
+        <slot />
+    </div>
+</div>
+
+<style>
+.dropdown {
+    display: inline-block;
+
+    /*
+     * Button lifts its icons by 0.05em (margin-bottom: 0.1em), which leaves
+     * the chevron visibly high beside the label; centre them here instead.
+     */
+    .dropdown__trigger svg {
+        margin-bottom: 0;
+    }
+
+    /* Follows the button's own text colour, so it suits every variant. */
+    .dropdown__chevron {
+        opacity: 0.75;
+        transition: rotate var(--transition);
+    }
+
+    &:has(.dropdown__panel:popover-open) .dropdown__chevron {
+        rotate: 180deg;
+    }
+
+    .dropdown__panel {
+        width: min(20rem, 100vw - 2 * var(--space-md));
+        margin: 0;
+        padding: var(--space-md);
+        color: var(--color-text);
+        background-color: var(--color-surface-raised);
+        border: var(--border-width) solid var(--color-border-strong);
+        border-radius: var(--radius);
+        box-shadow: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
+
+        &:popover-open {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        /* Under the button where anchor positioning exists; centred otherwise. */
+        @supports (position-area: bottom) {
+            margin-top: var(--space-xs);
+            position-try-fallbacks: flip-block;
+
+            &.dropdown__panel--align-start {
+                position-area: bottom span-right;
+            }
+
+            &.dropdown__panel--align-end {
+                position-area: bottom span-left;
+            }
+        }
+
+        @supports not (position-area: bottom) {
+            margin: auto;
+        }
+    }
+
+    .dropdown__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-block: calc(var(--space-xs) * -1);
+    }
+
+    .dropdown__title {
+        margin: 0;
+        font-weight: 600;
+    }
+}
+</style>

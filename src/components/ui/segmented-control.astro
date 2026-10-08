@@ -1,0 +1,170 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+
+export interface SegmentedOption {
+    value: string;
+    /** Always the accessible name; also the visible text unless there is an icon. */
+    label: string;
+    /** Shows the icon instead of the label, which becomes its tooltip. */
+    icon?: string;
+}
+
+/**
+ * A row of mutually exclusive options, as plain radios in a fieldset, so it
+ * submits with a form and can drive CSS through :has() without JS. Give
+ * each control its own `name`.
+ */
+interface Props extends Omit<HTMLAttributes<"fieldset">, "name"> {
+    name: string;
+    /** Accessible name for the group. */
+    label: string;
+    options: SegmentedOption[];
+    /** The initially checked option, if any. */
+    value?: string;
+    size?: "sm" | "default";
+    /** `subtle` marks the checked option with a quiet fill, not the accent. */
+    variant?: "solid" | "subtle";
+}
+
+const {
+    name,
+    label,
+    options,
+    value,
+    size = "default",
+    variant = "solid",
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<fieldset
+    class:list={[
+        "segmented",
+        `segmented--size-${size}`,
+        `segmented--${variant}`,
+        className,
+    ]}
+    {...rest}
+>
+    <legend class="visually-hidden">{label}</legend>
+    {options.map((option) => (
+        <label
+            class="segmented__option"
+            title={option.icon ? option.label : undefined}
+        >
+            <input
+                class="visually-hidden"
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={option.value === value}
+            >
+            {option.icon ? (
+                <>
+                    <Icon name={option.icon} aria-hidden="true" />
+                    <span class="visually-hidden">{option.label}</span>
+                </>
+            ) : (
+                <span class="segmented__text">{option.label}</span>
+            )}
+        </label>
+    ))}
+</fieldset>
+
+<style>
+.segmented {
+    --segmented-height: var(--control-height-md);
+    --segmented-inner-radius: calc(var(--radius) - var(--border-width));
+
+    display: inline-flex;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius);
+
+    &.segmented--size-sm {
+        --segmented-height: var(--control-height-sm);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    .segmented__option {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--segmented-height);
+        height: var(--segmented-height);
+        padding-inline: var(--space-sm);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+        cursor: pointer;
+        transition:
+            color var(--transition),
+            background-color var(--transition);
+
+        & + & {
+            border-left: var(--border-width) solid var(--color-border-strong);
+        }
+
+        /* Round the checked fill into the frame's corners, without clipping the focus ring. */
+        &:first-of-type {
+            border-start-start-radius: var(--segmented-inner-radius);
+            border-end-start-radius: var(--segmented-inner-radius);
+        }
+
+        &:last-of-type {
+            border-start-end-radius: var(--segmented-inner-radius);
+            border-end-end-radius: var(--segmented-inner-radius);
+        }
+
+        &:hover {
+            color: var(--color-text);
+            background-color: var(--color-bg-alt);
+        }
+
+        &:has(:checked) {
+            color: var(--color-on-accent);
+            background-color: var(--color-primary);
+        }
+
+        &:has(:focus-visible) {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+    }
+
+    &.segmented--size-sm .segmented__option {
+        padding-inline: var(--space-xs);
+        font-size: var(--font-size-xs);
+    }
+
+    &.segmented--subtle .segmented__option:has(:checked) {
+        color: var(--color-text);
+        background-color: var(--color-bg-alt);
+    }
+
+    &:disabled .segmented__option {
+        cursor: not-allowed;
+    }
+
+    .segmented__text {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Last, and per variant, so it outranks both checked styles above. */
+    @media (forced-colors: active) {
+        &.segmented--solid .segmented__option:has(:checked),
+        &.segmented--subtle .segmented__option:has(:checked) {
+            color: HighlightText;
+            background-color: Highlight;
+            forced-color-adjust: none;
+        }
+    }
+}
+</style>

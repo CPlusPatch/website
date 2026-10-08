@@ -1,4 +1,5 @@
 import Input from "../../components/ui/input.astro";
+import SegmentedControl from "../../components/ui/segmented-control.astro";
 import Select from "../../components/ui/select.astro";
 import Textarea from "../../components/ui/textarea.astro";
 import Toggle from "../../components/ui/toggle.astro";
@@ -8,6 +9,18 @@ const SELECT_OPTIONS = [
     { value: "one", label: "Option one" },
     { value: "two", label: "Option two" },
     { value: "three", label: "Option three" },
+];
+
+const VIEW_OPTIONS = [
+    { value: "list", label: "List" },
+    { value: "grid", label: "Grid" },
+    { value: "board", label: "Board" },
+];
+
+const ALIGN_OPTIONS = [
+    { value: "left", label: "Align left", icon: "lucide:align-left" },
+    { value: "center", label: "Align centre", icon: "lucide:align-center" },
+    { value: "right", label: "Align right", icon: "lucide:align-right" },
 ];
 
 export const forms: StoryGroup[] = [
@@ -142,6 +155,42 @@ export const forms: StoryGroup[] = [
             story("disabled", Textarea, {
                 label: "Example",
                 placeholder: "Disabled",
+                disabled: true,
+            }),
+        ],
+    },
+    {
+        id: "segmented-control",
+        title: "Segmented controls",
+        category: "forms",
+        source: "ui/segmented-control.astro",
+        description:
+            "Plain radios: they submit with a form and can drive CSS via :has().",
+        stories: [
+            story("text", SegmentedControl, {
+                name: "story-segmented-text",
+                label: "View",
+                options: VIEW_OPTIONS,
+                value: "grid",
+            }),
+            story("icons", SegmentedControl, {
+                name: "story-segmented-icons",
+                label: "Alignment",
+                options: ALIGN_OPTIONS,
+                value: "left",
+            }),
+            story("small", SegmentedControl, {
+                name: "story-segmented-small",
+                label: "View",
+                options: VIEW_OPTIONS,
+                value: "list",
+                size: "sm",
+            }),
+            story("disabled", SegmentedControl, {
+                name: "story-segmented-disabled",
+                label: "View",
+                options: VIEW_OPTIONS,
+                value: "grid",
                 disabled: true,
             }),
         ],
