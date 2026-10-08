@@ -1,4 +1,4 @@
-import type { StoryGroup } from "../story.ts";
+import { CATEGORIES, type StoryGroup } from "../story.ts";
 import { accordion } from "./accordion.ts";
 import { alerts } from "./alerts.ts";
 import { audioPlayer } from "./audio-player.ts";
@@ -17,24 +17,30 @@ import { sections } from "./sections.ts";
 import { stats } from "./stats.ts";
 import { terminal } from "./terminal.ts";
 
-/** Every group, in gallery order. */
+/** Every group. Within a category, groups keep this order. */
 export const groups: StoryGroup[] = [
     ...buttons,
     ...badges,
     ...avatars,
-    ...forms,
-    ...badges88x31,
-    ...cards,
     ...alerts,
+    ...cards,
+    ...forms,
     ...quotes,
     ...figures,
     ...stats,
     ...accordion,
-    ...sections,
     ...logos,
+    ...badges88x31,
     ...carousel,
     ...terminal,
+    ...destructor,
     ...audioPlayer,
     ...mediaPlayer,
-    ...destructor,
+    ...sections,
 ];
+
+/** The groups sorted into categories, in gallery order. */
+export const categories = CATEGORIES.map((category) => ({
+    ...category,
+    groups: groups.filter((group) => group.category === category.id),
+}));

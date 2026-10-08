@@ -22,6 +22,8 @@ export const accordion: StoryGroup[] = [
     {
         id: "accordion",
         title: "Accordion",
+        category: "blocks",
+        source: "blocks/accordion/",
         min: 24,
         stories: [
             story("default", Accordion, {}, { children: items() }),

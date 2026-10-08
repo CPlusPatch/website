@@ -6,6 +6,8 @@ export const quotes: StoryGroup[] = [
     {
         id: "quote",
         title: "Quotes",
+        category: "blocks",
+        source: "blocks/quote.astro",
         min: 24,
         stories: [
             story(

@@ -10,6 +10,8 @@ export const badges: StoryGroup[] = [
     {
         id: "badge-matrix",
         title: "Badges — variant × tone",
+        category: "primitives",
+        source: "ui/badge.astro",
         description: "Fill style and colour are independent axes.",
         min: 10,
         stories: BADGE_VARIANTS.flatMap((variant) =>
@@ -26,6 +28,8 @@ export const badges: StoryGroup[] = [
     {
         id: "badge-size",
         title: "Badges — size",
+        category: "primitives",
+        source: "ui/badge.astro",
         min: 10,
         stories: [
             ...SIZES.map((size) =>
@@ -47,6 +51,8 @@ export const badges88x31: StoryGroup[] = [
     {
         id: "88x31",
         title: "88x31s",
+        category: "blocks",
+        source: "blocks/badge-88x31.astro",
         min: 8,
         stories: [
             ...friends.map((friend) =>

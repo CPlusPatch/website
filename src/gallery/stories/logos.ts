@@ -6,6 +6,8 @@ export const logos: StoryGroup[] = [
     {
         id: "logos",
         title: "Logos",
+        category: "blocks",
+        source: "blocks/logos.astro",
         min: "full",
         stories: [story("default", Logos, { items: technologies, rows: 5 })],
     },

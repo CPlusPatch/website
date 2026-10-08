@@ -14,6 +14,8 @@ export const forms: StoryGroup[] = [
     {
         id: "toggle",
         title: "Toggles",
+        category: "forms",
+        source: "ui/toggle.astro",
         min: 10,
         stories: [
             story("default", Toggle, { label: "Example" }),
@@ -35,6 +37,8 @@ export const forms: StoryGroup[] = [
     {
         id: "select",
         title: "Selects",
+        category: "forms",
+        source: "ui/select.astro",
         min: 10,
         stories: [
             story("default", Select, {
@@ -56,6 +60,8 @@ export const forms: StoryGroup[] = [
     {
         id: "input",
         title: "Inputs",
+        category: "forms",
+        source: "ui/input.astro",
         min: 14,
         stories: [
             story("default", Input, {
@@ -99,6 +105,8 @@ export const forms: StoryGroup[] = [
     {
         id: "textarea",
         title: "Textareas",
+        category: "forms",
+        source: "ui/textarea.astro",
         min: 16,
         stories: [
             story("default", Textarea, {

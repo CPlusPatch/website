@@ -9,6 +9,8 @@ export const buttons: StoryGroup[] = [
     {
         id: "button-matrix",
         title: "Buttons — variant × tone",
+        category: "primitives",
+        source: "ui/button.astro",
         description: "Fill style and colour are independent axes.",
         min: 10,
         stories: VARIANTS.flatMap((variant) =>
@@ -25,6 +27,8 @@ export const buttons: StoryGroup[] = [
     {
         id: "button-size",
         title: "Buttons — size and state",
+        category: "primitives",
+        source: "ui/button.astro",
         min: 10,
         stories: [
             ...SIZES.map((size) =>
@@ -49,6 +53,8 @@ export const buttons: StoryGroup[] = [
     {
         id: "button-group",
         title: "Button groups",
+        category: "primitives",
+        source: "ui/button-group.astro",
         min: 16,
         stories: [
             story(

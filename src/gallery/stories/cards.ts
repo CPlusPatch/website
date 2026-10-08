@@ -22,6 +22,8 @@ export const cards: StoryGroup[] = [
     {
         id: "card",
         title: "Cards",
+        category: "primitives",
+        source: "ui/card.astro",
         min: 16,
         stories: [
             ...TONES.map((tone) =>
@@ -45,6 +47,8 @@ export const cards: StoryGroup[] = [
     {
         id: "media-card",
         title: "Media cards",
+        category: "blocks",
+        source: "blocks/media-card.astro",
         min: 18,
         stories: [
             story(

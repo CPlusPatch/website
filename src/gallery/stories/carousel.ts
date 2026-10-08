@@ -18,6 +18,8 @@ export const carousel: StoryGroup[] = [
     {
         id: "carousel",
         title: "Carousel",
+        category: "blocks",
+        source: "blocks/carousel/",
         min: "full",
         stories: [
             story(

@@ -6,6 +6,8 @@ export const avatars: StoryGroup[] = [
     {
         id: "avatar",
         title: "Avatars",
+        category: "primitives",
+        source: "ui/avatar.astro",
         description: "Initials stand in when there is no image.",
         min: 10,
         stories: [
