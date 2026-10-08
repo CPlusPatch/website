@@ -1,0 +1,17 @@
+{
+    "name": "@web-ng/destructor",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./styles.css": "./src/styles.css"
+    },
+    "dependencies": {
+        "matter-js": "^0.20.0"
+    },
+    "devDependencies": {
+        "@std/assert": "jsr:^1.0.0",
+        "@types/matter-js": "^0.20.0"
+    }
+}

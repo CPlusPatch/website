@@ -23,6 +23,7 @@
         "check": "biome check . && astro check && deno run theme:check && deno run test"
     },
     "dependencies": {
+        "@web-ng/destructor": "workspace:*",
         "@web-ng/palette": "workspace:*",
         "@iconify-json/lucide": "^1.2.138",
         "astro": "^7.3.5",
