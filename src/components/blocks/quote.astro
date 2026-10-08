@@ -50,8 +50,10 @@ const { author, cite, class: className, ...rest } = Astro.props;
     margin: 0;
     padding: var(--space-md);
 
+    /* The quote itself, a step up from the byline under it. */
     .quote__body {
         margin: 0;
+        font: var(--type-lead);
     }
 
     .quote__author {

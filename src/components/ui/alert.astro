@@ -81,13 +81,19 @@ const prefix = label[variant];
         flex-direction: column;
         min-width: 0;
 
-        /* Slotted, so the role comes by token rather than class. */
+        /*
+         * Slotted, so the roles come by token rather than class. Compact: a
+         * body-sized title over small text, a hair apart. The title is a
+         * label, not a heading role, so it drops heading tracking.
+         */
         h3 {
-            margin-bottom: 0;
-            font: var(--type-subheading);
+            margin-bottom: var(--space-xs);
+            font: var(--type-body-strong);
+            letter-spacing: normal;
         }
 
         p {
+            font: var(--type-body-sm);
             color: var(--color-text-muted);
         }
     }

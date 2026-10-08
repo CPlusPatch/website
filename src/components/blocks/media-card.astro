@@ -87,10 +87,16 @@ const { title, links = [], header, class: className, ...rest } = Astro.props;
         border-bottom: var(--border-width) solid var(--border-color);
     }
 
+    /* Set like Card's own content: small text, a hair under the title. */
     .media-card__body {
         padding: var(--space-md);
 
+        h3 {
+            margin-bottom: var(--space-xs);
+        }
+
         :global(p) {
+            font: var(--type-body-sm);
             color: var(--color-text-muted);
         }
     }
