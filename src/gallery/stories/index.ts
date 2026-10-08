@@ -9,6 +9,7 @@ import { carousel } from "./carousel.ts";
 import { destructor } from "./destructor.ts";
 import { forms } from "./forms.ts";
 import { logos } from "./logos.ts";
+import { mediaPlayer } from "./media-player.ts";
 import { quotes } from "./quotes.ts";
 import { sections } from "./sections.ts";
 import { terminal } from "./terminal.ts";
@@ -28,5 +29,6 @@ export const groups: StoryGroup[] = [
     ...carousel,
     ...terminal,
     ...audioPlayer,
+    ...mediaPlayer,
     ...destructor,
 ];
