@@ -1,0 +1,101 @@
+---
+import Dropdown from "../components/ui/dropdown.astro";
+import SegmentedControl from "../components/ui/segmented-control.astro";
+import Select from "../components/ui/select.astro";
+import Toggle from "../components/ui/toggle.astro";
+import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
+
+/**
+ * The gallery's page-wide settings: theme, default preview width and
+ * effects. None of it needs JS -- each control is read through :has()
+ * wherever it lives, so it keeps working while the dropdown is closed.
+ */
+
+// Each value other than "default" needs a matching stylesheet in
+// src/styles/themes/, which switches on while its option is selected.
+const THEMES = [
+    { value: "default", label: "Default" },
+    { value: "ocean", label: "Ocean" },
+];
+
+// Site-wide effects. Each is switched on by CSS that looks for its checked
+// [data-*-toggle] anywhere on the page.
+const EFFECTS = [
+    { label: "Crosshair", attr: "data-crosshair-toggle" },
+    { label: "Scanlines", attr: "data-scanlines-toggle" },
+    { label: "Signal", attr: "data-signal-toggle" },
+    { label: "Lift shadow", attr: "data-lift-shadow-toggle" },
+    { label: "Invert theme", attr: "data-theme-toggle" },
+];
+---
+
+<Dropdown
+    class="display-settings"
+    id="display-settings"
+    label="Display"
+    icon="lucide:sliders-horizontal"
+    title="Display"
+    align="end"
+>
+    <div class="display-settings__row">
+        <label for="theme-select">Theme</label>
+        {/* Themes key off the selected <option> via :has(). */}
+        <Select
+            id="theme-select"
+            label="Theme"
+            options={THEMES}
+            data-theme-select
+        />
+    </div>
+
+    <div class="display-settings__row">
+        <span>Preview width</span>
+        <SegmentedControl
+            name={PREVIEW_WIDTH_NAME}
+            label="Default preview width"
+            options={previewWidthOptions()}
+            value="desktop"
+            size="sm"
+            variant="subtle"
+        />
+    </div>
+
+    <fieldset class="display-settings__effects">
+        <legend>Effects</legend>
+        {EFFECTS.map(({ label, attr }) => (
+            <Toggle {label} {...{ [attr]: true }}>
+                {label}
+            </Toggle>
+        ))}
+    </fieldset>
+</Dropdown>
+
+<style>
+.display-settings {
+    .display-settings__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-md);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+    }
+
+    .display-settings__effects {
+        display: grid;
+        gap: var(--space-sm);
+        margin: 0;
+        padding: var(--space-md) 0 0;
+        border: 0;
+        border-top: var(--border-width) solid var(--border-color);
+        min-width: 0;
+
+        legend {
+            float: left;
+            margin-bottom: var(--space-xs);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+    }
+}
+</style>
