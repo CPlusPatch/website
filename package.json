@@ -1,6 +1,9 @@
 {
     "name": "web-ng",
     "type": "module",
+    "workspaces": [
+        "packages/*"
+    ],
     "version": "0.1.0-alpha.1",
     "engines": {
         "node": ">=22.12.0"
@@ -14,11 +17,12 @@
         "lint": "biome check .",
         "lint:fix": "biome check . --write",
         "typecheck": "astro check",
-        "theme": "deno run --allow-read scripts/generate-theme.ts",
-        "theme:check": "deno run --allow-read scripts/generate-theme.ts --check",
-        "check": "biome check . && astro check && deno run --allow-read scripts/generate-theme.ts --check"
+        "theme": "deno run --allow-read packages/palette/src/cli.ts src/styles/themes/palette.config.ts",
+        "theme:check": "deno run --allow-read packages/palette/src/cli.ts src/styles/themes/palette.config.ts --check",
+        "check": "biome check . && astro check && deno run theme:check"
     },
     "dependencies": {
+        "@web-ng/palette": "workspace:*",
         "@iconify-json/lucide": "^1.2.138",
         "astro": "^7.3.5",
         "astro-icon": "^1.2.0",

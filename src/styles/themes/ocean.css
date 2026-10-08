@@ -2,7 +2,7 @@
  * Ocean: an example second theme.
  *
  * The first block is the colour tokens. Like the default, they are generated
- * by scripts/generate-theme.ts (see THEMES there) -- do not edit them by
+ * from palette.config.ts (see `themes` there) -- do not edit them by
  * hand. The second block is the hand-written shape, motion and type: rounded
  * corners, a deeper, springier lift, a looser background grid and rounder
  * fonts.
