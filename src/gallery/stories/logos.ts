@@ -1,5 +1,5 @@
 import Logos from "../../components/blocks/logos.astro";
-import { technologies } from "../../data/experience.ts";
+import { technologies } from "../../data/technologies.ts";
 import { type StoryGroup, story } from "../story.ts";
 
 export const logos: StoryGroup[] = [
