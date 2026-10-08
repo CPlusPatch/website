@@ -1,5 +1,6 @@
 import type { StoryGroup } from "../story.ts";
 import { alerts } from "./alerts.ts";
+import { audioPlayer } from "./audio-player.ts";
 import { avatars } from "./avatars.ts";
 import { badges, badges88x31 } from "./badges.ts";
 import { buttons } from "./buttons.ts";
@@ -26,5 +27,6 @@ export const groups: StoryGroup[] = [
     ...logos,
     ...carousel,
     ...terminal,
+    ...audioPlayer,
     ...destructor,
 ];
