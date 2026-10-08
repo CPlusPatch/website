@@ -5,6 +5,8 @@ export const alerts: StoryGroup[] = [
     {
         id: "alert",
         title: "Alerts",
+        category: "primitives",
+        source: "ui/alert.astro",
         min: 24,
         stories: [
             story(

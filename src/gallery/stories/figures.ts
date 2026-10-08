@@ -7,6 +7,8 @@ export const figures: StoryGroup[] = [
     {
         id: "figure",
         title: "Figures",
+        category: "blocks",
+        source: "blocks/figure.astro",
         min: 20,
         stories: [
             story(

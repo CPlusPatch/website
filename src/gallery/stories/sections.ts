@@ -16,6 +16,8 @@ export const sections: StoryGroup[] = [
     {
         id: "side-hero",
         title: "Side hero",
+        category: "sections",
+        source: "sections/side-hero.astro",
         min: "full",
         stories: (["right", "left"] as const).map((side) =>
             story(
@@ -29,6 +31,8 @@ export const sections: StoryGroup[] = [
     {
         id: "navbar",
         title: "Navbar",
+        category: "sections",
+        source: "sections/navbar.astro",
         min: "full",
         stories: [
             story("default", Navbar, { title: "Jesse", links: NAV_LINKS }),
@@ -68,6 +72,8 @@ export const sections: StoryGroup[] = [
     {
         id: "footer",
         title: "Footer",
+        category: "sections",
+        source: "sections/footer.astro",
         min: "full",
         stories: [
             story("default", Footer, {

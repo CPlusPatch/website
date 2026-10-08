@@ -6,6 +6,8 @@ export const audioPlayer: StoryGroup[] = [
     {
         id: "audio-player",
         title: "Audio player",
+        category: "media",
+        source: "blocks/audio-player.astro",
         description: "Falls back to the browser's own player without JS.",
         min: 24,
         stories: [

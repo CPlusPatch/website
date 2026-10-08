@@ -35,10 +35,24 @@ export interface Story {
     slots?: Record<string, Story[]>;
 }
 
+/** Sidebar and page sections, in gallery order. */
+export const CATEGORIES = [
+    { id: "primitives", title: "Primitives", icon: "lucide:shapes" },
+    { id: "forms", title: "Forms", icon: "lucide:text-cursor-input" },
+    { id: "blocks", title: "Blocks", icon: "lucide:layout-grid" },
+    { id: "media", title: "Media", icon: "lucide:clapperboard" },
+    { id: "sections", title: "Sections", icon: "lucide:panels-top-left" },
+] as const;
+
+export type CategoryId = (typeof CATEGORIES)[number]["id"];
+
 export interface StoryGroup {
-    /** Unique. Used for the `data-story` hook. */
+    /** Unique. Used for the `data-story` hook and as the group's #anchor. */
     id: string;
     title: string;
+    category: CategoryId;
+    /** The component's file (or folder, for composites) under src/components/. */
+    source: string;
     description?: string;
     /**
      * Minimum gallery cell width, in rem, or "full" for one full-width cell
