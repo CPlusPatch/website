@@ -1,0 +1,43 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/** The single-line text types. Others (checkbox, range, file...) have components or looks of their own. */
+export type InputType =
+    | "text"
+    | "email"
+    | "password"
+    | "search"
+    | "tel"
+    | "url"
+    | "number";
+
+/**
+ * A single-line text field. Validation is native: `required`, `pattern`,
+ * `type="email"` and friends mark it invalid via :user-invalid, so only after
+ * the visitor has edited it or tried to submit. Set `aria-invalid` for errors
+ * found elsewhere (on the server, say).
+ */
+interface Props extends Omit<HTMLAttributes<"input">, "type"> {
+    /** Accessible name. Inputs have no visible label of their own. */
+    label: string;
+    type?: InputType;
+}
+
+const { label, type = "text", class: className, ...rest } = Astro.props;
+---
+
+<input
+    class:list={["field", "input", className]}
+    {type}
+    aria-label={label}
+    {...rest}
+>
+
+<style>
+/* The look is .field in utilities.css; this is only the single-line geometry. */
+.input {
+    height: var(--control-height-md);
+    padding: var(--space-xs) var(--space-sm);
+    line-height: var(--leading-snug);
+}
+</style>

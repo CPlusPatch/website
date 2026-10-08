@@ -1,0 +1,75 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * A multi-line text field that grows with its content (field-sizing), from
+ * `rows` lines up to `maxRows`, then scrolls. Engines without field-sizing
+ * keep it at `rows` lines and let the visitor drag it taller.
+ * Validation works as in Input.
+ */
+interface Props extends Omit<HTMLAttributes<"textarea">, "rows"> {
+    /** Accessible name. Textareas have no visible label of their own. */
+    label: string;
+    /** Initial content. */
+    value?: string;
+    /** Minimum height, in lines. */
+    rows?: number;
+    /** Height, in lines, past which it scrolls instead of growing. Unbounded if unset. */
+    maxRows?: number;
+}
+
+const {
+    label,
+    value,
+    rows = 3,
+    maxRows,
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<textarea
+    class:list={["field", "textarea", className]}
+    aria-label={label}
+    {rows}
+    style={{ "--rows": rows, "--max-rows": maxRows }}
+    {...rest}
+>{value}</textarea>
+
+<style>
+/* The look is .field in utilities.css; this is the sizing and scroll chrome. */
+.textarea {
+    --textarea-padding: var(--space-sm);
+    /* The padding and border around the lines. */
+    --textarea-chrome: calc(
+        2 *
+        (var(--textarea-padding) + var(--border-width))
+    );
+    display: block;
+    field-sizing: content;
+    min-block-size: calc(var(--rows) * 1lh + var(--textarea-chrome));
+    /* No --max-rows makes this invalid at computed time, i.e. `none`. */
+    max-block-size: calc(var(--max-rows) * 1lh + var(--textarea-chrome));
+    padding: var(--textarea-padding);
+    line-height: var(--leading-body);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+
+    /* Two diagonal hatches in the theme colour, not the system grip. */
+    &::-webkit-resizer {
+        background: linear-gradient(
+            135deg,
+            transparent 45%,
+            var(--color-border-strong) 45% 52%,
+            transparent 52% 68%,
+            var(--color-border-strong) 68% 75%,
+            transparent 75%
+        );
+    }
+
+    &[readonly],
+    &:disabled {
+        resize: none;
+    }
+}
+</style>
