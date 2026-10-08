@@ -1,0 +1,98 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * One entry in a <SidebarGroup>. The label goes in the default slot.
+ * Give it a `section` and it lights up while that element is the one being
+ * read (see the script in Sidebar).
+ */
+interface Props extends HTMLAttributes<"a"> {
+    href: string;
+    /** Marks the link as the current page. */
+    current?: boolean;
+    /** Id of the element on this page the link tracks while scrolling. */
+    section?: string;
+    /** Short trailing detail, such as a count. */
+    meta?: string | number;
+}
+
+const {
+    href,
+    current = false,
+    section,
+    meta,
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<li class="sidebar-link">
+    <a
+        class:list={["sidebar-link__anchor", className]}
+        href={href}
+        aria-current={current ? "page" : undefined}
+        data-section={section}
+        {...rest}
+    >
+        <span class="sidebar-link__label"><slot /></span>
+        {meta !== undefined && <span class="sidebar-link__meta">{meta}</span>}
+    </a>
+</li>
+
+<style>
+/*
+ * A row on its group's guide. Hover marks its segment of the guide; the
+ * current link marks it in the accent and goes full strength. No fill, so
+ * the sidebar stays quiet beside the content.
+ */
+.sidebar-link {
+    .sidebar-link__anchor {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        /* Sit on the guide, so the marker replaces that stretch of it. */
+        margin-left: calc(var(--border-width) * -1);
+        padding: var(--space-xs) var(--space-md);
+        font-size: var(--font-size-sm);
+        line-height: var(--leading-snug);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        border-left: 2px solid transparent;
+        transition:
+            color var(--transition),
+            border-color var(--transition);
+
+        /* Also replaces the global link hover's highlighter fill. */
+        &:hover {
+            color: var(--color-text);
+            background-color: transparent;
+            border-left-color: var(--color-border-strong);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: -2px;
+        }
+
+        /* "page" from `current`, or "location" from the scroll spy. */
+        &[aria-current] {
+            color: var(--color-text);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        @media (pointer: coarse) {
+            min-height: var(--control-height-sm);
+        }
+    }
+
+    .sidebar-link__meta {
+        flex-shrink: 0;
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
+        font-weight: 400;
+        color: var(--color-text-muted);
+    }
+}
+</style>

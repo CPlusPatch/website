@@ -1,0 +1,56 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * Content with a <Sidebar> beside it on wide screens and above it on narrow
+ * ones. Put the sidebar in the `sidebar` slot.
+ *
+ * Owns the breakpoint, as a container query, so it follows the space the
+ * layout gets rather than the viewport. The Sidebar in its `sidebar` slot
+ * stays open and sticky only while there is room for two columns; any other
+ * Sidebar nested in the content is unaffected.
+ */
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["sidebar-layout", className]} {...rest}>
+    <div class="sidebar-layout__grid">
+        <div class="sidebar-layout__aside">
+            <slot name="sidebar" />
+        </div>
+        <div class="sidebar-layout__main">
+            <slot />
+        </div>
+    </div>
+</div>
+
+<style>
+.sidebar-layout {
+    --sidebar-width: 15rem;
+    container: sidebar-layout / inline-size;
+
+    .sidebar-layout__grid {
+        display: grid;
+        gap: var(--space-lg);
+    }
+
+    .sidebar-layout__main {
+        min-width: 0;
+    }
+
+    /* Keep in step with the same query in sidebar.astro. */
+    @container sidebar-layout (width >= 56rem) {
+        .sidebar-layout__grid {
+            grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+            align-items: start;
+        }
+
+        /* Full height, so the sidebar has room to stick within it. */
+        .sidebar-layout__aside {
+            align-self: stretch;
+        }
+    }
+}
+</style>
