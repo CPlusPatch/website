@@ -17,7 +17,7 @@
         "lint": "biome check .",
         "lint:fix": "biome check . --write",
         "typecheck": "astro check",
-        "theme": "deno run --allow-read packages/palette/src/cli.ts src/styles/themes/palette.config.ts",
+        "theme": "deno run --allow-read --allow-write=src/styles/themes packages/palette/src/cli.ts src/styles/themes/palette.config.ts",
         "theme:check": "deno run --allow-read packages/palette/src/cli.ts src/styles/themes/palette.config.ts --check",
         "check": "biome check . && astro check && deno run theme:check"
     },

@@ -2,10 +2,10 @@
  * Ocean: an example second theme.
  *
  * The first block is the colour tokens. Like the default, they are generated
- * from palette.config.ts (see `themes` there) -- do not edit them by
- * hand. The second block is the hand-written shape, motion and type: rounded
- * corners, a deeper, springier lift, a looser background grid and rounder
- * fonts.
+ * from palette.config.ts (see `themes` there) by `deno run theme` -- do not
+ * edit them by hand. The second block is the hand-written shape, motion and
+ * type: rounded corners, a deeper, springier lift, a looser background grid
+ * and rounder fonts.
  *
  * Applied by `data-theme="ocean"` on <html>, or -- without any JS -- while
  * a [data-theme-select] has "ocean" selected (see the gallery). Every token
@@ -15,6 +15,7 @@
 
 :root[data-theme="ocean"],
 html:has([data-theme-select] option[value="ocean"]:checked) {
+    /* palette:start -- generated from palette.config.ts by `deno run theme` */
     --color-bg: light-dark(#eff4f8, #091018);
     --color-bg-alt: light-dark(#e1e9ef, #101822);
     --color-surface: light-dark(#f7fbfd, #141e29);
@@ -41,6 +42,7 @@ html:has([data-theme-select] option[value="ocean"]:checked) {
     --color-destructive-accent: light-dark(#f7796d, #f76d61);
     --color-warning-accent: light-dark(#cc9c2e, #c4972c);
     --color-success-accent: light-dark(#35c26c, #32bb68);
+    /* palette:end */
 }
 
 :root[data-theme="ocean"],

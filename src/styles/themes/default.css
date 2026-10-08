@@ -2,9 +2,10 @@
  * Default theme: the colour tokens.
  *
  * Generated from palette.config.ts, which holds the lightness, chroma and
- * hue values; `deno run theme` prints them with a contrast audit. Do not edit
- * them by hand: change the config, re-run `deno run theme`, and paste the block
- * back. `deno run theme:check` catches drift. Other themes in this folder
+ * hue values. Do not edit the values by hand: change the config and run
+ * `deno run theme`, which rewrites them in place (comments and order here are
+ * kept) and prints a contrast audit. `deno run theme:check` catches drift.
+ * Other themes in this folder
  * override these, plus any of the shape and motion tokens in tokens.css.
  *
  * The rules that matter when *using* the colours:
@@ -17,6 +18,8 @@
  */
 
 :root {
+    /* palette:start -- generated from palette.config.ts by `deno run theme` */
+
     /* Neutrals */
     --color-bg: light-dark(#f2f5f3, #0e0e0e);
     --color-bg-alt: light-dark(#e7ebe8, #171717);
@@ -57,4 +60,5 @@
     --color-destructive-accent: light-dark(#f7796d, #f76d61);
     --color-warning-accent: light-dark(#cc9c2e, #c4972c);
     --color-success-accent: light-dark(#35c26c, #32bb68);
+    /* palette:end */
 }

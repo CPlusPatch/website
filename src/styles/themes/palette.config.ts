@@ -1,8 +1,10 @@
 /**
  * Palette config for the theme stylesheets in this directory.
  *
- *   deno run theme          print the token blocks + a contrast audit
- *   deno run theme:check    verify the theme files still match this file (CI-safe)
+ *   deno run theme          write the tokens into each theme's stylesheet
+ *                           and print a contrast audit
+ *   deno run theme:check    fail if a stylesheet is out of date or a
+ *                           contrast check fails (CI-safe)
  *
  * The palette is not a set of hand-picked colours; it is a *ladder*. Every
  * role (primary, destructive, ...) sits at the same OKLCH lightness and
@@ -11,7 +13,9 @@
  * --color-on-accent work as the foreground for every filled surface.
  *
  * Editing the colour tokens by hand breaks that guarantee silently. Change
- * this file instead, re-run, and paste the output back. The engine itself
+ * this file instead and re-run. The generator only touches --color-*
+ * declarations between the palette:start and palette:end markers, rewriting
+ * values in place so the stylesheets' comments survive. The engine itself
  * lives in packages/palette.
  */
 
@@ -32,7 +36,7 @@ export default definePalette<Tone>({
      * Lightness per tier, per scheme (see `Tier` for what each tier is for).
      *
      * Raising `role.light` or lowering `role.dark` is the single knob that
-     * trades vividness for contrast. The audit tells you when you went too far.
+     * trades vividness for contrast. The audit fails when you went too far.
      */
     tiers: {
         role: { light: 0.45, dark: 0.78 },
