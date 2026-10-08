@@ -72,9 +72,9 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
         </div>
     </div>
     <hr>
+    {/* One string: Astro would drop the line break between "under" and the licence. */}
     <div class="footer__copyright">
-        &copy; {copyright.holder} {new Date().getFullYear()}. Licensed under
-        {copyright.license}.
+        {`© ${copyright.holder} ${new Date().getFullYear()}. Licensed under ${copyright.license}.`}
     </div>
     <div class="footer__friends">
         {friends && friends.length > 0 && (
