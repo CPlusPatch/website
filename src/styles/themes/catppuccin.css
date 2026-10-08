@@ -1,0 +1,48 @@
+/*
+ * Catppuccin: soothing pastels.
+ *
+ * Light is Latte, dark is Mocha. Primary is mauve, secondary blue,
+ * warning peach.
+ *
+ * Hand-written from the scheme's published colours, not generated from
+ * palette.config.ts. The accent tier is the scheme's own colours verbatim.
+ * Anything used as text (muted text, and the role tier, which is also a
+ * fill under --color-on-accent) keeps the scheme's colour where it already
+ * clears 4.5:1 against --color-bg, and otherwise has only its OKLCH lightness
+ * moved until it does; borders likewise for 2.2:1 and 3:1. Hovers are the
+ * role one step further from the background.
+ *
+ * Applied by `data-theme="catppuccin"` on <html>, or while a
+ * [data-theme-select] has it selected (see the gallery). Colour only: shape,
+ * motion and type are the defaults from tokens.css.
+ */
+
+:root[data-theme="catppuccin"],
+html:has([data-theme-select] option[value="catppuccin"]:checked) {
+    --color-bg: light-dark(#e6e9ef, #1e1e2e);
+    --color-bg-alt: light-dark(#dce0e8, #181825);
+    --color-surface: light-dark(#eff1f5, #313244);
+    --color-surface-raised: light-dark(#ffffff, #45475a);
+    --color-text: light-dark(#4c4f69, #cdd6f4);
+    --color-text-muted: light-dark(#65687e, #a6adc8);
+    --color-border: light-dark(#999dab, #585b70);
+    --color-border-strong: light-dark(#828597, #6c7086);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#8738ee, #cba6f7);
+    --color-primary-hover: light-dark(#7315d5, #ddc2ff);
+    --color-secondary: light-dark(#155dec, #89b4fa);
+    --color-secondary-hover: light-dark(#0047cf, #abcbff);
+    --color-destructive: light-dark(#d10d38, #f38ba8);
+    --color-destructive-hover: light-dark(#af002c, #ffa9c0);
+    --color-warning: light-dark(#b64400, #fab387);
+    --color-warning-hover: light-dark(#973700, #ffd1b6);
+    --color-success: light-dark(#1e7900, #a6e3a1);
+    --color-success-hover: light-dark(#166200, #bcfab7);
+    --color-on-accent: light-dark(#e6e9ef, #1e1e2e);
+    --color-primary-accent: light-dark(#8839ef, #cba6f7);
+    --color-secondary-accent: light-dark(#1e66f5, #89b4fa);
+    --color-destructive-accent: light-dark(#d20f39, #f38ba8);
+    --color-warning-accent: light-dark(#fe640b, #fab387);
+    --color-success-accent: light-dark(#40a02b, #a6e3a1);
+}

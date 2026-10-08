@@ -1,0 +1,48 @@
+/*
+ * Rosé Pine: all natural pine, faux fur and a bit of soho vibes.
+ *
+ * Light is Dawn, dark is the main variant. Primary is iris, secondary
+ * foam, destructive love, warning gold, success pine.
+ *
+ * Hand-written from the scheme's published colours, not generated from
+ * palette.config.ts. The accent tier is the scheme's own colours verbatim.
+ * Anything used as text (muted text, and the role tier, which is also a
+ * fill under --color-on-accent) keeps the scheme's colour where it already
+ * clears 4.5:1 against --color-bg, and otherwise has only its OKLCH lightness
+ * moved until it does; borders likewise for 2.2:1 and 3:1. Hovers are the
+ * role one step further from the background.
+ *
+ * Applied by `data-theme="rose-pine"` on <html>, or while a [data-theme-select]
+ * has it selected (see the gallery). Colour only: shape, motion and type are
+ * the defaults from tokens.css.
+ */
+
+:root[data-theme="rose-pine"],
+html:has([data-theme-select] option[value="rose-pine"]:checked) {
+    --color-bg: light-dark(#faf4ed, #191724);
+    --color-bg-alt: light-dark(#f2e9e1, #21202e);
+    --color-surface: light-dark(#fffaf3, #1f1d2e);
+    --color-surface-raised: light-dark(#ffffff, #26233a);
+    --color-text: light-dark(#575279, #e0def4);
+    --color-text-muted: light-dark(#716d8b, #908caa);
+    --color-border: light-dark(#aaa6a9, #514e63);
+    --color-border-strong: light-dark(#908b9d, #65627b);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#7d6795, #c4a7e7);
+    --color-primary-hover: light-dark(#695380, #dbbdff);
+    --color-secondary: light-dark(#3b7984, #9ccfd8);
+    --color-secondary-hover: light-dark(#25656f, #b2e6ef);
+    --color-destructive: light-dark(#a7576e, #eb6f92);
+    --color-destructive-hover: light-dark(#90435a, #ff89a8);
+    --color-warning: light-dark(#9e6300, #f6c177);
+    --color-warning-hover: light-dark(#835100, #ffdcae);
+    --color-success: light-dark(#286983, #4789a5);
+    --color-success-hover: light-dark(#0d556e, #5d9ebb);
+    --color-on-accent: light-dark(#faf4ed, #191724);
+    --color-primary-accent: light-dark(#907aa9, #c4a7e7);
+    --color-secondary-accent: light-dark(#56949f, #9ccfd8);
+    --color-destructive-accent: light-dark(#b4637a, #eb6f92);
+    --color-warning-accent: light-dark(#ea9d34, #f6c177);
+    --color-success-accent: light-dark(#286983, #31748f);
+}

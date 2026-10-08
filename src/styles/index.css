@@ -6,6 +6,14 @@
 @import "./tokens.css";
 @import "./themes/default.css";
 @import "./themes/ocean.css";
+@import "./themes/gruvbox.css";
+@import "./themes/nord.css";
+@import "./themes/catppuccin.css";
+@import "./themes/solarized.css";
+@import "./themes/dracula.css";
+@import "./themes/rose-pine.css";
+@import "./themes/tokyo-night.css";
+@import "./themes/everforest.css";
 @import "./containers.css";
 @import "./typography.css";
 @import "./utilities.css";
