@@ -50,6 +50,7 @@
     --grid-size: 2rem;
 
     /* Stacking order of the page-level overlays */
+    --z-backdrop: -1; /* Behind content, above body's background */
     --z-scanlines: 60;
     --z-destructor: 80;
     --z-crosshair: 100;

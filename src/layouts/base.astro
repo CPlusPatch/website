@@ -86,12 +86,62 @@ body {
     font-size: var(--font-size-base);
     line-height: var(--line-height);
     color: var(--color-text);
+
+    /*
+     * The blueprint backdrop: a fine grid, a heavier line every four cells,
+     * and a small "+" mark at every other heavy crossing. The marks sit in
+     * ::before, as do any fx layers behind content (z-index:
+     * var(--z-backdrop)), so body is their containing block and stacking
+     * context.
+     */
+    --grid-major: calc(var(--grid-size) * 4);
+    --grid-marks-size: calc(var(--grid-major) * 2);
+    /*
+     * Where the pattern starts. Half a cell keeps every line off the top and
+     * left edges, and half a major cell more keeps the first marks clear of
+     * them. Anything drawn on the grid (marks, fx) is positioned by this too.
+     */
+    --grid-offset: calc((var(--grid-size) + var(--grid-major)) / 2);
+    /*
+     * One mark per tile, drawn as quarter-arms at each corner. The viewBox is
+     * the tile at the default 2rem grid, so the arms are 4px. The stroke is
+     * 3px at any scale, and ::before shifts the mask by half a pixel, so it
+     * straddles the 1px grid line evenly. Alpha only: it is a mask.
+     */
+    --grid-marks: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M0 0h4M252 0h4M0 256h4M252 256h4M0 0v4M0 252v4M256 0v4M256 252v4' stroke='%23000' stroke-width='3' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+    position: relative;
+    isolation: isolate;
     background-color: var(--color-bg);
+    /* The major lines are the grid drawn again, so its alpha doubles there. */
     background-image:
         linear-gradient(var(--color-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--color-grid) 1px, transparent 1px),
+        linear-gradient(var(--color-grid) 1px, transparent 1px),
         linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
-    background-size: var(--grid-size) var(--grid-size);
+    background-size:
+        var(--grid-major) var(--grid-major),
+        var(--grid-major) var(--grid-major),
+        var(--grid-size) var(--grid-size),
+        var(--grid-size) var(--grid-size);
+    background-position: var(--grid-offset) var(--grid-offset);
     -webkit-font-smoothing: antialiased;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: var(--z-backdrop);
+        pointer-events: none;
+        background-color: color-mix(
+            in oklab,
+            var(--color-text-muted) 35%,
+            transparent
+        );
+        mask:
+            var(--grid-marks) calc(var(--grid-offset) + 0.5px)
+            calc(var(--grid-offset) + 0.5px) / var(--grid-marks-size)
+            var(--grid-marks-size);
+    }
 }
 
 .skip-link {
