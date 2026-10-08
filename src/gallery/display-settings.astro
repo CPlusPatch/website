@@ -37,7 +37,7 @@ const EFFECTS = [
     title="Display"
     align="end"
 >
-    <div class="display-settings__row">
+    <div class="display-settings__row text-ui">
         <label for="theme-select">Theme</label>
         {/* Themes key off the selected <option> via :has(). */}
         <Select
@@ -48,7 +48,7 @@ const EFFECTS = [
         />
     </div>
 
-    <div class="display-settings__row">
+    <div class="display-settings__row text-ui">
         <span>Preview width</span>
         <SegmentedControl
             name={PREVIEW_WIDTH_NAME}
@@ -61,7 +61,7 @@ const EFFECTS = [
     </div>
 
     <fieldset class="display-settings__effects">
-        <legend>Effects</legend>
+        <legend class="text-ui">Effects</legend>
         {EFFECTS.map(({ label, attr }) => (
             <Toggle {label} {...{ [attr]: true }}>
                 {label}
@@ -77,7 +77,6 @@ const EFFECTS = [
         align-items: center;
         justify-content: space-between;
         gap: var(--space-md);
-        font-size: var(--font-size-sm);
         color: var(--color-text-muted);
     }
 
@@ -93,7 +92,6 @@ const EFFECTS = [
         legend {
             float: left;
             margin-bottom: var(--space-xs);
-            font-size: var(--font-size-sm);
             color: var(--color-text-muted);
         }
     }
