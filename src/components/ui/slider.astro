@@ -1,0 +1,68 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * A range input drawn the same in every engine: a thin track, filled in the
+ * element's --tone up to --progress, then in a lighter step up to --buffered
+ * (both percentages, set by script -- see fill() in lib/media.ts), and a
+ * square thumb.
+ */
+type Props = Omit<HTMLAttributes<"input">, "type">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<input class:list={["slider", className]} type="range" {...rest}>
+
+<style>
+/*
+ * The -webkit- and -moz- parts need rules of their own, as a selector list
+ * with an unknown pseudo-element is dropped whole.
+ */
+.slider {
+    --thumb: 0.75rem;
+    --track: 0.25rem;
+    --fill: linear-gradient(
+        to right,
+        var(--tone, var(--color-primary)) var(--progress, 0%),
+        var(--color-border-strong) var(--progress, 0%) var(--buffered, 0%),
+        var(--color-border) var(--buffered, 0%)
+    );
+
+    min-width: 0;
+    height: var(--thumb);
+    margin: 0;
+    appearance: none;
+    background: none;
+    cursor: pointer;
+
+    &::-webkit-slider-runnable-track {
+        height: var(--track);
+        background: var(--fill);
+    }
+
+    &::-moz-range-track {
+        height: var(--track);
+        background: var(--fill);
+    }
+
+    &::-webkit-slider-thumb {
+        appearance: none;
+        width: var(--thumb);
+        height: var(--thumb);
+        /* WebKit aligns the thumb to the top of the track */
+        margin-top: calc((var(--track) - var(--thumb)) / 2);
+        border: 0;
+        border-radius: var(--radius);
+        background: var(--tone, var(--color-primary));
+    }
+
+    &::-moz-range-thumb {
+        width: var(--thumb);
+        height: var(--thumb);
+        border: 0;
+        border-radius: var(--radius);
+        background: var(--tone, var(--color-primary));
+    }
+}
+</style>
