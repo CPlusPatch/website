@@ -114,10 +114,14 @@ body {
     position: relative;
     isolation: isolate;
     background-color: var(--color-bg);
-    /* The major lines are the grid drawn again, so its alpha doubles there. */
+    /*
+     * The major lines are the grid drawn again at half strength, over the
+     * fine grid: half as strong again, enough to read without busying it.
+     */
+    --grid-major-line: color-mix(in oklab, var(--color-grid), transparent 50%);
     background-image:
-        linear-gradient(var(--color-grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--color-grid) 1px, transparent 1px),
+        linear-gradient(var(--grid-major-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-major-line) 1px, transparent 1px),
         linear-gradient(var(--color-grid) 1px, transparent 1px),
         linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
     background-size:
@@ -136,7 +140,7 @@ body {
         pointer-events: none;
         background-color: color-mix(
             in oklab,
-            var(--color-text-muted) 35%,
+            var(--color-text-muted) 20%,
             transparent
         );
         mask:
