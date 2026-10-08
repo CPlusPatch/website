@@ -1,0 +1,341 @@
+---
+import { getImage } from "astro:assets";
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import type { Tone } from "../../lib/tone.ts";
+import Button from "../ui/button.astro";
+import Slider from "../ui/slider.astro";
+
+/**
+ * A <video> player in the style of <AudioPlayer>. Without JS it is the
+ * browser's own player; the script swaps in a play toggle, seek bar, time,
+ * volume, captions and fullscreen, plus keyboard shortcuts while focus is
+ * inside it: K play, J/L back/forward 10s, M mute, C captions, F fullscreen.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    /** One URL, or several formats in order of preference. */
+    src: string | { src: string; type: string }[];
+    /** Also sets the aspect ratio, unless `ratio` is given. */
+    poster?: ImageMetadata;
+    /** As a CSS `aspect-ratio`. Defaults to the poster's, or 16 / 9. */
+    ratio?: string;
+    /** Shown under the player, and its accessible name. */
+    title?: string;
+    /** The `default` one (or else the first) is what the CC button toggles. */
+    tracks?: {
+        src: string;
+        srclang: string;
+        label: string;
+        kind?: "captions" | "subtitles";
+        default?: boolean;
+    }[];
+    loop?: boolean;
+    tone?: Tone;
+}
+
+const {
+    src,
+    poster,
+    ratio = poster ? `${poster.width} / ${poster.height}` : "16 / 9",
+    title,
+    tracks = [],
+    loop,
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+const sources = typeof src === "string" ? [{ src, type: undefined }] : src;
+const posterImage = poster && (await getImage({ src: poster }));
+---
+
+<figure
+    class:list={["media-player", "panel", `tone-${tone}`, className]}
+    {...rest}
+>
+    {/* biome-ignore lint/a11y/useMediaCaption: tracks are optional, as not every video has speech */}
+    <video
+        preload="metadata"
+        controls
+        playsinline
+        loop={loop}
+        poster={posterImage?.src}
+        aria-label={title}
+        style={`--ratio: ${ratio}`}
+    >
+        {sources.map((source) => <source src={source.src} type={source.type}>)}
+        {tracks.map((track) => (
+            <track
+                kind={track.kind ?? "captions"}
+                src={track.src}
+                srclang={track.srclang}
+                label={track.label}
+                default={track.default}
+            >
+        ))}
+    </video>
+    {/*
+     * Each toggle holds two icons: the first while not pressed, the
+     * second while pressed.
+     */}
+    <div class="media-player__controls" hidden>
+        <Button
+            class="media-player__toggle"
+            size="icon"
+            variant="outline"
+            tone="neutral"
+            lift={false}
+            aria-pressed="false"
+            aria-label={title ? `Play ${title}` : "Play"}
+        >
+            <Icon name="lucide:play" aria-hidden="true" />
+            <Icon name="lucide:pause" aria-hidden="true" />
+        </Button>
+        <Slider
+            class="media-player__seek"
+            min="0"
+            max="0"
+            step="any"
+            value="0"
+            aria-label="Seek"
+        />
+        <span class="media-player__time">0:00 / 0:00</span>
+        <Button
+            class="media-player__mute"
+            size="icon"
+            variant="ghost"
+            tone="neutral"
+            lift={false}
+            aria-pressed="false"
+            aria-label="Mute"
+        >
+            <Icon name="lucide:volume-2" aria-hidden="true" />
+            <Icon name="lucide:volume-x" aria-hidden="true" />
+        </Button>
+        <Slider
+            class="media-player__volume"
+            min="0"
+            max="1"
+            step="any"
+            value="1"
+            aria-label="Volume"
+        />
+        {tracks.length > 0 && (
+            <Button
+                class="media-player__captions"
+                size="icon"
+                variant="ghost"
+                tone="neutral"
+                lift={false}
+                aria-pressed="false"
+                aria-label="Captions"
+            >
+                <Icon name="lucide:captions-off" aria-hidden="true" />
+                <Icon name="lucide:captions" aria-hidden="true" />
+            </Button>
+        )}
+        <Button
+            class="media-player__fullscreen"
+            size="icon"
+            variant="ghost"
+            tone="neutral"
+            lift={false}
+            aria-pressed="false"
+            aria-label="Fullscreen"
+        >
+            <Icon name="lucide:maximize" aria-hidden="true" />
+            <Icon name="lucide:minimize" aria-hidden="true" />
+        </Button>
+    </div>
+    {title && <figcaption>{title}</figcaption>}
+</figure>
+
+<style>
+.media-player {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+    padding-bottom: var(--space-md);
+    /* Clip the video to the panel's corners when --radius is set */
+    overflow: hidden;
+
+    > :not(video) {
+        padding-inline: var(--space-md);
+    }
+
+    video {
+        display: block;
+        width: 100%;
+        aspect-ratio: var(--ratio);
+        /* Letterboxing is black in every theme, as on any screen */
+        background: #000;
+    }
+
+    /* The controls stay under the video, which takes the rest of the screen */
+    &:fullscreen video {
+        flex: 1;
+        min-height: 0;
+        aspect-ratio: auto;
+    }
+
+    figcaption {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+    }
+
+    .media-player__controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+
+    [aria-pressed] > :last-child,
+    [aria-pressed="true"] > :first-child {
+        display: none;
+    }
+
+    [aria-pressed="true"] > :last-child {
+        display: block;
+    }
+
+    .media-player__seek {
+        flex: 1;
+        margin-inline: var(--space-sm);
+    }
+
+    .media-player__time {
+        margin-inline-end: var(--space-sm);
+        color: var(--color-text-muted);
+        font: var(--font-size-xs) / 1 var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .media-player__volume {
+        width: 4rem;
+        margin-inline-end: var(--space-sm);
+    }
+
+    /* Touch devices have hardware volume (iOS ignores ours), and narrow players no room */
+    @media (pointer: coarse) {
+        .media-player__volume {
+            display: none;
+        }
+    }
+
+    @container (width < 28rem) {
+        .media-player__volume {
+            display: none;
+        }
+    }
+}
+
+video::cue {
+    font-family: var(--font-base);
+}
+</style>
+
+<script>
+import { bindTransport, fill } from "../../lib/media.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>(".media-player")) {
+    const video = root.querySelector("video") as HTMLVideoElement;
+    const part = <T extends HTMLElement = HTMLElement>(name: string) =>
+        root.querySelector(`.media-player__${name}`) as T;
+    const toggle = part("toggle");
+    const mute = part("mute");
+    const volume = part<HTMLInputElement>("volume");
+    const captions = root.querySelector<HTMLElement>(".media-player__captions");
+    const fullscreen = part("fullscreen");
+
+    bindTransport(video, {
+        controls: part("controls"),
+        toggle,
+        seek: part<HTMLInputElement>("seek"),
+        time: part("time"),
+    });
+
+    // Clicking the picture plays it, and focuses it (but not by Tab) so the
+    // shortcuts work after
+    video.tabIndex = -1;
+    video.addEventListener("click", () => toggle.click());
+
+    const renderVolume = () => {
+        mute.setAttribute("aria-pressed", String(video.muted));
+        volume.value = String(video.muted ? 0 : video.volume);
+        fill(volume);
+    };
+    video.addEventListener("volumechange", renderVolume);
+    mute.addEventListener("click", () => {
+        video.muted = !video.muted;
+        if (!video.muted && !video.volume) video.volume = 1;
+    });
+    volume.addEventListener("input", () => {
+        video.volume = volume.valueAsNumber;
+        video.muted = !video.volume;
+    });
+    renderVolume();
+
+    const track = (
+        (video.querySelector("track[default]") ??
+            video.querySelector("track")) as HTMLTrackElement | null
+    )?.track;
+    if (captions && track) {
+        const renderCaptions = () =>
+            captions.setAttribute(
+                "aria-pressed",
+                String(track.mode === "showing"),
+            );
+        video.textTracks.addEventListener("change", renderCaptions);
+        captions.addEventListener("click", () => {
+            track.mode = track.mode === "showing" ? "hidden" : "showing";
+        });
+        renderCaptions();
+    }
+
+    // Fullscreen on the figure keeps our controls. iPhone Safari can only
+    // take the <video> itself, with its own controls.
+    const ios = video as HTMLVideoElement & {
+        webkitEnterFullscreen?: () => void;
+    };
+    if (document.fullscreenEnabled) {
+        fullscreen.addEventListener("click", () => {
+            if (document.fullscreenElement === root)
+                void document.exitFullscreen();
+            else void root.requestFullscreen();
+        });
+        document.addEventListener("fullscreenchange", () =>
+            fullscreen.setAttribute(
+                "aria-pressed",
+                String(document.fullscreenElement === root),
+            ),
+        );
+    } else if (ios.webkitEnterFullscreen) {
+        fullscreen.addEventListener("click", () =>
+            ios.webkitEnterFullscreen?.(),
+        );
+    } else {
+        fullscreen.remove();
+    }
+
+    root.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        const key = event.key.toLowerCase();
+        const button = {
+            k: toggle,
+            m: mute,
+            c: captions,
+            f: fullscreen,
+            // Space already presses a focused button
+            " ": event.target === video ? toggle : null,
+        }[key];
+        if (button) button.click();
+        else if (key === "j") video.currentTime -= 10;
+        else if (key === "l") video.currentTime += 10;
+        else return;
+        event.preventDefault();
+    });
+}
+</script>
