@@ -114,6 +114,106 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
     }
 }
 
+/*
+ * A text-entry well, shared by Input and Textarea. Sunk slightly below the
+ * surface at rest; focus thickens the border to the accent. --field-accent
+ * recolours the border and caret, --field-tint the text selection (both turn
+ * destructive when invalid).
+ */
+.field {
+    --field-accent: var(--color-primary);
+    --field-tint: var(--color-primary-accent);
+    --field-ring: inset 0 0 0 0 transparent;
+    --field-sink: inset 0 1px 2px rgb(0 0 0 / 0.06);
+
+    inline-size: 100%;
+    min-inline-size: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    caret-color: var(--field-accent);
+    background-color: var(--color-surface-raised);
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--field-ring), var(--field-sink);
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+
+    &::placeholder {
+        color: var(--color-text-muted);
+    }
+
+    &::selection {
+        background-color: var(--field-tint);
+    }
+
+    &:hover:not(:disabled, [readonly], :focus) {
+        border-color: var(--color-text-muted);
+    }
+
+    /*
+     * The ring is a second border drawn inside the first, so focus reads as
+     * one 2px edge rather than a border with an outline floating outside it.
+     * The transparent outline is for forced colours, which drop box-shadow
+     * and paint it in instead.
+     */
+    &:focus {
+        --field-ring: inset 0 0 0 1px var(--field-accent);
+        border-color: var(--field-accent);
+        outline: 2px solid transparent;
+    }
+
+    /*
+     * Only once touched, so an untouched required field is not red on load.
+     * Primary and destructive can be close in hue, so the red alone would not
+     * tell an invalid field from a focused one: the tint marks invalid, the
+     * 2px ring marks focus, and the two combine.
+     */
+    &:user-invalid,
+    &[aria-invalid="true"] {
+        --field-accent: var(--color-destructive);
+        --field-tint: var(--color-destructive-accent);
+        border-color: var(--field-accent);
+        background-color: light-dark(
+            color-mix(
+                in oklab,
+                var(--color-destructive) 8%,
+                var(--color-surface-raised)
+            ),
+            color-mix(
+                in oklab,
+                var(--color-destructive) 12%,
+                var(--color-surface-raised)
+            )
+        );
+    }
+
+    &[readonly] {
+        --field-sink: none;
+        background-color: var(--color-bg-alt);
+        border-style: dashed;
+    }
+
+    &:disabled {
+        --field-sink: none;
+        opacity: 0.5;
+        background-color: var(--color-bg-alt);
+        cursor: not-allowed;
+    }
+
+    /*
+     * Forced colours repaint the border in a system colour, which would hide
+     * the invalid state, so mark it with a heavier one (dashed is taken by
+     * readonly).
+     */
+    @media (forced-colors: active) {
+        &:user-invalid,
+        &[aria-invalid="true"] {
+            border-width: 2px;
+        }
+    }
+}
+
 /* Visually hidden, still announced by screen readers. */
 .visually-hidden {
     position: absolute;
