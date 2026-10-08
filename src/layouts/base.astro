@@ -9,6 +9,7 @@ import "../styles/utilities.css";
 import { Font } from "astro:assets";
 import Crosshair from "../components/effects/crosshair.astro";
 import Scanlines from "../components/effects/scanlines.astro";
+import { site } from "../site.ts";
 
 interface Props {
     title: string;
@@ -29,8 +30,7 @@ const {
     canonical: hasCanonical = true,
 } = Astro.props;
 
-const siteName = "web-ng";
-const pageTitle = title === siteName ? title : `${title} — ${siteName}`;
+const pageTitle = title === site.name ? title : `${title} — ${site.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 ---
 
@@ -49,7 +49,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
         {hasCanonical && <link rel="canonical" href={canonical.href} />}
 
         <meta property="og:type" content="website">
-        <meta property="og:site_name" content={siteName}>
+        <meta property="og:site_name" content={site.name}>
         <meta property="og:title" content={pageTitle}>
         {description && (
             <meta property="og:description" content={description} />
