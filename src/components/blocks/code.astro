@@ -1,0 +1,230 @@
+---
+import { Code as AstroCode } from "astro:components";
+import type { ComponentProps } from "astro/types";
+import { Icon } from "astro-icon/components";
+import { codeTheme } from "../../lib/code-theme.ts";
+import Button from "../ui/button.astro";
+
+type AstroCodeProps = ComponentProps<typeof AstroCode>;
+
+/**
+ * Syntax-highlighted code, from Astro's <Code> (Shiki, at build time, so it
+ * ships no highlighter). Coloured from the palette through lib/code-theme.ts,
+ * so it follows light, dark and every theme; recolour a block by setting
+ * Shiki's --code-* variables (--code-token-keyword and so on) on it.
+ *
+ * A block has a header with an optional title (a file name, say), the
+ * language, and a copy button that a few lines of script reveal: without JS
+ * there is no button rather than a dead one. `inline` renders a bare <code>
+ * for use within a sentence instead.
+ */
+interface Props {
+    code: string;
+    lang?: AstroCodeProps["lang"];
+    /** Shown in the header, such as a file name. */
+    title?: string;
+    /** Numbers each line. */
+    lineNumbers?: boolean;
+    /** Wraps long lines instead of scrolling them. */
+    wrap?: boolean;
+    /** A bare inline <code>, for use within running text. */
+    inline?: boolean;
+    class?: string;
+}
+
+const {
+    code,
+    lang = "plaintext",
+    title,
+    lineNumbers = false,
+    wrap = false,
+    inline = false,
+    class: className,
+} = Astro.props;
+
+// Trailing newlines would render as an empty last line.
+const source = code.replace(/\n+$/, "");
+---
+
+{inline ? (
+    <AstroCode
+        class:list={["code-inline", className]}
+        code={source}
+        {lang}
+        theme={codeTheme}
+        inline
+    />
+) : (
+    <figure
+        class:list={["code", lineNumbers && "code--numbered", className]}
+        data-snap
+    >
+        <figcaption class="code__header">
+            <span class="code__title text-meta">{title ?? lang}</span>
+            {title && <span class="code__lang text-meta">{lang}</span>}
+            <Button
+                class="code__copy"
+                size="icon"
+                variant="ghost"
+                tone="neutral"
+                lift={false}
+                aria-label="Copy code"
+                hidden
+            >
+                <Icon
+                    name="lucide:copy"
+                    class="code__copy-idle"
+                    aria-hidden="true"
+                />
+                <Icon
+                    name="lucide:check"
+                    class="code__copy-done"
+                    aria-hidden="true"
+                />
+            </Button>
+            <span
+                class="code__status visually-hidden"
+                aria-live="polite"
+            ></span>
+        </figcaption>
+        <AstroCode
+            class="code__pre"
+            code={source}
+            {lang}
+            theme={codeTheme}
+            {wrap}
+        />
+    </figure>
+)}
+
+<style>
+/*
+ * Colours come from the theme's variables and their palette defaults (see
+ * lib/code-theme.ts). Shiki's markup is inserted as raw HTML, so it carries
+ * no scope attribute: styles reach it via :global().
+ */
+.code {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    /*
+     * Its lines don't set its width: without this a long line widens a grid
+     * or flex track to fit, and the block never scrolls.
+     */
+    contain: inline-size;
+    /* The header shares the code's background, from the same variable. */
+    background-color: var(--code-background, var(--color-bg-alt));
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+    /* Clip the scrolling code to the corners when --radius is set. */
+    overflow: hidden;
+
+    .code__header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        min-height: var(--control-height-md);
+        /* None on the right: the copy button fills that corner, edge to edge. */
+        padding-inline: var(--space-md) 0;
+        border-bottom: var(--border-width) solid var(--border-color);
+    }
+
+    .code__title {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--color-text);
+    }
+
+    /* Scripted: hidden until the script below reveals it. */
+    .code__copy[hidden] {
+        display: none;
+    }
+
+    .code__copy-done {
+        display: none;
+    }
+
+    .code__copy[data-copied] {
+        color: var(--color-success);
+
+        .code__copy-idle {
+            display: none;
+        }
+
+        .code__copy-done {
+            display: block;
+        }
+    }
+
+    :global(.code__pre) {
+        margin: 0;
+        padding: var(--space-sm) var(--space-md);
+        font: var(--type-code);
+        /* The characters as typed: != shouldn't read as ≠ in code to copy. */
+        font-variant-ligatures: none;
+        tab-size: 4;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border-strong) transparent;
+
+        /* The global code rule shrinks code to 0.9em; here it is the block. */
+        :global(code) {
+            font: inherit;
+        }
+
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+    }
+
+    &.code--numbered :global(.code__pre code) {
+        counter-reset: line;
+
+        :global(.line)::before {
+            counter-increment: line;
+            content: counter(line);
+            display: inline-block;
+            width: 2ch;
+            margin-right: var(--space-md);
+            text-align: right;
+            color: var(--code-line-number, var(--color-border-strong));
+            user-select: none;
+        }
+    }
+}
+
+/* Within a sentence: a tinted chip, sized to the text around it. */
+:global(.code-inline) {
+    padding: 0.1em 0.35em;
+    border-radius: var(--radius);
+    font-size: var(--font-size-code);
+    overflow-wrap: anywhere;
+}
+</style>
+
+<script>
+// Reveal each copy button, and copy its block's text on press.
+for (const button of document.querySelectorAll<HTMLButtonElement>(
+    ".code__copy",
+)) {
+    const block = button.closest(".code");
+    const code = block?.querySelector("pre code");
+    const status = block?.querySelector(".code__status");
+    if (!code || !navigator.clipboard) continue;
+    button.hidden = false;
+
+    let timer = 0;
+    button.addEventListener("click", async () => {
+        await navigator.clipboard.writeText(code.textContent ?? "");
+        button.dataset.copied = "";
+        if (status) status.textContent = "Copied";
+        clearTimeout(timer);
+        timer = window.setTimeout(() => {
+            delete button.dataset.copied;
+            if (status) status.textContent = "";
+        }, 2000);
+    });
+}
+</script>

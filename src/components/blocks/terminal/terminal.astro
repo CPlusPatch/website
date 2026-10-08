@@ -64,6 +64,8 @@ const prompt = promptFor(cwd);
     overflow-y: auto;
     padding: var(--space-md);
     font: var(--type-code);
+    /* The characters as typed, as in Code: != shouldn't read as ≠. */
+    font-variant-ligatures: none;
     transition: border-color var(--transition);
 
     /* The input has no outline of its own, so the whole frame shows focus. */
