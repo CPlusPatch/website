@@ -12,6 +12,7 @@ export default defineConfig({
     redirects: {
         "/": "/gallery/",
     },
+    // src/icons must exist, or the dev server stops watching src/. See its README.
     integrations: [icon()],
     fonts: [
         {
