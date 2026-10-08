@@ -1,0 +1,206 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import type { Tone } from "../../lib/tone.ts";
+import Button from "../ui/button.astro";
+
+/**
+ * An <audio> player in the site's style. Without JS it is the browser's own
+ * player; the script swaps in a play toggle, a seek bar and the time.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    src: string;
+    /** Shown under the player, and its accessible name. */
+    title?: string;
+    tone?: Tone;
+}
+
+const { src, title, tone = "primary", class: className, ...rest } = Astro.props;
+---
+
+<figure
+    class:list={["audio-player", "panel", `tone-${tone}`, className]}
+    {...rest}
+>
+    {/* biome-ignore lint/a11y/useMediaCaption: captions are for video; audio needs a transcript, which is page content */}
+    <audio src={src} preload="metadata" controls aria-label={title}></audio>
+    <div class="audio-player__controls" hidden>
+        <Button
+            class="audio-player__toggle"
+            size="icon"
+            variant="outline"
+            tone="neutral"
+            lift={false}
+            aria-pressed="false"
+            aria-label={title ? `Play ${title}` : "Play"}
+        >
+            <Icon
+                name="lucide:play"
+                class="audio-player__play"
+                aria-hidden="true"
+            />
+            <Icon
+                name="lucide:pause"
+                class="audio-player__pause"
+                aria-hidden="true"
+            />
+        </Button>
+        <input
+            class="audio-player__seek"
+            type="range"
+            min="0"
+            max="0"
+            step="any"
+            value="0"
+            aria-label="Seek"
+        >
+        <span class="audio-player__time">0:00 / 0:00</span>
+    </div>
+    {title && <figcaption>{title}</figcaption>}
+</figure>
+
+<style>
+.audio-player {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-md);
+
+    audio {
+        width: 100%;
+    }
+
+    figcaption {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+    }
+
+    .audio-player__controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    /* Pressed while playing, like the pause button */
+    .audio-player__pause {
+        display: none;
+    }
+
+    .audio-player__toggle[aria-pressed="true"] {
+        .audio-player__play {
+            display: none;
+        }
+
+        .audio-player__pause {
+            display: block;
+        }
+    }
+
+    /*
+     * Drawn the same in every engine: a thin track, filled up to the
+     * playhead (--progress, set by the script), and a square thumb. The
+     * -webkit- and -moz- parts need rules of their own, as a selector list
+     * with an unknown pseudo-element is dropped whole.
+     */
+    .audio-player__seek {
+        --thumb: 0.75rem;
+        --track: 0.25rem;
+        --fill: linear-gradient(
+            to right,
+            var(--tone) var(--progress, 0%),
+            var(--color-border) var(--progress, 0%)
+        );
+
+        flex: 1;
+        min-width: 0;
+        height: var(--thumb);
+        margin: 0;
+        appearance: none;
+        background: none;
+        cursor: pointer;
+
+        &::-webkit-slider-runnable-track {
+            height: var(--track);
+            background: var(--fill);
+        }
+
+        &::-moz-range-track {
+            height: var(--track);
+            background: var(--fill);
+        }
+
+        &::-webkit-slider-thumb {
+            appearance: none;
+            width: var(--thumb);
+            height: var(--thumb);
+            /* WebKit aligns the thumb to the top of the track */
+            margin-top: calc((var(--track) - var(--thumb)) / 2);
+            border: 0;
+            border-radius: var(--radius);
+            background: var(--tone);
+        }
+
+        &::-moz-range-thumb {
+            width: var(--thumb);
+            height: var(--thumb);
+            border: 0;
+            border-radius: var(--radius);
+            background: var(--tone);
+        }
+    }
+
+    .audio-player__time {
+        color: var(--color-text-muted);
+        font: var(--font-size-xs) / 1 var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+}
+</style>
+
+<script>
+const format = (seconds: number) =>
+    `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+
+for (const root of document.querySelectorAll<HTMLElement>(".audio-player")) {
+    const audio = root.querySelector("audio") as HTMLAudioElement;
+    const controls = root.querySelector(
+        ".audio-player__controls",
+    ) as HTMLElement;
+    const toggle = root.querySelector(".audio-player__toggle") as HTMLElement;
+    const seek = root.querySelector(".audio-player__seek") as HTMLInputElement;
+    const time = root.querySelector(".audio-player__time") as HTMLElement;
+
+    // Swap the browser's player for ours
+    audio.controls = false;
+    controls.hidden = false;
+
+    const render = () => {
+        // Infinite for streams, NaN until the metadata loads
+        const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+        seek.max = String(duration);
+        seek.value = String(audio.currentTime);
+        seek.setAttribute("aria-valuetext", format(audio.currentTime));
+        seek.style.setProperty(
+            "--progress",
+            `${duration ? (audio.currentTime / duration) * 100 : 0}%`,
+        );
+        time.textContent = `${format(audio.currentTime)} / ${format(duration)}`;
+        toggle.setAttribute("aria-pressed", String(!audio.paused));
+    };
+
+    for (const type of ["play", "pause", "timeupdate", "durationchange"]) {
+        audio.addEventListener(type, render);
+    }
+    toggle.addEventListener("click", () => {
+        if (audio.paused) void audio.play();
+        else audio.pause();
+    });
+    seek.addEventListener("input", () => {
+        audio.currentTime = seek.valueAsNumber;
+        render();
+    });
+    render();
+}
+</script>
