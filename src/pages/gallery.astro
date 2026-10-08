@@ -1,40 +1,15 @@
 ---
 import { Icon } from "astro-icon/components";
-import Button from "../components/ui/button.astro";
-import ButtonGroup from "../components/ui/button-group.astro";
-import Select from "../components/ui/select.astro";
-import Toggle from "../components/ui/toggle.astro";
-import { groups } from "../gallery/stories/index.ts";
-import StoryNode from "../gallery/story-node.astro";
+import Sidebar from "../components/sections/sidebar/sidebar.astro";
+import SidebarGroup from "../components/sections/sidebar/sidebar-group.astro";
+import SidebarLayout from "../components/sections/sidebar/sidebar-layout.astro";
+import SidebarLink from "../components/sections/sidebar/sidebar-link.astro";
+import DisplaySettings from "../gallery/display-settings.astro";
+import { categories, groups } from "../gallery/stories/index.ts";
+import StoryGroup from "../gallery/story-group.astro";
 import Layout from "../layouts/base.astro";
 
-// Each value other than "default" needs a matching stylesheet in
-// src/styles/themes/, which switches on while its option is selected.
-const THEMES = [
-    { value: "default", label: "Default" },
-    { value: "ocean", label: "Ocean" },
-];
-
-// Site-wide effects. Each is switched on by CSS that looks for its checked
-// [data-*-toggle] anywhere on the page, so these need no JS either.
-const EFFECTS = [
-    { label: "Crosshair", attr: "data-crosshair-toggle" },
-    { label: "Scanlines", attr: "data-scanlines-toggle" },
-    { label: "Signal", attr: "data-signal-toggle" },
-    { label: "Lift shadow", attr: "data-lift-shadow-toggle" },
-    { label: "Invert theme", attr: "data-theme-toggle" },
-];
-
-const cell = (min: number | "full" = 16) =>
-    min === "full" ? "100%" : `${min}rem`;
-
-// "desktop" has no class rule: it is the unconstrained width.
-const SIZES = [
-    { size: "desktop", icon: "lucide:monitor" },
-    { size: "tablet", icon: "lucide:tablet" },
-    { size: "phone", icon: "lucide:smartphone" },
-    { size: "tiny", icon: "lucide:watch" },
-];
+const storyCount = groups.reduce((n, group) => n + group.stories.length, 0);
 ---
 
 <Layout
@@ -42,274 +17,158 @@ const SIZES = [
     description="Every component in the web-ng UI toolkit, in each of its states and themes."
     noindex
 >
-    <main id="main" class="container">
-        <header class="toolbar">
-            <div class="toolbar__layout">
-                <h1>Component gallery</h1>
-                <div class="toolbar__controls">
-                    <fieldset class="toolbar__effects">
-                        <legend class="visually-hidden">Effects</legend>
-                        {EFFECTS.map(({ label, attr }) => (
-                            <Toggle {label} {...{ [attr]: true }}>
-                                {label}
-                            </Toggle>
-                        ))}
-                    </fieldset>
-                    {/* Works without JS: themes key off the selected <option> via :has(). */}
-                    <div class="toolbar__theme">
-                        <label for="theme-select">Theme</label>
-                        <Select
-                            id="theme-select"
-                            label="Theme"
-                            options={THEMES}
-                            data-theme-select
-                        />
-                    </div>
-                </div>
-            </div>
+    <div class="gallery">
+        <header class="gallery__bar">
+            <h1 class="gallery__title">Component gallery</h1>
+            <p class="gallery__count">
+                {`${groups.length} components · ${storyCount} stories`}
+            </p>
+            <DisplaySettings />
         </header>
-        {groups.map((group) => (
-            <section class="gallery">
-                <div class="gallery__header">
-                    <h2>{group.title}</h2>
-                    <ButtonGroup
-                        class="gallery__controls"
-                        label="Preview width"
-                    >
-                        {SIZES.map(({ size, icon }, i) => (
-                            <Button
-                                size="icon"
-                                variant="outline"
-                                tone="neutral"
-                                lift={false}
-                                data-size={size}
-                                aria-pressed={i === 0 ? "true" : "false"}
-                                aria-label={`Show ${size} layout`}
+
+        <SidebarLayout>
+            <Sidebar slot="sidebar" class="gallery__sidebar" label="Components">
+                {categories.map((category) => (
+                    <SidebarGroup title={category.title} icon={category.icon}>
+                        {category.groups.map((group) => (
+                            <SidebarLink
+                                href={`#${group.id}`}
+                                section={group.id}
                             >
-                                <Icon name={icon} aria-hidden="true" />
-                            </Button>
+                                {group.title}
+                            </SidebarLink>
                         ))}
-                    </ButtonGroup>
-                    {group.description && <p>{group.description}</p>}
-                </div>
-                <div class="grid" style={`--cell: ${cell(group.min)}`}>
-                    {group.stories.map((story) => (
-                        <figure
-                            class="cell"
-                            data-story={`${group.id}/${story.name}`}
-                        >
-                            <figcaption>{story.name}</figcaption>
-                            <div class="preview">
-                                <StoryNode {story} />
-                            </div>
-                        </figure>
-                    ))}
-                </div>
-            </section>
-        ))}
-    </main>
+                    </SidebarGroup>
+                ))}
+            </Sidebar>
+
+            <main id="main" class="gallery__main">
+                {categories.map((category) => (
+                    <section
+                        class="gallery__category"
+                        aria-labelledby={category.id}
+                    >
+                        <header class="gallery__category-header">
+                            <h2
+                                class="gallery__category-title"
+                                id={category.id}
+                            >
+                                <Icon name={category.icon} aria-hidden="true" />
+                                {category.title}
+                            </h2>
+                            <p class="gallery__category-count">
+                                {`${category.groups.length} components`}
+                            </p>
+                        </header>
+                        {category.groups.map((group) => (
+                            <StoryGroup {group} />
+                        ))}
+                    </section>
+                ))}
+            </main>
+        </SidebarLayout>
+    </div>
 </Layout>
 
 <style>
-main {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-    padding-block: var(--space-lg);
-}
+.gallery {
+    width: min(100% - 2 * var(--space-md), 90rem);
+    margin-inline: auto;
 
-/*
- * One row when there is room for it (it needs about 58rem). Below that, the
- * controls move into a panel under the title instead of wrapping piecemeal:
- * effects in a grid of 4, 2 or 1 columns so rows always fill evenly, and
- * theme on its own row.
- */
-.toolbar {
-    container-type: inline-size;
-
-    h1 {
-        font-size: var(--font-size-2xl);
-    }
-
-    .toolbar__layout {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: var(--space-md);
-    }
-
-    .toolbar__controls,
-    .toolbar__effects {
+    /* Sticky, so the settings stay in reach; the sidebar sticks just below it. */
+    .gallery__bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
         display: flex;
         align-items: center;
+        gap: var(--space-sm) var(--space-md);
+        min-height: var(--header-height);
+        margin-bottom: var(--space-md);
+        /* Bleed to the viewport edges, so content never shows beside it. */
+        padding-inline: var(--space-md);
+        margin-inline: calc(var(--space-md) * -1);
+        background-color: color-mix(in oklab, var(--color-bg) 85%, transparent);
+        backdrop-filter: blur(8px);
+        border-bottom: var(--border-width) solid var(--border-color);
     }
 
-    .toolbar__controls {
-        gap: var(--space-lg);
-    }
-
-    .toolbar__effects {
-        gap: var(--space-md);
+    .gallery__title {
         margin: 0;
-        padding: 0;
-        border: 0;
-        min-width: 0;
+        font-size: var(--font-size-lg);
     }
 
-    .toolbar__theme {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-        font-size: var(--font-size-sm);
+    .gallery__count {
+        flex: 1;
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
         color: var(--color-text-muted);
     }
 
-    @container (width < 59rem) {
-        .toolbar__layout {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .toolbar__controls {
-            flex-direction: column;
-            align-items: stretch;
-            gap: var(--space-md);
-            padding: var(--space-md);
-            background-color: var(--color-surface);
-            border: var(--border-width) solid var(--border-color);
-            border-radius: var(--radius);
-        }
-
-        .toolbar__effects {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: var(--space-sm) var(--space-md);
-        }
-
-        .toolbar__theme {
-            justify-content: space-between;
-            padding-top: var(--space-md);
-            border-top: var(--border-width) solid var(--border-color);
-        }
+    .gallery__sidebar {
+        --sidebar-top: calc(var(--header-height) + var(--space-md));
     }
-
-    @container (width < 40rem) {
-        .toolbar__effects {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @container (width < 21rem) {
-        .toolbar__effects {
-            grid-template-columns: 1fr;
-        }
-    }
-}
-
-.gallery {
-    padding: var(--space-md);
-    background-color: var(--color-surface);
-    border: var(--border-width) solid var(--border-color);
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
 
     /*
-     * Title and width controls share the first row; the description sits
-     * just under the title, across the full width so it doesn't get
-     * squeezed beside the controls on narrow screens.
+     * The page's bottom padding lives here, inside the sidebar's column:
+     * outside it, the column would end short of the page and push the
+     * sticky sidebar up at the bottom.
      */
-    .gallery__header {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        column-gap: var(--space-md);
-
-        h2 {
-            font-size: var(--font-size-lg);
-            margin-bottom: 0;
-        }
-
-        p {
-            grid-column: 1 / -1;
-            margin-top: var(--space-xs);
-            color: var(--color-text-muted);
-            font-size: var(--font-size-sm);
-            line-height: var(--leading-snug);
-        }
+    .gallery__main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xl);
+        padding-bottom: var(--space-xl);
     }
 
-    .gallery__controls :global(.button[aria-pressed="true"]) {
-        color: var(--color-text);
-        border-color: var(--color-text);
-        background-color: var(--color-bg-alt);
-    }
-
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(
-                auto-fill,
-                minmax(min(var(--cell), 100%), 1fr)
-            );
+    .gallery__category {
+        display: flex;
+        flex-direction: column;
         gap: var(--space-md);
-        align-items: start;
-        width: 100%;
-        margin: 0 auto;
+    }
 
-        &.tablet {
-            max-width: 48rem;
-            border-inline: var(--border-width) dotted var(--border-color);
-        }
+    /*
+     * The break between categories: a full-strength heading on a solid
+     * rule, so it reads clearly over the backdrop grid.
+     */
+    .gallery__category-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 2px solid var(--color-border-strong);
+    }
 
-        &.phone {
-            max-width: 32rem;
-            border-inline: var(--border-width) dotted var(--border-color);
-        }
+    .gallery__category-title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin: 0;
+        font-size: var(--font-size-xl);
+        scroll-margin-top: calc(var(--header-height) + var(--space-md));
 
-        &.tiny {
-            max-width: 24rem;
-            border-inline: var(--border-width) dotted var(--border-color);
-        }
-
-        .cell {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-xs);
-            margin: 0;
+        svg {
+            color: var(--color-primary);
         }
     }
-}
 
-figcaption {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
-}
+    .gallery__category-count {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
+    }
 
-.preview {
-    container-type: inline-size;
-    display: flex;
-    align-items: flex-start;
+    @container (width < 30rem) {
+        .gallery__count {
+            display: none;
+        }
+
+        .gallery__title {
+            flex: 1;
+        }
+    }
 }
 </style>
-
-<script>
-const controls = document.querySelectorAll(".gallery__controls .button");
-
-for (const control of controls) {
-    control.addEventListener("click", () => {
-        const grid = control.closest(".gallery")?.querySelector(".grid");
-        const size = control.getAttribute("data-size");
-
-        if (!grid || !size) return;
-
-        grid.classList.remove("desktop", "tablet", "phone", "tiny");
-        grid.classList.add(size);
-
-        for (const other of control.parentElement?.children ?? []) {
-            other.setAttribute("aria-pressed", String(other === control));
-        }
-    });
-}
-</script>
