@@ -28,14 +28,16 @@ const {
 
 <li class="sidebar-link">
     <a
-        class:list={["sidebar-link__anchor", className]}
+        class:list={["sidebar-link__anchor", "text-ui", className]}
         href={href}
         aria-current={current ? "page" : undefined}
         data-section={section}
         {...rest}
     >
         <span class="sidebar-link__label"><slot /></span>
-        {meta !== undefined && <span class="sidebar-link__meta">{meta}</span>}
+        {meta !== undefined && (
+            <span class="sidebar-link__meta text-meta">{meta}</span>
+        )}
     </a>
 </li>
 
@@ -54,8 +56,8 @@ const {
         /* Sit on the guide, so the marker replaces that stretch of it. */
         margin-left: calc(var(--border-width) * -1);
         padding: var(--space-xs) var(--space-md);
-        font-size: var(--font-size-sm);
-        line-height: var(--leading-snug);
+        /* WCAG 2.2's minimum target size, as the rows touch. */
+        min-height: 1.5rem;
         color: var(--color-text-muted);
         text-decoration: none;
         border-left: 2px solid transparent;
@@ -85,14 +87,29 @@ const {
         @media (pointer: coarse) {
             min-height: var(--control-height-sm);
         }
+
+        /*
+         * Forced colours paint every link's spare border, which would mark
+         * them all; draw the markers in system colours instead.
+         */
+        @media (forced-colors: active) {
+            forced-color-adjust: none;
+            color: LinkText;
+            border-left-color: transparent;
+
+            &:hover {
+                border-left-color: CanvasText;
+            }
+
+            &[aria-current] {
+                color: Highlight;
+                border-left-color: Highlight;
+            }
+        }
     }
 
     .sidebar-link__meta {
         flex-shrink: 0;
-        font-family: var(--font-mono);
-        font-size: var(--font-size-xs);
-        font-weight: 400;
-        color: var(--color-text-muted);
     }
 }
 </style>
