@@ -1,0 +1,146 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../lib/tone.ts";
+
+/**
+ * A big number with a label under it. With JS it counts up from zero the
+ * first time it scrolls into view; without, it just shows the number.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    value: number;
+    label: string;
+    /** Shown before the number, like a currency sign. */
+    prefix?: string;
+    /** Shown after the number, like a unit or `%`. */
+    suffix?: string;
+    /** Decimal places shown. Defaults to as many as `value` has. */
+    decimals?: number;
+    tone?: Tone;
+}
+
+const {
+    value,
+    label,
+    prefix,
+    suffix,
+    decimals = String(value).split(".")[1]?.length ?? 0,
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+// Passed to the script too, so the count formats its numbers the same way
+const locale = Astro.currentLocale ?? "en";
+const formatted = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+}).format(value);
+---
+
+<div class:list={["stat", "panel", `tone-${tone}`, className]} {...rest}>
+    <p class="stat__value">
+        {/* The count is hidden from screen readers, which would otherwise read
+            whatever number it was at; they get the final one below. */}
+        <span class="stat__display" aria-hidden="true">
+            {prefix && <span class="stat__affix">{prefix}</span>}
+            <span
+                class="stat__count"
+                data-value={value}
+                data-decimals={decimals}
+                data-locale={locale}
+                >{formatted}</span
+            >
+            {suffix && <span class="stat__affix">{suffix}</span>}
+        </span>
+        <span class="visually-hidden">{prefix}{formatted}{suffix}</span>
+    </p>
+    <p class="stat__label">{label}</p>
+</div>
+
+<script>
+const DURATION = 1500;
+
+// Fast start, slow finish, so the last digits settle rather than stop dead
+const easeOut = (t: number) => 1 - (1 - t) ** 4;
+
+const formatter = (el: HTMLElement) =>
+    new Intl.NumberFormat(el.dataset.locale, {
+        minimumFractionDigits: Number(el.dataset.decimals),
+        maximumFractionDigits: Number(el.dataset.decimals),
+    });
+
+const count = (el: HTMLElement) => {
+    const value = Number(el.dataset.value);
+    const format = formatter(el);
+    let start: number | undefined;
+
+    const frame = (now: number) => {
+        start ??= now;
+        const t = Math.min((now - start) / DURATION, 1);
+        el.textContent = format.format(value * easeOut(t));
+        if (t < 1) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+};
+
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const observer = new IntersectionObserver(
+        (entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                observer.unobserve(entry.target);
+                count(entry.target as HTMLElement);
+            }
+        },
+        { threshold: 1 },
+    );
+
+    for (const el of document.querySelectorAll<HTMLElement>(".stat__count")) {
+        // Zeroed now rather than when it scrolls in, or stats already on
+        // screen would flash their final number first
+        el.textContent = formatter(el).format(0);
+        observer.observe(el);
+    }
+}
+</script>
+
+<style>
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    width: 100%;
+    padding: var(--space-md);
+
+    .stat__value {
+        color: var(--tone);
+        font-size: var(--font-size-4xl);
+        font-weight: 800;
+        line-height: var(--leading-tight);
+        letter-spacing: -0.02em;
+        /* Equal-width digits, so the number doesn't jitter as it counts */
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Flex rather than inline, so the template's whitespace doesn't put a
+       space between the number and its prefix or suffix */
+    .stat__display {
+        display: flex;
+        align-items: baseline;
+        white-space: nowrap;
+    }
+
+    .stat__affix {
+        font-size: 0.6em;
+        font-weight: 700;
+    }
+
+    .stat__label {
+        /* The gap spaces it, not typography.css's p + p margin */
+        margin-top: 0;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+        line-height: var(--leading-snug);
+    }
+}
+</style>
