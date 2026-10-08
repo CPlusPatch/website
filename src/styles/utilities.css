@@ -214,6 +214,25 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
     }
 }
 
+/*
+ * A page-wide overlay that lib/top-layer.ts has made a popover, so it can
+ * draw over other popovers. Undoes the popover's default box (border,
+ * padding, Canvas background, centring); each overlay's own enabled styles
+ * outrank this and draw over the reset.
+ */
+.fx-top-layer:popover-open {
+    inset: 0;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    color: inherit;
+    background: none;
+    border: 0;
+    pointer-events: none;
+}
+
 /* Visually hidden, still announced by screen readers. */
 .visually-hidden {
     position: absolute;

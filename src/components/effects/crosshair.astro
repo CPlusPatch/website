@@ -131,10 +131,14 @@ const { snap = DEFAULT_SNAP } = Astro.props;
 <script>
 // Writes --pointer-x/--pointer-y on the [data-pointer] root; this script only snaps.
 import "../../lib/pointer.ts";
+import { keepOnTop } from "../../lib/top-layer.ts";
 
 const root = document.querySelector<HTMLElement>(
     ".fx-crosshair",
 ) as HTMLElement;
+
+// Over popovers and dialogs too, which sit above any z-index.
+keepOnTop(root);
 
 const selector = root.dataset.snapSelector; // undefined => snapping disabled
 const style = root.style;

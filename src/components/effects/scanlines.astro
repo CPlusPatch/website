@@ -22,3 +22,10 @@
     }
 }
 </style>
+
+<script>
+// Over popovers too; without JS it is still drawn over everything else.
+import { keepOnTop } from "../../lib/top-layer.ts";
+
+keepOnTop(document.querySelector<HTMLElement>(".fx-scanlines") as HTMLElement);
+</script>
