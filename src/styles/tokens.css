@@ -23,6 +23,8 @@
 
     --leading-tight: 1.2;
     --leading-snug: 1.25;
+    /* Small multi-line text: roomier than snug, tighter than body copy. */
+    --leading-normal: 1.5;
     --leading-code: 1.6;
     --leading-body: 1.7;
     --line-height: var(--leading-body);
