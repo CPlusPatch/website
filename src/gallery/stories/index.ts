@@ -13,6 +13,7 @@ import { logos } from "./logos.ts";
 import { mediaPlayer } from "./media-player.ts";
 import { quotes } from "./quotes.ts";
 import { sections } from "./sections.ts";
+import { stats } from "./stats.ts";
 import { terminal } from "./terminal.ts";
 
 /** Every group, in gallery order. */
@@ -26,6 +27,7 @@ export const groups: StoryGroup[] = [
     ...alerts,
     ...quotes,
     ...figures,
+    ...stats,
     ...sections,
     ...logos,
     ...carousel,
