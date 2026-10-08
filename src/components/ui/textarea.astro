@@ -51,7 +51,8 @@ const {
     /* No --max-rows makes this invalid at computed time, i.e. `none`. */
     max-block-size: calc(var(--max-rows) * 1lh + var(--textarea-chrome));
     padding: var(--textarea-padding);
-    line-height: var(--leading-body);
+    /* Multi-line, so small prose rather than .field's single-line text. */
+    font: var(--type-body-sm);
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-strong) transparent;
 

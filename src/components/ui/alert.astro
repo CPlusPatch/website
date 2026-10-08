@@ -81,9 +81,10 @@ const prefix = label[variant];
         flex-direction: column;
         min-width: 0;
 
+        /* Slotted, so the role comes by token rather than class. */
         h3 {
             margin-bottom: 0;
-            font-weight: 600;
+            font: var(--type-subheading);
         }
 
         p {

@@ -38,7 +38,7 @@ const formatted = new Intl.NumberFormat(locale, {
 ---
 
 <div class:list={["stat", "panel", `tone-${tone}`, className]} {...rest}>
-    <p class="stat__value">
+    <p class="stat__value text-display">
         {/* The count is hidden from screen readers, which would otherwise read
             whatever number it was at; they get the final one below. */}
         <span class="stat__display" aria-hidden="true">
@@ -54,7 +54,7 @@ const formatted = new Intl.NumberFormat(locale, {
         </span>
         <span class="visually-hidden">{prefix}{formatted}{suffix}</span>
     </p>
-    <p class="stat__label">{label}</p>
+    <p class="stat__label text-ui">{label}</p>
 </div>
 
 <script>
@@ -114,10 +114,6 @@ if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 
     .stat__value {
         color: var(--tone);
-        font-size: var(--font-size-4xl);
-        font-weight: 800;
-        line-height: var(--leading-tight);
-        letter-spacing: -0.02em;
         /* Equal-width digits, so the number doesn't jitter as it counts */
         font-variant-numeric: tabular-nums;
 
@@ -128,6 +124,7 @@ if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
             align-items: baseline;
             white-space: nowrap;
 
+            /* Relative to the number it sits beside, not a role of its own. */
             .stat__affix {
                 font-size: 0.6em;
                 font-weight: 700;
@@ -139,8 +136,6 @@ if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         /* The gap spaces it, not typography.css's p + p margin */
         margin-top: 0;
         color: var(--color-text-muted);
-        font-size: var(--font-size-sm);
-        line-height: var(--leading-snug);
     }
 }
 </style>

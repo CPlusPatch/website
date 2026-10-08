@@ -31,7 +31,7 @@ const { ground, class: className, ...rest } = Astro.props;
         aria-label="Gravity gun"
         aria-pressed="false"
     ></button>
-    <p class="destructor__hint" aria-live="polite">
+    <p class="destructor__hint text-caption" aria-live="polite">
         <span data-hint-for="mouse">Perhaps with a mouse?</span>
         <span data-hint-for="desktop">Perhaps on a desktop browser?</span>
         <noscript>Perhaps with JavaScript enabled?</noscript>
@@ -102,8 +102,6 @@ const { ground, class: className, ...rest } = Astro.props;
     .destructor__hint {
         min-height: 1lh;
         color: var(--color-text-muted);
-        font-size: var(--font-size-xs);
-        line-height: var(--leading-tight);
         text-align: center;
 
         span {

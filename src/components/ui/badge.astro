@@ -40,8 +40,7 @@ const {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 500;
-    line-height: var(--leading-tight);
+    font: var(--type-label);
     border: var(--border-width) solid transparent;
     border-radius: var(--radius);
     gap: var(--space-xs);
@@ -54,6 +53,7 @@ const {
         flex: none;
     }
 
+    /* Sizes change only the label's size (see typography.css). */
     &.badge--size-sm {
         font-size: var(--font-size-xs);
         padding: 0 var(--space-xs);
@@ -61,7 +61,6 @@ const {
     }
 
     &.badge--size-default {
-        font-size: var(--font-size-sm);
         padding: 0 var(--space-sm);
         height: 1.5rem;
     }

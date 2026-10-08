@@ -128,7 +128,7 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
 
     inline-size: 100%;
     min-inline-size: 0;
-    font-size: var(--font-size-sm);
+    font: var(--type-ui);
     color: var(--color-text);
     caret-color: var(--field-accent);
     background-color: var(--color-surface-raised);

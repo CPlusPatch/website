@@ -74,9 +74,7 @@ const classes = [
     height: var(--control-height-md);
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    line-height: var(--leading-snug);
+    font: var(--type-label);
     text-decoration: none;
     color: var(--color-on-accent);
     background-color: var(--button-color);
@@ -109,6 +107,7 @@ const classes = [
         border-color: transparent;
     }
 
+    /* Sizes change only the label's size (see typography.css). */
     &.button--size-sm {
         padding: var(--space-xs) var(--space-sm);
         font-size: var(--font-size-xs);

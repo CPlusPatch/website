@@ -43,7 +43,7 @@ const caption = (await Astro.slots.render("default")).trim();
         {sizes}
         style={ratio && `aspect-ratio: ${ratio}`}
     />
-    {caption && <figcaption set:html={caption} />}
+    {caption && <figcaption class="text-body-sm" set:html={caption} />}
 </figure>
 
 <style>
@@ -69,8 +69,6 @@ const caption = (await Astro.slots.render("default")).trim();
     figcaption {
         padding: var(--space-md);
         color: var(--color-text-muted);
-        font-size: var(--font-size-sm);
-        line-height: var(--leading-snug);
     }
 }
 </style>

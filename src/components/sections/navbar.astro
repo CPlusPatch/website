@@ -24,7 +24,7 @@ const { title, links, finalLink, class: className, ...rest } = Astro.props;
 <header class:list={["navbar", className]} {...rest}>
     <div class="container">
         <a class="navbar__brand" href="/">
-            <span class="navbar__brand-text">{title}</span>
+            <span class="navbar__brand-text text-subheading">{title}</span>
         </a>
 
         <label class="navbar__toggle">
@@ -137,8 +137,6 @@ for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
 
     .navbar__brand {
         color: var(--color-text);
-        font-size: var(--font-size-lg);
-        font-weight: 700;
         text-decoration: none;
         transition: color var(--transition);
 

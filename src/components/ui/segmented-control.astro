@@ -100,7 +100,7 @@ const {
         min-width: var(--segmented-height);
         height: var(--segmented-height);
         padding-inline: var(--space-sm);
-        font-size: var(--font-size-sm);
+        font: var(--type-label);
         color: var(--color-text-muted);
         cursor: pointer;
         transition:
@@ -138,6 +138,7 @@ const {
         }
     }
 
+    /* The small size changes only the label's size (see typography.css). */
     &.segmented--size-sm .segmented__option {
         padding-inline: var(--space-xs);
         font-size: var(--font-size-xs);
@@ -153,7 +154,6 @@ const {
     }
 
     .segmented__text {
-        font-weight: 600;
         white-space: nowrap;
     }
 

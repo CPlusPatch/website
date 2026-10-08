@@ -15,7 +15,7 @@ const { summary, class: className, ...rest } = Astro.props;
 ---
 
 <details class:list={["accordion-item", className]} {...rest}>
-    <summary>
+    <summary class="text-body-strong">
         {summary}
         <Icon name="lucide:chevron-down" aria-hidden="true" />
     </summary>
@@ -40,8 +40,6 @@ const { summary, class: className, ...rest } = Astro.props;
         justify-content: space-between;
         gap: var(--space-sm);
         padding: var(--space-md);
-        font-weight: 600;
-        line-height: var(--leading-snug);
         cursor: pointer;
         list-style: none;
         transition: color var(--transition);
