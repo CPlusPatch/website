@@ -89,8 +89,8 @@ const SIZES = [
                             </Button>
                         ))}
                     </ButtonGroup>
+                    {group.description && <p>{group.description}</p>}
                 </div>
-                {group.description && <p>{group.description}</p>}
                 <div class="grid" style={`--cell: ${cell(group.min)}`}>
                     {group.stories.map((story) => (
                         <figure
@@ -214,18 +214,29 @@ main {
     flex-direction: column;
     gap: var(--space-md);
 
+    /*
+     * Title and width controls share the first row; the description sits
+     * just under the title, across the full width so it doesn't get
+     * squeezed beside the controls on narrow screens.
+     */
     .gallery__header {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr auto;
         align-items: center;
+        column-gap: var(--space-md);
 
         h2 {
             font-size: var(--font-size-lg);
+            margin-bottom: 0;
         }
-    }
 
-    & > p {
-        color: var(--color-text-muted);
+        p {
+            grid-column: 1 / -1;
+            margin-top: var(--space-xs);
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+            line-height: var(--leading-snug);
+        }
     }
 
     .gallery__controls :global(.button[aria-pressed="true"]) {
