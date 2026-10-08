@@ -3,7 +3,7 @@
  * An interactive terminal widget
  */
 
-import { type Entry, promptFor } from "../lib/terminal.ts";
+import { type Entry, promptFor } from "./terminal.ts";
 
 interface Props {
     entries?: Entry[];
@@ -127,7 +127,7 @@ const prompt = promptFor(cwd);
 </style>
 
 <script>
-import { run } from "../lib/terminal";
+import { run } from "./terminal.ts";
 
 interface TerminalState {
     history: string[];
