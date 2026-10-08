@@ -4,6 +4,7 @@ import "../styles/index.css";
 import { Font } from "astro:assets";
 import Crosshair from "../components/effects/crosshair.astro";
 import Scanlines from "../components/effects/scanlines.astro";
+import Signal from "../components/effects/signal.astro";
 import { site } from "../site.ts";
 
 interface Props {
@@ -68,6 +69,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
         <Font cssVariable="--font-fira-code" />
     </head>
     <body>
+        <Signal />
         <Scanlines />
         <Crosshair />
         <a class="skip-link" href="#main">Skip to content</a>

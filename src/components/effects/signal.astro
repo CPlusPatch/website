@@ -1,0 +1,70 @@
+<div class="fx-signal" data-pointer aria-hidden="true">
+    <div class="fx-signal__viewport">
+        <span class="fx-signal__glow"></span>
+    </div>
+</div>
+
+<style is:global>
+/*
+ * Lights the backdrop grid's crossings near the pointer. The layer is a
+ * soft glow masked down to one dot per crossing.
+ *
+ * The mask spans the whole body, so it scrolls with the grid, while the
+ * glow sits in a sticky viewport, so it can be placed in client coordinates
+ * (from lib/pointer.ts). Moving it is a compositor-only translate.
+ */
+@media (hover: hover) and (pointer: fine) {
+    html[data-signal] .fx-signal,
+    html:has([data-signal-toggle] > input:checked) .fx-signal {
+        /* Pointer position in px, written by lib/pointer.ts. Far off-screen until the first move. */
+        --pointer-x: -9999;
+        --pointer-y: -9999;
+        --signal-radius: 14rem;
+
+        position: absolute;
+        inset: 0;
+        z-index: var(--z-backdrop);
+        pointer-events: none;
+        overflow: clip;
+        /* Dots centred on the crossings: tile-centred, shifted back half a tile from body's --grid-offset. */
+        mask:
+            radial-gradient(circle, #000 1.5px, transparent 2px)
+            calc(var(--grid-offset) - var(--grid-size) / 2 + 0.5px)
+            calc(var(--grid-offset) - var(--grid-size) / 2 + 0.5px) /
+            var(--grid-size) var(--grid-size);
+
+        .fx-signal__viewport {
+            position: sticky;
+            top: 0;
+            height: 100dvh;
+            overflow: clip;
+        }
+
+        .fx-signal__glow {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: calc(var(--signal-radius) * 2);
+            aspect-ratio: 1;
+            background: radial-gradient(
+                closest-side,
+                var(--color-primary),
+                color-mix(in oklab, var(--color-primary) 40%, transparent) 50%,
+                transparent
+            );
+            translate: calc(var(--pointer-x) * 1px - 50%)
+                calc(var(--pointer-y) * 1px - 50%);
+            will-change: translate;
+        }
+
+        @media (forced-colors: active) {
+            display: none;
+        }
+    }
+}
+</style>
+
+<script>
+// Writes --pointer-x/--pointer-y on the [data-pointer] root.
+import "../../lib/pointer.ts";
+</script>
