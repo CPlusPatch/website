@@ -1,0 +1,114 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+
+/**
+ * One collapsible section of an <Accordion>, as a native <details>, so it
+ * opens without JS. Items sharing a `name` close each other, also natively.
+ */
+interface Props extends HTMLAttributes<"details"> {
+    /** The always-visible heading that toggles the item. */
+    summary: string;
+}
+
+const { summary, class: className, ...rest } = Astro.props;
+---
+
+<details class:list={["accordion-item", className]} {...rest}>
+    <summary>
+        {summary}
+        <Icon name="lucide:chevron-down" aria-hidden="true" />
+    </summary>
+    <div class="accordion-item__body">
+        <div class="accordion-item__content">
+            <slot />
+        </div>
+    </div>
+</details>
+
+<style>
+.accordion-item {
+    --accordion-duration: 200ms;
+
+    & + & {
+        border-top: var(--border-width) solid var(--border-color);
+    }
+
+    summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        padding: var(--space-md);
+        font-weight: 600;
+        line-height: var(--leading-snug);
+        cursor: pointer;
+        list-style: none;
+        transition: color var(--transition);
+
+        /* Safari still draws its own marker without this */
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        &:hover {
+            color: var(--tone);
+        }
+
+        /* Inside the frame, which clips anything outside it */
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+
+        [data-icon] {
+            flex-shrink: 0;
+            color: var(--color-text-muted);
+            transition: rotate var(--accordion-duration) ease-out;
+        }
+    }
+
+    &[open] summary [data-icon] {
+        rotate: 180deg;
+    }
+
+    /*
+     * The open/close animation. A 0fr to 1fr grid row rather than
+     * `block-size: auto`, which only Chromium can transition (it needs
+     * interpolate-size). content-visibility is what <details> flips to hide
+     * its content; allow-discrete holds it visible until closing ends.
+     * Browsers without ::details-content toggle instantly.
+     *
+     * Safari (WebKit 27) drops the content-visibility transition and closes
+     * instantly; opening still animates. Hiding with `visibility` instead
+     * would animate there too, but find-in-page could then no longer match
+     * text in closed items.
+     */
+    &::details-content {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition:
+            grid-template-rows var(--accordion-duration) ease-out,
+            content-visibility var(--accordion-duration) allow-discrete;
+    }
+
+    &[open]::details-content {
+        grid-template-rows: 1fr;
+    }
+
+    /* Lets the row shrink below the content's height */
+    .accordion-item__body {
+        min-height: 0;
+        overflow: hidden;
+
+        /* Padding a level down, as the body's own would hold the row open */
+        .accordion-item__content {
+            padding: 0 var(--space-md) var(--space-md);
+            color: var(--color-text-muted);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        --accordion-duration: 0s;
+    }
+}
+</style>

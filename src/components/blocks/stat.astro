@@ -120,19 +120,19 @@ if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         letter-spacing: -0.02em;
         /* Equal-width digits, so the number doesn't jitter as it counts */
         font-variant-numeric: tabular-nums;
-    }
 
-    /* Flex rather than inline, so the template's whitespace doesn't put a
-       space between the number and its prefix or suffix */
-    .stat__display {
-        display: flex;
-        align-items: baseline;
-        white-space: nowrap;
-    }
+        /* Flex rather than inline, so the template's whitespace doesn't put a
+        space between the number and its prefix or suffix */
+        .stat__display {
+            display: flex;
+            align-items: baseline;
+            white-space: nowrap;
 
-    .stat__affix {
-        font-size: 0.6em;
-        font-weight: 700;
+            .stat__affix {
+                font-size: 0.6em;
+                font-weight: 700;
+            }
+        }
     }
 
     .stat__label {

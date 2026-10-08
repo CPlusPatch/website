@@ -1,0 +1,26 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../../lib/tone.ts";
+
+/**
+ * A stack of <AccordionItem>s in one frame. Give the items the same `name`
+ * to have only one open at a time.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    tone?: Tone;
+}
+
+const { tone = "primary", class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["accordion", "panel", `tone-${tone}`, className]} {...rest}>
+    <slot />
+</div>
+
+<style>
+.accordion {
+    width: 100%;
+    /* Clip the items to the panel's corners when --radius is set */
+    overflow: hidden;
+}
+</style>

@@ -1,4 +1,5 @@
 import type { StoryGroup } from "../story.ts";
+import { accordion } from "./accordion.ts";
 import { alerts } from "./alerts.ts";
 import { audioPlayer } from "./audio-player.ts";
 import { avatars } from "./avatars.ts";
@@ -28,6 +29,7 @@ export const groups: StoryGroup[] = [
     ...quotes,
     ...figures,
     ...stats,
+    ...accordion,
     ...sections,
     ...logos,
     ...carousel,
