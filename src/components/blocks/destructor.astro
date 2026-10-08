@@ -1,0 +1,164 @@
+---
+// Inert until the simulation starts: it only styles what that adds to the page
+import "@web-ng/destructor/styles.css";
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div"> {
+    /**
+     * Selector for the element thrown things land on, such as the site
+     * footer. Without one they land on the bottom of the viewport.
+     */
+    ground?: string;
+}
+
+const { ground, class: className, ...rest } = Astro.props;
+---
+
+{/*
+ * The gravity gun from @web-ng/destructor. Its script is only fetched when
+ * the trigger is first pressed; until then this is a plain toggle button.
+ * The block itself is never grabbable, so the gun can't be thrown away.
+ */}
+<div
+    class:list={["destructor", className]}
+    data-destructor="none"
+    data-ground={ground}
+    {...rest}
+>
+    <button
+        type="button"
+        class="destructor__trigger"
+        aria-label="Gravity gun"
+        aria-pressed="false"
+    ></button>
+    <p class="destructor__hint" aria-live="polite">
+        <span data-hint-for="mouse">Perhaps with a mouse?</span>
+        <span data-hint-for="desktop">Perhaps on a desktop browser?</span>
+        <noscript>Perhaps with JavaScript enabled?</noscript>
+    </p>
+</div>
+
+<style is:global>
+:root {
+    --destructor-z: var(--z-destructor);
+}
+</style>
+
+<style>
+.destructor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* aria-pressed, data-hint and data-wiggle are written by the package */
+.destructor__trigger {
+    width: 180px;
+    aspect-ratio: 360 / 187;
+    padding: 0;
+    border: 0;
+    background:
+        url("../../images/destructor/gravgun-outline.png") center / contain
+        no-repeat;
+    cursor: pointer;
+    transition: scale var(--transition);
+
+    /* Sprite swaps are instant, like in the game */
+    &:hover,
+    &[data-hint] {
+        background-image: url("../../images/destructor/gravgun-hover.png");
+    }
+
+    &[aria-pressed="true"] {
+        background-image: url("../../images/destructor/gravgun-inset.png");
+
+        &:hover {
+            background-image: url("../../images/destructor/gravgun-inset-hover.png");
+        }
+    }
+
+    &:active {
+        scale: 0.97;
+    }
+
+    &[data-wiggle] {
+        animation: destructor-wiggle 0.5s ease-in-out;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
+
+    /* It does nothing without JS, so it shouldn't look like it would */
+    @media (scripting: none) {
+        pointer-events: none;
+    }
+}
+
+/*
+ * The gun needs a mouse; shown after a touch press, until it is equipped.
+ * Without JS, the <noscript> message shows instead.
+ */
+.destructor__hint {
+    min-height: 1lh;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--leading-tight);
+    text-align: center;
+
+    span {
+        display: none;
+    }
+}
+
+.destructor:has([data-hint="mouse"]) [data-hint-for="mouse"],
+.destructor:has([data-hint="desktop"]) [data-hint-for="desktop"] {
+    display: inline;
+}
+
+@keyframes destructor-wiggle {
+    0%,
+    100% {
+        rotate: 0deg;
+    }
+    10%,
+    50%,
+    90% {
+        rotate: 10deg;
+    }
+    30%,
+    70% {
+        rotate: -10deg;
+    }
+}
+</style>
+
+<script>
+type DestructorModule = typeof import("@web-ng/destructor");
+
+const root = document.querySelector<HTMLElement>(".destructor");
+const trigger = root?.querySelector<HTMLButtonElement>(".destructor__trigger");
+
+if (root && trigger) {
+    let module: Promise<DestructorModule> | undefined;
+    const load = () => (module ??= import("@web-ng/destructor"));
+
+    // Start fetching on intent, so the first press doesn't wait on it
+    trigger.addEventListener("pointerenter", load, { once: true });
+    trigger.addEventListener("focus", load, { once: true });
+
+    trigger.addEventListener(
+        "click",
+        async (event) => {
+            const { Destructor } = await load();
+            const ground = root.dataset.ground
+                ? document.querySelector(root.dataset.ground)
+                : null;
+            // From here on the package listens to the trigger itself
+            new Destructor({ trigger, ground }).press(event);
+        },
+        { once: true },
+    );
+}
+</script>
