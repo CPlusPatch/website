@@ -1,26 +1,26 @@
+/*
+ * Bare headings take their roles from the type scale below, so a heading
+ * reads the same whether it is set by its tag, a class or a token.
+ */
 h1,
 h2,
 h3,
 h4 {
     line-height: var(--leading-tight);
-    letter-spacing: -0.02em;
     text-wrap: balance;
 }
 
 h1 {
-    font-size: var(--font-size-4xl);
-    font-weight: 800;
+    font: var(--type-display);
 }
 
 h2 {
-    font-size: var(--font-size-3xl);
-    font-weight: 700;
+    font: var(--type-headline);
     margin-bottom: var(--space-md);
 }
 
 h3 {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
+    font: var(--type-subheading);
     margin-bottom: var(--space-sm);
 }
 
@@ -63,8 +63,135 @@ code {
     font-size: var(--font-size-code);
 }
 
+/*
+ * Text styles: the type scale as named roles, defined once here and used
+ * everywhere. Each is a `font` shorthand (weight, size / leading, family),
+ * so a component applies one with `font: var(--type-label)` -- including to
+ * slotted content it can't put a class on -- and markup with the matching
+ * .text-* class below.
+ *
+ * The one sanctioned tweak: a control may change only font-size, to another
+ * --font-size-* token, to follow its own size option (see Button).
+ *
+ * Declared on :root, where the themes set --font-base and --font-mono, so a
+ * theme's fonts flow through.
+ */
+:root {
+    /* Big numbers and page-opening lines. */
+    --type-display:
+        800 var(--font-size-4xl) / var(--leading-tight) var(--font-base);
+    /* Section and hero headings in running content. */
+    --type-headline:
+        700 var(--font-size-3xl) / var(--leading-tight) var(--font-base);
+    /* Page titles; steps down towards xl on small screens. */
+    --type-title:
+        800 clamp(var(--font-size-xl), 0.75rem + 2.5vw, var(--font-size-2xl)) /
+        var(--leading-tight) var(--font-base);
+    --type-heading:
+        700 var(--font-size-xl) / var(--leading-tight) var(--font-base);
+    --type-subheading:
+        600 var(--font-size-lg) / var(--leading-snug) var(--font-base);
+    /* Intro copy under a heading. */
+    --type-lead: 400 var(--font-size-lg) / var(--leading-body) var(--font-base);
+    /* Running text: the page default (see body in layouts/base.astro). */
+    --type-body:
+        400 var(--font-size-base) / var(--line-height) var(--font-base);
+    /* Body-sized but emphasised: summaries, names. */
+    --type-body-strong:
+        600 var(--font-size-base) / var(--leading-snug) var(--font-base);
+    /* Small prose that may wrap: descriptions, captions, hints. */
+    --type-body-sm:
+        400 var(--font-size-sm) / var(--leading-normal) var(--font-base);
+    /* Interface labels: buttons, group and panel titles, badges. */
+    --type-label:
+        600 var(--font-size-sm) / var(--leading-snug) var(--font-base);
+    /* Single-line interface text: menu items, fields, options. */
+    --type-ui: 400 var(--font-size-sm) / var(--leading-snug) var(--font-base);
+    /* The smallest prose, such as hints under a control. */
+    --type-caption:
+        400 var(--font-size-xs) / var(--leading-snug) var(--font-base);
+    /* Secondary detail: counts, paths, readouts. Use with a muted colour. */
+    --type-meta: 400 var(--font-size-xs) / var(--leading-snug) var(--font-mono);
+    /* Code and terminal output. */
+    --type-code: 400 var(--font-size-sm) / var(--leading-code) var(--font-mono);
+}
+
+/*
+ * Heading tracking, in one place for every heading role, whether it comes
+ * from the tag or a class (a `font` value can't carry it).
+ */
+:is(h1, h2, h3, h4),
+.text-display,
+.text-headline,
+.text-title,
+.text-heading,
+.text-subheading {
+    letter-spacing: -0.02em;
+}
+
+/* The roles as classes, for markup. */
+.text-display {
+    font: var(--type-display);
+}
+
+.text-headline {
+    font: var(--type-headline);
+}
+
+.text-title {
+    font: var(--type-title);
+}
+
+.text-heading {
+    font: var(--type-heading);
+}
+
+.text-subheading {
+    font: var(--type-subheading);
+}
+
+.text-lead {
+    font: var(--type-lead);
+}
+
+.text-body-strong {
+    font: var(--type-body-strong);
+}
+
+.text-body-sm {
+    font: var(--type-body-sm);
+}
+
+.text-label {
+    font: var(--type-label);
+}
+
+.text-ui {
+    font: var(--type-ui);
+}
+
+.text-caption {
+    font: var(--type-caption);
+}
+
+/* Always secondary, so the colour comes with it. */
+.text-meta {
+    font: var(--type-meta);
+    letter-spacing: 0;
+    color: var(--color-text-muted);
+
+    code {
+        font-size: inherit;
+    }
+}
+
+.text-code {
+    font: var(--type-code);
+}
+
+/* Lead copy as it usually appears: muted, with room around it. */
 .lead {
-    font-size: var(--font-size-lg);
+    font: var(--type-lead);
     color: var(--color-text-muted);
     margin-block: var(--space-md) var(--space-lg);
 }
