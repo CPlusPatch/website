@@ -1,0 +1,48 @@
+/*
+ * Solarized: precision colours, by Ethan Schoonover.
+ *
+ * The same eight accents on both base ramps: light is base3/base2 with
+ * base01 text, dark is base03/base02 with base1 text.
+ *
+ * Hand-written from the scheme's published colours, not generated from
+ * palette.config.ts. The accent tier is the scheme's own colours verbatim.
+ * Anything used as text (muted text, and the role tier, which is also a
+ * fill under --color-on-accent) keeps the scheme's colour where it already
+ * clears 4.5:1 against --color-bg, and otherwise has only its OKLCH lightness
+ * moved until it does; borders likewise for 2.2:1 and 3:1. Hovers are the
+ * role one step further from the background.
+ *
+ * Applied by `data-theme="solarized"` on <html>, or while a [data-theme-select]
+ * has it selected (see the gallery). Colour only: shape, motion and type are
+ * the defaults from tokens.css.
+ */
+
+:root[data-theme="solarized"],
+html:has([data-theme-select] option[value="solarized"]:checked) {
+    --color-bg: light-dark(#fdf6e3, #002b36);
+    --color-bg-alt: light-dark(#eee8d5, #073642);
+    --color-surface: light-dark(#fdf6e3, #073642);
+    --color-surface-raised: light-dark(#ffffff, #0d4150);
+    --color-text: light-dark(#586e75, #93a1a1);
+    --color-text-muted: light-dark(#5f757c, #839496);
+    --color-border: light-dark(#93a1a1, #586e75);
+    --color-border-strong: light-dark(#839191, #5d737a);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#0076bb, #3193db);
+    --color-primary-hover: light-dark(#00619b, #4aa9f3);
+    --color-secondary: light-dark(#6569bb, #7f86db);
+    --color-secondary-hover: light-dark(#5254a4, #949cf3);
+    --color-destructive: light-dark(#d72c2a, #fa5149);
+    --color-destructive-hover: light-dark(#bd0011, #ff7e72);
+    --color-warning: light-dark(#8f6c00, #b58900);
+    --color-warning-hover: light-dark(#775900, #cc9f2e);
+    --color-success: light-dark(#687800, #859900);
+    --color-success-hover: light-dark(#556300, #9aaf2d);
+    --color-on-accent: light-dark(#fdf6e3, #002b36);
+    --color-primary-accent: light-dark(#268bd2, #268bd2);
+    --color-secondary-accent: light-dark(#6c71c4, #6c71c4);
+    --color-destructive-accent: light-dark(#dc322f, #dc322f);
+    --color-warning-accent: light-dark(#b58900, #b58900);
+    --color-success-accent: light-dark(#859900, #859900);
+}

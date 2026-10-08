@@ -1,0 +1,48 @@
+/*
+ * Dracula: a dark theme, with Alucard as its light side.
+ *
+ * Dark is Dracula on its background/darker/lighter ramp; light is Alucard.
+ * Primary is purple, secondary pink, warning orange.
+ *
+ * Hand-written from the scheme's published colours, not generated from
+ * palette.config.ts. The accent tier is the scheme's own colours verbatim.
+ * Anything used as text (muted text, and the role tier, which is also a
+ * fill under --color-on-accent) keeps the scheme's colour where it already
+ * clears 4.5:1 against --color-bg, and otherwise has only its OKLCH lightness
+ * moved until it does; borders likewise for 2.2:1 and 3:1. Hovers are the
+ * role one step further from the background.
+ *
+ * Applied by `data-theme="dracula"` on <html>, or while a [data-theme-select]
+ * has it selected (see the gallery). Colour only: shape, motion and type are
+ * the defaults from tokens.css.
+ */
+
+:root[data-theme="dracula"],
+html:has([data-theme-select] option[value="dracula"]:checked) {
+    --color-bg: light-dark(#fffbeb, #282a36);
+    --color-bg-alt: light-dark(#f2eedb, #21222c);
+    --color-surface: light-dark(#fffdf5, #343746);
+    --color-surface-raised: light-dark(#ffffff, #424450);
+    --color-text: light-dark(#1f1f1f, #f8f8f2);
+    --color-text-muted: light-dark(#6c664b, #7f90c4);
+    --color-border: light-dark(#aaaab9, #5a5e71);
+    --color-border-strong: light-dark(#90909e, #6272a4);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#644ac9, #bd93f9);
+    --color-primary-hover: light-dark(#5233b1, #cfb0ff);
+    --color-secondary: light-dark(#a3144d, #ff79c6);
+    --color-secondary-hover: light-dark(#86003c, #ffa5d5);
+    --color-destructive: light-dark(#cb3a2a, #ff5555);
+    --color-destructive-hover: light-dark(#b21e10, #ff857f);
+    --color-warning: light-dark(#a34d14, #ffb86c);
+    --color-warning-hover: light-dark(#893b00, #ffd7b0);
+    --color-success: light-dark(#14710a, #50fa7b);
+    --color-success-hover: light-dark(#075b00, #bdffc5);
+    --color-on-accent: light-dark(#fffbeb, #282a36);
+    --color-primary-accent: light-dark(#644ac9, #bd93f9);
+    --color-secondary-accent: light-dark(#a3144d, #ff79c6);
+    --color-destructive-accent: light-dark(#cb3a2a, #ff5555);
+    --color-warning-accent: light-dark(#a34d14, #ffb86c);
+    --color-success-accent: light-dark(#14710a, #50fa7b);
+}

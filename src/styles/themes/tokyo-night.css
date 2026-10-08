@@ -1,0 +1,48 @@
+/*
+ * Tokyo Night: the lights of downtown Tokyo at night, by enkia.
+ *
+ * Light is Day, dark is Night (with Storm's background for surfaces).
+ * Primary is blue, secondary magenta, warning yellow.
+ *
+ * Hand-written from the scheme's published colours, not generated from
+ * palette.config.ts. The accent tier is the scheme's own colours verbatim.
+ * Anything used as text (muted text, and the role tier, which is also a
+ * fill under --color-on-accent) keeps the scheme's colour where it already
+ * clears 4.5:1 against --color-bg, and otherwise has only its OKLCH lightness
+ * moved until it does; borders likewise for 2.2:1 and 3:1. Hovers are the
+ * role one step further from the background.
+ *
+ * Applied by `data-theme="tokyo-night"` on <html>, or while a
+ * [data-theme-select] has it selected (see the gallery). Colour only: shape,
+ * motion and type are the defaults from tokens.css.
+ */
+
+:root[data-theme="tokyo-night"],
+html:has([data-theme-select] option[value="tokyo-night"]:checked) {
+    --color-bg: light-dark(#e1e2e7, #1a1b26);
+    --color-bg-alt: light-dark(#d0d5e3, #16161e);
+    --color-surface: light-dark(#e9e9ed, #24283b);
+    --color-surface-raised: light-dark(#f5f5f7, #292e42);
+    --color-text: light-dark(#3760bf, #c0caf5);
+    --color-text-muted: light-dark(#52629f, #7a81aa);
+    --color-border: light-dark(#9298b4, #4a5171);
+    --color-border-strong: light-dark(#787fa8, #5d6688);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#0961cb, #7aa2f7);
+    --color-primary-hover: light-dark(#004ea9, #98baff);
+    --color-secondary: light-dark(#833bd8, #bb9af7);
+    --color-secondary-hover: light-dark(#6f1ec0, #ceb6ff);
+    --color-destructive: light-dark(#c9004c, #f7768e);
+    --color-destructive-hover: light-dark(#a6003d, #ff99a9);
+    --color-warning: light-dark(#7f5f31, #e0af68);
+    --color-warning-hover: light-dark(#6a4b1c, #f7c57e);
+    --color-success: light-dark(#516d32, #9ece6a);
+    --color-success-hover: light-dark(#3e591e, #b4e580);
+    --color-on-accent: light-dark(#e1e2e7, #1a1b26);
+    --color-primary-accent: light-dark(#2e7de9, #7aa2f7);
+    --color-secondary-accent: light-dark(#9854f1, #bb9af7);
+    --color-destructive-accent: light-dark(#f52a65, #f7768e);
+    --color-warning-accent: light-dark(#b15c00, #ff9e64);
+    --color-success-accent: light-dark(#587539, #9ece6a);
+}

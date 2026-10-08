@@ -1,0 +1,48 @@
+/*
+ * Gruvbox: retro groove, by morhetz.
+ *
+ * Light is Gruvbox Light's faded colours on bg0; dark is Gruvbox Dark's
+ * bright colours on bg0. Accents are the neutral colours shared by both.
+ *
+ * Hand-written from the scheme's published colours, not generated from
+ * palette.config.ts. The accent tier is the scheme's own colours verbatim.
+ * Anything used as text (muted text, and the role tier, which is also a
+ * fill under --color-on-accent) keeps the scheme's colour where it already
+ * clears 4.5:1 against --color-bg, and otherwise has only its OKLCH lightness
+ * moved until it does; borders likewise for 2.2:1 and 3:1. Hovers are the
+ * role one step further from the background.
+ *
+ * Applied by `data-theme="gruvbox"` on <html>, or while a [data-theme-select]
+ * has it selected (see the gallery). Colour only: shape, motion and type are
+ * the defaults from tokens.css.
+ */
+
+:root[data-theme="gruvbox"],
+html:has([data-theme-select] option[value="gruvbox"]:checked) {
+    --color-bg: light-dark(#f2e5bc, #1d2021);
+    --color-bg-alt: light-dark(#ebdbb2, #282828);
+    --color-surface: light-dark(#fbf1c7, #32302f);
+    --color-surface-raised: light-dark(#f9f5d7, #3c3836);
+    --color-text: light-dark(#3c3836, #ebdbb2);
+    --color-text-muted: light-dark(#71655a, #a89984);
+    --color-border: light-dark(#a89a7f, #5b5450);
+    --color-border-strong: light-dark(#90816d, #726860);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#af3a03, #fe8019);
+    --color-primary-hover: light-dark(#902d00, #ffa56e);
+    --color-secondary: light-dark(#076678, #83a598);
+    --color-secondary-hover: light-dark(#005160, #98bbae);
+    --color-destructive: light-dark(#9d0006, #fb4934);
+    --color-destructive-hover: light-dark(#7c0003, #ff7965);
+    --color-warning: light-dark(#905b00, #fabd2f);
+    --color-warning-hover: light-dark(#764a00, #ffd991);
+    --color-success: light-dark(#6e6900, #b8bb26);
+    --color-success-hover: light-dark(#595500, #ced246);
+    --color-on-accent: light-dark(#f2e5bc, #1d2021);
+    --color-primary-accent: light-dark(#d65d0e, #d65d0e);
+    --color-secondary-accent: light-dark(#458588, #458588);
+    --color-destructive-accent: light-dark(#cc241d, #cc241d);
+    --color-warning-accent: light-dark(#d79921, #d79921);
+    --color-success-accent: light-dark(#98971a, #98971a);
+}

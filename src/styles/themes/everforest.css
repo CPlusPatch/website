@@ -1,0 +1,48 @@
+/*
+ * Everforest: a green-based scheme, by sainnhe.
+ *
+ * Light and dark are the medium-contrast variants. Primary is green,
+ * secondary blue, success aqua.
+ *
+ * Hand-written from the scheme's published colours, not generated from
+ * palette.config.ts. The accent tier is the scheme's own colours verbatim.
+ * Anything used as text (muted text, and the role tier, which is also a
+ * fill under --color-on-accent) keeps the scheme's colour where it already
+ * clears 4.5:1 against --color-bg, and otherwise has only its OKLCH lightness
+ * moved until it does; borders likewise for 2.2:1 and 3:1. Hovers are the
+ * role one step further from the background.
+ *
+ * Applied by `data-theme="everforest"` on <html>, or while a
+ * [data-theme-select] has it selected (see the gallery). Colour only: shape,
+ * motion and type are the defaults from tokens.css.
+ */
+
+:root[data-theme="everforest"],
+html:has([data-theme-select] option[value="everforest"]:checked) {
+    --color-bg: light-dark(#f4f0d9, #2d353b);
+    --color-bg-alt: light-dark(#efebd4, #232a2e);
+    --color-surface: light-dark(#fdf6e3, #343f44);
+    --color-surface-raised: light-dark(#fffbef, #3d484d);
+    --color-text: light-dark(#5c6a72, #d3c6aa);
+    --color-text-muted: light-dark(#637162, #9da9a0);
+    --color-border: light-dark(#a0a592, #60696f);
+    --color-border-strong: light-dark(#838d7e, #7a8478);
+    --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-primary: light-dark(#657400, #a7c080);
+    --color-primary-hover: light-dark(#525f00, #bdd796);
+    --color-secondary: light-dark(#0b74a4, #7fbbb3);
+    --color-secondary-hover: light-dark(#005f88, #95d2c9);
+    --color-destructive: light-dark(#cf2b30, #e67e80);
+    --color-destructive-hover: light-dark(#b6001a, #fe9495);
+    --color-warning: light-dark(#8f6500, #dbbc7f);
+    --color-warning-hover: light-dark(#765300, #f2d395);
+    --color-success: light-dark(#007c57, #83c092);
+    --color-success-hover: light-dark(#006546, #99d7a8);
+    --color-on-accent: light-dark(#f4f0d9, #2d353b);
+    --color-primary-accent: light-dark(#8da101, #a7c080);
+    --color-secondary-accent: light-dark(#3a94c5, #7fbbb3);
+    --color-destructive-accent: light-dark(#f85552, #e67e80);
+    --color-warning-accent: light-dark(#dfa000, #dbbc7f);
+    --color-success-accent: light-dark(#35a77c, #83c092);
+}
