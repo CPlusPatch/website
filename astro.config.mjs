@@ -1,6 +1,5 @@
 // @ts-check
 
-/* import vue from "@astrojs/vue"; */
 import { defineConfig, fontProviders } from "astro/config";
 import icon from "astro-icon";
 import browserslist from "browserslist";
@@ -13,7 +12,7 @@ export default defineConfig({
     redirects: {
         "/": "/gallery/",
     },
-    integrations: [/* vue() */ icon()],
+    integrations: [icon()],
     fonts: [
         {
             provider: fontProviders.fontsource(),

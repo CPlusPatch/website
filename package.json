@@ -19,15 +19,13 @@
         "check": "biome check . && astro check && deno run --allow-read scripts/generate-theme.ts --check"
     },
     "dependencies": {
-        "@astrojs/vue": "^7.0.3",
         "@iconify-json/lucide": "^1.2.138",
         "astro": "^7.3.5",
         "astro-icon": "^1.2.0",
         "browserslist": "^4.29.3",
         "lightningcss": "^1.33.0",
         "sharp": "^0.35.5",
-        "typescript": "^6.0.3",
-        "vue": "^3.5.43"
+        "typescript": "^6.0.3"
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.10",
