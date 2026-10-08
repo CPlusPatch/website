@@ -7,6 +7,7 @@ import { badges, badges88x31 } from "./badges.ts";
 import { buttons } from "./buttons.ts";
 import { cards } from "./cards.ts";
 import { carousel } from "./carousel.ts";
+import { code } from "./code.ts";
 import { destructor } from "./destructor.ts";
 import { dropdowns } from "./dropdowns.ts";
 import { figures } from "./figures.ts";
@@ -35,6 +36,7 @@ export const groups: StoryGroup[] = [
     ...badges88x31,
     ...carousel,
     ...terminal,
+    ...code,
     ...destructor,
     ...audioPlayer,
     ...mediaPlayer,
