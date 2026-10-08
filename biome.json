@@ -17,10 +17,7 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "preset": "recommended",
-            "style": {
-                "useVueMultiWordComponentNames": "off"
-            }
+            "preset": "recommended"
         }
     },
     "javascript": {
