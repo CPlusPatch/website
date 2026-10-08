@@ -1,0 +1,76 @@
+---
+import { Image } from "astro:assets";
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../lib/tone.ts";
+
+/**
+ * An image with an optional caption, in the frame of <MediaPlayer>. The
+ * caption goes in the default slot, so it can hold links and emphasis.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    src: ImageMetadata;
+    alt: string;
+    /** As a CSS `aspect-ratio`, cropping to fit. Defaults to the image's own. */
+    ratio?: string;
+    /**
+     * How wide the figure is shown, as an `<img sizes>` value, so the
+     * browser picks the right file. Defaults to the full container width.
+     */
+    sizes?: string;
+    tone?: Tone;
+}
+
+const {
+    src,
+    alt,
+    ratio,
+    sizes = "(min-width: 70rem) 70rem, 100vw",
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+// Rendered rather than checked with `slots.has`, which is also true for a
+// slot that renders to nothing, like `{caption}` with no caption.
+const caption = (await Astro.slots.render("default")).trim();
+---
+
+<figure class:list={["figure", "panel", `tone-${tone}`, className]} {...rest}>
+    <Image
+        {src}
+        {alt}
+        widths={[480, 960, 1440]}
+        {sizes}
+        style={ratio && `aspect-ratio: ${ratio}`}
+    />
+    {caption && <figcaption set:html={caption} />}
+</figure>
+
+<style>
+.figure {
+    width: 100%;
+    margin: 0;
+    /* Clip the image to the panel's corners when --radius is set */
+    overflow: hidden;
+
+    img {
+        display: block;
+        width: 100%;
+        height: auto;
+        /* Only bites when `ratio` sets an aspect-ratio inline */
+        object-fit: cover;
+
+        /* Images with a light edge would otherwise run into the caption */
+        &:not(:last-child) {
+            border-bottom: var(--border-width) solid var(--border-color);
+        }
+    }
+
+    figcaption {
+        padding: var(--space-md);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+        line-height: var(--leading-snug);
+    }
+}
+</style>

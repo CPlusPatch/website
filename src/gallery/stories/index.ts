@@ -7,6 +7,7 @@ import { buttons } from "./buttons.ts";
 import { cards } from "./cards.ts";
 import { carousel } from "./carousel.ts";
 import { destructor } from "./destructor.ts";
+import { figures } from "./figures.ts";
 import { forms } from "./forms.ts";
 import { logos } from "./logos.ts";
 import { mediaPlayer } from "./media-player.ts";
@@ -24,6 +25,7 @@ export const groups: StoryGroup[] = [
     ...cards,
     ...alerts,
     ...quotes,
+    ...figures,
     ...sections,
     ...logos,
     ...carousel,
