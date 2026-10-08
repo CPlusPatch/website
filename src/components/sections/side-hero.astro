@@ -47,10 +47,10 @@ const { side = "right", image, class: className, ...rest } = Astro.props;
         max-width: 30rem;
         justify-self: center;
 
+        /* Slotted, so the role comes by token rather than class. */
         p {
             color: var(--color-text);
-            font-size: 1.125rem;
-            line-height: 1.75rem;
+            font: var(--type-lead);
         }
     }
 

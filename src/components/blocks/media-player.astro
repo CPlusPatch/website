@@ -147,7 +147,7 @@ const posterImage = poster && (await getImage({ src: poster }));
             <Icon name="lucide:minimize" aria-hidden="true" />
         </Button>
     </div>
-    {title && <figcaption>{title}</figcaption>}
+    {title && <figcaption class="text-body-sm">{title}</figcaption>}
 </figure>
 
 <style>
@@ -182,7 +182,6 @@ const posterImage = poster && (await getImage({ src: poster }));
 
     figcaption {
         color: var(--color-text-muted);
-        font-size: var(--font-size-sm);
     }
 
     .media-player__controls {
@@ -208,7 +207,7 @@ const posterImage = poster && (await getImage({ src: poster }));
     .media-player__time {
         margin-inline-end: var(--space-sm);
         color: var(--color-text-muted);
-        font: var(--font-size-xs) / 1 var(--font-mono);
+        font: var(--type-meta);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
@@ -231,6 +230,7 @@ const posterImage = poster && (await getImage({ src: poster }));
         }
     }
 
+    /* The browser sizes captions to the video; only the face is ours. */
     video::cue {
         font-family: var(--font-base);
     }

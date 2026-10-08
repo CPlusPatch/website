@@ -35,7 +35,7 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
 
 <footer class="footer">
     <div class="footer__content">
-        {tagline && <p class="footer__tagline">{tagline}</p>}
+        {tagline && <p class="footer__tagline text-body-sm">{tagline}</p>}
         {socials && socials.length > 0 && (
             <ul class="footer__socials">
                 {socials.map((social) => (
@@ -73,7 +73,7 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
     </div>
     <hr>
     {/* One string: Astro would drop the line break between "under" and the licence. */}
-    <div class="footer__copyright">
+    <div class="footer__copyright text-body-sm">
         {`© ${copyright.holder} ${new Date().getFullYear()}. Licensed under ${copyright.license}.`}
     </div>
     <div class="footer__friends">
@@ -120,7 +120,6 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
         margin-bottom: var(--space-md);
 
         .footer__tagline {
-            font-size: var(--font-size-sm);
             color: var(--color-text-muted);
             /* Keeps the tagline's \n line breaks */
             white-space: pre;
@@ -153,6 +152,7 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
                     filter: grayscale(0%);
                 }
 
+                /* Sizes the icons, which are 1em. */
                 a {
                     color: var(--color-text);
                     font-size: var(--font-size-2xl);
@@ -167,7 +167,6 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
     }
 
     .footer__copyright {
-        font-size: var(--font-size-sm);
         color: var(--color-text-muted);
     }
 

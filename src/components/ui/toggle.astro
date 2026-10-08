@@ -46,7 +46,7 @@ const hasText = Astro.slots.has("default");
     <span class="toggle__slider" aria-hidden="true"></span>
     {/* Hidden from assistive tech: the input's aria-label already says it. */}
     {hasText && (
-        <span class="toggle__text" aria-hidden="true">
+        <span class="toggle__text text-ui" aria-hidden="true">
             <slot />
         </span>
     )}
@@ -67,10 +67,6 @@ const hasText = Astro.slots.has("default");
         display: inline-flex;
         align-items: center;
         gap: var(--space-sm);
-    }
-
-    .toggle__text {
-        font-size: var(--font-size-sm);
     }
 
     .toggle__input {

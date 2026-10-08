@@ -33,8 +33,10 @@ const { author, cite, class: className, ...rest } = Astro.props;
             <Avatar src={author.avatar} alt={author.name} aria-hidden="true" />
         )}
         <span class="quote__byline">
-            <span class="quote__name">{author.name}</span>
-            {author.title && <span class="quote__title">{author.title}</span>}
+            <span class="quote__name text-body-strong">{author.name}</span>
+            {author.title && (
+                <span class="quote__title text-ui">{author.title}</span>
+            )}
         </span>
     </figcaption>
 </figure>
@@ -64,14 +66,8 @@ const { author, cite, class: className, ...rest } = Astro.props;
             display: flex;
             flex-direction: column;
             min-width: 0;
-            line-height: var(--leading-snug);
-
-            .quote__name {
-                font-weight: 600;
-            }
 
             .quote__title {
-                font-size: var(--font-size-sm);
                 color: var(--color-text-muted);
             }
         }
