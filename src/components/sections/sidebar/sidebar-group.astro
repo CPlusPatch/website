@@ -1,0 +1,59 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+
+/** A titled list of <SidebarLink>s inside a <Sidebar>. */
+interface Props extends HTMLAttributes<"div"> {
+    title: string;
+    /** Shown before the title. */
+    icon?: string;
+}
+
+const { title, icon, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["sidebar-group", className]} {...rest}>
+    {/* The list's own label names it for screen readers, so this is visual only. */}
+    <p class="sidebar-group__title" aria-hidden="true">
+        {icon && <Icon name={icon} class="sidebar-group__icon" />}
+        {title}
+    </p>
+    <ul class="sidebar-group__list" aria-label={title}>
+        <slot />
+    </ul>
+</div>
+
+<style>
+/*
+ * A heading over its links, which hang off a hairline guide lined up under
+ * the heading's icon (or its first letter, without one).
+ */
+.sidebar-group {
+    --sidebar-icon: 0.875rem;
+
+    .sidebar-group__title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin: 0 0 var(--space-sm);
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+        line-height: var(--leading-snug);
+        color: var(--color-text);
+    }
+
+    .sidebar-group__icon {
+        flex-shrink: 0;
+        width: var(--sidebar-icon);
+        height: var(--sidebar-icon);
+        color: var(--color-text-muted);
+    }
+
+    .sidebar-group__list {
+        margin: 0 0 0 calc(var(--sidebar-icon) / 2);
+        padding: 0;
+        list-style: none;
+        border-left: var(--border-width) solid var(--border-color);
+    }
+}
+</style>

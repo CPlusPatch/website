@@ -1,6 +1,9 @@
 import Footer from "../../components/sections/footer.astro";
 import Navbar from "../../components/sections/navbar.astro";
 import SideHero from "../../components/sections/side-hero.astro";
+import Sidebar from "../../components/sections/sidebar/sidebar.astro";
+import SidebarGroup from "../../components/sections/sidebar/sidebar-group.astro";
+import SidebarLink from "../../components/sections/sidebar/sidebar-link.astro";
 import { friends } from "../../data/friends.ts";
 import jessew from "../../images/88x31s/jessew.png";
 import greg from "../../images/greg.jpg";
@@ -10,6 +13,53 @@ const NAV_LINKS = [
     { href: "/", label: "Home", active: true },
     { href: "/projects", label: "Projects" },
     { href: "/blog", label: "Blog" },
+];
+
+// The links point at ids that don't exist, so the page's scroll-spy
+// leaves them alone.
+const SIDEBAR_GROUPS = [
+    story(
+        "guides",
+        SidebarGroup,
+        { title: "Guides" },
+        {
+            children: [
+                story(
+                    "start",
+                    SidebarLink,
+                    { href: "#demo-start", current: true },
+                    { slot: "Getting started" },
+                ),
+                story(
+                    "theming",
+                    SidebarLink,
+                    { href: "#demo-theming" },
+                    { slot: "Theming" },
+                ),
+            ],
+        },
+    ),
+    story(
+        "reference",
+        SidebarGroup,
+        { title: "Reference" },
+        {
+            children: [
+                story(
+                    "tokens",
+                    SidebarLink,
+                    { href: "#demo-tokens", meta: 42 },
+                    { slot: "Tokens" },
+                ),
+                story(
+                    "components",
+                    SidebarLink,
+                    { href: "#demo-components", meta: 27 },
+                    { slot: "Components" },
+                ),
+            ],
+        },
+    ),
 ];
 
 export const sections: StoryGroup[] = [
@@ -121,6 +171,28 @@ export const sections: StoryGroup[] = [
                     alt: `A small icon representing ${friend.name}'s website`,
                 })),
             }),
+        ],
+    },
+    {
+        id: "sidebar",
+        title: "Sidebar",
+        category: "sections",
+        source: "sections/sidebar/",
+        description:
+            "A collapsible menu on its own; open and sticky beside the content in a wide SidebarLayout, as on this page.",
+        stories: [
+            story(
+                "collapsed",
+                Sidebar,
+                { label: "Docs" },
+                { children: SIDEBAR_GROUPS },
+            ),
+            story(
+                "open",
+                Sidebar,
+                { label: "Docs", open: true },
+                { children: SIDEBAR_GROUPS },
+            ),
         ],
     },
 ];
