@@ -9,7 +9,9 @@ import Button, { type ButtonTone, type ButtonVariant } from "./button.astro";
  * and returns focus without JS.
  *
  * Anchored under its button where CSS anchor positioning is supported, and
- * centred on screen elsewhere.
+ * centred on screen elsewhere. A tall panel scrolls within the space it has.
+ * Following an in-page link inside it closes it (a line of script), so a
+ * menu of anchors doesn't sit over the section it jumped to.
  */
 interface Props extends HTMLAttributes<"div"> {
     /** Unique on the page: ties the button to its panel (which gets this id). */
@@ -48,7 +50,7 @@ const {
         popovertarget={id}
     >
         {icon && <Icon name={icon} aria-hidden="true" />}
-        {label}
+        <span class="dropdown__label">{label}</span>
         <Icon
             name="lucide:chevron-down"
             class="dropdown__chevron"
@@ -63,7 +65,7 @@ const {
     >
         {title && (
             <div class="dropdown__header">
-                <p class="dropdown__title">{title}</p>
+                <p class="dropdown__title text-label">{title}</p>
                 <Button
                     size="icon"
                     variant="ghost"
@@ -112,6 +114,10 @@ const {
         border: var(--border-width) solid var(--color-border-strong);
         border-radius: var(--radius);
         box-shadow: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
+        /* Within the space around the button (or the viewport, centred). */
+        max-height: calc(100% - var(--space-md));
+        overflow-y: auto;
+        overscroll-behavior: contain;
 
         &:popover-open {
             display: flex;
@@ -147,7 +153,15 @@ const {
 
     .dropdown__title {
         margin: 0;
-        font-weight: 600;
     }
 }
 </style>
+
+<script>
+// Close the panel once an in-page link inside it has been followed.
+document.addEventListener("click", (event) => {
+    const link = (event.target as Element).closest?.('a[href^="#"]');
+    const panel = link?.closest<HTMLElement>(".dropdown__panel:popover-open");
+    panel?.hidePopover();
+});
+</script>
