@@ -15,6 +15,7 @@ import { figures } from "./figures.ts";
 import { forms } from "./forms.ts";
 import { logos } from "./logos.ts";
 import { mediaPlayer } from "./media-player.ts";
+import { messages } from "./messages.ts";
 import { quotes } from "./quotes.ts";
 import { sections } from "./sections.ts";
 import { stats } from "./stats.ts";
@@ -28,6 +29,7 @@ export const groups: StoryGroup[] = [
     ...alerts,
     ...cards,
     ...attachments,
+    ...messages,
     ...dropdowns,
     ...forms,
     ...quotes,
