@@ -10,10 +10,12 @@ import Button from "./button.astro";
 interface Props {
     /** Selector for the ancestor to pause, e.g. ".marquee". */
     target: string;
+    /** Names what it pauses; stays the same while pressed, as aria-pressed says paused. */
+    label?: string;
     class?: string;
 }
 
-const { target, class: className } = Astro.props;
+const { target, label = "Pause scrolling", class: className } = Astro.props;
 ---
 
 <Button
@@ -24,7 +26,7 @@ const { target, class: className } = Astro.props;
     lift={false}
     data-pause-target={target}
     aria-pressed="false"
-    aria-label="Pause scrolling"
+    aria-label={label}
 >
     <Icon name="lucide:pause" class="pause-button__pause" aria-hidden="true" />
     <Icon name="lucide:play" class="pause-button__play" aria-hidden="true" />
