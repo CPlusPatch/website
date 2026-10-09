@@ -20,6 +20,7 @@ import { mediaPlayer } from "./media-player.ts";
 import { messages } from "./messages.ts";
 import { progress } from "./progress.ts";
 import { quotes } from "./quotes.ts";
+import { scrollCue } from "./scroll-cue.ts";
 import { sections } from "./sections.ts";
 import { stats } from "./stats.ts";
 import { status } from "./status.ts";
@@ -37,6 +38,7 @@ export const groups: StoryGroup[] = [
     ...dropdowns,
     ...cornerWindows,
     ...progress,
+    ...scrollCue,
     ...forms,
     ...attachments,
     ...quotes,

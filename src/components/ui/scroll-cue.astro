@@ -1,0 +1,49 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+
+/**
+ * A small link at the foot of a tall section, pointing on to the next one.
+ * The arrow nudges downwards, except under reduced motion.
+ */
+interface Props extends HTMLAttributes<"a"> {
+    /** Where it leads, usually the next section's #id. */
+    href: string;
+    label?: string;
+}
+
+const { href, label = "Scroll", class: className, ...rest } = Astro.props;
+---
+
+<a class:list={["scroll-cue", "text-meta", className]} {href} {...rest}>
+    {label}
+    <Icon name="lucide:arrow-down" aria-hidden="true" />
+</a>
+
+<style>
+.scroll-cue {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text-muted);
+    text-decoration: none;
+
+    svg {
+        animation: scroll-cue-nudge 2s ease-in-out infinite;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
+}
+
+@keyframes scroll-cue-nudge {
+    0%,
+    100% {
+        translate: 0 0;
+    }
+    50% {
+        translate: 0 0.25rem;
+    }
+}
+</style>
