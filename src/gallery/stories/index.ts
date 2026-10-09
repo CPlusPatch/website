@@ -14,6 +14,7 @@ import { destructor } from "./destructor.ts";
 import { dropdowns } from "./dropdowns.ts";
 import { figures } from "./figures.ts";
 import { forms } from "./forms.ts";
+import { kbd } from "./kbd.ts";
 import { logos } from "./logos.ts";
 import { mediaPlayer } from "./media-player.ts";
 import { messages } from "./messages.ts";
@@ -27,6 +28,7 @@ import { terminal } from "./terminal.ts";
 export const groups: StoryGroup[] = [
     ...buttons,
     ...badges,
+    ...kbd,
     ...avatars,
     ...alerts,
     ...cards,

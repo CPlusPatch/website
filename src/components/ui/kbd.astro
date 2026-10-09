@@ -1,0 +1,93 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * A key, or a combination pressed together. A single key goes in the
+ * default slot; a combination goes in `keys`, each as its own keycap inside
+ * one <kbd>, as HTML nests them.
+ *
+ * Modifiers are written the PC way (Alt, Shift, Ctrl, Meta). With JS, Apple
+ * devices see their own symbols instead (⌥ ⇧ ⌃ ⌘), with no plus between.
+ */
+interface Props extends HTMLAttributes<"kbd"> {
+    keys?: string[];
+}
+
+const { keys, class: className, ...rest } = Astro.props;
+---
+
+{keys ? (
+    <kbd class:list={["kbd", className]} {...rest}>
+        {keys.map((key, i) => (
+            <>
+                {i > 0 && (
+                    <span class="kbd__plus" aria-hidden="true">
+                        +
+                    </span>
+                )}
+                <kbd class="kbd__key" data-key={key}>
+                    {key}
+                </kbd>
+            </>
+        ))}
+    </kbd>
+) : (
+    <kbd class:list={["kbd", "kbd__key", className]} {...rest}>
+        <slot />
+    </kbd>
+)}
+
+<style>
+.kbd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    font: var(--type-meta);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+
+    &.kbd__key,
+    .kbd__key {
+        display: inline-block;
+        min-width: 1.75em;
+        padding: 0.0625rem 0.3125rem 0;
+        font: inherit;
+        line-height: 1.4;
+        text-align: center;
+        color: var(--color-text);
+        background-color: var(--color-surface-raised);
+        border: var(--border-width) solid var(--color-border-strong);
+        /* A thicker bottom edge, so it reads as a keycap. */
+        border-bottom-width: 2px;
+        border-radius: var(--radius);
+    }
+
+    &[data-apple] .kbd__plus {
+        display: none;
+    }
+}
+</style>
+
+<script>
+const APPLE: Record<string, [symbol: string, name: string]> = {
+    Alt: ["⌥", "Option"],
+    Shift: ["⇧", "Shift"],
+    Ctrl: ["⌃", "Control"],
+    Meta: ["⌘", "Command"],
+};
+
+const platform =
+    (navigator as { userAgentData?: { platform: string } }).userAgentData
+        ?.platform ?? navigator.platform;
+
+if (/mac|iphone|ipad/i.test(platform)) {
+    for (const key of document.querySelectorAll<HTMLElement>(
+        ".kbd__key[data-key]",
+    )) {
+        const apple = APPLE[key.dataset.key ?? ""];
+        if (!apple) continue;
+        [key.textContent, key.title] = apple;
+        key.closest(".kbd")?.toggleAttribute("data-apple", true);
+    }
+}
+</script>
