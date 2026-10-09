@@ -1,0 +1,37 @@
+---
+import Footer from "../components/page/footer.astro";
+import GravityGun from "../components/page/gravity-gun.astro";
+import Header from "../components/page/header.astro";
+import Hero from "../components/page/hero.astro";
+import Projects from "../components/page/projects.astro";
+import Reviews from "../components/page/reviews.astro";
+import Stack from "../components/page/stack.astro";
+import Stats from "../components/page/stats.astro";
+import Widgets from "../components/page/widgets.astro";
+import Layout from "../layouts/base.astro";
+---
+
+{/* The sections are in components/page/, their content in data/home.ts. */}
+<Layout
+    title="Home"
+    description="Sample front page, built from the site's components."
+    noindex
+>
+    <Header />
+    <main id="main" class="home">
+        <Hero />
+        <Stats />
+        <Stack />
+        <Reviews />
+        <Projects />
+        <GravityGun />
+    </main>
+    <Footer />
+    <Widgets />
+</Layout>
+
+<style>
+.home {
+    flex: 1;
+}
+</style>

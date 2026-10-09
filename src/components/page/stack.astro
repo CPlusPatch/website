@@ -1,0 +1,9 @@
+---
+import { technologies } from "../../data/technologies.ts";
+import Logos from "../blocks/logos.astro";
+import Section from "../sections/section.astro";
+---
+
+<Section id="stack" title="What I work with">
+    <Logos items={technologies} rows={5} />
+</Section>

@@ -1,0 +1,33 @@
+---
+import stillAlive from "../../audio/Portal2-3x26_Still_Alive_Radio Mix_Clean.ogg";
+import { chat } from "../../data/home.ts";
+import verity from "../../images/avatars/verity.png";
+import AudioPlayer from "../blocks/audio-player.astro";
+import InteractiveMessage from "../blocks/message/interactive-message.astro";
+import CornerWindow from "../ui/corner-window.astro";
+---
+
+{/* Opposite corners, so the two buttons never overlap. */}
+<CornerWindow
+    id="music"
+    label="Music"
+    title="Now playing"
+    icon="lucide:music"
+    corner="start"
+    variant="outline"
+    tone="neutral"
+>
+    <AudioPlayer
+        src={stillAlive}
+        title="Still Alive (Radio Mix)"
+        framed={false}
+    />
+</CornerWindow>
+
+<CornerWindow
+    id="chat"
+    label="Chat with Verity"
+    icon="lucide:face-slightly-smiling"
+>
+    <InteractiveMessage tree={chat} author="Verity" avatar={verity} />
+</CornerWindow>

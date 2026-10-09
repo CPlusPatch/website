@@ -1,0 +1,36 @@
+---
+import { reviews } from "../../data/home.ts";
+import Masonry from "../blocks/masonry.astro";
+import Quote from "../blocks/quote.astro";
+import Section from "../sections/section.astro";
+
+// The first review is featured across the full width. A long one there
+// keeps it from stretching one column of the wall far past the others.
+const [featured, ...rest] = reviews;
+---
+
+<Section id="reviews" title="What people say" alt>
+    <div class="reviews">
+        {featured && (
+            <Quote author={featured.author}>
+                <p>{featured.body}</p>
+            </Quote>
+        )}
+        <Masonry>
+            {rest.map((review) => (
+                <Quote author={review.author}>
+                    <p>{review.body}</p>
+                </Quote>
+            ))}
+        </Masonry>
+    </div>
+</Section>
+
+<style>
+/* A gap, not a margin, which Quote's own margin reset would outrank. */
+.reviews {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+</style>
