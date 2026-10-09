@@ -1,0 +1,85 @@
+---
+/**
+ * The carousel's row of slide markers, one bar per slide, filled by pips.ts.
+ *
+ * Pips keep a usable size rather than shrinking to fit; past what fits, the
+ * row scrolls to follow the current one, and the counter beside it says
+ * where that is in the whole.
+ */
+---
+
+<div class="carousel-pips" data-carousel-pips />
+
+<style>
+.carousel-pips {
+    display: flex;
+    flex: 1;
+    min-inline-size: 0;
+    overflow: hidden;
+    mask-image: linear-gradient(
+        calc(var(--fade-flip, 1) * 90deg),
+        transparent,
+        #000 var(--fade-start, 0),
+        #000 calc(100% - var(--fade-end, 0)),
+        transparent
+    );
+
+    /* The gradient runs left to right; -90deg turns it round for RTL. */
+    &:dir(rtl) {
+        --fade-flip: -1;
+    }
+
+    &[data-fade-start] {
+        --fade-start: var(--space-lg);
+    }
+
+    &[data-fade-end] {
+        --fade-end: var(--space-lg);
+    }
+}
+
+/*
+ * Built by the script, so outside the scope Astro adds to this file's markup.
+ * The button is the touch target; ::before is the bar drawn in it.
+ */
+.carousel-pips :global(.carousel-pips__pip) {
+    display: flex;
+    align-items: center;
+    flex: 0 1 2rem;
+    min-inline-size: 0.75rem;
+    height: var(--control-height-md);
+    padding: 0 2px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &::before {
+        content: "";
+        flex: 1;
+        height: 3px;
+        background-color: var(--color-border-strong);
+        transition:
+            background-color var(--transition),
+            height var(--transition);
+    }
+
+    &:hover::before {
+        background-color: var(--color-text-muted);
+    }
+
+    &[aria-current="true"]::before {
+        height: 5px;
+        background-color: var(--tone);
+    }
+
+    @media (forced-colors: active) {
+        &::before {
+            background-color: CanvasText;
+        }
+
+        &[aria-current="true"]::before {
+            background-color: Highlight;
+        }
+    }
+}
+</style>

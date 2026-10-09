@@ -11,19 +11,17 @@ const { class: className, ...rest } = Astro.props;
 </div>
 
 <style>
+/*
+ * No frame of its own: the carousel's panel is the frame. A grid, so slotted
+ * content stretches to the tallest slide in both axes without being forced
+ * to a fixed height (and clipped below it).
+ */
 .carousel-item {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: grid;
     flex: 0 0 100%;
-    width: 100%;
-    height: 100%;
+    min-inline-size: 0;
     scroll-snap-align: start;
-    border: var(--border-width) solid var(--border-color);
-
-    & > :global(*) {
-        width: 100%;
-        height: 100%;
-    }
+    /* One swipe moves one slide, however hard it is flung. */
+    scroll-snap-stop: always;
 }
 </style>

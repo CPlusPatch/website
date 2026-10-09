@@ -1,73 +1,51 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
+import type { Tone } from "../../../lib/tone.ts";
 import Button from "../../ui/button.astro";
+import CarouselPips from "./carousel-pips.astro";
 
 /**
  * Carousel shape:
  *
- *     [       ]
- *   < [       ] >
- *     [       ]
- *     [ ][ ][ ]
+ *   ┌──────────────────────────┐
+ *   │                          │
+ *   │          slide           │
+ *   │                          │
+ *   ├──────────────────────────┤
+ *   │ 02 / 04   ━ ━ ━ ━    < > │   footer: counter, pips, arrows
+ *   └──────────────────────────┘
  *
- * A scroll-snapping track of arbitrary content, with optional arrows and an
- * optional preview row below it.
+ * A scroll-snapping track of arbitrary content in a panel. Controls sit in a
+ * footer below the track, never over slide content. The track is as tall as
+ * its tallest slide, so content is never clipped and the panel does not jump
+ * between slides.
+ *
+ * Without JS it is just the track, which still swipes and scrolls natively;
+ * the footer only drives it, so it stays hidden until the script runs.
+ *
+ * The script is split by concern: track.ts scrolls, pips.ts builds on it,
+ * and this file wires them to the footer.
  *
  * Slots:
  *   default    -- one <CarouselItem> per slide
- *   previews   -- one <CarouselPreview> per slide, in the same order
- *
- * Slide/preview pairing is positional and wired up at runtime, so the two
- * slots must contain the same number of children.
  */
-interface Props extends HTMLAttributes<"div"> {
+interface Props extends HTMLAttributes<"section"> {
     /** Names the region for screen readers. */
     label: string;
-    /**
-     * Show prev/next arrows beside the track, and inset the track so they
-     * don't cover slide content. Defaults to true.
-     */
-    buttons?: boolean;
+    /** Colours the panel's top rule and the current pip. */
+    tone?: Tone;
 }
 
-const { label, buttons = true, class: className, ...rest } = Astro.props;
+const { label, tone = "primary", class: className, ...rest } = Astro.props;
 ---
 
 <section
-    class:list={["carousel", buttons && "carousel--buttons", className]}
+    class:list={["carousel", "panel", `tone-${tone}`, className]}
     aria-roledescription="carousel"
     aria-label={label}
     {...rest}
 >
-    {buttons && (
-        <>
-            <Button
-                class="carousel__button carousel__button--left"
-                size="icon"
-                variant="outline"
-                lift={false}
-                data-carousel-prev
-                aria-label="Previous slide"
-            >
-                <Icon name="lucide:chevron-left" aria-hidden="true" />
-            </Button>
-            <Button
-                class="carousel__button carousel__button--right"
-                size="icon"
-                variant="outline"
-                lift={false}
-                data-carousel-next
-                aria-label="Next slide"
-            >
-                <Icon name="lucide:chevron-right" aria-hidden="true" />
-            </Button>
-        </>
-    )}
-    {/*
-     * A named group gives the track a role, so a screen reader can announce it
-     * without it becoming a second region nested in the carousel.
-     */}
     {/* biome-ignore lint/a11y/useSemanticElements: a second <section> would announce as a second region inside the carousel */}
     <div
         class="carousel__items"
@@ -77,159 +55,136 @@ const { label, buttons = true, class: className, ...rest } = Astro.props;
     >
         <slot />
     </div>
-    <div class="carousel__preview-grid" data-carousel-previews>
-        <slot name="previews" />
+    <div class="carousel__footer" data-carousel-footer hidden>
+        <p class="carousel__counter" aria-hidden="true">
+            <span data-carousel-index>01</span>
+            <span class="carousel__total">/ <span data-carousel-total /></span>
+        </p>
+        <CarouselPips />
+        <div class="carousel__arrows">
+            <Button
+                size="icon"
+                variant="outline"
+                tone="neutral"
+                lift={false}
+                data-carousel-prev
+                aria-label="Previous slide"
+            >
+                <Icon name="lucide:chevron-left" aria-hidden="true" />
+            </Button>
+            <Button
+                size="icon"
+                variant="outline"
+                tone="neutral"
+                lift={false}
+                data-carousel-next
+                aria-label="Next slide"
+            >
+                <Icon name="lucide:chevron-right" aria-hidden="true" />
+            </Button>
+        </div>
+        {/* Says which slide is showing once it changes; the counter is for sighted users. */}
+        <p class="visually-hidden" aria-live="polite" data-carousel-status />
     </div>
 </section>
 
 <script>
-const carousels = document.querySelectorAll<HTMLElement>(
-    "[aria-roledescription='carousel']",
-);
+import { bindPips } from "./pips.ts";
+import { bindTrack } from "./track.ts";
 
-for (const root of carousels) {
-    const track = root.querySelector<HTMLElement>("[data-carousel-track]");
-    if (!track) continue;
+const pad = (n: number) => String(n).padStart(2, "0");
 
-    const slides = Array.from(track.children) as HTMLElement[];
-    if (slides.length === 0) continue;
+for (const root of document.querySelectorAll<HTMLElement>(".carousel")) {
+    const part = (name: string) =>
+        root.querySelector<HTMLElement>(`[data-carousel-${name}]`);
+    const items = part("track");
+    const footer = part("footer");
+    if (!items?.children.length || !footer) continue;
 
-    const prev = root.querySelector<HTMLButtonElement>("[data-carousel-prev]");
-    const next = root.querySelector<HTMLButtonElement>("[data-carousel-next]");
-    const previews = Array.from(
-        root.querySelector("[data-carousel-previews]")?.children ?? [],
-    ) as HTMLElement[];
+    const track = bindTrack(items);
+    footer.hidden = false;
 
-    slides.forEach((slide, i) => {
-        slide.setAttribute("role", "group");
-        slide.setAttribute("aria-roledescription", "slide");
-        slide.setAttribute("aria-label", `${i + 1} of ${slides.length}`);
-    });
+    const pips = part("pips");
+    if (pips) bindPips(pips, track);
 
-    // Makes the track keyboard-scrollable (WCAG 2.1.1). Set here rather than
-    // in the markup: modern browsers already focus overflow containers, and
-    // without this script there are no arrows or previews for it to drive.
-    track.tabIndex = 0;
+    const prev = part("prev");
+    const next = part("next");
+    prev?.addEventListener("click", () => track.goTo(track.current - 1));
+    next?.addEventListener("click", () => track.goTo(track.current + 1));
 
-    let current = 0;
-
-    const goTo = (index: number) => {
-        const target = slides[Math.max(0, Math.min(index, slides.length - 1))];
-        track.scrollTo({
-            left: target.offsetLeft - track.offsetLeft,
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-                .matches
-                ? "auto"
-                : "smooth",
-        });
-    };
-
-    const sync = () => {
-        // aria-disabled, not disabled: a disabled button drops focus to <body>
-        // the moment the user reaches either end.
+    const index = part("index");
+    const total = part("total");
+    const status = part("status");
+    if (total) total.textContent = pad(track.count);
+    let first = true;
+    track.onChange((current) => {
         prev?.setAttribute("aria-disabled", String(current === 0));
         next?.setAttribute(
             "aria-disabled",
-            String(current === slides.length - 1),
+            String(current === track.count - 1),
         );
-        // Slides that are off-screen must not be reachable by keyboard.
-        slides.forEach((slide, i) => {
-            slide.inert = i !== current;
-        });
-        previews.forEach((p, i) => {
-            p.setAttribute("aria-current", String(i === current));
-            p.classList.toggle("is-current", i === current);
-        });
-    };
-
-    prev?.addEventListener("click", () => goTo(current - 1));
-    next?.addEventListener("click", () => goTo(current + 1));
-
-    previews.forEach((preview, i) => {
-        preview.setAttribute("aria-label", `Go to slide ${i + 1}`);
-        preview.addEventListener("click", () => goTo(i));
+        if (index) index.textContent = pad(current + 1);
+        // Not on load: only a change is news.
+        if (status && !first) {
+            status.textContent = `Slide ${current + 1} of ${track.count}`;
+        }
+        first = false;
     });
-
-    // Derive the active slide from scroll position rather than tracking it
-    // on click, so native swipe and keyboard scrolling stay in sync too.
-    const observer = new IntersectionObserver(
-        (entries) => {
-            for (const entry of entries) {
-                if (!entry.isIntersecting) continue;
-                const index = slides.indexOf(entry.target as HTMLElement);
-                if (index !== -1) current = index;
-            }
-            sync();
-        },
-        { root: track, threshold: 0.6 },
-    );
-
-    for (const slide of slides) observer.observe(slide);
-    sync();
 }
 </script>
 
 <style>
 .carousel {
-    --carousel-height: 38rem;
-
-    position: relative;
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-    justify-content: center;
     width: 100%;
+    /* Clip the slides to the panel's corners when --radius is set */
+    overflow: hidden;
 
     .carousel__items {
         display: flex;
-        width: 100%;
-        height: var(--carousel-height);
+        min-block-size: var(--carousel-min-height, 0);
         overflow: auto hidden;
-        gap: var(--space-sm);
-        scroll-snap-type: x mandatory;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: inline mandatory;
         scrollbar-width: none;
-    }
 
-    .carousel__items::-webkit-scrollbar {
-        display: none;
-    }
-
-    /*
-     * Inset the track when arrows are present so they do not sit on top of
-     * slide content.
-     */
-    &.carousel--buttons .carousel__items {
-        scroll-padding-inline: var(--space-lg);
-    }
-
-    .carousel__button {
-        position: absolute;
-        top: calc(var(--carousel-height) / 2);
-        z-index: 1;
-        translate: 0 -50%;
-        background-color: var(--color-surface);
-    }
-
-    .carousel__button--left {
-        left: -0.5rem;
-    }
-
-    .carousel__button--right {
-        right: -0.5rem;
-    }
-
-    .carousel__preview-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-        gap: var(--space-sm);
-        height: 8rem;
-    }
-
-    @container (max-width: 40rem) {
-        --carousel-height: 24rem;
-
-        .carousel__preview-grid {
+        &::-webkit-scrollbar {
             display: none;
+        }
+
+        /* Drawn inside, as the panel clips anything outside its edge. */
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+    }
+
+    .carousel__footer {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+        border-block-start: var(--border-width) solid var(--border-color);
+
+        .carousel__counter {
+            display: flex;
+            gap: 0.5ch;
+            margin: 0;
+            font: var(--type-meta);
+            font-variant-numeric: tabular-nums;
+            color: var(--color-text);
+            white-space: nowrap;
+
+            .carousel__total {
+                color: var(--color-text-muted);
+            }
+        }
+
+        .carousel__arrows {
+            display: flex;
+            gap: var(--space-xs);
+            margin-inline-start: auto;
         }
     }
 }
