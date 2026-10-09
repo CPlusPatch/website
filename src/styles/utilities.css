@@ -215,6 +215,86 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
 }
 
 /*
+ * A bottom sheet. On a narrow or short screen, a popover or modal dialog
+ * with this class slides up from the bottom edge at full width, over a
+ * dimmed page that holds still; outside it, the class does nothing. A
+ * component using it keeps its own box styles to the opposite query,
+ * (width >= 40rem) and (height >= 32rem), so the two never meet.
+ *
+ * It sizes to its content, up to a gap at the top that leaves the page in
+ * view; the content scrolls within.
+ */
+@media (width < 40rem), (height < 32rem) {
+    .sheet {
+        inset: auto 0 0;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        max-height: calc(100dvh - var(--space-xl) - env(safe-area-inset-top));
+        margin: 0;
+        padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom)
+            env(safe-area-inset-left);
+        color: var(--color-text);
+        background-color: var(--color-surface-raised);
+        border: 0;
+        border-top: var(--border-width) solid var(--color-border-strong);
+        border-radius: var(--radius) var(--radius) 0 0;
+        box-shadow: 0 calc(var(--space-sm) * -1) var(--space-lg)
+            rgb(0 0 0 / 0.2);
+        overscroll-behavior: contain;
+        transition:
+            translate 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            display 250ms allow-discrete,
+            overlay 250ms allow-discrete;
+
+        &:popover-open,
+        &[open] {
+            translate: 0 0;
+
+            @starting-style {
+                translate: 0 100%;
+            }
+        }
+
+        &:not(:popover-open, [open]) {
+            translate: 0 100%;
+        }
+
+        &::backdrop {
+            background-color: rgb(0 0 0 / 0.4);
+            transition:
+                opacity 250ms,
+                display 250ms allow-discrete,
+                overlay 250ms allow-discrete;
+        }
+
+        &:popover-open::backdrop,
+        &[open]::backdrop {
+            opacity: 1;
+
+            @starting-style {
+                opacity: 0;
+            }
+        }
+
+        &:not(:popover-open, [open])::backdrop {
+            opacity: 0;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            &,
+            &::backdrop {
+                transition: none;
+            }
+        }
+    }
+
+    html:has(.sheet:popover-open, .sheet[open]) {
+        overflow: hidden;
+    }
+}
+
+/*
  * A page-wide overlay that lib/top-layer.ts has made a popover, so it can
  * draw over other popovers. Undoes the popover's default box (border,
  * padding, Canvas background, centring); each overlay's own enabled styles

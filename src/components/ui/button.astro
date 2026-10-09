@@ -7,8 +7,17 @@ export type ButtonVariant = "solid" | "outline" | "ghost" | "link";
 /** `neutral` is for chrome that should not compete with content. */
 export type ButtonTone = Tone | "neutral";
 
-/** `icon-sm` is a compact square, for actions inside a row or under content. */
-export type ButtonSize = "sm" | "default" | "lg" | "icon" | "icon-sm";
+/**
+ * `icon-sm` is a compact square, for actions inside a row or under content;
+ * `icon-lg` a larger one, for a control that stands alone.
+ */
+export type ButtonSize =
+    | "sm"
+    | "default"
+    | "lg"
+    | "icon"
+    | "icon-sm"
+    | "icon-lg";
 
 /**
  * Renders an <a> when `as="a"` or an `href` is given, otherwise a <button>.
@@ -122,7 +131,8 @@ const classes = [
     }
 
     &.button--size-icon,
-    &.button--size-icon-sm {
+    &.button--size-icon-sm,
+    &.button--size-icon-lg {
         width: var(--control-height-md);
         height: var(--control-height-md);
         padding: 0;
@@ -135,6 +145,12 @@ const classes = [
     &.button--size-icon-sm {
         width: var(--control-height-sm);
         height: var(--control-height-sm);
+    }
+
+    &.button--size-icon-lg {
+        width: var(--control-height-lg);
+        height: var(--control-height-lg);
+        font-size: var(--font-size-base);
     }
 
     &:hover {

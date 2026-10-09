@@ -9,6 +9,7 @@ import { buttons } from "./buttons.ts";
 import { cards } from "./cards.ts";
 import { carousel } from "./carousel.ts";
 import { code } from "./code.ts";
+import { cornerWindows } from "./corner-windows.ts";
 import { destructor } from "./destructor.ts";
 import { dropdowns } from "./dropdowns.ts";
 import { figures } from "./figures.ts";
@@ -29,6 +30,7 @@ export const groups: StoryGroup[] = [
     ...alerts,
     ...cards,
     ...dropdowns,
+    ...cornerWindows,
     ...forms,
     ...attachments,
     ...quotes,
