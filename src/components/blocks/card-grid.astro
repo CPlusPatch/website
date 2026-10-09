@@ -1,0 +1,60 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * A grid of same-sized items, like project cards: one column, then two,
+ * then three as the page widens. Whatever the count, a short last row is
+ * centred rather than left hanging at the start.
+ */
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["card-grid", className]} {...rest}>
+    <slot />
+</div>
+
+<style>
+/*
+ * Each item spans two tracks of a grid twice as fine as its columns, so a
+ * leftover item can start half a column in, which centres its row.
+ * Slotted items carry their own scope, hence :global().
+ */
+.card-grid {
+    display: grid;
+    gap: var(--space-md);
+    width: 100%;
+
+    @container (min-width: 36rem) {
+        grid-template-columns: repeat(4, 1fr);
+
+        & > :global(*) {
+            grid-column: span 2;
+        }
+
+        /* One left over in a row of two. */
+        & > :global(:last-child:nth-child(2n + 1)) {
+            grid-column: 2 / span 2;
+        }
+    }
+
+    @container (min-width: 52rem) {
+        grid-template-columns: repeat(6, 1fr);
+
+        & > :global(:last-child:nth-child(2n + 1)) {
+            grid-column: span 2;
+        }
+
+        /* One left over in a row of three... */
+        & > :global(:last-child:nth-child(3n + 1)) {
+            grid-column: 3 / span 2;
+        }
+
+        /* ...or two, the second following on from the first. */
+        & > :global(:nth-last-child(2):nth-child(3n + 1)) {
+            grid-column: 2 / span 2;
+        }
+    }
+}
+</style>

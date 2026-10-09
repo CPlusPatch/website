@@ -7,6 +7,7 @@ import { avatars } from "./avatars.ts";
 import { badges, badges88x31 } from "./badges.ts";
 import { blueprintFrame } from "./blueprint-frame.ts";
 import { buttons } from "./buttons.ts";
+import { cardGrid } from "./card-grid.ts";
 import { cards } from "./cards.ts";
 import { carousel } from "./carousel.ts";
 import { code } from "./code.ts";
@@ -55,6 +56,7 @@ export const groups: StoryGroup[] = [
     ...badges88x31,
     ...carousel,
     ...blueprintFrame,
+    ...cardGrid,
     ...figures,
     ...audioPlayer,
     ...mediaPlayer,
