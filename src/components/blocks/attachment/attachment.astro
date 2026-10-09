@@ -1,0 +1,303 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../../lib/tone.ts";
+import AttachmentMedia from "./attachment-media.astro";
+import AttachmentProgress from "./attachment-progress.astro";
+
+export type AttachmentState =
+    | "idle"
+    | "uploading"
+    | "processing"
+    | "error"
+    | "done";
+
+export type AttachmentSize = "sm" | "default" | "lg";
+
+export type AttachmentOrientation = "horizontal" | "vertical";
+
+/**
+ * A file or image attached to a message or form: its media, name and
+ * metadata, its upload state, and optional actions.
+ *
+ * The default slot is the description (type, size, progress). It is also
+ * where the state is put into words: colour and shimmer alone don't reach a
+ * screen reader, so an error should say what went wrong.
+ *
+ * With `href`, the name becomes a link stretched over the whole card, so the
+ * card opens the file while the `actions` slot's buttons stay separately
+ * clickable above it.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** The file name. */
+    title: string;
+    /** Icon shown when there is no `image`. Defaults to a generic file. */
+    icon?: string;
+    /** A preview, for images. Decorative: the title names the file. */
+    image?: ImageMetadata;
+    state?: AttachmentState;
+    /** Upload progress from 0 to 100, drawn along the bottom edge while uploading. */
+    progress?: number;
+    size?: AttachmentSize;
+    /** Media beside the name, or above it (for image previews). */
+    orientation?: AttachmentOrientation;
+    /** Tone of the progress bar and hover. An error is always destructive. */
+    tone?: Tone;
+    /** Opens or downloads the file when the card is clicked. */
+    href?: string;
+    /** Download the link rather than navigate to it, optionally as this file name. */
+    download?: boolean | string;
+}
+
+const {
+    title,
+    icon = "lucide:file",
+    image,
+    state = "done",
+    progress,
+    size = "default",
+    orientation = "horizontal",
+    tone = "primary",
+    href,
+    download,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const error = state === "error";
+const busy = state === "uploading" || state === "processing";
+const Title = href ? "a" : "span";
+---
+
+<div
+    class:list={[
+        "attachment",
+        `attachment--${orientation}`,
+        `attachment--size-${size}`,
+        `attachment--state-${state}`,
+        href && "lift",
+        `tone-${error ? "destructive" : tone}`,
+        className,
+    ]}
+    aria-busy={busy ? "true" : undefined}
+    data-snap
+    {...rest}
+>
+    <AttachmentMedia
+        icon={error ? "lucide:file-x" : icon}
+        {image}
+        vertical={orientation === "vertical"}
+    />
+
+    <div class="attachment__content">
+        <Title class="attachment__title" {href} {download}>{title}</Title>
+        {Astro.slots.has("default") && (
+            <span class="attachment__description">
+                <slot />
+            </span>
+        )}
+    </div>
+
+    {Astro.slots.has("actions") && (
+        <div class="attachment__actions">
+            <slot name="actions" />
+        </div>
+    )}
+
+    {state === "uploading" && progress !== undefined && (
+        <AttachmentProgress value={progress} label={`Uploading ${title}`} />
+    )}
+</div>
+
+<style>
+.attachment {
+    --attachment-media: 2.5rem;
+    --attachment-pad: var(--space-sm);
+    --attachment-title-size: var(--font-size-sm);
+    --shadow-color: var(--tone-accent);
+
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-sm);
+    inline-size: var(--attachment-width, 100%);
+    max-inline-size: 100%;
+    padding: var(--attachment-pad);
+    background-color: var(--color-surface-raised);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+    /* Clip the progress bar and image to the corners when --radius is set. */
+    overflow: hidden;
+
+    &.attachment--size-sm {
+        --attachment-media: 2rem;
+        --attachment-pad: var(--space-xs);
+        --attachment-title-size: var(--font-size-xs);
+    }
+
+    &.attachment--size-lg {
+        --attachment-media: 3rem;
+        --attachment-pad: 0.75rem;
+        --attachment-title-size: var(--font-size-base);
+    }
+
+    .attachment__content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        min-inline-size: 0;
+    }
+
+    .attachment__title,
+    .attachment__description {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .attachment__title {
+        font: var(--type-label);
+        font-size: var(--attachment-title-size);
+        color: var(--color-text);
+    }
+
+    .attachment__description {
+        font: var(--type-meta);
+        color: var(--color-text-muted);
+    }
+
+    /*
+     * The stretched link: its ::after covers the card, so the whole card
+     * opens the file (and hovering anywhere on it hovers the link). Actions
+     * sit above it and stay clickable.
+     */
+    a.attachment__title {
+        text-decoration: none;
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+        }
+
+        /* Not the global link hover's highlighter fill. */
+        &:hover {
+            color: var(--color-text);
+            background-color: transparent;
+            text-decoration: underline;
+        }
+
+        /* The ring goes round the card the link covers, not the name. */
+        &:focus-visible {
+            outline: none;
+
+            &::after {
+                outline: 2px solid var(--color-primary);
+                outline-offset: -2px;
+            }
+        }
+    }
+
+    &:has(a.attachment__title:hover) {
+        border-color: var(--shadow-color);
+    }
+
+    .attachment__actions {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+
+        /* Slotted icon buttons, compacted to fit the row. */
+        :global(.button--size-icon) {
+            inline-size: var(--control-height-sm);
+            block-size: var(--control-height-sm);
+        }
+    }
+
+    /* Selected but not sent yet: a dashed frame, like a slot to be filled. */
+    &.attachment--state-idle {
+        border-style: dashed;
+        border-color: var(--color-border-strong);
+    }
+
+    /*
+     * Uploading or processing: the name shimmers. With reduced motion it
+     * holds still, muted, and the description carries the state.
+     */
+    &[aria-busy="true"] .attachment__title {
+        color: transparent;
+        background:
+            linear-gradient(
+                90deg,
+                var(--color-text-muted) 35%,
+                var(--color-text) 50%,
+                var(--color-text-muted) 65%
+            )
+            0 0 / 300% 100%;
+        background-clip: text;
+        animation: attachment-shimmer 1.6s linear infinite;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+            background: none;
+            color: var(--color-text-muted);
+        }
+
+        @media (forced-colors: active) {
+            color: CanvasText;
+            background: none;
+        }
+    }
+
+    &.attachment--state-error {
+        --attachment-media-color: var(--tone);
+        --attachment-media-border: var(--tone-accent);
+        border-color: var(--tone);
+        background-color: light-dark(
+            color-mix(in oklab, var(--tone) 6%, var(--color-surface-raised)),
+            color-mix(in oklab, var(--tone) 10%, var(--color-surface-raised))
+        );
+
+        .attachment__description {
+            color: var(--tone);
+        }
+    }
+
+    /* Vertical: the preview fills the top, the name and actions sit below. */
+    &.attachment--vertical {
+        --attachment-width: 10rem;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 0;
+        padding: 0;
+
+        &.attachment--size-sm {
+            --attachment-width: 8rem;
+        }
+
+        &.attachment--size-lg {
+            --attachment-width: 13rem;
+        }
+
+        .attachment__content {
+            padding: var(--space-sm);
+        }
+
+        .attachment__actions {
+            padding: var(--space-sm) var(--space-sm) 0 0;
+        }
+    }
+}
+
+@keyframes attachment-shimmer {
+    from {
+        background-position: 100% 0;
+    }
+
+    to {
+        background-position: 0 0;
+    }
+}
+</style>

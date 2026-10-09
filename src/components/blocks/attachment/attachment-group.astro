@@ -1,0 +1,111 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * A row of <Attachment>s that scrolls sideways, snapping to each one, with
+ * the overflowing edges faded out. Horizontal attachments get a fixed width
+ * here instead of filling the row; set --attachment-width to change it.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /**
+     * Names the row ("Attachments", "Files to upload"). Also makes it
+     * focusable, so keyboard users can scroll a row with no links or actions.
+     */
+    label?: string;
+}
+
+const { label, class: className, ...rest } = Astro.props;
+---
+
+{/* biome-ignore lint/a11y/useSemanticElements: a <fieldset> is for form controls, and these are files */}
+<div
+    class:list={["attachment-group", className]}
+    role="group"
+    aria-label={label}
+    tabindex={label ? 0 : undefined}
+    {...rest}
+>
+    <slot />
+</div>
+
+<style>
+.attachment-group {
+    --fade: var(--space-md);
+
+    display: flex;
+    gap: var(--space-sm);
+    inline-size: 100%;
+    min-inline-size: 0;
+    overflow-x: auto;
+    /* Room for the lift and focus ring, which overflow would clip. */
+    padding: var(--space-xs);
+    scroll-padding-inline: var(--space-xs);
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+    /* Its children don't set its width, so it scrolls rather than widening a grid track. */
+    contain: inline-size;
+
+    /*
+     * Fade only the edges that have more to scroll to: the timeline runs the
+     * fades in and out as the row moves, and a row that fits never fades.
+     */
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 var(--fade-start, 0),
+        #000 calc(100% - var(--fade-end, 0)),
+        transparent
+    );
+
+    @supports (animation-timeline: scroll()) {
+        animation: attachment-group-fade linear both;
+        animation-timeline: scroll(self inline);
+    }
+
+    > :global(.attachment) {
+        flex: none;
+        scroll-snap-align: start;
+    }
+
+    /* Vertical ones already have a width per size. */
+    > :global(.attachment--horizontal) {
+        --attachment-width: 15rem;
+    }
+
+    &:focus-visible {
+        outline-offset: -2px;
+    }
+}
+
+@property --fade-start {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --fade-end {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@keyframes attachment-group-fade {
+    0% {
+        --fade-start: 0px;
+        --fade-end: var(--fade);
+    }
+
+    5%,
+    95% {
+        --fade-start: var(--fade);
+        --fade-end: var(--fade);
+    }
+
+    100% {
+        --fade-start: var(--fade);
+        --fade-end: 0px;
+    }
+}
+</style>
