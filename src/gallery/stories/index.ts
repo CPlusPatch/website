@@ -17,6 +17,7 @@ import { forms } from "./forms.ts";
 import { iconList } from "./icon-list.ts";
 import { kbd } from "./kbd.ts";
 import { logos } from "./logos.ts";
+import { masonry } from "./masonry.ts";
 import { mediaPlayer } from "./media-player.ts";
 import { messages } from "./messages.ts";
 import { progress } from "./progress.ts";
@@ -45,6 +46,7 @@ export const groups: StoryGroup[] = [
     ...quotes,
     ...stats,
     ...iconList,
+    ...masonry,
     ...accordion,
     ...code,
     ...messages,

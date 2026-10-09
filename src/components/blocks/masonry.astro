@@ -1,0 +1,38 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * Columns of items with uneven heights, like quotes or notes. Each item
+ * keeps its own height, rather than being stretched to its row's tallest as
+ * in a grid, and any number of them pack in. Items read down each column,
+ * then across.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Narrowest a column gets before there are fewer of them. */
+    min?: string;
+    /** Most columns there will ever be. */
+    columns?: number;
+}
+
+const { min = "18rem", columns = 3, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["masonry", className]} {...rest}>
+    <slot />
+</div>
+
+<style define:vars={{ "masonry-min": min, "masonry-columns": columns }}>
+.masonry {
+    columns: var(--masonry-min) var(--masonry-columns);
+    column-gap: var(--space-md);
+}
+
+/*
+ * Slotted, so its items carry their own scope. `.masonry` is repeated to
+ * outrank an item's own margin reset, like Quote's.
+ */
+.masonry.masonry > :global(*) {
+    break-inside: avoid;
+    margin-bottom: var(--space-md);
+}
+</style>
