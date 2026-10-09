@@ -1,0 +1,278 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import Button, { type ButtonTone, type ButtonVariant } from "./button.astro";
+
+/**
+ * A button pinned to a corner of the viewport that opens a window of
+ * anything in the default slot: a chat, a form, a note. Built on the native
+ * popover attribute like Dropdown, so it opens, closes on Esc or an outside
+ * click, and returns focus without JS.
+ *
+ * On a wide screen the window floats over the page above its button. On a
+ * narrow or short one it slides up from the bottom as a sheet (`.sheet` in
+ * utilities.css). Its close button takes focus when it opens.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Unique on the page: ties the button to its window (which gets this id). */
+    id: string;
+    /** Names the button for screen readers, and heads the window unless `title` does. */
+    label: string;
+    /** Heading inside the window, with a close button beside it. */
+    title?: string;
+    /** Shown on the button while the window is closed. */
+    icon?: string;
+    /** Which bottom corner the button sits in. */
+    corner?: "end" | "start";
+    /** In the flow rather than pinned to the viewport, as in the gallery. */
+    inline?: boolean;
+    variant?: ButtonVariant;
+    tone?: ButtonTone;
+}
+
+const {
+    id,
+    label,
+    title = label,
+    icon = "lucide:message-circle",
+    corner = "end",
+    inline = false,
+    variant = "solid",
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+const titleId = `${id}-title`;
+---
+
+<div
+    class:list={[
+        "corner-window",
+        `corner-window--${corner}`,
+        inline && "corner-window--inline",
+        className,
+    ]}
+    {...rest}
+>
+    <Button
+        class="corner-window__trigger"
+        size="icon-lg"
+        {variant}
+        {tone}
+        lift={false}
+        popovertarget={id}
+        aria-label={label}
+    >
+        <Icon name={icon} class="corner-window__open" aria-hidden="true" />
+        <Icon name="lucide:x" class="corner-window__close" aria-hidden="true" />
+    </Button>
+
+    <div
+        class="corner-window__panel sheet"
+        {id}
+        popover
+        role="dialog"
+        aria-labelledby={titleId}
+    >
+        <div class="corner-window__header">
+            <p class="corner-window__title text-label" id={titleId}>{title}</p>
+            <Button
+                size="icon"
+                variant="ghost"
+                tone="neutral"
+                lift={false}
+                popovertarget={id}
+                popovertargetaction="hide"
+                aria-label={`Close ${title}`}
+                autofocus
+            >
+                <Icon name="lucide:x" aria-hidden="true" />
+            </Button>
+        </div>
+        <div class="corner-window__body">
+            <slot />
+        </div>
+    </div>
+</div>
+
+<style>
+.corner-window {
+    --corner-window-gap: var(--space-md);
+
+    position: fixed;
+    inset-block-end: calc(
+        var(--corner-window-gap) +
+        env(safe-area-inset-bottom)
+    );
+    z-index: var(--z-sticky);
+
+    &.corner-window--end {
+        inset-inline-end: calc(
+            var(--corner-window-gap) +
+            env(safe-area-inset-right)
+        );
+    }
+
+    &.corner-window--start {
+        inset-inline-start: calc(
+            var(--corner-window-gap) +
+            env(safe-area-inset-left)
+        );
+    }
+
+    &.corner-window--inline {
+        position: static;
+    }
+
+    .corner-window__trigger svg {
+        transition: rotate var(--transition);
+    }
+
+    /* The icon turns into a close cross while the window is open. */
+    .corner-window__close {
+        display: none;
+    }
+
+    &:has(.corner-window__panel:popover-open) {
+        .corner-window__open {
+            display: none;
+        }
+
+        .corner-window__close {
+            display: block;
+            rotate: 90deg;
+        }
+    }
+
+    .corner-window__panel {
+        flex-direction: column;
+
+        &:popover-open {
+            display: flex;
+        }
+    }
+
+    /* A narrow or short screen gets the sheet instead (see .sheet). */
+    @media (width >= 40rem) and (height >= 32rem) {
+        .corner-window__panel {
+            width: min(24rem, 100vw - 2 * var(--corner-window-gap));
+            /* Clear of the button and the viewport's edges. */
+            max-height: min(
+                36rem,
+                100dvh -
+                3 *
+                var(--corner-window-gap) -
+                var(--control-height-lg)
+            );
+            margin: 0;
+            padding: 0;
+            color: var(--color-text);
+            background-color: var(--color-surface-raised);
+            border: var(--border-width) solid var(--color-border-strong);
+            border-radius: var(--radius);
+            box-shadow: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
+            overscroll-behavior: contain;
+            transform-origin: bottom right;
+            transition:
+                opacity var(--transition),
+                scale var(--transition),
+                display var(--transition) allow-discrete,
+                overlay var(--transition) allow-discrete;
+
+            &:popover-open {
+                @starting-style {
+                    opacity: 0;
+                    scale: 0.96;
+                }
+            }
+
+            &:not(:popover-open) {
+                opacity: 0;
+                scale: 0.96;
+            }
+
+            /*
+             * Over the button, from its corner, where anchor positioning
+             * exists: flipped to whichever side has room when it sits in
+             * the flow.
+             */
+            @supports (position-area: top) {
+                margin-block-end: var(--space-sm);
+                position-try-fallbacks:
+                    flip-block,
+                    flip-inline,
+                    flip-block flip-inline;
+            }
+
+            /* Elsewhere, in the viewport's corner above where the button sits. */
+            @supports not (position-area: top) {
+                inset: auto;
+                inset-block-end: calc(
+                    2 *
+                    var(--corner-window-gap) +
+                    var(--control-height-lg)
+                );
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                transition: none;
+            }
+        }
+
+        &.corner-window--end .corner-window__panel {
+            @supports (position-area: top) {
+                position-area: top span-left;
+            }
+
+            @supports not (position-area: top) {
+                inset-inline-end: var(--corner-window-gap);
+            }
+        }
+
+        &.corner-window--start .corner-window__panel {
+            transform-origin: bottom left;
+
+            @supports (position-area: top) {
+                position-area: top span-right;
+            }
+
+            @supports not (position-area: top) {
+                inset-inline-start: var(--corner-window-gap);
+            }
+        }
+    }
+
+    .corner-window__header {
+        display: flex;
+        flex: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
+        border-bottom: var(--border-width) solid var(--color-border);
+    }
+
+    .corner-window__title {
+        margin: 0;
+    }
+
+    /* Its content may cap itself and scroll within; otherwise this scrolls. */
+    .corner-window__body {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: var(--space-md);
+        min-height: 0;
+        padding: var(--space-md);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .corner-window__trigger svg {
+            transition: none;
+        }
+    }
+}
+</style>

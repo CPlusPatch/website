@@ -40,6 +40,12 @@ export const buttons: StoryGroup[] = [
                 { size: "icon", "aria-label": "Favourite" },
                 { icon: "lucide:star" },
             ),
+            story(
+                "icon-lg",
+                Button,
+                { size: "icon-lg", "aria-label": "Favourite" },
+                { icon: "lucide:star" },
+            ),
             story("disabled", Button, { disabled: true }, { slot: "Disabled" }),
             story(
                 "anchor",
