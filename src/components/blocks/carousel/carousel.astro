@@ -3,6 +3,7 @@ import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 import type { Tone } from "../../../lib/tone.ts";
 import Button from "../../ui/button.astro";
+import PauseButton from "../../ui/pause-button.astro";
 import CarouselPips from "./carousel-pips.astro";
 
 /**
@@ -13,8 +14,8 @@ import CarouselPips from "./carousel-pips.astro";
  *   │          slide           │
  *   │                          │
  *   ├──────────────────────────┤
- *   │ 02 / 04   ━ ━ ━ ━    < > │   footer: counter, pips, arrows
- *   └──────────────────────────┘
+ *   │ ‖ 02 / 04  ━ ━ ━ ━   < > │   footer: pause (autoplay only),
+ *   └──────────────────────────┘           counter, pips, arrows
  *
  * A scroll-snapping track of arbitrary content in a panel. Controls sit in a
  * footer below the track, never over slide content. The track is as tall as
@@ -24,8 +25,8 @@ import CarouselPips from "./carousel-pips.astro";
  * Without JS it is just the track, which still swipes and scrolls natively;
  * the footer only drives it, so it stays hidden until the script runs.
  *
- * The script is split by concern: track.ts scrolls, pips.ts builds on it,
- * and this file wires them to the footer.
+ * The script is split by concern: track.ts scrolls, pips.ts and
+ * autoplay.ts build on it, and this file wires them to the footer.
  *
  * Slots:
  *   default    -- one <CarouselItem> per slide
@@ -35,15 +36,36 @@ interface Props extends HTMLAttributes<"section"> {
     label: string;
     /** Colours the panel's top rule and the current pip. */
     tone?: Tone;
+    /**
+     * Advance on a timer: seconds per slide, or `true` for 6. Off by
+     * default, as moving content distracts and is easy to miss. Follows the
+     * WAI-ARIA carousel pattern and WCAG 2.2.2:
+     *
+     * - A pause control, so rotation can always be stopped.
+     * - Rotation stops for good once the user takes over -- keyboard focus or
+     *   a press anywhere in the carousel -- and only the control restarts it.
+     * - Hovering, or the tab being hidden, holds it without stopping it.
+     * - It starts stopped under prefers-reduced-motion.
+     * - Slide changes are only announced while it is stopped.
+     */
+    autoplay?: boolean | number;
 }
 
-const { label, tone = "primary", class: className, ...rest } = Astro.props;
+const {
+    label,
+    tone = "primary",
+    autoplay = false,
+    class: className,
+    ...rest
+} = Astro.props;
+const seconds = autoplay === true ? 6 : autoplay || undefined;
 ---
 
 <section
     class:list={["carousel", "panel", `tone-${tone}`, className]}
     aria-roledescription="carousel"
     aria-label={label}
+    data-autoplay={seconds}
     {...rest}
 >
     {/* biome-ignore lint/a11y/useSemanticElements: a second <section> would announce as a second region inside the carousel */}
@@ -56,6 +78,19 @@ const { label, tone = "primary", class: className, ...rest } = Astro.props;
         <slot />
     </div>
     <div class="carousel__footer" data-carousel-footer hidden>
+        {/*
+         * The pattern puts this control first in the carousel's tab order so
+         * rotation stops before focus reaches the slides. Here the track
+         * comes first, but focusing anything in the carousel stops it, so
+         * the slides still never move under a keyboard user.
+         */}
+        {seconds && (
+            <PauseButton
+                class="carousel__pause"
+                target=".carousel"
+                label="Pause slideshow"
+            />
+        )}
         <p class="carousel__counter" aria-hidden="true">
             <span data-carousel-index>01</span>
             <span class="carousel__total">/ <span data-carousel-total /></span>
@@ -89,6 +124,7 @@ const { label, tone = "primary", class: className, ...rest } = Astro.props;
 </section>
 
 <script>
+import { bindAutoplay } from "./autoplay.ts";
 import { bindPips } from "./pips.ts";
 import { bindTrack } from "./track.ts";
 
@@ -130,6 +166,10 @@ for (const root of document.querySelectorAll<HTMLElement>(".carousel")) {
         }
         first = false;
     });
+
+    const pause = root.querySelector<HTMLElement>(".carousel__pause");
+    if (pause && pips)
+        bindAutoplay(root, track, { pause, timer: pips, status });
 }
 </script>
 
@@ -166,6 +206,11 @@ for (const root of document.querySelectorAll<HTMLElement>(".carousel")) {
         gap: var(--space-md);
         padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
         border-block-start: var(--border-width) solid var(--border-color);
+
+        /* A button at either end sits as close to the edge as the arrows. */
+        &:has(> .carousel__pause:not([hidden])) {
+            padding-inline-start: var(--space-sm);
+        }
 
         .carousel__counter {
             display: flex;

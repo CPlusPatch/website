@@ -1,6 +1,8 @@
 ---
 /**
  * The carousel's row of slide markers, one bar per slide, filled by pips.ts.
+ * Also autoplay's timer: while rotating, the current pip is a track that a
+ * progress bar fills over the interval (see autoplay.ts).
  *
  * Pips keep a usable size rather than shrinking to fit; past what fits, the
  * row scrolls to follow the current one, and the counter beside it says
@@ -36,13 +38,36 @@
     &[data-fade-end] {
         --fade-end: var(--space-lg);
     }
+
+    /* The carousel's autoplay state, as hooks for the pips below. */
+    :global(.carousel[data-held]) & {
+        --pip-progress-state: paused;
+    }
+
+    :global(.carousel[data-autoplay]:not([data-paused])) & {
+        --pip-current: var(--tone-accent);
+        --pip-progress: carousel-progress var(--carousel-interval) linear
+            forwards;
+
+        @media (forced-colors: active) {
+            --pip-current: GrayText;
+        }
+    }
+}
+
+@keyframes carousel-progress {
+    to {
+        scale: 1 1;
+    }
 }
 
 /*
  * Built by the script, so outside the scope Astro adds to this file's markup.
- * The button is the touch target; ::before is the bar drawn in it.
+ * The button is the touch target; ::before is the bar drawn in it, and
+ * ::after autoplay's progress over it.
  */
 .carousel-pips :global(.carousel-pips__pip) {
+    position: relative;
     display: flex;
     align-items: center;
     flex: 0 1 2rem;
@@ -69,7 +94,28 @@
 
     &[aria-current="true"]::before {
         height: 5px;
+        background-color: var(--pip-current, var(--tone));
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset-inline: 2px;
+        top: 50%;
+        height: 5px;
+        translate: 0 -50%;
         background-color: var(--tone);
+        scale: 0 1;
+        transform-origin: left;
+    }
+
+    &:dir(rtl)::after {
+        transform-origin: right;
+    }
+
+    &[aria-current="true"]::after {
+        animation: var(--pip-progress, none);
+        animation-play-state: var(--pip-progress-state, running);
     }
 
     @media (forced-colors: active) {
@@ -78,6 +124,10 @@
         }
 
         &[aria-current="true"]::before {
+            background-color: var(--pip-current, Highlight);
+        }
+
+        &::after {
             background-color: Highlight;
         }
     }

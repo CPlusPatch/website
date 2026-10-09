@@ -82,13 +82,24 @@ export const carousel: StoryGroup[] = [
         title: "Carousel",
         category: "blocks",
         source: "blocks/carousel/",
-        description: "Swipes and scrolls natively without JS.",
+        description:
+            "Swipes and scrolls natively without JS. Autoplay pauses on hover and stops for good on focus or a press.",
         min: "full",
         stories: [
             story(
                 "default",
                 Carousel,
                 { label: "Carousel features" },
+                { children: slides() },
+            ),
+            story(
+                "autoplay",
+                Carousel,
+                {
+                    label: "Carousel features, autoplay",
+                    tone: "secondary",
+                    autoplay: 4,
+                },
                 { children: slides() },
             ),
             story(
