@@ -8,7 +8,7 @@ import { createCssVariablesTheme } from "shiki/core";
  * https://shiki.style/guide/theme-colors#css-variables-theme).
  */
 export const codeTheme = createCssVariablesTheme({
-    name: "web-ng",
+    name: "website",
     variablePrefix: "--code-",
     variableDefaults: {
         foreground: "var(--color-text)",

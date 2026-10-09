@@ -1,5 +1,5 @@
 {
-    "name": "web-ng",
+    "name": "website",
     "type": "module",
     "workspaces": [
         "packages/*"
@@ -24,8 +24,8 @@
         "check": "biome check . && astro check && deno run theme:check && deno run test"
     },
     "dependencies": {
-        "@web-ng/destructor": "workspace:*",
-        "@web-ng/palette": "workspace:*",
+        "@cpluspatch/destructor": "workspace:*",
+        "@cpluspatch/palette": "workspace:*",
         "@iconify-json/lucide": "^1.2.138",
         "astro": "^7.3.5",
         "astro-icon": "^1.2.0",

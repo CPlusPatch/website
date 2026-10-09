@@ -1,6 +1,6 @@
 ---
 // Inert until the simulation starts: it only styles what that adds to the page
-import "@web-ng/destructor/styles.css";
+import "@cpluspatch/destructor/styles.css";
 import type { HTMLAttributes } from "astro/types";
 
 interface Props extends HTMLAttributes<"div"> {
@@ -15,7 +15,7 @@ const { ground, class: className, ...rest } = Astro.props;
 ---
 
 {/*
- * The gravity gun from @web-ng/destructor. Its script is only fetched when
+ * The gravity gun from @cpluspatch/destructor. Its script is only fetched when
  * the trigger is first pressed; until then this is a plain toggle button.
  * The block itself is never grabbable, so the gun can't be thrown away.
  */}
@@ -133,14 +133,14 @@ const { ground, class: className, ...rest } = Astro.props;
 </style>
 
 <script>
-type DestructorModule = typeof import("@web-ng/destructor");
+type DestructorModule = typeof import("@cpluspatch/destructor");
 
 const root = document.querySelector<HTMLElement>(".destructor");
 const trigger = root?.querySelector<HTMLButtonElement>(".destructor__trigger");
 
 if (root && trigger) {
     let module: Promise<DestructorModule> | undefined;
-    const load = () => (module ??= import("@web-ng/destructor"));
+    const load = () => (module ??= import("@cpluspatch/destructor"));
 
     // Start fetching on intent, so the first press doesn't wait on it
     trigger.addEventListener("pointerenter", load, { once: true });
