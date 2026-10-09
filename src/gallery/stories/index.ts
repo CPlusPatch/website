@@ -1,6 +1,7 @@
 import { CATEGORIES, type StoryGroup } from "../story.ts";
 import { accordion } from "./accordion.ts";
 import { alerts } from "./alerts.ts";
+import { attachments } from "./attachments.ts";
 import { audioPlayer } from "./audio-player.ts";
 import { avatars } from "./avatars.ts";
 import { badges, badges88x31 } from "./badges.ts";
@@ -26,6 +27,7 @@ export const groups: StoryGroup[] = [
     ...avatars,
     ...alerts,
     ...cards,
+    ...attachments,
     ...dropdowns,
     ...forms,
     ...quotes,

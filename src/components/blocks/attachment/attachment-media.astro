@@ -1,0 +1,74 @@
+---
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
+
+/**
+ * An <Attachment>'s icon or image preview: a small square beside the name,
+ * or a 4:3 banner across the top of a vertical one. Recoloured through
+ * --attachment-media-color and --attachment-media-border.
+ */
+interface Props {
+    icon: string;
+    image?: ImageMetadata;
+    vertical: boolean;
+}
+
+const { icon, image, vertical } = Astro.props;
+---
+
+<div
+    class:list={["attachment-media", vertical && "attachment-media--vertical"]}
+>
+    {image ? (
+        <Image
+            src={image}
+            alt=""
+            widths={vertical ? [320, 640] : [96, 192]}
+            sizes={vertical ? "16rem" : "3rem"}
+            loading="lazy"
+        />
+    ) : (
+        <Icon name={icon} aria-hidden="true" />
+    )}
+</div>
+
+<style>
+.attachment-media {
+    display: grid;
+    place-items: center;
+    inline-size: var(--attachment-media);
+    block-size: var(--attachment-media);
+    overflow: hidden;
+    color: var(--attachment-media-color, var(--color-text-muted));
+    background-color: var(--color-bg-alt);
+    border: var(--border-width) solid
+        var(--attachment-media-border, var(--border-color));
+    border-radius: var(--radius);
+
+    svg {
+        inline-size: 45%;
+        block-size: 45%;
+    }
+
+    img {
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+    }
+
+    /* Spans the card's grid, flush to its edges. */
+    &.attachment-media--vertical {
+        grid-column: 1 / -1;
+        inline-size: 100%;
+        block-size: auto;
+        aspect-ratio: 4 / 3;
+        border-width: 0 0 var(--border-width);
+        border-radius: 0;
+
+        svg {
+            inline-size: 2rem;
+            block-size: 2rem;
+        }
+    }
+}
+</style>
