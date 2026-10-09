@@ -61,7 +61,8 @@ const prompt = promptFor(cwd);
     gap: var(--space-sm);
     width: 100%;
     max-height: 24rem;
-    overflow-y: auto;
+    /* Lines keep their shape, like a real terminal: wide ones scroll sideways. */
+    overflow: auto;
     padding: var(--space-md);
     font: var(--type-code);
     /* The characters as typed, as in Code: != shouldn't read as ≠. */
@@ -79,7 +80,7 @@ const prompt = promptFor(cwd);
 
         .terminal__command {
             color: var(--color-text);
-            overflow-wrap: anywhere;
+            white-space: pre;
 
             &::before {
                 content: var(--prompt);
@@ -89,8 +90,7 @@ const prompt = promptFor(cwd);
 
         .terminal__output {
             color: var(--color-text-muted);
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
+            white-space: pre;
         }
     }
 
