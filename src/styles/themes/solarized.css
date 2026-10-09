@@ -28,7 +28,7 @@ html:has([data-theme-select] option[value="solarized"]:checked) {
     --color-border: light-dark(#93a1a1, #586e75);
     --color-border-strong: light-dark(#839191, #5d737a);
     --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
-    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.035));
     --color-primary: light-dark(#0076bb, #3193db);
     --color-primary-hover: light-dark(#00619b, #4aa9f3);
     --color-secondary: light-dark(#6569bb, #7f86db);

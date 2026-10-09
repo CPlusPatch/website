@@ -37,7 +37,7 @@
     --color-border: light-dark(#a3a8a4, #474c48);
     --color-border-strong: light-dark(#898f8b, #5b605c);
     --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
-    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.035));
 
     /* Role tier -- safe for text and for fills paired with --color-on-accent */
     --color-primary: light-dark(#98194b, #f995af);

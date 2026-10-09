@@ -28,7 +28,7 @@ html:has([data-theme-select] option[value="catppuccin"]:checked) {
     --color-border: light-dark(#999dab, #585b70);
     --color-border-strong: light-dark(#828597, #6c7086);
     --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
-    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.035));
     --color-primary: light-dark(#8738ee, #cba6f7);
     --color-primary-hover: light-dark(#7315d5, #ddc2ff);
     --color-secondary: light-dark(#155dec, #89b4fa);
