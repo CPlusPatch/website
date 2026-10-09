@@ -1,6 +1,6 @@
 <div align="center">
 
-# web-ng
+# website
 
 Source code for my website, and the components it's built from.
 
@@ -51,7 +51,7 @@ deno run theme      # regenerate the theme colours
 ## Layout
 
 ```
-web-ng/
+website/
 ├── src/
 │   ├── components/
 │   │   ├── ui/         buttons, inputs, badges, etc.

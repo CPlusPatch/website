@@ -19,7 +19,7 @@
  * lives in packages/palette.
  */
 
-import { definePalette, type Theme } from "@web-ng/palette";
+import { definePalette, type Theme } from "@cpluspatch/palette";
 import type { Tone } from "../../lib/tone.ts";
 
 /** Hue angles in OKLCH degrees. Inherited from the original hand-picked brand. */

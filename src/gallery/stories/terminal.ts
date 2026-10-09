@@ -17,11 +17,11 @@ export const terminal: StoryGroup[] = [
                     },
                     {
                         command: "uname -a",
-                        output: "Linux web-ng 7.2.8-2-cachyos #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
+                        output: "Linux website 7.2.8-2-cachyos #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
                     },
                     {
                         command: "ls ~/projects",
-                        output: "web-ng\nversia\ndotfiles",
+                        output: "website\nversia\ndotfiles",
                     },
                     {
                         command: "cat motd.txt",
