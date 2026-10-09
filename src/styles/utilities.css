@@ -231,12 +231,10 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
         max-width: none;
         height: auto;
         max-height: calc(100dvh - var(--space-xl) - env(safe-area-inset-top));
-        margin: 0;
         padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom)
             env(safe-area-inset-left);
         color: var(--color-text);
         background-color: var(--color-surface-raised);
-        border: 0;
         border-top: var(--border-width) solid var(--color-border-strong);
         border-radius: var(--radius) var(--radius) 0 0;
         box-shadow: 0 calc(var(--space-sm) * -1) var(--space-lg)
@@ -249,8 +247,6 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
 
         &:popover-open,
         &[open] {
-            translate: 0 0;
-
             @starting-style {
                 translate: 0 100%;
             }
@@ -270,8 +266,6 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
 
         &:popover-open::backdrop,
         &[open]::backdrop {
-            opacity: 1;
-
             @starting-style {
                 opacity: 0;
             }
