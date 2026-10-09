@@ -28,7 +28,7 @@ html:has([data-theme-select] option[value="gruvbox"]:checked) {
     --color-border: light-dark(#a89a7f, #5b5450);
     --color-border-strong: light-dark(#90816d, #726860);
     --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
-    --color-scanline: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.07));
+    --color-scanline: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.035));
     --color-primary: light-dark(#af3a03, #fe8019);
     --color-primary-hover: light-dark(#902d00, #ffa56e);
     --color-secondary: light-dark(#076678, #83a598);
