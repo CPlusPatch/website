@@ -1,8 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import type { Tone } from "../../../lib/tone.ts";
+import Progress from "../../ui/progress.astro";
 import AttachmentMedia from "./attachment-media.astro";
-import AttachmentProgress from "./attachment-progress.astro";
 
 export type AttachmentState =
     | "idle"
@@ -104,7 +104,11 @@ const Title = href ? "a" : "span";
     )}
 
     {state === "uploading" && progress !== undefined && (
-        <AttachmentProgress value={progress} label={`Uploading ${title}`} />
+        <Progress
+            class="attachment__progress"
+            value={progress}
+            label={`Uploading ${title}`}
+        />
     )}
 </div>
 
@@ -209,6 +213,13 @@ const Title = href ? "a" : "span";
         display: flex;
         align-items: center;
         gap: var(--space-xs);
+    }
+
+    /* A hairline along the bottom edge. */
+    .attachment__progress {
+        position: absolute;
+        inset: auto 0 0;
+        block-size: 2px;
     }
 
     /* Selected but not sent yet: a dashed frame, like a slot to be filled. */
