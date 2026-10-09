@@ -1,0 +1,94 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * Sets whatever is in the default slot as a drawing on the page's blueprint
+ * grid: an optional figure label above it, registration marks at its
+ * corners, and a dashed sheet offset behind it. The content brings its own
+ * surface; the frame only draws around it.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    /** Shown at the start of the label, like "fig. 01". */
+    label?: string;
+    /** Shown at the end of the label. */
+    meta?: string;
+}
+
+const { label, meta, class: className, ...rest } = Astro.props;
+---
+
+<figure class:list={["blueprint-frame", className]} {...rest}>
+    {(label || meta) && (
+        <figcaption class="blueprint-frame__label text-meta">
+            <span>{label}</span>
+            <span>{meta}</span>
+        </figcaption>
+    )}
+    <div class="blueprint-frame__drawing">
+        <slot />
+    </div>
+</figure>
+
+<style>
+.blueprint-frame {
+    width: 100%;
+    min-width: 0;
+
+    .blueprint-frame__label {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-xs);
+        border-bottom: var(--border-width) dashed var(--color-border-strong);
+    }
+
+    .blueprint-frame__drawing {
+        --mark: var(--color-primary);
+        --mark-size: 0.75rem;
+        --mark-gap: calc(var(--space-sm) * -1);
+        --sheet-offset: var(--space-md);
+        position: relative;
+        isolation: isolate;
+
+        &::before,
+        &::after {
+            content: "";
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /*
+         * Corner marks: a border around the drawing, masked down to an L at
+         * each corner. Tiles one corner's size short of the box, repeated, so
+         * only the corners show.
+         */
+        &::before {
+            inset: var(--mark-gap);
+            border: 2px solid var(--mark);
+            mask:
+                conic-gradient(
+                    at var(--mark-size) var(--mark-size),
+                    transparent 75%,
+                    #000 0
+                )
+                0 0 / calc(100% - var(--mark-size))
+                calc(100% - var(--mark-size));
+        }
+
+        &::after {
+            inset: 0;
+            z-index: -1;
+            translate: var(--sheet-offset) var(--sheet-offset);
+            border: var(--border-width) dashed var(--color-border-strong);
+            border-radius: var(--radius);
+        }
+
+        /* Smaller on small screens, to stay inside the page's gutter. */
+        @container (max-width: 40rem) {
+            --mark-size: 0.5rem;
+            --sheet-offset: var(--space-sm);
+        }
+    }
+}
+</style>
