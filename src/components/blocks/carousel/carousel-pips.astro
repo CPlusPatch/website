@@ -1,8 +1,10 @@
 ---
+import Progress from "../../ui/progress.astro";
+
 /**
- * The carousel's row of slide markers, one bar per slide, filled by pips.ts.
- * Also autoplay's timer: while rotating, the current pip is a track that a
- * progress bar fills over the interval (see autoplay.ts).
+ * The carousel's row of slide markers, one bar per slide, filled by pips.ts
+ * from the template. Also autoplay's timer: while rotating, the current
+ * pip's bar fills over the interval (see autoplay.ts).
  *
  * Pips keep a usable size rather than shrinking to fit; past what fits, the
  * row scrolls to follow the current one, and the counter beside it says
@@ -10,7 +12,14 @@
  */
 ---
 
-<div class="carousel-pips" data-carousel-pips />
+<div class="carousel-pips" data-carousel-pips>
+    {/* The button is the touch target; the bar is drawn in it. */}
+    <template data-carousel-pip>
+        <button type="button" class="carousel-pips__pip">
+            <Progress class="carousel-pips__bar" value={0} decorative />
+        </button>
+    </template>
+</div>
 
 <style>
 .carousel-pips {
@@ -57,17 +66,11 @@
 
 @keyframes carousel-progress {
     to {
-        scale: 1 1;
+        --progress-value: 1;
     }
 }
 
-/*
- * Built by the script, so outside the scope Astro adds to this file's markup.
- * The button is the touch target; ::before is the bar drawn in it, and
- * ::after autoplay's progress over it.
- */
-.carousel-pips :global(.carousel-pips__pip) {
-    position: relative;
+.carousel-pips__pip {
     display: flex;
     align-items: center;
     flex: 0 1 2rem;
@@ -78,57 +81,35 @@
     border: 0;
     cursor: pointer;
 
-    &::before {
-        content: "";
+    .carousel-pips__bar {
+        --progress-track: var(--color-border-strong);
+
         flex: 1;
-        height: 3px;
-        background-color: var(--color-border-strong);
+        block-size: 3px;
         transition:
             background-color var(--transition),
-            height var(--transition);
+            block-size var(--transition);
     }
 
-    &:hover::before {
-        background-color: var(--color-text-muted);
+    &:hover .carousel-pips__bar {
+        --progress-track: var(--color-text-muted);
     }
 
-    &[aria-current="true"]::before {
-        height: 5px;
-        background-color: var(--pip-current, var(--tone));
-    }
+    &[aria-current="true"] .carousel-pips__bar {
+        --progress-track: var(--pip-current, var(--tone));
 
-    &::after {
-        content: "";
-        position: absolute;
-        inset-inline: 2px;
-        top: 50%;
-        height: 5px;
-        translate: 0 -50%;
-        background-color: var(--tone);
-        scale: 0 1;
-        transform-origin: left;
-    }
-
-    &:dir(rtl)::after {
-        transform-origin: right;
-    }
-
-    &[aria-current="true"]::after {
+        block-size: 5px;
         animation: var(--pip-progress, none);
         animation-play-state: var(--pip-progress-state, running);
     }
 
     @media (forced-colors: active) {
-        &::before {
-            background-color: CanvasText;
+        .carousel-pips__bar {
+            --progress-track: CanvasText;
         }
 
-        &[aria-current="true"]::before {
-            background-color: var(--pip-current, Highlight);
-        }
-
-        &::after {
-            background-color: Highlight;
+        &[aria-current="true"] .carousel-pips__bar {
+            --progress-track: var(--pip-current, Highlight);
         }
     }
 }
