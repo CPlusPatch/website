@@ -22,7 +22,7 @@ export const accordion: StoryGroup[] = [
     {
         id: "accordion",
         title: "Accordion",
-        category: "blocks",
+        category: "content",
         source: "blocks/accordion/",
         min: 24,
         stories: [
