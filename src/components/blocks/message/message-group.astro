@@ -1,0 +1,41 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * Consecutive <Message>s from one sender, stacked close together. Give each
+ * the same author and avatar: only the first shows the name, and only one
+ * the avatar -- the last, level with its bubble, or for ghost messages the
+ * first, beside the name. The rest keep its space so the content lines up.
+ */
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["message-group", className]} {...rest}>
+    <slot />
+</div>
+
+<style>
+.message-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    inline-size: 100%;
+
+    > :global(.message:not(:first-child) .message__header) {
+        display: none;
+    }
+
+    > :global(.message:not(.message--ghost, :last-child) .message__avatar) {
+        visibility: hidden;
+    }
+
+    /* Spanning every row, it would still set a one-line message's height. */
+    > :global(.message--ghost:not(:first-child) .message__avatar) {
+        visibility: hidden;
+        block-size: 0;
+        border-block-width: 0;
+    }
+}
+</style>

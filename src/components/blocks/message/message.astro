@@ -1,0 +1,208 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Avatar from "../../ui/avatar.astro";
+import MessageBubble, {
+    type BubbleTone,
+    type BubbleVariant,
+} from "./message-bubble.astro";
+import MessageTyping from "./message-typing.astro";
+
+export type MessageAlign = "start" | "end";
+
+/**
+ * One message in a conversation: who sent it, the bubble, and a footer for
+ * status or actions. `align="end"` is for the reader's own messages, and
+ * defaults to a solid bubble; `start` defaults to a neutral outline.
+ *
+ * The default slot is the message. The `footer` slot takes actions after
+ * any `status`: `size="icon-sm"` buttons, each with an aria-label.
+ * Conversation-level semantics, such as role="log", belong on the
+ * surrounding container.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    align?: MessageAlign;
+    /** Sender name, shown above the bubble and the source of the avatar's initials. */
+    author?: string;
+    /** Show an avatar: `true` for the author's initials, or their picture. Needs `author`. */
+    avatar?: boolean | ImageMetadata;
+    /** When it was sent, as shown ("09:41"). */
+    time?: string;
+    /** The same moment, machine-readable, for the <time> element. */
+    datetime?: string;
+    variant?: BubbleVariant;
+    tone?: BubbleTone;
+    /** Delivery or read status ("Read", "Not delivered"), shown in the footer. */
+    status?: string;
+    /** Show typing dots instead of the slot. */
+    typing?: boolean;
+}
+
+const {
+    align = "start",
+    author,
+    avatar = false,
+    time,
+    datetime,
+    status,
+    variant = align === "end" ? "solid" : "outline",
+    tone = align === "end" ? "primary" : "neutral",
+    typing = false,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const showAvatar = Boolean(avatar && author);
+const avatarSrc = typeof avatar === "object" ? avatar : undefined;
+---
+
+<div
+    class:list={[
+        "message",
+        `message--${align}`,
+        variant === "ghost" && "message--ghost",
+        showAvatar && "message--avatar",
+        className,
+    ]}
+    {...rest}
+>
+    {(author || time) && (
+        <div class="message__header">
+            {author && <span class="message__author">{author}</span>}
+            {time && (
+                <time class="message__time" {datetime}>
+                    {time}
+                </time>
+            )}
+        </div>
+    )}
+
+    {/* The header already names the sender, so the avatar is decoration. */}
+    {showAvatar && (
+        <Avatar
+            class="message__avatar"
+            src={avatarSrc}
+            alt={author ?? ""}
+            size="sm"
+            aria-hidden="true"
+        />
+    )}
+
+    <MessageBubble class="message__bubble" {variant} {tone}>
+        {typing ? (
+            <MessageTyping label={`${author ?? "Someone"} is typing`} />
+        ) : (
+            <slot />
+        )}
+    </MessageBubble>
+
+    {(status || Astro.slots.has("footer")) && (
+        <div class="message__footer">
+            {status && <span>{status}</span>}
+            <slot name="footer" />
+        </div>
+    )}
+</div>
+
+<style>
+/*
+ * A grid, so the avatar sits level with the bottom of the bubble rather
+ * than the footer, and the header and footer line up with the bubble. A
+ * ghost message has no bubble to line up with, so it is laid out like a
+ * feed instead: the avatar at the top, beside the name.
+ */
+.message {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "header" "bubble" "footer";
+    justify-items: start;
+    /* Header and footer space themselves, so absent ones leave no gap. */
+    column-gap: var(--space-sm);
+    inline-size: 100%;
+
+    &.message--avatar {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas: ". header" "avatar bubble" ". footer";
+    }
+
+    &.message--end {
+        justify-items: end;
+
+        &.message--avatar {
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas: "header ." "bubble avatar" "footer .";
+        }
+    }
+
+    .message__header {
+        grid-area: header;
+        margin-bottom: var(--space-xs);
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-sm);
+    }
+
+    .message__author {
+        font: var(--type-label);
+    }
+
+    .message__time {
+        font: var(--type-meta);
+        color: var(--color-text-muted);
+    }
+
+    :global(.message__avatar) {
+        grid-area: avatar;
+        align-self: end;
+    }
+
+    :global(.message__bubble) {
+        grid-area: bubble;
+    }
+
+    &.message--ghost.message--avatar {
+        grid-template-areas: "avatar header" "avatar bubble" "avatar footer";
+
+        :global(.message__avatar) {
+            align-self: start;
+        }
+
+        &.message--end {
+            grid-template-areas: "header avatar" "bubble avatar" "footer avatar";
+        }
+    }
+
+    .message__footer {
+        grid-area: footer;
+        margin-top: var(--space-xs);
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font: var(--type-meta);
+        color: var(--color-text-muted);
+    }
+
+    /*
+     * With no frame to sit under, the outer icons line up with the text
+     * rather than their buttons' edges: an icon-sm button is
+     * control-height-sm square around a 1.2em icon (see Button).
+     */
+    &.message--ghost .message__footer {
+        --message-icon-inset: calc(
+            (1.2 * var(--font-size-sm) - var(--control-height-sm)) /
+            2
+        );
+    }
+
+    &.message--ghost.message--start
+        .message__footer
+        :global(.button--size-icon-sm:first-child) {
+        margin-inline-start: var(--message-icon-inset);
+    }
+
+    &.message--ghost.message--end
+        .message__footer
+        :global(.button--size-icon-sm:last-child) {
+        margin-inline-end: var(--message-icon-inset);
+    }
+}
+</style>

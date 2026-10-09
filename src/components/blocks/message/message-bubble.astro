@@ -1,0 +1,94 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../../lib/tone.ts";
+
+export type BubbleVariant = "solid" | "tinted" | "outline" | "ghost";
+
+/** `neutral` is for the other side of a conversation, so it doesn't compete. */
+export type BubbleTone = Tone | "neutral";
+
+/**
+ * The surface a message's content sits on. Sized to its content up to 80%
+ * of the row, except `ghost`, which is unframed and spans it, for
+ * feed-style threads like a team chat. Usable on its own; <Message> wraps
+ * one for you.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    variant?: BubbleVariant;
+    tone?: BubbleTone;
+}
+
+const {
+    variant = "outline",
+    tone = "neutral",
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<div
+    class:list={[
+        "message-bubble",
+        `message-bubble--${variant}`,
+        `tone-${tone}`,
+        className,
+    ]}
+    data-snap
+    {...rest}
+>
+    <slot />
+</div>
+
+<style>
+.message-bubble {
+    max-inline-size: 80%;
+    min-inline-size: 0;
+    padding: var(--space-sm) 0.75rem;
+    font: var(--type-body-sm);
+    overflow-wrap: anywhere;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius);
+
+    /* Slotted, so spaced by element: paragraphs a line apart, not a block. */
+    :global(p + p) {
+        margin-top: var(--space-sm);
+    }
+
+    &.message-bubble--solid {
+        color: var(--color-on-accent);
+        background-color: var(--tone);
+
+        /*
+         * Links take the bubble's colour; the underline marks them. The
+         * global hover's primary fill would vanish into a primary bubble,
+         * so the highlighter inverts the bubble instead.
+         */
+        :global(a) {
+            color: inherit;
+
+            &:hover {
+                color: var(--tone);
+                background-color: var(--color-on-accent);
+            }
+        }
+    }
+
+    &.message-bubble--tinted {
+        background-color: light-dark(
+            color-mix(in oklab, var(--tone) 12%, var(--color-surface-raised)),
+            color-mix(in oklab, var(--tone) 20%, var(--color-surface-raised))
+        );
+    }
+
+    &.message-bubble--outline {
+        background-color: var(--color-surface-raised);
+        border-color: var(--tone-accent);
+    }
+
+    &.message-bubble--ghost {
+        max-inline-size: none;
+        justify-self: stretch;
+        padding: 0;
+    }
+}
+</style>
