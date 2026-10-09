@@ -1,0 +1,56 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * A page section: the content held to the container's width, under an
+ * optional heading that also names the section for screen readers.
+ */
+interface Props extends HTMLAttributes<"section"> {
+    title?: string;
+    /** The alternate background, to set it apart from its neighbours. */
+    alt?: boolean;
+    align?: "start" | "center";
+}
+
+const {
+    title,
+    alt = false,
+    align = "start",
+    id,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const headingId = title && id ? `${id}-title` : undefined;
+---
+
+<section
+    class:list={[
+        "section",
+        "page-section",
+        align === "center" && "page-section--center",
+        alt && "section--alt",
+        className,
+    ]}
+    {id}
+    aria-labelledby={headingId}
+    {...rest}
+>
+    <div class="container page-section__inner">
+        {title && <h2 id={headingId}>{title}</h2>}
+        <slot />
+    </div>
+</section>
+
+<style>
+.page-section {
+    width: 100%;
+}
+
+.page-section--center .page-section__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+</style>
