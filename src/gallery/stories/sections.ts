@@ -1,5 +1,6 @@
 import Footer from "../../components/sections/footer.astro";
 import Navbar from "../../components/sections/navbar.astro";
+import Section from "../../components/sections/section.astro";
 import SideHero from "../../components/sections/side-hero.astro";
 import Sidebar from "../../components/sections/sidebar/sidebar.astro";
 import SidebarGroup from "../../components/sections/sidebar/sidebar-group.astro";
@@ -63,6 +64,45 @@ const SIDEBAR_GROUPS = [
 ];
 
 export const sections: StoryGroup[] = [
+    {
+        id: "section",
+        title: "Section",
+        category: "sections",
+        source: "sections/section.astro",
+        description:
+            "With an id, the heading names the section for screen readers.",
+        min: "full",
+        stories: [
+            story(
+                "default",
+                Section,
+                { id: "demo-section", title: "A section" },
+                { slot: BODY },
+            ),
+            story(
+                "alt",
+                Section,
+                {
+                    id: "demo-section-alt",
+                    title: "Alternate background",
+                    alt: true,
+                },
+                { slot: BODY },
+            ),
+            story(
+                "center",
+                Section,
+                {
+                    id: "demo-section-center",
+                    title: "Centred",
+                    align: "center",
+                },
+                {
+                    slot: `<p class="lead">Lead copy, centred under its heading.</p>`,
+                },
+            ),
+        ],
+    },
     {
         id: "side-hero",
         title: "Side hero",
