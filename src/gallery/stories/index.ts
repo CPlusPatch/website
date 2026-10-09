@@ -22,6 +22,7 @@ import { progress } from "./progress.ts";
 import { quotes } from "./quotes.ts";
 import { sections } from "./sections.ts";
 import { stats } from "./stats.ts";
+import { status } from "./status.ts";
 import { terminal } from "./terminal.ts";
 
 /** Every group. Within a category, groups keep this order. */
@@ -29,6 +30,7 @@ export const groups: StoryGroup[] = [
     ...buttons,
     ...badges,
     ...kbd,
+    ...status,
     ...avatars,
     ...alerts,
     ...cards,

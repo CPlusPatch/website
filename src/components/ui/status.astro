@@ -1,0 +1,81 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../lib/tone.ts";
+
+/**
+ * A status light with its label in the default slot, like "Online". The
+ * light takes the text colour, so inside a Badge it follows the badge's
+ * tone; give it a `tone` of its own to colour just the light.
+ *
+ * The label carries the meaning, so the light is never the only cue.
+ */
+interface Props extends HTMLAttributes<"span"> {
+    tone?: Tone;
+    /** A slow ripple, for something live. Off under reduced motion. */
+    pulse?: boolean;
+}
+
+const { tone, pulse = false, class: className, ...rest } = Astro.props;
+---
+
+<span class:list={["status", className]} {...rest}>
+    <span
+        class:list={[
+            "status__light",
+            tone && `tone-${tone}`,
+            tone && "status__light--toned",
+            pulse && "status__light--pulse",
+        ]}
+        aria-hidden="true"
+    ></span>
+    <slot />
+</span>
+
+<style>
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    .status__light {
+        position: relative;
+        flex: none;
+        width: 0.5em;
+        height: 0.5em;
+        background-color: currentColor;
+        border-radius: var(--radius);
+
+        &.status__light--toned {
+            color: var(--tone);
+        }
+
+        /*
+         * A copy of the light that grows and fades. Scale and opacity, not a
+         * spreading box-shadow, so the endless loop never repaints.
+         */
+        &.status__light--pulse::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-color: inherit;
+            border-radius: inherit;
+            animation: status-pulse 2s ease-out infinite;
+
+            @media (prefers-reduced-motion: reduce) {
+                display: none;
+            }
+        }
+    }
+}
+
+@keyframes status-pulse {
+    from {
+        opacity: 0.6;
+        scale: 1;
+    }
+    to {
+        opacity: 0;
+        scale: 2.5;
+    }
+}
+</style>
