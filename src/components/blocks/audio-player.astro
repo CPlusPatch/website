@@ -14,13 +14,25 @@ interface Props extends HTMLAttributes<"figure"> {
     /** Shown under the player, and its accessible name. */
     title?: string;
     tone?: Tone;
+    /**
+     * Its own bordered panel. Turn off inside something that already frames
+     * it, like a CornerWindow.
+     */
+    framed?: boolean;
 }
 
-const { src, title, tone = "primary", class: className, ...rest } = Astro.props;
+const {
+    src,
+    title,
+    tone = "primary",
+    framed = true,
+    class: className,
+    ...rest
+} = Astro.props;
 ---
 
 <figure
-    class:list={["audio-player", "panel", `tone-${tone}`, className]}
+    class:list={["audio-player", framed && "panel", `tone-${tone}`, className]}
     {...rest}
 >
     {/* biome-ignore lint/a11y/useMediaCaption: captions are for video; audio needs a transcript, which is page content */}
@@ -65,7 +77,10 @@ const { src, title, tone = "primary", class: className, ...rest } = Astro.props;
     flex-direction: column;
     gap: var(--space-sm);
     width: 100%;
-    padding: var(--space-md);
+
+    &.panel {
+        padding: var(--space-md);
+    }
 
     audio {
         width: 100%;

@@ -21,6 +21,11 @@ export const audioPlayer: StoryGroup[] = [
                 title: "Still Alive (Radio Mix)",
                 tone: "secondary",
             }),
+            story("unframed", AudioPlayer, {
+                src: stillAlive,
+                title: "Still Alive (Radio Mix)",
+                framed: false,
+            }),
         ],
     },
 ];
