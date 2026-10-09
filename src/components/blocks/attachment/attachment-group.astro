@@ -30,7 +30,7 @@ const { label, class: className, ...rest } = Astro.props;
 
 <style>
 .attachment-group {
-    --fade: var(--space-md);
+    --attachment-group-fade: var(--space-md);
 
     display: flex;
     gap: var(--space-sm);
@@ -39,7 +39,8 @@ const { label, class: className, ...rest } = Astro.props;
     overflow-x: auto;
     /* Room for the lift and focus ring, which overflow would clip. */
     padding: var(--space-xs);
-    scroll-padding-inline: var(--space-xs);
+    /* Snapped and focused cards stop clear of the faded edges. */
+    scroll-padding-inline: var(--attachment-group-fade);
     scroll-snap-type: x mandatory;
     overscroll-behavior-x: contain;
     scrollbar-width: thin;
@@ -49,17 +50,17 @@ const { label, class: className, ...rest } = Astro.props;
 
     /*
      * Fade only the edges that have more to scroll to: the timeline runs the
-     * fades in and out as the row moves, and a row that fits never fades.
+     * fades in and out as the row moves. Without overflow there is no
+     * timeline, so both stay at 0 and nothing fades (as in SidebarNav).
      */
-    mask-image: linear-gradient(
-        to right,
-        transparent,
-        #000 var(--fade-start, 0),
-        #000 calc(100% - var(--fade-end, 0)),
-        transparent
-    );
-
     @supports (animation-timeline: scroll()) {
+        mask-image: linear-gradient(
+            to right,
+            transparent,
+            #000 var(--attachment-group-fade-start),
+            #000 calc(100% - var(--attachment-group-fade-end)),
+            transparent
+        );
         animation: attachment-group-fade linear both;
         animation-timeline: scroll(self inline);
     }
@@ -79,13 +80,14 @@ const { label, class: className, ...rest } = Astro.props;
     }
 }
 
-@property --fade-start {
+/* Registered, so the fade lengths can animate. */
+@property --attachment-group-fade-start {
     syntax: "<length>";
     inherits: false;
     initial-value: 0px;
 }
 
-@property --fade-end {
+@property --attachment-group-fade-end {
     syntax: "<length>";
     inherits: false;
     initial-value: 0px;
@@ -93,19 +95,19 @@ const { label, class: className, ...rest } = Astro.props;
 
 @keyframes attachment-group-fade {
     0% {
-        --fade-start: 0px;
-        --fade-end: var(--fade);
+        --attachment-group-fade-start: 0px;
+        --attachment-group-fade-end: var(--attachment-group-fade);
     }
 
     5%,
     95% {
-        --fade-start: var(--fade);
-        --fade-end: var(--fade);
+        --attachment-group-fade-start: var(--attachment-group-fade);
+        --attachment-group-fade-end: var(--attachment-group-fade);
     }
 
     100% {
-        --fade-start: var(--fade);
-        --fade-end: 0px;
+        --attachment-group-fade-start: var(--attachment-group-fade);
+        --attachment-group-fade-end: 0px;
     }
 }
 </style>
