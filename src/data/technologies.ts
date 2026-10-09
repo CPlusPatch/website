@@ -6,11 +6,10 @@ export const technologies: {
         name: "TypeScript",
         logo: "logos:typescript-icon",
     },
-    // Hidden until the `logos` icon set has a correct NixOS logo.
-    /* {
+    {
         name: "NixOS",
-        logo: "logos:nixos",
-    }, */
+        logo: "nixos",
+    },
     {
         name: "Vue",
         logo: "logos:vue",
@@ -111,11 +110,10 @@ export const technologies: {
         name: "Raspberry Pi",
         logo: "logos:raspberry-pi",
     },
-    // Hidden until the `logos` icon set has a correct jQuery logo.
-    /* {
-        name: "JQuery",
+    {
+        name: "jQuery",
         logo: "logos:jquery",
-    }, */
+    },
     {
         name: "Rust",
         logo: "logos:rust",
