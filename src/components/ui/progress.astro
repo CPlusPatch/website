@@ -1,0 +1,100 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { measure } from "../../lib/progress.ts";
+import type { Tone } from "../../lib/tone.ts";
+
+/**
+ * A progress bar: a track in a faint step of its tone, filled in the tone
+ * up to `value`. Without a `tone` it takes the one it sits in, so a bar
+ * inside a toned component matches it.
+ *
+ * To change it from script, use setProgress() in lib/progress.ts, which
+ * keeps what it shows and what it announces in step. The fill follows
+ * `--progress-value` (0 to 1), a registered property: a parent may animate
+ * that directly, as the carousel's autoplay timer does, but only on a
+ * `decorative` bar, as aria-valuenow would not follow.
+ *
+ * The fill is scaled rather than sized, so updates skip layout. It fills its
+ * container's width; its height is the element's block-size, and
+ * `--progress-track` recolours the track.
+ */
+type Props = Omit<HTMLAttributes<"div">, "role"> & {
+    /** From 0 to `max`. Out-of-range values are clamped. */
+    value: number;
+    max?: number;
+    tone?: Tone;
+} & (
+        | { /** Names the bar for screen readers. */ label: string }
+        /** Hidden from screen readers, for a bar inside a control that names itself. */
+        | { decorative: true }
+    );
+
+const { value, max = 100, tone, class: className, ...props } = Astro.props;
+const { label, decorative, ...rest } = props as typeof props & {
+    label?: string;
+    decorative?: true;
+};
+const { now, fraction } = measure(value, max);
+---
+
+<div
+    class:list={["progress", tone && `tone-${tone}`, className]}
+    style={`--progress-value: ${fraction}`}
+    data-max={max}
+    {...decorative
+        ? { "aria-hidden": "true" }
+        : {
+              role: "progressbar",
+              "aria-label": label,
+              "aria-valuemin": 0,
+              "aria-valuemax": max,
+              "aria-valuenow": now,
+          }}
+    {...rest}
+></div>
+
+<style>
+/*
+ * Registered, so it can be animated and transitioned. Inherited, for the
+ * ::before fill. The transition is on the value rather than the fill's
+ * scale: an animation of the value overrides it, where a transition on
+ * scale would restart on every frame of one.
+ */
+@property --progress-value {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 0;
+}
+
+.progress {
+    --progress-fill: var(--tone, var(--color-primary));
+    --progress-track: color-mix(
+        in oklab,
+        var(--progress-fill) 20%,
+        transparent
+    );
+
+    display: flex;
+    inline-size: 100%;
+    block-size: 0.25rem;
+    background-color: var(--progress-track);
+    transition: --progress-value var(--transition);
+
+    &::before {
+        content: "";
+        flex: 1;
+        background-color: var(--progress-fill);
+        scale: var(--progress-value) 1;
+        transform-origin: left;
+    }
+
+    &:dir(rtl)::before {
+        transform-origin: right;
+    }
+
+    @media (forced-colors: active) {
+        --progress-fill: Highlight;
+        --progress-track: GrayText;
+    }
+}
+</style>
