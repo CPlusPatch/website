@@ -1,4 +1,6 @@
 import Attachment from "../../components/blocks/attachment/attachment.astro";
+import type { DialogueNode } from "../../components/blocks/message/dialogue.ts";
+import InteractiveMessage from "../../components/blocks/message/interactive-message.astro";
 import Message from "../../components/blocks/message/message.astro";
 import MessageBubble from "../../components/blocks/message/message-bubble.astro";
 import MessageGroup from "../../components/blocks/message/message-group.astro";
@@ -9,6 +11,63 @@ import { type StoryGroup, story, title } from "../story.ts";
 const VARIANTS = ["solid", "tinted", "outline", "ghost"] as const;
 
 const GREG = { author: "Greg Heffley", avatar: greg } as const;
+
+/** Shared by two branches: a tree may reuse a node, as long as it never loops. */
+const COME_OVER: DialogueNode = {
+    messages: ["Awesome!!", "My dad says we can only play for an hour though."],
+    options: [
+        {
+            label: "An hour is plenty",
+            next: {
+                messages: ["Cool, see you at four! Bring the cheese puffs."],
+            },
+        },
+        {
+            label: "Can we play at mine?",
+            reply: "Can we play at my house instead?",
+            next: {
+                messages: ["Won't Rodrick take the controller again?"],
+                options: [
+                    {
+                        label: "I'll lock the basement",
+                        reply: "I'll lock the basement door. He'll never know.",
+                        next: { messages: ["Deal! On my way."] },
+                    },
+                    { label: "Fine, yours it is" },
+                ],
+            },
+        },
+    ],
+};
+
+const DIALOGUE: DialogueNode = {
+    messages: ["Hey Greg!", "Want to come over and play Twisted Wizard?"],
+    options: [
+        { label: "Sure, I'll come over", next: COME_OVER },
+        {
+            label: "Can't, I'm busy",
+            next: {
+                messages: ["Busy doing what?"],
+                options: [
+                    {
+                        label: "Homework",
+                        next: {
+                            messages: [
+                                "On a Saturday??",
+                                "OK, but you'll miss the new level with the dragon.",
+                            ],
+                        },
+                    },
+                    {
+                        label: "Nothing, actually",
+                        reply: "Nothing, actually. Let's play.",
+                        next: COME_OVER,
+                    },
+                ],
+            },
+        },
+    ],
+};
 
 /** An icon action, as it would sit in the `footer` slot. */
 const action = (icon: string, label: string) =>
@@ -208,6 +267,27 @@ export const messages: StoryGroup[] = [
                     ),
                 },
             ),
+        ],
+    },
+    {
+        id: "interactive-message",
+        title: "Interactive messages",
+        category: "blocks",
+        source: "blocks/message/interactive-message.astro",
+        description:
+            "Pick a reply to walk the dialogue tree. Without JS, only the opening shows.",
+        min: 24,
+        stories: [
+            story("default", InteractiveMessage, {
+                tree: DIALOGUE,
+                author: "Rowley Jefferson",
+            }),
+            story("capped-height", InteractiveMessage, {
+                tree: DIALOGUE,
+                author: "Greg Heffley",
+                avatar: greg,
+                style: "max-block-size: 18rem",
+            }),
         ],
     },
 ];
