@@ -134,7 +134,7 @@ export const messages: StoryGroup[] = [
     {
         id: "message",
         title: "Messages",
-        category: "blocks",
+        category: "chat",
         source: "blocks/message/message.astro",
         description:
             "Start for the other side, end for the reader. The avatar sits level with the bubble, not the footer.",
@@ -228,7 +228,7 @@ export const messages: StoryGroup[] = [
     {
         id: "message-bubble",
         title: "Message bubbles",
-        category: "blocks",
+        category: "chat",
         source: "blocks/message/message-bubble.astro",
         description: "Ghost drops the frame and the 80% width cap.",
         min: 16,
@@ -246,7 +246,7 @@ export const messages: StoryGroup[] = [
     {
         id: "message-group",
         title: "Message groups",
-        category: "blocks",
+        category: "chat",
         source: "blocks/message/message-group.astro",
         description:
             "The first message names the sender; the last carries the avatar (the first, for ghost messages).",
@@ -318,7 +318,7 @@ export const messages: StoryGroup[] = [
     {
         id: "interactive-message",
         title: "Interactive messages",
-        category: "blocks",
+        category: "chat",
         source: "blocks/message/interactive-message.astro",
         description:
             "Pick a reply to walk the dialogue tree. Without JS, only the opening shows. Rodrick's branches run page-wide actions.",

@@ -80,7 +80,7 @@ export const carousel: StoryGroup[] = [
     {
         id: "carousel",
         title: "Carousel",
-        category: "blocks",
+        category: "showcase",
         source: "blocks/carousel/",
         description:
             "Swipes and scrolls natively without JS. Autoplay pauses on hover and stops for good on focus or a press.",

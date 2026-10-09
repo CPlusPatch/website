@@ -39,8 +39,15 @@ export interface Story {
 export const CATEGORIES = [
     { id: "primitives", title: "Primitives", icon: "lucide:shapes" },
     { id: "forms", title: "Forms", icon: "lucide:text-cursor-input" },
-    { id: "blocks", title: "Blocks", icon: "lucide:layout-grid" },
+    { id: "content", title: "Content", icon: "lucide:pilcrow" },
+    { id: "chat", title: "Chat", icon: "lucide:messages-square" },
+    {
+        id: "showcase",
+        title: "Showcase",
+        icon: "lucide:gallery-horizontal-end",
+    },
     { id: "media", title: "Media", icon: "lucide:clapperboard" },
+    { id: "toys", title: "Toys", icon: "lucide:gamepad-2" },
     { id: "sections", title: "Sections", icon: "lucide:panels-top-left" },
 ] as const;
 

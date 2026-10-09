@@ -51,7 +51,7 @@ export const badges88x31: StoryGroup[] = [
     {
         id: "88x31",
         title: "88x31s",
-        category: "blocks",
+        category: "showcase",
         source: "blocks/badge-88x31.astro",
         min: 8,
         stories: [

@@ -5,7 +5,7 @@ export const stats: StoryGroup[] = [
     {
         id: "stat",
         title: "Stats",
-        category: "blocks",
+        category: "content",
         source: "blocks/stat.astro",
         description: "Counts up on first scroll into view, with JS.",
         min: 14,

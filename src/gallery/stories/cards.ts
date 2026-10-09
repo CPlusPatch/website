@@ -47,7 +47,7 @@ export const cards: StoryGroup[] = [
     {
         id: "media-card",
         title: "Media cards",
-        category: "blocks",
+        category: "showcase",
         source: "blocks/media-card.astro",
         min: 18,
         stories: [
