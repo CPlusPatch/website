@@ -1,0 +1,45 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+
+/**
+ * A row of short facts, each after an icon: a location, a timezone, a
+ * job title. It wraps onto more lines when it runs out of room.
+ */
+interface Props extends HTMLAttributes<"ul"> {
+    items: {
+        icon: string;
+        label: string;
+    }[];
+}
+
+const { items, class: className, ...rest } = Astro.props;
+---
+
+<ul class:list={["icon-list", "text-ui", className]} {...rest}>
+    {items.map((item) => (
+        <li>
+            <Icon name={item.icon} aria-hidden="true" />
+            {item.label}
+        </li>
+    ))}
+</ul>
+
+<style>
+.icon-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-md);
+    color: var(--color-text-muted);
+
+    li {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+
+    svg {
+        flex: none;
+    }
+}
+</style>
