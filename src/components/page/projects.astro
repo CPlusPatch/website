@@ -1,0 +1,16 @@
+---
+import { projects } from "../../data/home.ts";
+import CardGrid from "../blocks/card-grid.astro";
+import MediaCard from "../blocks/media-card.astro";
+import Section from "../sections/section.astro";
+---
+
+<Section id="projects" title="Projects">
+    <CardGrid>
+        {projects.map(({ body, ...project }) => (
+            <MediaCard {...project}>
+                <p>{body}</p>
+            </MediaCard>
+        ))}
+    </CardGrid>
+</Section>

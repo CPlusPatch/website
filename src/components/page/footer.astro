@@ -1,0 +1,18 @@
+---
+import { friends } from "../../data/friends.ts";
+import { socials } from "../../data/home.ts";
+import jessew from "../../images/88x31s/jessew.png";
+import Footer from "../sections/footer.astro";
+---
+
+<Footer
+    copyright={{ license: "AGPL-3.0", holder: "Jesse W" }}
+    tagline={"This was a triumph\nI'm making a note here\nHuge success"}
+    {socials}
+    badge88x31={{ image: jessew, alt: "A badge linking to this website" }}
+    friends={friends.map((friend) => ({
+        href: friend.href,
+        image: friend.image,
+        alt: `A small icon representing ${friend.name}'s website`,
+    }))}
+/>

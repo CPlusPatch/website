@@ -1,0 +1,106 @@
+---
+import { details } from "../../data/home.ts";
+import BlueprintFrame from "../blocks/blueprint-frame.astro";
+import Terminal from "../blocks/terminal/terminal.astro";
+import { neofetch } from "../blocks/terminal/terminal.ts";
+import Badge from "../ui/badge.astro";
+import IconList from "../ui/icon-list.astro";
+import ScrollCue from "../ui/scroll-cue.astro";
+import Status from "../ui/status.astro";
+---
+
+<section class="section hero" aria-labelledby="hero-title">
+    <div class="container hero__inner">
+        <div class="hero__intro">
+            <Badge variant="outline" tone="success">
+                <Status>Now playing: Portal 2 OST</Status>
+            </Badge>
+            <p class="hero__eyebrow text-meta">
+                <span class="accent">//</span>{" "}jesse@website:~$
+            </p>
+            <h1 id="hero-title">
+                Hi, I'm <span class="accent">Jesse</span>.
+                <span class="hero__headline">I like computers.</span>
+            </h1>
+            <p class="lead">
+                I study engineering, run too many servers, and care a lot about
+                making good software. Poke at the terminal or scroll down.
+            </p>
+            <IconList items={details} />
+        </div>
+
+        <BlueprintFrame label="fig. 01" meta="jessew@website">
+            <Terminal
+                interactive
+                entries={[{ command: "neofetch", output: neofetch() }]}
+            />
+        </BlueprintFrame>
+    </div>
+
+    <ScrollCue class="hero__scroll" href="#stats" />
+</section>
+
+<style>
+/*
+ * Fills the screen under the effects bar and navbar (up to a point, on very
+ * tall screens), with the scroll cue at its foot.
+ */
+.hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    min-block-size: min(
+        60rem,
+        100svh -
+        var(--header-height) -
+        var(--control-height-lg)
+    );
+
+    /* A soft wash of the accent behind the terminal. */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: var(--z-backdrop);
+        pointer-events: none;
+        background: radial-gradient(
+            ellipse 50% 60% at 72% 50%,
+            color-mix(in oklab, var(--color-primary) 10%, transparent),
+            transparent
+        );
+    }
+
+    .hero__inner {
+        display: grid;
+        flex: 1;
+        gap: var(--space-xl);
+        align-items: center;
+
+        @container (min-width: 60rem) {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            gap: var(--space-lg);
+        }
+    }
+
+    .hero__intro {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hero__eyebrow {
+        margin-block: var(--space-lg) var(--space-sm);
+    }
+
+    /* Its own line, so the break falls between the sentences. */
+    .hero__headline {
+        display: block;
+    }
+
+    /* On ScrollCue's root, which carries its own scope. */
+    :global(.hero__scroll) {
+        align-self: center;
+    }
+}
+</style>

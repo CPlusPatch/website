@@ -1,0 +1,13 @@
+---
+import { contact, effects, navLinks } from "../../data/home.ts";
+import EffectsBar from "../sections/effects-bar.astro";
+import Navbar from "../sections/navbar.astro";
+---
+
+<EffectsBar {effects} />
+<Navbar
+    sticky
+    title="Jesse"
+    links={navLinks}
+    finalLink={{ href: contact, label: "Contact" }}
+/>

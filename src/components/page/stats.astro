@@ -1,0 +1,25 @@
+---
+import { stats } from "../../data/home.ts";
+import Stat from "../blocks/stat.astro";
+import Section from "../sections/section.astro";
+---
+
+<Section id="stats" title="By the numbers" alt>
+    <div class="stats">{stats.map((stat) => <Stat {...stat} />)}</div>
+</Section>
+
+<style>
+/* Fixed steps rather than auto-fit, so a row never ends on an orphan. */
+.stats {
+    display: grid;
+    gap: var(--space-md);
+
+    @container (min-width: 30rem) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @container (min-width: 52rem) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+</style>
