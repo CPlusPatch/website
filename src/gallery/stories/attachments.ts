@@ -11,7 +11,7 @@ const action = (name: string, icon: string, label: string) =>
         name,
         Button,
         {
-            size: "icon",
+            size: "icon-sm",
             variant: "ghost",
             tone: "neutral",
             lift: false,

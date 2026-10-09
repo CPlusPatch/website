@@ -25,7 +25,7 @@ export type AttachmentOrientation = "horizontal" | "vertical";
  *
  * With `href`, the name becomes a link stretched over the whole card, so the
  * card opens the file while the `actions` slot's buttons stay separately
- * clickable above it.
+ * clickable above it. Use `size="icon-sm"` buttons there.
  */
 interface Props extends HTMLAttributes<"div"> {
     /** The file name. */
@@ -198,7 +198,8 @@ const Title = href ? "a" : "span";
         }
     }
 
-    &:has(a.attachment__title:hover) {
+    /* Only linked cards lift, so this is the link's hover too. */
+    &.lift:hover {
         border-color: var(--shadow-color);
     }
 
@@ -208,12 +209,6 @@ const Title = href ? "a" : "span";
         display: flex;
         align-items: center;
         gap: var(--space-xs);
-
-        /* Slotted icon buttons, compacted to fit the row. */
-        :global(.button--size-icon) {
-            inline-size: var(--control-height-sm);
-            block-size: var(--control-height-sm);
-        }
     }
 
     /* Selected but not sent yet: a dashed frame, like a slot to be filled. */
