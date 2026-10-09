@@ -1,0 +1,247 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import Button from "../../ui/button.astro";
+import type { DialogueNode } from "./dialogue.ts";
+import Message from "./message.astro";
+import MessageGroup from "./message-group.astro";
+
+/**
+ * A conversation the reader steers: the other side opens with `tree`'s
+ * messages, the reader picks one of its options, the other side types its
+ * answer, and so on down the tree. Once a branch runs out of options, the
+ * reader can start over.
+ *
+ * Without JS the opening still shows, and the options never appear rather
+ * than doing nothing. Caps on its height (max-block-size) scroll the
+ * conversation, keeping the options in view below it.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    tree: DialogueNode;
+    /** The other side's name. */
+    author: string;
+    /** Their avatar: `true` for initials, or their picture. */
+    avatar?: boolean | ImageMetadata;
+    /** The reader's name, shown over their replies. Usually left out. */
+    reader?: string;
+    /** Names the conversation for screen readers. */
+    label?: string;
+}
+
+const {
+    tree,
+    author,
+    avatar = true,
+    reader,
+    label = `Conversation with ${author}`,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const them = { author, avatar };
+// Inert as JSON, but a "</script>" inside a message would still end the tag.
+const json = JSON.stringify(tree).replaceAll("<", "\\u003c");
+---
+
+<div
+    class:list={["interactive-message", className]}
+    data-interactive-message
+    {...rest}
+>
+    <div
+        class="interactive-message__log"
+        role="log"
+        aria-label={label}
+        data-dialogue-log
+    >
+        <MessageGroup>
+            {tree.messages.map((text) => (
+                <Message {...them}>
+                    <p>{text}</p>
+                </Message>
+            ))}
+        </MessageGroup>
+    </div>
+
+    <div class="interactive-message__footer">
+        {/* Filled by the script; focused while the other side answers. */}
+        {/* biome-ignore lint/a11y/useSemanticElements: <fieldset> brings default box styling that would need undoing, as in ButtonGroup */}
+        <div
+            class="interactive-message__options"
+            role="group"
+            aria-label="Your replies"
+            tabindex="-1"
+            data-dialogue-options
+            hidden
+        ></div>
+        {/*
+         * In the page rather than a template: astro-icon emits an icon's
+         * <symbol> only on its first render, and one inside a template is
+         * not in the document for later icons to point at.
+         */}
+        <Button
+            class="interactive-message__restart"
+            variant="ghost"
+            tone="neutral"
+            size="sm"
+            lift={false}
+            data-dialogue-restart
+            hidden
+        >
+            <Icon name="lucide:rotate-ccw" aria-hidden="true" />
+            Start over
+        </Button>
+    </div>
+
+    <script
+        is:inline
+        type="application/json"
+        data-dialogue-tree
+        set:html={json}
+    />
+
+    <template data-dialogue-template="group"><MessageGroup /></template>
+    <template data-dialogue-template="message">
+        <Message {...them}><p data-dialogue-text></p></Message>
+    </template>
+    <template data-dialogue-template="typing">
+        <Message {...them} typing />
+    </template>
+    {/* Unnamed, the reader's side would read as more of the other's. */}
+    <template data-dialogue-template="reply">
+        <Message align="end" author={reader}>
+            <p>
+                {!reader && <span class="visually-hidden">You: </span>}
+                <span data-dialogue-text></span>
+            </p>
+        </Message>
+    </template>
+    <template data-dialogue-template="option">
+        <Button variant="outline" size="sm" lift={false}>
+            <span data-dialogue-text></span>
+        </Button>
+    </template>
+</div>
+
+<script>
+import { bindDialogue } from "./dialogue.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>(
+    "[data-interactive-message]",
+)) {
+    bindDialogue(root);
+}
+</script>
+
+<style>
+.interactive-message {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    inline-size: 100%;
+    min-block-size: 0;
+
+    .interactive-message__log {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        min-block-size: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border-strong) transparent;
+
+        @media (prefers-reduced-motion: reduce) {
+            scroll-behavior: auto;
+        }
+
+        /*
+         * Added by the script, so the server-rendered opening holds still.
+         * Grown from the corner on its sender's side, and never past its
+         * own box: anything poking out would make the log scrollable for a
+         * moment, flashing a scrollbar.
+         */
+        :global(.message[data-new]) {
+            transform-origin: bottom left;
+            animation: interactive-message-in 200ms ease-out;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+
+        :global(.message--end[data-new]) {
+            transform-origin: bottom right;
+        }
+    }
+
+    /* Set by the script when a height cap means the log will scroll. */
+    &[data-capped] .interactive-message__log {
+        scrollbar-gutter: stable;
+    }
+
+    .interactive-message__footer {
+        display: flex;
+        justify-content: end;
+    }
+
+    .interactive-message__options {
+        display: flex;
+        flex: 1;
+        flex-wrap: wrap;
+        justify-content: end;
+        gap: var(--space-xs);
+
+        /* Only ever focused by the script, between turns. */
+        &:focus {
+            outline: none;
+        }
+
+        > :global(*) {
+            animation: interactive-message-in 200ms ease-out backwards;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+
+        /* Staggered, so a row of options reads as arriving in order. */
+        > :global(:nth-child(2)) {
+            animation-delay: 50ms;
+        }
+
+        > :global(:nth-child(n + 3)) {
+            animation-delay: 100ms;
+        }
+
+        /*
+         * Between turns the used options fade out but keep their space, so
+         * the row doesn't collapse and jolt everything below it.
+         */
+        &[data-waiting] > :global(*) {
+            visibility: hidden;
+            opacity: 0;
+            transition:
+                opacity var(--transition),
+                visibility var(--transition);
+        }
+    }
+
+    /* Animates each time it is unhidden, as display none restarts it. */
+    :global(.interactive-message__restart) {
+        animation: interactive-message-in 200ms ease-out;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
+}
+
+@keyframes interactive-message-in {
+    from {
+        opacity: 0;
+        scale: 0.96;
+    }
+}
+</style>
