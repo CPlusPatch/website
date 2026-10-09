@@ -84,6 +84,52 @@ const action = (icon: string, label: string) =>
         { icon },
     );
 
+/** Runs the page-wide actions in src/gallery/dialogue-actions.ts. */
+const RODRICK: DialogueNode = {
+    messages: ["What do you want, dweeb?"],
+    options: [
+        {
+            label: "Play me your new song",
+            reply: "Can you play me Löded Diper's new song?",
+            next: {
+                messages: [
+                    "Finally, someone with taste.",
+                    "Hold on to something.",
+                ],
+                action: "quake",
+                options: [
+                    {
+                        label: "That was awesome",
+                        next: { messages: ["Obviously."] },
+                    },
+                    {
+                        label: "My ears are ringing",
+                        next: { messages: ["That means it's working."] },
+                    },
+                ],
+            },
+        },
+        {
+            label: "Mom says turn it down",
+            next: {
+                messages: [
+                    "Oh yeah?",
+                    "Let's see you find the volume knob in the dark.",
+                ],
+                action: "lightsOut",
+                options: [
+                    {
+                        label: "Turn the lights back on",
+                        action: "lightsOn",
+                        next: { messages: ["Whatever. Get out of my room."] },
+                    },
+                    { label: "Run upstairs", reply: "*runs upstairs*" },
+                ],
+            },
+        },
+    ],
+};
+
 export const messages: StoryGroup[] = [
     {
         id: "message",
@@ -275,12 +321,16 @@ export const messages: StoryGroup[] = [
         category: "blocks",
         source: "blocks/message/interactive-message.astro",
         description:
-            "Pick a reply to walk the dialogue tree. Without JS, only the opening shows.",
+            "Pick a reply to walk the dialogue tree. Without JS, only the opening shows. Rodrick's branches run page-wide actions.",
         min: 24,
         stories: [
             story("default", InteractiveMessage, {
                 tree: DIALOGUE,
                 author: "Rowley Jefferson",
+            }),
+            story("page-actions", InteractiveMessage, {
+                tree: RODRICK,
+                author: "Rodrick Heffley",
             }),
             story("capped-height", InteractiveMessage, {
                 tree: DIALOGUE,
