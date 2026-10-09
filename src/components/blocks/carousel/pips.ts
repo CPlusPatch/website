@@ -1,15 +1,18 @@
 import { motion, type Track } from "./track.ts";
 
 /**
- * Fills a <CarouselPips> row with one pip per slide. Built here rather than
- * in the markup: the slide count is only known once the slot has rendered,
- * and without JS they would do nothing.
+ * Fills a <CarouselPips> row with one pip per slide, from its template.
+ * Built here rather than in the markup: the slide count is only known once
+ * the slot has rendered, and without JS they would do nothing.
  */
 export const bindPips = (row: HTMLElement, track: Track) => {
+    const template = row.querySelector<HTMLTemplateElement>(
+        "template[data-carousel-pip]",
+    );
     const pips = Array.from({ length: track.count }, (_, i) => {
-        const pip = document.createElement("button");
-        pip.type = "button";
-        pip.className = "carousel-pips__pip";
+        const pip = template?.content.firstElementChild?.cloneNode(
+            true,
+        ) as HTMLButtonElement;
         pip.ariaLabel = `Slide ${i + 1}`;
         pip.addEventListener("click", () => track.goTo(i));
         row.append(pip);
