@@ -1,6 +1,6 @@
 # Adding a component
 
-Small, standalone things go in `src/components/ui/`. Bigger components built out of those go in `blocks/`, and page-level stuff like the navbar goes in `sections/`. If a component ends up with several files, give it its own folder, like this one:
+Small, standalone things go in `src/components/ui/`. Bigger components built out of those go in `blocks/`, and page-level stuff like the navbar goes in `sections/`. The sections of one particular page, filled with that page's content, go in `page/`; their content lives in `src/data/`, and anything in them that could be reused elsewhere belongs in one of the other folders instead. If a component ends up with several files, give it its own folder, like this one:
 
 ```
 blocks/message/

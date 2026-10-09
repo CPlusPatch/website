@@ -57,6 +57,7 @@ website/
 │   │   ├── ui/         buttons, inputs, badges, etc.
 │   │   ├── blocks/     larger components (messages, carousel, ...)
 │   │   ├── sections/   navbar, footer, sidebar
+│   │   ├── page/       the front page's sections
 │   │   └── effects/    page-wide effects like the crosshair
 │   ├── gallery/        the gallery and its stories
 │   └── styles/         tokens, themes and global CSS
