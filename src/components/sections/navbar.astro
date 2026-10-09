@@ -16,12 +16,24 @@ interface Props extends HTMLAttributes<"header"> {
         label: string;
         external?: boolean;
     };
+    /** Stays at the top of the viewport as the page scrolls. */
+    sticky?: boolean;
 }
 
-const { title, links, finalLink, class: className, ...rest } = Astro.props;
+const {
+    title,
+    links,
+    finalLink,
+    sticky = false,
+    class: className,
+    ...rest
+} = Astro.props;
 ---
 
-<header class:list={["navbar", className]} {...rest}>
+<header
+    class:list={["navbar", sticky && "navbar--sticky", className]}
+    {...rest}
+>
     <div class="container">
         <a class="navbar__brand" href="/">
             <span class="navbar__brand-text text-subheading">{title}</span>
@@ -116,11 +128,22 @@ for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
 </script>
 
 <style>
+/* In-page links land below a stuck navbar, not under it. */
+:global(html:has(.navbar--sticky)) {
+    scroll-padding-top: var(--header-height);
+}
+
 .navbar {
     --navbar-transition: 240ms ease-out;
     width: 100%;
     background-color: var(--color-surface);
     border-bottom: var(--border-width) solid var(--border-color);
+
+    &.navbar--sticky {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-sticky);
+    }
 
     .container {
         display: flex;
@@ -273,6 +296,12 @@ for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
             .navbar__menu-inner > :global(:last-child) {
                 margin-bottom: var(--space-md);
             }
+        }
+
+        /* Stuck, it can't scroll off, so a long menu scrolls within. */
+        &.navbar--sticky .navbar__menu-inner {
+            max-height: calc(100dvh - var(--header-height));
+            overflow-y: auto;
         }
 
         &:has(.navbar__toggle-input:checked) {
