@@ -50,7 +50,7 @@ const titleId = `${id}-title`;
     class:list={[
         "corner-window",
         `corner-window--${corner}`,
-        inline && "corner-window--inline",
+        !inline && "corner-window--pinned",
         className,
     ]}
     {...rest}
@@ -76,7 +76,7 @@ const titleId = `${id}-title`;
         aria-labelledby={titleId}
     >
         <div class="corner-window__header">
-            <p class="corner-window__title text-label" id={titleId}>{title}</p>
+            <p class="text-label" id={titleId}>{title}</p>
             <Button
                 size="icon"
                 variant="ghost"
@@ -100,33 +100,37 @@ const titleId = `${id}-title`;
 .corner-window {
     --corner-window-gap: var(--space-md);
 
-    position: fixed;
-    inset-block-end: calc(
-        var(--corner-window-gap) +
-        env(safe-area-inset-bottom)
-    );
-    z-index: var(--z-sticky);
-
     &.corner-window--end {
-        inset-inline-end: calc(
-            var(--corner-window-gap) +
-            env(safe-area-inset-right)
-        );
+        --corner-window-area: top span-left;
+        --corner-window-origin: bottom right;
     }
 
     &.corner-window--start {
-        inset-inline-start: calc(
+        --corner-window-area: top span-right;
+        --corner-window-origin: bottom left;
+    }
+
+    &.corner-window--pinned {
+        position: fixed;
+        inset-block-end: calc(
             var(--corner-window-gap) +
-            env(safe-area-inset-left)
+            env(safe-area-inset-bottom)
         );
-    }
+        z-index: var(--z-sticky);
 
-    &.corner-window--inline {
-        position: static;
-    }
+        &.corner-window--end {
+            inset-inline-end: calc(
+                var(--corner-window-gap) +
+                env(safe-area-inset-right)
+            );
+        }
 
-    .corner-window__trigger svg {
-        transition: rotate var(--transition);
+        &.corner-window--start {
+            inset-inline-start: calc(
+                var(--corner-window-gap) +
+                env(safe-area-inset-left)
+            );
+        }
     }
 
     /* The icon turns into a close cross while the window is open. */
@@ -141,7 +145,6 @@ const titleId = `${id}-title`;
 
         .corner-window__close {
             display: block;
-            rotate: 90deg;
         }
     }
 
@@ -156,7 +159,7 @@ const titleId = `${id}-title`;
     /* A narrow or short screen gets the sheet instead (see .sheet). */
     @media (width >= 40rem) and (height >= 32rem) {
         .corner-window__panel {
-            width: min(24rem, 100vw - 2 * var(--corner-window-gap));
+            width: 24rem;
             /* Clear of the button and the viewport's edges. */
             max-height: min(
                 36rem,
@@ -165,15 +168,12 @@ const titleId = `${id}-title`;
                 var(--corner-window-gap) -
                 var(--control-height-lg)
             );
-            margin: 0;
-            padding: 0;
             color: var(--color-text);
             background-color: var(--color-surface-raised);
             border: var(--border-width) solid var(--color-border-strong);
             border-radius: var(--radius);
             box-shadow: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
-            overscroll-behavior: contain;
-            transform-origin: bottom right;
+            transform-origin: var(--corner-window-origin);
             transition:
                 opacity var(--transition),
                 scale var(--transition),
@@ -195,50 +195,19 @@ const titleId = `${id}-title`;
             /*
              * Over the button, from its corner, where anchor positioning
              * exists: flipped to whichever side has room when it sits in
-             * the flow.
+             * the flow. Centred elsewhere.
              */
             @supports (position-area: top) {
                 margin-block-end: var(--space-sm);
+                position-area: var(--corner-window-area);
                 position-try-fallbacks:
                     flip-block,
                     flip-inline,
                     flip-block flip-inline;
             }
 
-            /* Elsewhere, in the viewport's corner above where the button sits. */
             @supports not (position-area: top) {
-                inset: auto;
-                inset-block-end: calc(
-                    2 *
-                    var(--corner-window-gap) +
-                    var(--control-height-lg)
-                );
-            }
-
-            @media (prefers-reduced-motion: reduce) {
-                transition: none;
-            }
-        }
-
-        &.corner-window--end .corner-window__panel {
-            @supports (position-area: top) {
-                position-area: top span-left;
-            }
-
-            @supports not (position-area: top) {
-                inset-inline-end: var(--corner-window-gap);
-            }
-        }
-
-        &.corner-window--start .corner-window__panel {
-            transform-origin: bottom left;
-
-            @supports (position-area: top) {
-                position-area: top span-right;
-            }
-
-            @supports not (position-area: top) {
-                inset-inline-start: var(--corner-window-gap);
+                margin: auto;
             }
         }
     }
@@ -253,10 +222,6 @@ const titleId = `${id}-title`;
         border-bottom: var(--border-width) solid var(--color-border);
     }
 
-    .corner-window__title {
-        margin: 0;
-    }
-
     /* Its content may cap itself and scroll within; otherwise this scrolls. */
     .corner-window__body {
         display: flex;
@@ -267,12 +232,6 @@ const titleId = `${id}-title`;
         padding: var(--space-md);
         overflow-y: auto;
         overscroll-behavior: contain;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .corner-window__trigger svg {
-            transition: none;
-        }
     }
 }
 </style>
