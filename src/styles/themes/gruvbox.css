@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="gruvbox"` on <html>, or while a [data-theme-select]
- * has it selected (see the gallery). Colour only: shape, motion and type are
+ * has it selected (the Display menu). Colour only: shape, motion and type are
  * the defaults from tokens.css.
  */
 
 :root[data-theme="gruvbox"],
-html:has([data-theme-select] option[value="gruvbox"]:checked) {
+html:has([data-theme-select] [value="gruvbox"]:checked),
+[data-theme-preview="gruvbox"] {
     --color-bg: light-dark(#f2e5bc, #1d2021);
     --color-bg-alt: light-dark(#ebdbb2, #282828);
     --color-surface: light-dark(#fbf1c7, #32302f);

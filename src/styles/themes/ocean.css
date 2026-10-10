@@ -8,13 +8,14 @@
  * and rounder fonts.
  *
  * Applied by `data-theme="ocean"` on <html>, or -- without any JS -- while
- * a [data-theme-select] has "ocean" selected (see the gallery). Every token
- * is a light-dark() pair, so it follows color-scheme and the invert toggle
+ * a [data-theme-select] has "ocean" selected (the Display menu). Every token
+ * is a light-dark() pair, so it follows color-scheme, and the menu's Mode,
  * like the default does.
  */
 
 :root[data-theme="ocean"],
-html:has([data-theme-select] option[value="ocean"]:checked) {
+html:has([data-theme-select] [value="ocean"]:checked),
+[data-theme-preview="ocean"] {
     /* palette:start -- generated from palette.config.ts by `deno run theme` */
     --color-bg: light-dark(#eff4f8, #091018);
     --color-bg-alt: light-dark(#e1e9ef, #101822);
@@ -46,7 +47,7 @@ html:has([data-theme-select] option[value="ocean"]:checked) {
 }
 
 :root[data-theme="ocean"],
-html:has([data-theme-select] option[value="ocean"]:checked) {
+html:has([data-theme-select] [value="ocean"]:checked) {
     --radius: 0.625rem;
     --shadow-offset: 6px;
     /* Overshoots slightly, so lifts and presses land with a little bounce. */

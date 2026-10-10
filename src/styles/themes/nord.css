@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="nord"` on <html>, or while a [data-theme-select]
- * has it selected (see the gallery). Colour only: shape, motion and type are
+ * has it selected (the Display menu). Colour only: shape, motion and type are
  * the defaults from tokens.css.
  */
 
 :root[data-theme="nord"],
-html:has([data-theme-select] option[value="nord"]:checked) {
+html:has([data-theme-select] [value="nord"]:checked),
+[data-theme-preview="nord"] {
     --color-bg: light-dark(#e5e9f0, #2e3440);
     --color-bg-alt: light-dark(#d8dee9, #3b4252);
     --color-surface: light-dark(#eceff4, #3b4252);
