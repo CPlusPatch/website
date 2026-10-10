@@ -5,7 +5,9 @@ import { Font } from "astro:assets";
 import Crosshair from "../components/effects/crosshair.astro";
 import Scanlines from "../components/effects/scanlines.astro";
 import Signal from "../components/effects/signal.astro";
+import { STORAGE_KEY } from "../lib/display.ts";
 import { site } from "../site.ts";
+import { OVERRIDES, OVERRIDES_CSS } from "../styles/overrides.ts";
 
 interface Props {
     title: string;
@@ -28,6 +30,9 @@ const {
 
 const pageTitle = title === site.name ? title : `${title} — ${site.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+
+// The Display menu's choices that change the whole page's look.
+const PAINTED = ["theme", ...OVERRIDES.map(({ name }) => name)];
 ---
 
 <!doctype html>
@@ -38,6 +43,30 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">
         <link rel="icon" href="/favicon.ico">
         <meta name="generator" content={Astro.generator}>
+
+        {/*
+         * The theme and overrides picked in the Display menu on another
+         * page, set on <html> as data-<name> before first paint, so the page
+         * doesn't flash the defaults. The menu takes over from these once it
+         * loads (see lib/display.ts).
+         */}
+        <script is:inline define:vars={{ key: STORAGE_KEY, names: PAINTED }}>
+        try {
+            const choices = JSON.parse(localStorage.getItem(key) ?? "{}");
+            const root = document.documentElement;
+            for (const name of names) {
+                const attr = `data-${name}`;
+                if (
+                    typeof choices[name] === "string" &&
+                    !root.hasAttribute(attr)
+                )
+                    root.setAttribute(attr, choices[name]);
+            }
+        } catch {
+            // Blocked storage, or nothing saved yet
+        }
+        </script>
+        <style is:inline set:html={OVERRIDES_CSS} />
 
         <title>{pageTitle}</title>
         {description && <meta name="description" content={description} />}

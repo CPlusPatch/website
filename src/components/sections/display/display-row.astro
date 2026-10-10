@@ -1,0 +1,61 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Kbd from "../../ui/kbd.astro";
+
+/**
+ * One setting in the Display menu: an optional label, the control in the
+ * default slot, and, with a `key`, its Alt+Shift shortcut (see
+ * lib/shortcuts.ts) and a hint for it. The label is for sight only: give the
+ * control its own accessible name.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    label?: string;
+    /** A letter, pressed with Alt+Shift to click the control. */
+    key?: string;
+    /** Only on a fine pointer, for a control whose effect can't show on touch. */
+    fine?: boolean;
+}
+
+const { label, key, fine, class: className, ...rest } = Astro.props;
+---
+
+<div
+    class:list={["display-row", className]}
+    data-shortcut={key?.toUpperCase()}
+    data-fine={fine || undefined}
+    {...rest}
+>
+    {label && (
+        <span class="display-row__label text-ui" aria-hidden="true">
+            {label}
+        </span>
+    )}
+    <slot />
+    {key && <Kbd class="display-key">{key.toUpperCase()}</Kbd>}
+</div>
+
+<style>
+.display-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    /*
+     * The label, or the control without one, pushes the rest to the end.
+     * :global() as the control is a component, with its own scope.
+     */
+    > :global(:first-child) {
+        margin-inline-end: auto;
+    }
+
+    .display-row__label {
+        color: var(--color-text-muted);
+    }
+
+    &[data-fine] {
+        @media not ((hover: hover) and (pointer: fine)) {
+            display: none;
+        }
+    }
+}
+</style>

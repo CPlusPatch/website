@@ -6,7 +6,6 @@ import SidebarNav from "../components/sections/sidebar/sidebar-nav.astro";
 import Dropdown from "../components/ui/dropdown.astro";
 import DisplaySettings from "../gallery/display-settings.astro";
 import GalleryNav from "../gallery/gallery-nav.astro";
-import { OVERRIDES_CSS } from "../gallery/overrides.ts";
 import { categories, groups } from "../gallery/stories/index.ts";
 import type { StoryGroup as Group } from "../gallery/story.ts";
 import StoryGroup from "../gallery/story-group.astro";
@@ -29,7 +28,6 @@ const summary = `${count(components(groups), "component")} · ${count(storyCount
     noindex
 >
     <style is:inline set:html={PREVIEW_CSS} />
-    <style is:inline set:html={OVERRIDES_CSS} />
 
     <div class="gallery" id="top">
         <header class="gallery__bar">
@@ -43,12 +41,13 @@ const summary = `${count(components(groups), "component")} · ${count(storyCount
                 id="gallery-menu"
                 label="Components"
                 icon="lucide:menu"
+                collapseBelow="30rem"
             >
                 <SidebarNav label="Components">
                     <GalleryNav />
                 </SidebarNav>
             </Dropdown>
-            <DisplaySettings />
+            <DisplaySettings collapseBelow="30rem" />
         </header>
 
         <SidebarLayout>
@@ -234,7 +233,7 @@ import "../gallery/dialogue-actions.ts";
         }
     }
 
-    /* Tiny: drop the counts, and the buttons' words and chevrons. */
+    /* Tiny: drop the counts; the dropdowns drop their words (collapseBelow). */
     @container (width < 30rem) {
         .gallery__count {
             display: none;
@@ -246,24 +245,6 @@ import "../gallery/dialogue-actions.ts";
 
         .gallery__bar {
             gap: var(--space-sm);
-        }
-
-        .gallery__bar :global(.dropdown__chevron) {
-            display: none;
-        }
-
-        /* Icon-only now, so as compact as an icon button. */
-        .gallery__bar :global(.dropdown__trigger) {
-            padding-inline: var(--space-sm);
-        }
-
-        .gallery__bar :global(.dropdown__label) {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            clip-path: inset(50%);
-            white-space: nowrap;
         }
     }
 }

@@ -77,19 +77,6 @@
     --breakpoint-xl: 80rem;
 }
 
-/*
- * Theme toggle, JS-free like the other effect toggles. The page cannot know
- * the system scheme without script, so a checked toggle flips whichever one
- * the system prefers: forced light by default, forced dark on a light system.
- */
-html:has([data-theme-toggle] > input:checked) {
-    color-scheme: light;
-
-    @media (prefers-color-scheme: light) {
-        color-scheme: dark;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
     :root {
         --transition: 0s;

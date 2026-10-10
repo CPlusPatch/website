@@ -1,64 +1,34 @@
 ---
-import Dropdown from "../components/ui/dropdown.astro";
+import type { ComponentProps } from "astro/types";
+import DisplayMenu, {
+    type DisplayEffect,
+} from "../components/sections/display/display-menu.astro";
+import DisplayRow from "../components/sections/display/display-row.astro";
 import SegmentedControl from "../components/ui/segmented-control.astro";
-import Select from "../components/ui/select.astro";
-import Toggle from "../components/ui/toggle.astro";
-import { OVERRIDES, overrideOptions } from "./overrides.ts";
 import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 
 /**
- * The gallery's page-wide settings: theme, default preview width,
- * spacing, radius and font size overrides, and effects. None of it needs JS -- each control is read through :has()
- * wherever it lives, so it keeps working while the dropdown is closed.
+ * The site's Display menu, with the gallery's own setting added: the default
+ * preview width. Like the rest of the menu it needs no JS, but it isn't kept
+ * across pages.
  */
+type Props = Pick<ComponentProps<typeof DisplayMenu>, "collapseBelow">;
 
-// Each value other than "default" needs a matching stylesheet in
-// src/styles/themes/, which switches on while its option is selected.
-const THEMES = [
-    { value: "default", label: "Default" },
-    { value: "ocean", label: "Ocean" },
-    { value: "gruvbox", label: "Gruvbox" },
-    { value: "nord", label: "Nord" },
-    { value: "catppuccin", label: "Catppuccin" },
-    { value: "solarized", label: "Solarized" },
-    { value: "dracula", label: "Dracula" },
-    { value: "rose-pine", label: "Rosé Pine" },
-    { value: "tokyo-night", label: "Tokyo Night" },
-    { value: "everforest", label: "Everforest" },
-];
-
-// Site-wide effects. Each is switched on by CSS that looks for its checked
-// [data-*-toggle] anywhere on the page.
-const EFFECTS = [
-    { label: "Crosshair", attr: "data-crosshair-toggle" },
-    { label: "Scanlines", attr: "data-scanlines-toggle" },
-    { label: "Signal", attr: "data-signal-toggle" },
-    { label: "Lift shadow", attr: "data-lift-shadow-toggle" },
-    { label: "Invert theme", attr: "data-theme-toggle" },
+// Every effect, where the front page has only some.
+const EFFECTS: DisplayEffect[] = [
+    { name: "crosshair", label: "Crosshair", key: "c", fine: true },
+    { name: "scanlines", label: "Scanlines", key: "s" },
+    { name: "signal", label: "Signal" },
+    { name: "lift-shadow", label: "Lift shadow" },
 ];
 ---
 
-<Dropdown
-    class="display-settings"
+<DisplayMenu
     id="display-settings"
-    label="Display"
-    icon="lucide:sliders-horizontal"
-    title="Display"
-    align="end"
+    effects={EFFECTS}
+    collapseBelow={Astro.props.collapseBelow}
 >
-    <div class="display-settings__row text-ui">
-        <label for="theme-select">Theme</label>
-        {/* Themes key off the selected <option> via :has(). */}
-        <Select
-            id="theme-select"
-            label="Theme"
-            options={THEMES}
-            data-theme-select
-        />
-    </div>
-
-    <div class="display-settings__row text-ui">
-        <span>Preview width</span>
+    <DisplayRow label="Preview width">
         <SegmentedControl
             name={PREVIEW_WIDTH_NAME}
             label="Default preview width"
@@ -67,59 +37,8 @@ const EFFECTS = [
             size="sm"
             variant="subtle"
         />
-    </div>
-
-    {OVERRIDES.map((override) => (
-        <div class="display-settings__row text-ui">
-            <span>{override.label}</span>
-            <SegmentedControl
-                name={override.name}
-                label={override.label}
-                options={overrideOptions(override)}
-                value="default"
-                size="sm"
-                variant="subtle"
-            />
-        </div>
-    ))}
-
-    <fieldset class="display-settings__effects">
-        <legend class="text-ui">Effects</legend>
-        {EFFECTS.map(({ label, attr }) => (
-            <Toggle {label} {...{ [attr]: true }}>
-                {label}
-            </Toggle>
-        ))}
-    </fieldset>
-</Dropdown>
-
-<style>
-.display-settings {
-    .display-settings__row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-md);
-        color: var(--color-text-muted);
-    }
-
-    .display-settings__effects {
-        display: grid;
-        gap: var(--space-sm);
-        margin: 0;
-        padding: var(--space-md) 0 0;
-        border: 0;
-        border-top: var(--border-width) solid var(--border-color);
-        min-width: 0;
-
-        legend {
-            float: left;
-            margin-bottom: var(--space-xs);
-            color: var(--color-text-muted);
-        }
-    }
-}
-</style>
+    </DisplayRow>
+</DisplayMenu>
 
 <script>
 /*

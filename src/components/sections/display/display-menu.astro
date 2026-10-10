@@ -1,0 +1,168 @@
+---
+import { OVERRIDES, overrideOptions } from "../../../styles/overrides.ts";
+import Dropdown from "../../ui/dropdown.astro";
+import Kbd from "../../ui/kbd.astro";
+import SegmentedControl from "../../ui/segmented-control.astro";
+import Toggle from "../../ui/toggle.astro";
+import DisplayRow from "./display-row.astro";
+import ThemePicker from "./theme-picker.astro";
+
+/**
+ * The page-wide display settings, in a dropdown: theme, the overrides in
+ * styles/overrides.ts (light or dark, spacing, radius, font size), and
+ * effects. None of it needs JS -- each control is read through :has()
+ * wherever it lives, so it works while the panel is closed, and the browser
+ * restores it on reload. With JS, the choices carry over to other pages (see
+ * lib/display.ts), and controls with a key get an Alt+Shift shortcut.
+ *
+ * Anything in the default slot goes between the look and the effects, for
+ * settings of the page's own: use DisplayRow, so they line up.
+ */
+export interface DisplayEffect {
+    /** Names the effect's hook, `data-<name>-toggle`, and its saved choice. */
+    name: string;
+    label: string;
+    /** A letter, pressed with Alt+Shift to flip the switch. */
+    key?: string;
+    checked?: boolean;
+    /** Hide the switch where the effect can't show, like the crosshair on touch. */
+    fine?: boolean;
+}
+
+interface Props {
+    /** Unique on the page. */
+    id: string;
+    effects: DisplayEffect[];
+    size?: "sm" | "default";
+    collapseBelow?: "30rem" | "48rem";
+    class?: string;
+}
+
+const { id, effects, size, collapseBelow, class: className } = Astro.props;
+---
+
+<Dropdown
+    class:list={["display-menu", className]}
+    {id}
+    label="Display"
+    icon="lucide:sliders-horizontal"
+    title="Display"
+    align="end"
+    {size}
+    {collapseBelow}
+>
+    <fieldset class="display-menu__group" data-persist data-shortcut="T">
+        <legend class="display-menu__heading text-ui">
+            Theme
+            <Kbd class="display-key">T</Kbd>
+        </legend>
+        <ThemePicker />
+    </fieldset>
+
+    {OVERRIDES.map((override) => (
+        <DisplayRow label={override.label} key={override.key} data-persist>
+            <SegmentedControl
+                name={override.name}
+                label={override.label}
+                options={overrideOptions(override)}
+                value={override.options[0].value}
+                size="sm"
+                variant="subtle"
+            />
+        </DisplayRow>
+    ))}
+
+    <slot />
+
+    <fieldset class="display-menu__group display-menu__effects" data-persist>
+        <legend class="display-menu__heading text-ui">Effects</legend>
+        {effects.map(({ name, label, key, checked, fine }) => (
+            <DisplayRow {key} {fine}>
+                <Toggle
+                    {label}
+                    {checked}
+                    {name}
+                    {...{ [`data-${name}-toggle`]: true }}
+                >
+                    {label}
+                </Toggle>
+            </DisplayRow>
+        ))}
+    </fieldset>
+
+    <p class="display-menu__hint text-meta">
+        <span>Shortcuts</span>
+        <Kbd keys={["Alt", "Shift", "key"]} />
+    </p>
+</Dropdown>
+
+<style>
+.display-menu {
+    .display-menu__group {
+        display: grid;
+        gap: var(--space-sm);
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    /* Ruled off from what's above, like a section of the panel. */
+    .display-menu__effects {
+        padding-top: var(--space-md);
+        border-top: var(--border-width) solid var(--border-color);
+    }
+
+    /* Floated, so the grid's gap applies below it like any other row. */
+    .display-menu__heading {
+        float: left;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        /* A legend shrinks to its text otherwise. */
+        width: 100%;
+        padding: 0;
+        color: var(--color-text-muted);
+    }
+
+    .display-menu__hint {
+        display: none;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        margin: 0;
+        color: var(--color-text-muted);
+    }
+
+    /*
+     * Key hints, here and in each DisplayRow. :global() as they sit on Kbd's
+     * root, which carries its own scope.
+     */
+    :global(.display-key) {
+        display: none;
+    }
+
+    /* Shortcuts need JS and a keyboard, and so do their hints. */
+    &[data-shortcuts] {
+        @media (hover: hover) and (pointer: fine) {
+            .display-menu__hint {
+                display: flex;
+            }
+
+            :global(.display-key) {
+                display: inline-block;
+            }
+        }
+    }
+}
+</style>
+
+<script>
+import { bindDisplayMenu } from "../../../lib/display.ts";
+import { bindShortcuts } from "../../../lib/shortcuts.ts";
+
+for (const menu of document.querySelectorAll<HTMLElement>(".display-menu")) {
+    bindDisplayMenu(menu);
+    bindShortcuts(menu);
+}
+</script>
