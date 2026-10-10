@@ -32,6 +32,7 @@ import type Heatmap from "../components/blocks/heatmap/heatmap.astro";
 import type MediaCard from "../components/blocks/media-card.astro";
 import type { DialogueNode } from "../components/blocks/message/dialogue.ts";
 import type Quote from "../components/blocks/quote.astro";
+import type Rack from "../components/blocks/rack/rack.astro";
 import type Radio from "../components/blocks/radio/radio.astro";
 import type Stat from "../components/blocks/stat.astro";
 import type EffectsBar from "../components/sections/effects-bar.astro";
@@ -362,6 +363,36 @@ export const projects: (ComponentProps<typeof MediaCard> & {
         ],
     },
 ];
+
+/** The homelab rack, and the ways requests take through it. */
+export const rack: ComponentProps<typeof Rack> = {
+    label: "rack-01",
+    units: [
+        { name: "core-sw", about: "48 × 10 GbE", kind: "switch" },
+        { name: "edge", about: "proxy · firewall · tls" },
+        { name: "app-01", about: "web · auth · chat" },
+        { name: "app-02", about: "photos · files · social" },
+        { name: "blank", kind: "blank" },
+        { name: "game-01", about: "minecraft · factorio" },
+        {
+            name: "db-01",
+            about: "postgres · redis · metrics",
+            kind: "storage",
+            height: 2,
+        },
+        { name: "nas", about: "media · backups", kind: "storage", height: 2 },
+    ],
+    flows: [
+        { name: "web", path: ["edge", "app-01", "db-01"], tone: "primary" },
+        { name: "chat", path: ["edge", "app-01", "db-01"], tone: "success" },
+        {
+            name: "photos",
+            path: ["edge", "app-02", "db-01", "nas"],
+            tone: "secondary",
+        },
+        { name: "game", path: ["edge", "game-01"], tone: "warning" },
+    ],
+};
 
 export const chat: DialogueNode = {
     messages: ["Hello, I'm Verity!", "Ask me anything... I know everything."],

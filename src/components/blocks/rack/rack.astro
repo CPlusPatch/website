@@ -1,0 +1,320 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import PauseButton from "../../ui/pause-button.astro";
+import type { RackFlow, RackUnit as Unit } from "./rack.ts";
+import RackUnit from "./rack-unit.astro";
+
+/**
+ * A server rack: a cabinet of units, top to bottom, with a cable manager
+ * down its side. The units under its first switch each get a cable from
+ * the back of it.
+ *
+ * With JS, traffic plays on it once scrolled into view: each of `flows` is a
+ * kind of request, with its colour in the key, going through the switch to
+ * the units on its path in turn. A button beside the key pauses it, and it
+ * starts paused under reduced motion. Without JS, the rack stands still.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    units: Unit[];
+    flows?: RackFlow[];
+    /** Names the rack, on its top and for screen readers. */
+    label: string;
+}
+
+const { units, flows = [], label, class: className, ...rest } = Astro.props;
+
+// Each unit's place, in rack units from the top
+let next = 0;
+const placed = units.map(({ kind = "server", height = 1, ...unit }) => {
+    const top = next;
+    next += height;
+    return { ...unit, kind, height, top };
+});
+
+// Cables from the switch to the units under it. The first unit's runs
+// innermost and leaves the switch lowest, so none cross.
+const hub = placed.find(({ kind }) => kind === "switch");
+const cabled = placed.filter(
+    ({ kind, top }) => hub && kind !== "blank" && top > hub.top,
+);
+
+// The key, one entry for each kind of request
+const key = [...new Map(flows.map((flow) => [flow.name, flow])).values()];
+---
+
+<figure
+    class:list={["rack", className]}
+    data-rack
+    data-flows={JSON.stringify(flows)}
+    style={`--cabled: ${cabled.length}; --switch: ${hub?.top ?? 0}`}
+    {...rest}
+>
+    <div class="rack__cabinet">
+        <div class="rack__cap" aria-hidden="true">
+            <span class="rack__plate">{label}</span>
+        </div>
+        <div class="rack__body">
+            <div class="rack__mount">
+                <ol class="rack__units" aria-label={label}>
+                    {placed.map((unit) => <RackUnit {...unit} />)}
+                </ol>
+                <div class="rack__cables" aria-hidden="true">
+                    {cabled.map(({ name, top, height }, i) => (
+                        <span
+                            class="rack__cable"
+                            data-cable={name}
+                            style={`--track: ${i}; --stack: ${cabled.length - 1 - i}; --unit: ${top + height / 2}`}
+                        ></span>
+                    ))}
+                </div>
+            </div>
+            <div class="rack__lane" aria-hidden="true"></div>
+        </div>
+        <div class="rack__plinth" aria-hidden="true"></div>
+    </div>
+    {/* Shown by the script, once there is something to pause. */}
+    <figcaption class="rack__footer text-meta" hidden data-rack-live>
+        <ul class="rack__key">
+            {key.map(({ name, tone = "primary" }) => (
+                <li class={`tone-${tone}`}>{name}</li>
+            ))}
+        </ul>
+        <PauseButton target=".rack" label="Pause traffic" />
+    </figcaption>
+</figure>
+
+<script>
+import { bindRack } from "./rack.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>("[data-rack]")) {
+    bindRack(root);
+}
+</script>
+
+<style>
+/*
+ * Racks are black steel whatever the theme, so the metal is mixed from black
+ * and a touch of the theme's muted grey: from the holes, through the
+ * cabinet (0), up to the edges that catch the light (3). The lights use the
+ * accent tier, made to glow against it. Red is kept for faults, so none
+ * show here. Its units draw with all of these.
+ */
+.rack {
+    --steel-hole: color-mix(in oklab, black 92%, var(--color-text-muted));
+    --steel-rail: color-mix(in oklab, black 84%, var(--color-text-muted));
+    --steel-0: color-mix(in oklab, black 78%, var(--color-text-muted));
+    --steel-1: color-mix(in oklab, black 64%, var(--color-text-muted));
+    --steel-2: color-mix(in oklab, black 50%, var(--color-text-muted));
+    --steel-3: color-mix(in oklab, black 25%, var(--color-text-muted));
+    --edge: color-mix(in oklab, white 18%, transparent);
+    --shade: rgb(0 0 0 / 0.5);
+    /* Layers over the metal: a sheen down from the top, and perforations. */
+    --metal: linear-gradient(
+        color-mix(in oklab, white 10%, transparent),
+        transparent 35%
+    );
+    --mesh:
+        radial-gradient(circle, var(--steel-hole) 0.1rem, transparent 0.12rem) 0
+        0 / 0.4rem 0.35rem,
+        radial-gradient(circle, var(--steel-hole) 0.1rem, transparent 0.12rem)
+        0.2rem 0.175rem / 0.4rem 0.35rem;
+    /* Printed on the metal: names, and the smaller print around them. */
+    --print: color-mix(in oklab, white 88%, var(--color-text-muted));
+    --print-muted: color-mix(in oklab, white 55%, var(--color-text-muted));
+    --led-power: var(--color-success-accent);
+    --led-activity: var(--color-warning-accent);
+    --copper: color-mix(
+        in oklab,
+        var(--color-secondary-accent) 45%,
+        var(--steel-3)
+    );
+
+    /* Sizes the units are drawn at, and the cables laid out from. */
+    --u: 2.5rem;
+    --rail: 0.5rem;
+    --ear: 1.25rem;
+    --pad: var(--space-sm);
+    --lane: 2.5rem;
+    --track-gap: 4px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-align: start;
+
+    @container (max-width: 30rem) {
+        --ear: 0.875rem;
+        --rail: 0.375rem;
+        --lane: 1.75rem;
+        --track-gap: 3px;
+    }
+}
+
+.rack__cabinet {
+    padding-inline: var(--space-sm);
+    background: var(--steel-0);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+}
+
+/* The top, vented, with the rack's name on a plate. */
+.rack__cap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.75rem;
+    margin-inline: calc(-1 * var(--space-sm));
+    background:
+        repeating-linear-gradient(
+            90deg,
+            var(--steel-hole) 0 0.75rem,
+            transparent 0 1rem
+        )
+        center / 70% 0.2rem no-repeat,
+        var(--metal),
+        var(--steel-1);
+    box-shadow: inset 0 1px 0 var(--edge);
+}
+
+.rack__plate {
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--space-sm);
+    background: var(--steel-0);
+    border: 1px solid var(--steel-3);
+    font: var(--type-meta);
+    letter-spacing: 0.1em;
+    color: var(--print-muted);
+    text-transform: uppercase;
+}
+
+.rack__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--lane);
+    padding-block: var(--space-sm);
+}
+
+/*
+ * The rails the units are screwed to, punched with three square holes a
+ * unit. Positioned, so the cables and packets are laid out from its corner.
+ */
+.rack__mount {
+    --hole:
+        conic-gradient(
+            from 270deg at 0.25rem 0.25rem,
+            var(--steel-hole) 25%,
+            transparent 0
+        )
+        0 calc(var(--u) / 6 - 0.125rem) / 0.25rem calc(var(--u) / 3) repeat-y;
+    --rail-fill:
+        linear-gradient(var(--steel-rail), var(--steel-rail)) 0 0 / var(--rail)
+        100% no-repeat;
+    position: relative;
+    padding-inline: var(--rail);
+    background: var(--hole), var(--hole), var(--rail-fill), var(--rail-fill);
+    background-position-x:
+        calc((var(--rail) - 0.25rem) / 2),
+        calc(100% - (var(--rail) - 0.25rem) / 2), left, right;
+}
+
+.rack__units {
+    display: flex;
+    flex-direction: column;
+}
+
+/*
+ * The cables, drawn over the units from the mount's corner: each out of the
+ * back of the switch, along to its own track in the cable manager, down it,
+ * and into the back of its unit. They leave the switch stacked, the
+ * outermost track's on top, so none cross.
+ */
+.rack__cables {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.rack__cable {
+    --from-y: calc(
+        (var(--switch) + 0.5) *
+        var(--u) +
+        (var(--stack) - (var(--cabled) - 1) / 2) *
+        3px
+    );
+    position: absolute;
+    top: var(--from-y);
+    left: calc(100% - var(--rail));
+    width: calc(
+        var(--rail) +
+        var(--space-xs) +
+        var(--track) *
+        var(--track-gap) +
+        2px
+    );
+    height: calc(var(--unit) * var(--u) - var(--from-y) + 1px);
+    border: solid var(--copper);
+    border-width: 2px 2px 2px 0;
+    border-radius: 0 0.375rem 0.375rem 0;
+}
+
+/* The cable manager, with a ring at every unit's top to hold the cables. */
+.rack__lane {
+    background:
+        repeating-linear-gradient(var(--steel-2) 0 2px, transparent 0 var(--u))
+        center top -1px / 60% 100% no-repeat;
+}
+
+/* Added by the script, which moves it along its cable. */
+:global(.rack__packet) {
+    position: absolute;
+    margin: -0.25rem 0 0 -0.25rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--tone-accent);
+    box-shadow: 0 0 0.5rem var(--tone-accent);
+}
+
+/* The base, standing on two feet. */
+.rack__plinth {
+    --foot: linear-gradient(var(--steel-0), var(--steel-0));
+    height: 1rem;
+    margin-inline: calc(-1 * var(--space-sm));
+    background:
+        linear-gradient(var(--steel-1), var(--steel-1)) top / 100% 50% no-repeat,
+        var(--foot) 1rem 100% / 2rem 50% no-repeat,
+        var(--foot) calc(100% - 1rem) 100% / 2rem 50% no-repeat;
+}
+
+/* A status bar along the foot of the cabinet. */
+.rack__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm) var(--space-md);
+    padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-sm);
+    background: var(--color-surface-raised);
+    border: var(--border-width) solid var(--border-color);
+    border-top: 0;
+}
+
+.rack__key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-md);
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+
+        &::before {
+            content: "";
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: var(--tone-accent);
+        }
+    }
+}
+</style>
