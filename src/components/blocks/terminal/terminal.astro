@@ -91,6 +91,18 @@ const prompt = promptFor(cwd);
         .terminal__output {
             color: var(--color-text-muted);
             white-space: pre;
+
+            /* Pictures drawn in blocks: rows touching, so pixels do too. */
+            &.terminal__art {
+                line-height: 1;
+                color: var(--color-text);
+                /*
+                 * Blocks rarely end on a whole device pixel, so neighbours
+                 * each half-cover the one they share, leaving a faint seam.
+                 * A hairline outline overlaps them by half a pixel instead.
+                 */
+                -webkit-text-stroke: 1px currentColor;
+            }
         }
     }
 
@@ -133,6 +145,7 @@ interface TerminalState {
     history: string[];
     cursor: number; // Index into history; history.length = live input
     draft: string; // In-progress input saved while browsing history
+    stop?: () => void; // Stops the program still running (see Program in terminal.ts)
 }
 
 // Keyed by root element so multiple terminals on the page can have independent state
@@ -156,6 +169,7 @@ const stateOf = (root: HTMLElement): TerminalState => {
     return state;
 };
 
+/** Adds a row for the command, and returns its output, for a program to fill. */
 const appendRow = (root: HTMLElement, command: string, output: string) => {
     const row = (
         root.querySelector<HTMLTemplateElement>(
@@ -164,10 +178,11 @@ const appendRow = (root: HTMLElement, command: string, output: string) => {
     ).content.cloneNode(true) as DocumentFragment;
     (row.querySelector(".terminal__command") as HTMLElement).textContent =
         command;
-    (row.querySelector(".terminal__output") as HTMLElement).textContent =
-        output;
+    const outputElement = row.querySelector(".terminal__output") as HTMLElement;
+    outputElement.textContent = output;
     (root.querySelector(".terminal__input") as HTMLElement).before(row);
     root.scrollTop = root.scrollHeight;
+    return outputElement;
 };
 
 document.addEventListener("keydown", (e) => {
@@ -181,14 +196,32 @@ document.addEventListener("keydown", (e) => {
 
     const state = stateOf(root);
 
+    // Like a shell: Ctrl+C stops what's running, rather than copying.
+    if (e.ctrlKey && e.key === "c" && state.stop) {
+        state.stop();
+        state.stop = undefined;
+        e.preventDefault();
+        return;
+    }
+
     switch (e.key) {
         case "Enter": {
             const command = field.value.trim();
             if (!command) return;
             field.value = "";
 
-            const output = run(command);
-            appendRow(root, command, output);
+            state.stop?.();
+            state.stop = undefined;
+            const result = run(command);
+            if (typeof result === "string") {
+                appendRow(root, command, result);
+            } else {
+                const stop = result(appendRow(root, command, ""), () => {
+                    // Unless it was stopped already, and another started.
+                    if (state.stop === stop) state.stop = undefined;
+                });
+                state.stop = stop;
+            }
 
             state.history.push(command);
             state.cursor = state.history.length;

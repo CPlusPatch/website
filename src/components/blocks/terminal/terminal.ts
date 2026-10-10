@@ -1,4 +1,5 @@
 import { shake, uwuify } from "../../../lib/page-effects.ts";
+import { badApple } from "./bad-apple.ts";
 
 export interface Entry {
     command: string;
@@ -8,24 +9,12 @@ export interface Entry {
 export const promptFor = (cwd: string): string =>
     `guest@cpluspatch.com:${cwd}$ `;
 
-export const run = (command: string): string => {
-    switch (command) {
-        case "fastfetch":
-        case "neofetch":
-            return neofetch();
-        case "whoami":
-            return whoami();
-        case "help":
-            return help();
-        case "uwu":
-            return uwu();
-        case "shake":
-            void shake();
-            return "*rumble*";
-        default:
-            return `bash: ${command}: command not found`;
-    }
-};
+/**
+ * A command that runs on after it returns, drawing into its output itself.
+ * It calls `done` when it finishes, and returns a function that stops it
+ * sooner, called on Ctrl+C or the next command.
+ */
+export type Program = (output: HTMLElement, done: () => void) => () => void;
 
 export const neofetch =
     (): string => `                            jessew@website
@@ -37,14 +26,6 @@ export const neofetch =
      \\ \\____/\\ \`\\___x___/   Packages: 6767 (jacman)
       \\/___/  '\\/__//__/    Shell: jash 0.22.1
                             Display (BROWSER): [Built-in]
-`;
-
-export const help = (): string => `Available commands:
-  fastfetch, neofetch  - Display system information
-  whoami               - Display the current user
-  help                 - Display this help message
-  uwu                  - Uwuify the page, or undo it
-  shake                - Shake the page
 `;
 
 export const whoami = (): string => "jessew";
@@ -62,3 +43,48 @@ export const uwu = (): string => {
     unUwu = uwuify();
     return "Evewything is uwu now (ᵘʷᵘ)";
 };
+
+/** Every command, in the order `help` lists them. */
+const commands: {
+    names: string[];
+    description: string;
+    run: () => string | Program;
+}[] = [
+    {
+        names: ["fastfetch", "neofetch"],
+        description: "Display system information",
+        run: neofetch,
+    },
+    { names: ["whoami"], description: "Display the current user", run: whoami },
+    {
+        names: ["help"],
+        description: "Display this help message",
+        run: () => help(),
+    },
+    { names: ["uwu"], description: "Uwuify the page, or undo it", run: uwu },
+    {
+        names: ["shake"],
+        description: "Shake the page",
+        run: () => {
+            void shake();
+            return "*rumble*";
+        },
+    },
+    {
+        names: ["badapple"],
+        description: "Play Bad Apple!!, with sound (Ctrl+C to stop)",
+        run: () => badApple,
+    },
+];
+
+export const help = (): string =>
+    `Available commands:\n${commands
+        .map(
+            ({ names, description }) =>
+                `  ${names.join(", ").padEnd(21)}- ${description}\n`,
+        )
+        .join("")}`;
+
+export const run = (command: string): string | Program =>
+    commands.find(({ names }) => names.includes(command))?.run() ??
+    `bash: ${command}: command not found`;
