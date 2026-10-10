@@ -47,6 +47,7 @@ deno run check      # lint, typecheck and tests (same as CI)
 deno run lint:fix   # format and autofix
 deno run theme      # regenerate the theme colours
 deno run bad-apple  # regenerate the terminal's Bad Apple!! (needs ffmpeg and yt-dlp)
+deno run movie <file or URL>  # a colour film for the terminal's `movie` (kept out of git)
 ```
 
 ## Layout
