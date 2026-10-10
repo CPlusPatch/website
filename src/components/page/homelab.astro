@@ -1,0 +1,23 @@
+---
+import { rack } from "../../data/home.ts";
+import BlueprintFrame from "../blocks/blueprint-frame.astro";
+import Rack from "../blocks/rack/rack.astro";
+import Section from "../sections/section.astro";
+---
+
+<Section
+    id="homelab"
+    class="wash"
+    title="My homelab"
+    align="center"
+    style="--wash-at: 50% 60%"
+>
+    <p class="lead">Roughly what I self-host, squeezed into one rack.</p>
+    <BlueprintFrame
+        label="fig. 02"
+        meta="simulated traffic"
+        style="max-width: 38rem"
+    >
+        <Rack {...rack} />
+    </BlueprintFrame>
+</Section>

@@ -5,7 +5,7 @@ import MediaCard from "../blocks/media-card.astro";
 import Section from "../sections/section.astro";
 ---
 
-<Section id="projects" title="Projects">
+<Section id="projects" title="Projects" alt>
     <CardGrid>
         {projects.map(({ body, ...project }) => (
             <MediaCard {...project}>
