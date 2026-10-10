@@ -4,9 +4,34 @@
  */
 import type { ComponentProps } from "astro/types";
 import componentScreenshot from "../../docs/assets/gallery-dark.webp";
+import liberTeaCover from "../audio/radio/a-cup-of-liber-tea.jpg";
+import liberTea from "../audio/radio/a-cup-of-liber-tea.ogg";
+import ariaMathCover from "../audio/radio/aria-math.jpg";
+import ariaMath from "../audio/radio/aria-math.ogg";
+import othersideCover from "../audio/radio/otherside.jpg";
+import otherside from "../audio/radio/otherside.ogg";
+import pigstepCover from "../audio/radio/pigstep.jpg";
+import pigstep from "../audio/radio/pigstep.ogg";
+import stillAliveCover from "../audio/radio/still-alive-radio-mix-clean.jpg";
+import stillAlive from "../audio/radio/still-alive-radio-mix-clean.ogg";
+import swedenCover from "../audio/radio/sweden.jpg";
+import sweden from "../audio/radio/sweden.ogg";
+import cyberGrindCover from "../audio/radio/the-cyber-grind.jpg";
+import cyberGrind from "../audio/radio/the-cyber-grind.ogg";
+import timeGoFishingCover from "../audio/radio/time-go-fishing.jpg";
+import timeGoFishing from "../audio/radio/time-go-fishing.ogg";
+import ultraChurchCover from "../audio/radio/ultrachurch.jpg";
+import ultraChurch from "../audio/radio/ultrachurch.ogg";
+import unstoppableForceCover from "../audio/radio/unstoppable-force.jpg";
+import unstoppableForce from "../audio/radio/unstoppable-force.ogg";
+import wantYouGoneCover from "../audio/radio/want-you-gone.jpg";
+import wantYouGone from "../audio/radio/want-you-gone.ogg";
+import warWithoutReasonCover from "../audio/radio/war-without-reason.jpg";
+import warWithoutReason from "../audio/radio/war-without-reason.ogg";
 import type MediaCard from "../components/blocks/media-card.astro";
 import type { DialogueNode } from "../components/blocks/message/dialogue.ts";
 import type Quote from "../components/blocks/quote.astro";
+import type Radio from "../components/blocks/radio/radio.astro";
 import type Stat from "../components/blocks/stat.astro";
 import type EffectsBar from "../components/sections/effects-bar.astro";
 import flaviScreenshot from "../images/assets/flavi-screenshot.png";
@@ -426,5 +451,71 @@ export const socials = [
         name: "Matrix",
         href: "https://matrix.to/#/@jesse:cpluspatch.dev",
         icon: "matrix",
+    },
+];
+
+/** The music corner window's radio, played in this order. */
+export const radioTracks: ComponentProps<typeof Radio>["tracks"] = [
+    { src: sweden, cover: swedenCover, title: "Sweden", artist: "C418" },
+    { src: ariaMath, cover: ariaMathCover, title: "Aria Math", artist: "C418" },
+    {
+        src: otherside,
+        cover: othersideCover,
+        title: "otherside",
+        artist: "Lena Raine",
+    },
+    {
+        src: pigstep,
+        cover: pigstepCover,
+        title: "Pigstep",
+        artist: "Lena Raine",
+    },
+    {
+        src: timeGoFishing,
+        cover: timeGoFishingCover,
+        title: "Time Go Fishing",
+        artist: "Daniel Pemberton",
+    },
+    {
+        src: liberTea,
+        cover: liberTeaCover,
+        title: "A Cup of Liber-Tea",
+        artist: "Wilbert Roget, II",
+    },
+    {
+        src: unstoppableForce,
+        cover: unstoppableForceCover,
+        title: "Unstoppable Force",
+        artist: "Heaven Pierce Her",
+    },
+    {
+        src: warWithoutReason,
+        cover: warWithoutReasonCover,
+        title: "War Without Reason",
+        artist: "Heaven Pierce Her",
+    },
+    {
+        src: cyberGrind,
+        cover: cyberGrindCover,
+        title: "The Cyber Grind",
+        artist: "Meganeko",
+    },
+    {
+        src: ultraChurch,
+        cover: ultraChurchCover,
+        title: "UltraChurch",
+        artist: "Keygen Church",
+    },
+    {
+        src: stillAlive,
+        cover: stillAliveCover,
+        title: "Still Alive (Radio Mix)",
+        artist: "Aperture Science Psychoacoustic Laboratories",
+    },
+    {
+        src: wantYouGone,
+        cover: wantYouGoneCover,
+        title: "Want You Gone",
+        artist: "Aperture Science Psychoacoustic Laboratories",
     },
 ];

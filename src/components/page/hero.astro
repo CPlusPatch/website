@@ -3,18 +3,13 @@ import { details } from "../../data/home.ts";
 import BlueprintFrame from "../blocks/blueprint-frame.astro";
 import Terminal from "../blocks/terminal/terminal.astro";
 import { neofetch } from "../blocks/terminal/terminal.ts";
-import Badge from "../ui/badge.astro";
 import IconList from "../ui/icon-list.astro";
 import ScrollCue from "../ui/scroll-cue.astro";
-import Status from "../ui/status.astro";
 ---
 
 <section class="section hero" aria-labelledby="hero-title">
     <div class="container hero__inner">
         <div class="hero__intro">
-            <Badge variant="outline" tone="success">
-                <Status>Now playing: Portal 2 OST</Status>
-            </Badge>
             <p class="hero__eyebrow text-meta">
                 <span class="accent">//</span>{" "}jesse@website:~$
             </p>

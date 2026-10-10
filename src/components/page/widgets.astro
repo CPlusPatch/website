@@ -1,9 +1,8 @@
 ---
-import stillAlive from "../../audio/Portal2-3x26_Still_Alive_Radio Mix_Clean.ogg";
-import { chat } from "../../data/home.ts";
+import { chat, radioTracks } from "../../data/home.ts";
 import verity from "../../images/avatars/verity.png";
-import AudioPlayer from "../blocks/audio-player.astro";
 import InteractiveMessage from "../blocks/message/interactive-message.astro";
+import Radio from "../blocks/radio/radio.astro";
 import CornerWindow from "../ui/corner-window.astro";
 ---
 
@@ -17,11 +16,7 @@ import CornerWindow from "../ui/corner-window.astro";
     variant="outline"
     tone="neutral"
 >
-    <AudioPlayer
-        src={stillAlive}
-        title="Still Alive (Radio Mix)"
-        framed={false}
-    />
+    <Radio tracks={radioTracks} name="Jesse FM" framed={false} />
 </CornerWindow>
 
 <CornerWindow
