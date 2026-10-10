@@ -63,7 +63,8 @@ website/
 │   └── styles/         tokens, themes and global CSS
 ├── packages/
 │   ├── palette/        theme colour generator
-│   └── destructor/     the gravity gun
+│   ├── destructor/     the gravity gun
+│   └── flipbook/       turns a video into text-art frames
 └── docs/               guides, linked below
 ```
 

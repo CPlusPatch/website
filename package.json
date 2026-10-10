@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "@cpluspatch/destructor": "workspace:*",
+        "@cpluspatch/flipbook": "workspace:*",
         "@cpluspatch/palette": "workspace:*",
         "@iconify-json/lucide": "^1.2.138",
         "astro": "^7.3.5",
