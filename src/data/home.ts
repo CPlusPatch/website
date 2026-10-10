@@ -35,7 +35,7 @@ import type Quote from "../components/blocks/quote.astro";
 import type Rack from "../components/blocks/rack/rack.astro";
 import type Radio from "../components/blocks/radio/radio.astro";
 import type Stat from "../components/blocks/stat.astro";
-import type EffectsBar from "../components/sections/effects-bar.astro";
+import type { DisplayEffect } from "../components/sections/display/display-menu.astro";
 import flaviScreenshot from "../images/assets/flavi-screenshot.png";
 import joinMastodonScreenshot from "../images/assets/join-mastodon.de_en.webp";
 import kitsuScreenshot from "../images/assets/kitsudotlife.png";
@@ -64,20 +64,9 @@ export const navLinks = [
     },
 ];
 
-export const effects: ComponentProps<typeof EffectsBar>["effects"] = [
-    {
-        label: "Scanlines",
-        attr: "data-scanlines-toggle",
-        key: "s",
-        checked: true,
-    },
-    {
-        label: "Crosshair",
-        attr: "data-crosshair-toggle",
-        key: "c",
-        fine: true,
-    },
-    { label: "Invert theme", attr: "data-theme-toggle", key: "i" },
+export const effects: DisplayEffect[] = [
+    { name: "scanlines", label: "Scanlines", key: "s", checked: true },
+    { name: "crosshair", label: "Crosshair", key: "c", fine: true },
 ];
 
 export const details = [

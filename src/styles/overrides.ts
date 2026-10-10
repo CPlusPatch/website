@@ -1,20 +1,24 @@
 import type { SegmentedOption } from "../components/ui/segmented-control.astro";
 
 /**
- * Gallery overrides for the theme's spacing, radius and font size tokens.
- * Each control is a radio group read through :has(), like the theme select;
- * the "default" option sets nothing, so the theme's own values apply. As
- * with PREVIEW_CSS, the options and the CSS are built from one list.
+ * Overrides for the theme's colour scheme, spacing, radius and font size,
+ * picked in the Display menu. Each control is a radio group read through
+ * :has(), like the theme picker; the first option is the default and sets
+ * nothing, so the theme's own values apply. The options and the CSS are
+ * built from one list.
  */
 
 interface Override {
-    /** Radio group name. */
+    /** Radio group name, and the choice's name when saved. */
     name: string;
     label: string;
+    /** A letter, pressed with Alt+Shift to move on to the next option. */
+    key?: string;
     options: {
         value: string;
         label: string;
-        tokens?: Record<string, string>;
+        /** Custom properties, or any other property set on <html>. */
+        declarations?: Record<string, string>;
     }[];
 }
 
@@ -44,12 +48,38 @@ const scale = (factor: number) => ({
 
 export const OVERRIDES: Override[] = [
     {
+        name: "scheme",
+        label: "Mode",
+        key: "M",
+        options: [
+            { value: "auto", label: "Auto" },
+            {
+                value: "light",
+                label: "Light",
+                declarations: { "color-scheme": "light" },
+            },
+            {
+                value: "dark",
+                label: "Dark",
+                declarations: { "color-scheme": "dark" },
+            },
+        ],
+    },
+    {
         name: "override-spacing",
         label: "Spacing",
         options: [
             { value: "default", label: "Theme" },
-            { value: "compact", label: "Compact", tokens: scale(0.75).spacing },
-            { value: "roomy", label: "Roomy", tokens: scale(1.25).spacing },
+            {
+                value: "compact",
+                label: "Compact",
+                declarations: scale(0.75).spacing,
+            },
+            {
+                value: "roomy",
+                label: "Roomy",
+                declarations: scale(1.25).spacing,
+            },
         ],
     },
     {
@@ -57,12 +87,20 @@ export const OVERRIDES: Override[] = [
         label: "Radius",
         options: [
             { value: "default", label: "Theme" },
-            { value: "square", label: "Square", tokens: { "--radius": "0" } },
-            { value: "soft", label: "Soft", tokens: { "--radius": "0.25rem" } },
+            {
+                value: "square",
+                label: "Square",
+                declarations: { "--radius": "0" },
+            },
+            {
+                value: "soft",
+                label: "Soft",
+                declarations: { "--radius": "0.25rem" },
+            },
             {
                 value: "round",
                 label: "Round",
-                tokens: { "--radius": "0.75rem" },
+                declarations: { "--radius": "0.75rem" },
             },
         ],
     },
@@ -71,8 +109,8 @@ export const OVERRIDES: Override[] = [
         label: "Font size",
         options: [
             { value: "default", label: "Theme" },
-            { value: "small", label: "Small", tokens: scale(0.875).font },
-            { value: "large", label: "Large", tokens: scale(1.125).font },
+            { value: "small", label: "Small", declarations: scale(0.875).font },
+            { value: "large", label: "Large", declarations: scale(1.125).font },
         ],
     },
 ];
@@ -84,14 +122,19 @@ export const overrideOptions = (override: Override): SegmentedOption[] =>
  * `html:root` and :has() give a specificity above a theme's own
  * `html:has([data-theme-select] ...)` block, so an override wins whichever
  * theme is selected. Component-level declarations still win, as intended.
- * Inlined by the page, so flat rather than nested.
+ *
+ * Each also applies by `data-<name>` on <html>, as the head script sets it
+ * from a choice saved on another page (see layouts/base.astro). :is() takes
+ * the :has() form's specificity for both, so either beats any theme.
+ *
+ * Inlined by the layout, so flat rather than nested.
  */
 export const OVERRIDES_CSS = OVERRIDES.flatMap(({ name, options }) =>
-    options.flatMap(({ value, tokens }) =>
-        tokens
+    options.flatMap(({ value, declarations }) =>
+        declarations
             ? [
-                  `html:root:has(input[name="${name}"][value="${value}"]:checked) { ${Object.entries(
-                      tokens,
+                  `html:root:is([data-${name}="${value}"], :has(input[name="${name}"][value="${value}"]:checked)) { ${Object.entries(
+                      declarations,
                   )
                       .map(([k, v]) => `${k}: ${v};`)
                       .join(" ")} }`,

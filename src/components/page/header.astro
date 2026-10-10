@@ -1,13 +1,20 @@
 ---
 import { contact, effects, navLinks } from "../../data/home.ts";
-import EffectsBar from "../sections/effects-bar.astro";
+import DisplayMenu from "../sections/display/display-menu.astro";
 import Navbar from "../sections/navbar.astro";
 ---
 
-<EffectsBar {effects} />
 <Navbar
     sticky
     title="Jesse"
     links={navLinks}
     finalLink={{ href: contact, label: "Contact" }}
-/>
+>
+    <DisplayMenu
+        slot="actions"
+        id="display"
+        {effects}
+        size="sm"
+        collapseBelow="48rem"
+    />
+</Navbar>
