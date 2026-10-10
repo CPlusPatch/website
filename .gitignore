@@ -26,3 +26,6 @@ pnpm-debug.log*
 # syncthing temp files
 .syncthing.*
 *.tmp
+
+# a colour film for the terminal, made by `deno run movie`; often not ours to publish
+src/data/movie/

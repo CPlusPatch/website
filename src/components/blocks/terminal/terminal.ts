@@ -45,6 +45,18 @@ export const uwu = (): string => {
     return "Evewything is uwu now (ᵘʷᵘ)";
 };
 
+/**
+ * The film made by `deno run movie`, if there is one. It is gitignored, so a
+ * checkout without it builds fine, just without the `movie` command.
+ */
+const movie: string | undefined = Object.values(
+    import.meta.glob<string>("../../../data/movie/video.webm", {
+        query: "?url",
+        import: "default",
+        eager: true,
+    }),
+)[0];
+
 /** Every command, in the order `help` lists them. */
 const commands: {
     names: string[];
@@ -76,6 +88,15 @@ const commands: {
         description: "Play Bad Apple!!, with sound (Ctrl+C to stop)",
         run: () => playVideo(badApple, "Bad Apple!!"),
     },
+    ...(movie
+        ? [
+              {
+                  names: ["movie"],
+                  description: "Play a movie, in colour (Ctrl+C to stop)",
+                  run: () => playVideo(movie, "the movie"),
+              },
+          ]
+        : []),
 ];
 
 export const help = (): string =>
