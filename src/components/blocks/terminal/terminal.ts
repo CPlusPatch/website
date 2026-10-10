@@ -1,5 +1,7 @@
 import badApple from "../../../data/bad-apple/video.webm?url";
+import { currentTheme, setTheme } from "../../../lib/display.ts";
 import { shake, uwuify } from "../../../lib/page-effects.ts";
+import { THEMES } from "../../../styles/themes/index.ts";
 import { playVideo } from "./video.ts";
 
 export interface Entry {
@@ -50,6 +52,21 @@ export const CLEAR = Symbol("clear");
 
 export type Result = string | Program | typeof CLEAR;
 
+/** Lists the themes, or switches to one, as the Display menu would. */
+export const theme = ([name]: string[]): string => {
+    if (!name) {
+        const current = currentTheme();
+        return `Usage: theme <name>\n\n${THEMES.map(
+            ({ value, label }) =>
+                `${value === current ? "*" : " "} ${value.padEnd(13)}${label}\n`,
+        ).join("")}`;
+    }
+    const picked = setTheme(name);
+    return picked
+        ? `Switched to ${picked.label}.`
+        : `theme: ${name}: no such theme`;
+};
+
 /**
  * The film for the `movie` command: the one `deno run movie` made, which is
  * gitignored, or else one hosted elsewhere at PUBLIC_MOVIE_URL, as CI sets.
@@ -68,7 +85,7 @@ const movie: string | undefined =
 const commands: {
     names: string[];
     description: string;
-    run: () => Result;
+    run: (args: string[]) => Result;
 }[] = [
     {
         names: ["fastfetch", "neofetch"],
@@ -82,6 +99,11 @@ const commands: {
         run: () => help(),
     },
     { names: ["clear"], description: "Clear the terminal", run: () => CLEAR },
+    {
+        names: ["theme"],
+        description: "List the themes, or switch to one",
+        run: theme,
+    },
     { names: ["uwu"], description: "Uwuify the page, or undo it", run: uwu },
     {
         names: ["shake"],
@@ -115,6 +137,10 @@ export const help = (): string =>
         )
         .join("")}`;
 
-export const run = (command: string): Result =>
-    commands.find(({ names }) => names.includes(command))?.run() ??
-    `bash: ${command}: command not found`;
+export const run = (line: string): Result => {
+    const [command, ...args] = line.split(/\s+/);
+    return (
+        commands.find(({ names }) => names.includes(command))?.run(args) ??
+        `bash: ${command}: command not found`
+    );
+};

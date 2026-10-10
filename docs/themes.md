@@ -2,7 +2,7 @@
 
 All colours are CSS variables, so a theme is basically a stylesheet that overrides them. Themes support both light and dark mode.
 
-To use a theme, set `data-theme` on the `<html>` element (e.g. `data-theme="nord"`), and `data-scheme="light"` or `"dark"` to force one mode. Visitors can also switch both from the Display menu in the navbar (or the gallery's bar). With JS, their choice carries over to other pages.
+To use a theme, set `data-theme` on the `<html>` element (e.g. `data-theme="nord"`), and `data-scheme="light"` or `"dark"` to force one mode. Visitors can also switch both from the Display menu in the navbar (or the gallery's bar), or with `theme <name>` in the front page's terminal. With JS, their choice carries over to other pages.
 
 ## Which colour to use
 
