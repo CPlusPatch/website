@@ -1,4 +1,4 @@
-import { setPaused } from "../../ui/pause-button.ts";
+import { playWhileVisible } from "../../ui/pause-button.ts";
 import { life } from "./life.ts";
 
 /** Generations a second: slow enough to follow a glider. */
@@ -29,34 +29,10 @@ export const bindHeatmap = (root: HTMLElement) => {
         }
     };
 
-    let visible = false;
-    let timer = 0;
-    const playing = () => visible && !root.hasAttribute("data-paused");
-    const play = () => {
-        if (playing() && !timer) {
-            timer = window.setInterval(() => draw(next()), 1000 / FPS);
-        } else if (!playing() && timer) {
-            clearInterval(timer);
-            timer = 0;
-        }
-    };
-
-    // Moving content needs a way to stop it, and reduced motion starts there.
-    const pause = root.querySelector<HTMLElement>("[data-heatmap-pause]");
-    const button = pause?.querySelector<HTMLElement>("[data-pause-target]");
-    if (pause) pause.hidden = false;
-    if (
-        button &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-        setPaused(button, true);
-    }
-
-    new MutationObserver(play).observe(root, {
-        attributeFilter: ["data-paused"],
-    });
-    new IntersectionObserver(([entry]) => {
-        visible = entry.isIntersecting;
-        play();
-    }).observe(root);
+    playWhileVisible(
+        root,
+        root.querySelector("[data-heatmap-pause]"),
+        1000 / FPS,
+        () => draw(next()),
+    );
 };
