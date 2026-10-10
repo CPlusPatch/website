@@ -322,12 +322,24 @@ export const chat: DialogueNode = {
                     {
                         label: "Paris.",
                         reply: "Oui oui oui, it is Paris.",
-                        next: { messages: ["Correct!"] },
+                        next: {
+                            messages: ["What does the cow say?"],
+                            options: [
+                                {
+                                    label: "Moo.",
+                                    reply: "Oh moo moo moo",
+                                    next: { messages: ["I speak that too!"] },
+                                },
+                                {
+                                    label: "Bing bong.",
+                                    next: { messages: ["Try again."] },
+                                },
+                            ],
+                        },
                     },
                     {
                         label: "Idk",
-                        reply: "It's Paris, silly.",
-                        next: { messages: ["Correct!"] },
+                        next: { messages: ["You're no fun."] },
                     },
                 ],
             },
@@ -337,8 +349,8 @@ export const chat: DialogueNode = {
             next: {
                 action: "shake",
                 messages: [
-                    "*shake shake shake*",
                     "I guess you could say they're pretty fat.",
+                    "*shake shake shake*",
                 ],
                 options: [
                     {
@@ -350,6 +362,45 @@ export const chat: DialogueNode = {
                         next: {
                             messages: [
                                 "Oops sorry *burps*, I'm very gassy today.",
+                            ],
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            label: "Can you talk cuter?",
+            next: {
+                action: "uwuify",
+                messages: ["Of course! Is this better?"],
+                options: [
+                    {
+                        label: "Much better",
+                        next: { messages: ["Hehe, thank you!"] },
+                    },
+                    {
+                        label: "Please stop",
+                        next: {
+                            messages: ["No."],
+                            options: [
+                                {
+                                    label: "I said stop!",
+                                    next: {
+                                        action: "swear",
+                                        messages: [
+                                            "You want something else?",
+                                            "Fine. You asked for it.",
+                                        ],
+                                        options: [
+                                            {
+                                                label: "Language!",
+                                                next: {
+                                                    messages: ["You asked."],
+                                                },
+                                            },
+                                        ],
+                                    },
+                                },
                             ],
                         },
                     },
