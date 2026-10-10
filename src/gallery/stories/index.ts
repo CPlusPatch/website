@@ -16,6 +16,7 @@ import { destructor } from "./destructor.ts";
 import { dropdowns } from "./dropdowns.ts";
 import { figures } from "./figures.ts";
 import { forms } from "./forms.ts";
+import { heatmap } from "./heatmap.ts";
 import { iconList } from "./icon-list.ts";
 import { kbd } from "./kbd.ts";
 import { logos } from "./logos.ts";
@@ -48,6 +49,7 @@ export const groups: StoryGroup[] = [
     ...attachments,
     ...quotes,
     ...stats,
+    ...heatmap,
     ...iconList,
     ...masonry,
     ...accordion,
