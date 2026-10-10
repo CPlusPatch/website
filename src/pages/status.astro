@@ -1,0 +1,63 @@
+---
+import { Icon } from "astro-icon/components";
+import StatusBoard from "../components/blocks/status-board/status-board.astro";
+import { status } from "../data/status.ts";
+import Layout from "../layouts/base.astro";
+---
+
+{/* The status board on its own, filling the screen, without the navbar. */}
+<Layout
+    title="Status"
+    description="Whether the services I self-host are up, live from my servers' monitoring."
+>
+    <main id="main" class="status-page">
+        <header class="status-page__bar">
+            <h1 class="status-page__title text-heading">Status</h1>
+            <a class="status-page__back text-ui" href="/">
+                <Icon name="lucide:arrow-left" aria-hidden="true" />
+                cpluspatch.com
+            </a>
+        </header>
+        <StatusBoard {...status} fill class="status-page__board">
+            Live from Prometheus
+        </StatusBoard>
+    </main>
+</Layout>
+
+<style>
+/* At least the screen's height, the board filling what the bar leaves. */
+.status-page {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+
+    .status-page__bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-xs) var(--space-md);
+    }
+
+    .status-page__title {
+        margin: 0;
+    }
+
+    .status-page__back {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        color: var(--color-text-muted);
+
+        &:hover {
+            color: var(--color-text);
+        }
+    }
+
+    .status-page__board {
+        flex: 1;
+    }
+}
+</style>

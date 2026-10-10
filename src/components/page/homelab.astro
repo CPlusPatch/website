@@ -1,7 +1,9 @@
 ---
+import { Icon } from "astro-icon/components";
 import { status } from "../../data/status.ts";
 import StatusBoard from "../blocks/status-board/status-board.astro";
 import Section from "../sections/section.astro";
+import Button from "../ui/button.astro";
 ---
 
 <Section
@@ -15,4 +17,14 @@ import Section from "../sections/section.astro";
     <StatusBoard {...status} style="max-width: 48rem">
         Live from Prometheus
     </StatusBoard>
+    <Button href="/status/" variant="outline" class="homelab__more">
+        <Icon name="lucide:activity" aria-hidden="true" />
+        Full status page
+    </Button>
 </Section>
+
+<style>
+.homelab__more {
+    margin-top: var(--space-md);
+}
+</style>
