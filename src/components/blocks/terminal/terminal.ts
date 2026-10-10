@@ -1,3 +1,5 @@
+import { shake, uwuify } from "../../../lib/page-effects.ts";
+
 export interface Entry {
     command: string;
     output: string;
@@ -19,6 +21,11 @@ export const run = (command: string): string => {
             return whoami();
         case "help":
             return help();
+        case "uwu":
+            return uwu();
+        case "shake":
+            void shake();
+            return "*rumble*";
         default:
             return `bash: ${command}: command not found`;
     }
@@ -40,6 +47,22 @@ export const help = (): string => `Available commands:
   fastfetch, neofetch  - Display system information
   whoami               - Display the current user
   help                 - Display this help message
+  uwu                  - Uwuify the page, or undo it
+  shake                - Shake the page
 `;
 
 export const whoami = (): string => "jessew";
+
+/** Undoes the page's uwuification, while it's on. */
+let unUwu: (() => void) | undefined;
+
+/** Uwuifies the whole page, or puts it back if it already is. */
+export const uwu = (): string => {
+    if (unUwu) {
+        unUwu();
+        unUwu = undefined;
+        return "Back to normal.";
+    }
+    unUwu = uwuify();
+    return "Evewything is uwu now (ᵘʷᵘ)";
+};
