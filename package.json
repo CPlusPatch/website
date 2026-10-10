@@ -20,13 +20,12 @@
         "typecheck": "astro check",
         "theme": "deno run --allow-read --allow-write=src/styles/themes packages/palette/src/cli.ts src/styles/themes/palette.config.ts",
         "theme:check": "deno run --allow-read packages/palette/src/cli.ts src/styles/themes/palette.config.ts --check",
-        "frames": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/flipbook/src/cli.ts https://www.youtube.com/watch?v=FtutLA63Cp8 --out src/data/bad-apple",
+        "bad-apple": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/flipbook/src/cli.ts https://www.youtube.com/watch?v=FtutLA63Cp8 --columns 48 --rows 36 --audio-bitrate 24 --out src/data/bad-apple",
         "test": "deno test packages",
         "check": "biome check . && astro check && deno run theme:check && deno run test"
     },
     "dependencies": {
         "@cpluspatch/destructor": "workspace:*",
-        "@cpluspatch/flipbook": "workspace:*",
         "@cpluspatch/palette": "workspace:*",
         "@iconify-json/lucide": "^1.2.138",
         "astro": "^7.3.5",

@@ -92,16 +92,26 @@ const prompt = promptFor(cwd);
             color: var(--color-text-muted);
             white-space: pre;
 
-            /* Pictures drawn in blocks: rows touching, so pixels do too. */
-            &.terminal__art {
-                line-height: 1;
-                color: var(--color-text);
-                /*
-                 * Blocks rarely end on a whole device pixel, so neighbours
-                 * each half-cover the one they share, leaving a faint seam.
-                 * A hairline outline overlaps them by half a pixel instead.
-                 */
-                -webkit-text-stroke: 1px currentColor;
+            /*
+             * A picture, from video.ts: a ▀ a cell, two square pixels
+             * tall, both halves painted here rather than by the glyph,
+             * whose shape depends on the fallback font that draws it.
+             */
+            &.terminal__screen {
+                line-height: 0;
+
+                .terminal__pixel {
+                    display: inline-block;
+                    vertical-align: top;
+                    width: 1ch;
+                    height: 2ch;
+                    color: transparent;
+                    background: linear-gradient(
+                        to bottom,
+                        var(--top, #000) 50%,
+                        var(--bottom, #000) 50%
+                    );
+                }
             }
         }
     }
