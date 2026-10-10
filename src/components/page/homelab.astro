@@ -1,7 +1,6 @@
 ---
-import { rack } from "../../data/home.ts";
-import BlueprintFrame from "../blocks/blueprint-frame.astro";
-import Rack from "../blocks/rack/rack.astro";
+import { status } from "../../data/status.ts";
+import StatusBoard from "../blocks/status-board/status-board.astro";
 import Section from "../sections/section.astro";
 ---
 
@@ -12,12 +11,8 @@ import Section from "../sections/section.astro";
     align="center"
     style="--wash-at: 50% 60%"
 >
-    <p class="lead">Roughly what I self-host, squeezed into one rack.</p>
-    <BlueprintFrame
-        label="fig. 02"
-        meta="simulated traffic"
-        style="max-width: 38rem"
-    >
-        <Rack {...rack} />
-    </BlueprintFrame>
+    <p class="lead">What I self-host, and whether it's up right now.</p>
+    <StatusBoard {...status} style="max-width: 48rem">
+        Live from Prometheus
+    </StatusBoard>
 </Section>
