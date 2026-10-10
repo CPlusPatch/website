@@ -1,7 +1,11 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
-import Button, { type ButtonTone, type ButtonVariant } from "./button.astro";
+import Button, {
+    type ButtonSize,
+    type ButtonTone,
+    type ButtonVariant,
+} from "./button.astro";
 
 /**
  * A button that opens a panel of anything in the default slot. Built on the
@@ -26,6 +30,13 @@ interface Props extends HTMLAttributes<"div"> {
     align?: "start" | "end";
     variant?: ButtonVariant;
     tone?: ButtonTone;
+    /** The button's size: one of the text sizes, as it always has a label. */
+    size?: Extract<ButtonSize, "sm" | "default" | "lg">;
+    /**
+     * Below this container width, the button drops its chevron and shows
+     * its label to screen readers only, leaving the icon.
+     */
+    collapseBelow?: "30rem" | "48rem";
 }
 
 const {
@@ -36,16 +47,26 @@ const {
     align = "start",
     variant = "outline",
     tone = "neutral",
+    size,
+    collapseBelow,
     class: className,
     ...rest
 } = Astro.props;
 ---
 
-<div class:list={["dropdown", className]} {...rest}>
+<div
+    class:list={[
+        "dropdown",
+        collapseBelow && `dropdown--collapse-${collapseBelow}`,
+        className,
+    ]}
+    {...rest}
+>
     <Button
         class="dropdown__trigger"
         {variant}
         {tone}
+        {size}
         lift={false}
         popovertarget={id}
     >
@@ -103,6 +124,53 @@ const {
 
     &:has(.dropdown__panel:popover-open) .dropdown__chevron {
         rotate: 180deg;
+    }
+
+    /* Icon only: the same rules at each width, as a query can't take a var(). */
+    @container (max-width: 30rem) {
+        &.dropdown--collapse-30rem {
+            .dropdown__chevron {
+                display: none;
+            }
+
+            /* As compact as an icon button. */
+            .dropdown__trigger {
+                padding-inline: var(--space-sm);
+            }
+
+            /* Visually hidden, as it's still the button's name. */
+            .dropdown__label {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+            }
+        }
+    }
+
+    @container (max-width: 48rem) {
+        &.dropdown--collapse-48rem {
+            .dropdown__chevron {
+                display: none;
+            }
+
+            /* As compact as an icon button. */
+            .dropdown__trigger {
+                padding-inline: var(--space-sm);
+            }
+
+            /* Visually hidden, as it's still the button's name. */
+            .dropdown__label {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+            }
+        }
     }
 
     .dropdown__panel {
