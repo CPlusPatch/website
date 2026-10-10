@@ -318,3 +318,24 @@ html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
     white-space: nowrap;
     border: 0;
 }
+
+/*
+ * A soft wash of the accent behind a section's centrepiece. --wash-at places
+ * it, as a radial-gradient position.
+ */
+.wash {
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: var(--z-backdrop);
+        pointer-events: none;
+        background: radial-gradient(
+            ellipse 50% 60% at var(--wash-at, 50% 50%),
+            color-mix(in oklab, var(--color-primary) 10%, transparent),
+            transparent
+        );
+    }
+}
