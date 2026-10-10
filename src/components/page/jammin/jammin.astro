@@ -1,0 +1,176 @@
+---
+import { Icon } from "astro-icon/components";
+import video from "../../../video/jammin.mp4";
+import Button from "../../ui/button.astro";
+import Progress from "../../ui/progress.astro";
+
+/**
+ * The /jammin prank: a button that plays a music video full-screen, and from
+ * the drop on, puts what the visitor's browser and IP give away on top of it
+ * a line at a time, in time with the music.
+ *
+ * Narrower than this, the lines wouldn't fit, so it asks for a bigger screen
+ * instead and loads nothing. Keep it in step with the media queries below.
+ */
+const MIN_WIDTH = "(min-width: 40rem)";
+---
+
+<div class="jammin" data-jammin data-src={video} data-min-width={MIN_WIDTH}>
+    <p class="jammin__narrow lead">
+        Please visit this page on a desktop or tablet, otherwise it won't fit on
+        your screen.
+    </p>
+
+    <div class="jammin__wide">
+        <noscript>
+            <p class="lead">This page needs JavaScript to jam.</p>
+        </noscript>
+
+        {/* Shown by the script while the video downloads and the rest loads. */}
+        <div class="jammin__card panel" hidden data-jammin-card>
+            <p class="jammin__status text-ui" role="status" data-jammin-status>
+                Getting ready...
+            </p>
+            <Progress
+                class="jammin__progress"
+                value={0}
+                label="Downloading the video"
+                data-jammin-progress
+            />
+        </div>
+
+        <Button size="lg" hidden data-jammin-start>
+            <Icon name="lucide:play" aria-hidden="true" />
+            Jam It!
+        </Button>
+    </div>
+
+    <div class="jammin__stage" hidden data-jammin-stage>
+        {/* biome-ignore lint/a11y/useMediaCaption: it's music with no words; the lines over it are the content */}
+        <video playsinline disablepictureinpicture></video>
+        <div class="jammin__overlay">
+            <ul class="jammin__lines" aria-live="polite" data-jammin-lines></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+import { bindJammin } from "./jammin.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>("[data-jammin]")) {
+    bindJammin(root);
+}
+</script>
+
+<style>
+.jammin {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    padding: var(--space-md);
+    text-align: center;
+
+    .jammin__narrow {
+        max-width: 30rem;
+
+        @media (min-width: 40rem) {
+            display: none;
+        }
+    }
+
+    .jammin__wide {
+        display: contents;
+
+        @media not (min-width: 40rem) {
+            display: none;
+        }
+
+        .jammin__card {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            width: min(100%, 24rem);
+            padding: var(--space-md);
+
+            &[hidden] {
+                display: none;
+            }
+
+            .jammin__status {
+                margin: 0;
+                color: var(--color-text-muted);
+                font-variant-numeric: tabular-nums;
+            }
+
+            /* No size from the server: a slice of the bar sweeping across instead. */
+            :global(.jammin__progress--indeterminate) {
+                --progress-value: 0.25;
+                overflow: hidden;
+
+                &::before {
+                    animation: jammin-sweep 1.2s ease-in-out infinite;
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    --progress-value: 1;
+                    opacity: 0.5;
+
+                    &::before {
+                        animation: none;
+                    }
+                }
+            }
+        }
+    }
+
+    /* The video, filling the screen, with the lines centred over it. */
+    .jammin__stage {
+        position: fixed;
+        inset: 0;
+        background-color: black;
+
+        @media not (min-width: 40rem) {
+            display: none;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        .jammin__overlay {
+            position: absolute;
+            inset: var(--space-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            /* Shrunk by the script as lines come in, so the block always fits. */
+            .jammin__lines {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+                font-family: var(--font-base);
+                font-size: var(--font-size-4xl);
+                font-weight: 600;
+                line-height: var(--leading-tight);
+                color: white;
+                text-shadow: 0 0.05em 0.2em rgb(0 0 0 / 0.75);
+                overflow-wrap: anywhere;
+            }
+        }
+    }
+}
+
+@keyframes jammin-sweep {
+    from {
+        translate: -25% 0;
+    }
+
+    to {
+        translate: 100% 0;
+    }
+}
+</style>

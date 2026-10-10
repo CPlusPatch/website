@@ -1,0 +1,19 @@
+---
+import Jammin from "../components/page/jammin/jammin.astro";
+import Layout from "../layouts/base.astro";
+---
+
+{/* The prank on its own, filling the screen, without the navbar. */}
+<Layout title="Jammin" description="Press the button and jam out.">
+    <main id="main" class="jammin-page">
+        <Jammin />
+    </main>
+</Layout>
+
+<style>
+.jammin-page {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+</style>
