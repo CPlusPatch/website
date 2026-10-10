@@ -47,16 +47,8 @@ const {
             aria-pressed="false"
             aria-label={title ? `Play ${title}` : "Play"}
         >
-            <Icon
-                name="lucide:play"
-                class="audio-player__play"
-                aria-hidden="true"
-            />
-            <Icon
-                name="lucide:pause"
-                class="audio-player__pause"
-                aria-hidden="true"
-            />
+            <Icon name="lucide:play" aria-hidden="true" />
+            <Icon name="lucide:pause" aria-hidden="true" />
         </Button>
         <Slider
             class="audio-player__seek"
@@ -94,21 +86,6 @@ const {
         display: flex;
         align-items: center;
         gap: var(--space-md);
-    }
-
-    /* Pressed while playing, like the pause button */
-    .audio-player__pause {
-        display: none;
-    }
-
-    .audio-player__toggle[aria-pressed="true"] {
-        .audio-player__play {
-            display: none;
-        }
-
-        .audio-player__pause {
-            display: block;
-        }
     }
 
     .audio-player__seek {

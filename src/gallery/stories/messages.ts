@@ -96,7 +96,7 @@ const RODRICK: DialogueNode = {
                     "Finally, someone with taste.",
                     "Hold on to something.",
                 ],
-                action: "quake",
+                action: "shake",
                 options: [
                     {
                         label: "That was awesome",

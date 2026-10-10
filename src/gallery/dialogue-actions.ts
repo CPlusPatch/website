@@ -3,9 +3,7 @@
  * or two, to show what a dialogue tree's `action` can reach.
  */
 import { defineDialogueActions } from "../components/blocks/message/dialogue.ts";
-
-const reducedMotion = () =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+import { shake } from "../lib/page-effects.ts";
 
 let overlay: HTMLElement | undefined;
 
@@ -18,18 +16,7 @@ const lightsOn = () => {
 };
 
 defineDialogueActions({
-    /**
-     * Rattles the whole page. Up and down, as the page already scrolls that
-     * way: sideways would flash a horizontal scrollbar. With reduced motion,
-     * the words say it alone.
-     */
-    quake: async () => {
-        if (reducedMotion()) return;
-        await document.body.animate(
-            [0, -6, 6, -4, 4, -2, 0].map((y) => ({ translate: `0 ${y}px` })),
-            { duration: 500, easing: "ease-out" },
-        ).finished;
-    },
+    shake,
 
     /** Dims the whole page, until lightsOn or a restart. */
     lightsOut: () => {

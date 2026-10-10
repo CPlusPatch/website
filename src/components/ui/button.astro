@@ -173,6 +173,20 @@ const classes = [
         }
     }
 
+    /*
+     * A toggle holding two icons shows the first while not pressed and the
+     * second while pressed, like play and pause. Global, as the icons come
+     * from the caller's slot and carry its scope rather than this one.
+     */
+    &[aria-pressed] > :global(:nth-child(2)),
+    &[aria-pressed="true"] > :global(:first-child:not(:only-child)) {
+        display: none;
+    }
+
+    &[aria-pressed="true"] > :global(:nth-child(2)) {
+        display: block;
+    }
+
     &:active:where(:not(:disabled, [aria-disabled="true"])) {
         translate: 0 1px;
     }

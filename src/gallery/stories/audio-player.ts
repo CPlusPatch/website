@@ -1,4 +1,4 @@
-import stillAlive from "../../audio/Portal2-3x26_Still_Alive_Radio Mix_Clean.ogg";
+import stillAlive from "../../audio/radio/still-alive-radio-mix-clean.ogg";
 import AudioPlayer from "../../components/blocks/audio-player.astro";
 import { type StoryGroup, story } from "../story.ts";
 

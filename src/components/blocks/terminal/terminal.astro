@@ -133,7 +133,6 @@ interface TerminalState {
     history: string[];
     cursor: number; // Index into history; history.length = live input
     draft: string; // In-progress input saved while browsing history
-    cwd: string;
 }
 
 // Keyed by root element so multiple terminals on the page can have independent state
@@ -151,7 +150,6 @@ const stateOf = (root: HTMLElement): TerminalState => {
             history,
             cursor: history.length,
             draft: "",
-            cwd: root.dataset.cwd ?? "~",
         };
         states.set(root, state);
     }
