@@ -28,8 +28,8 @@ const { target, label = "Pause scrolling", class: className } = Astro.props;
     aria-pressed="false"
     aria-label={label}
 >
-    <Icon name="lucide:pause" class="pause-button__pause" aria-hidden="true" />
-    <Icon name="lucide:play" class="pause-button__play" aria-hidden="true" />
+    <Icon name="lucide:pause" aria-hidden="true" />
+    <Icon name="lucide:play" aria-hidden="true" />
 </Button>
 
 <script>
@@ -44,16 +44,3 @@ for (const button of document.querySelectorAll<HTMLElement>(
     });
 }
 </script>
-
-<style is:global>
-.pause-button {
-    .pause-button__play,
-    &[aria-pressed="true"] .pause-button__pause {
-        display: none;
-    }
-
-    &[aria-pressed="true"] .pause-button__play {
-        display: block;
-    }
-}
-</style>

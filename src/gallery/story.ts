@@ -12,7 +12,6 @@
  * Composites nest through `children` (the default slot) and `slots` (named
  * slots), each holding more stories -- see the carousel.
  */
-// deno-lint-ignore-file no-explicit-any
 
 import type { ComponentProps } from "astro/types";
 

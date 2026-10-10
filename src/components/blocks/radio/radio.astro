@@ -206,16 +206,6 @@ const [first] = optimised;
         gap: var(--space-xs);
     }
 
-    /* The toggle shows play while paused, and pause while playing. */
-    .radio__toggle > :last-child,
-    .radio__toggle[aria-pressed="true"] > :first-child {
-        display: none;
-    }
-
-    .radio__toggle[aria-pressed="true"] > :last-child {
-        display: block;
-    }
-
     .radio__seek {
         flex: 1;
         margin-inline: var(--space-sm);

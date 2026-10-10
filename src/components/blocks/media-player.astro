@@ -190,15 +190,6 @@ const posterImage = poster && (await getImage({ src: poster }));
         gap: var(--space-xs);
     }
 
-    [aria-pressed] > :last-child,
-    [aria-pressed="true"] > :first-child {
-        display: none;
-    }
-
-    [aria-pressed="true"] > :last-child {
-        display: block;
-    }
-
     .media-player__seek {
         flex: 1;
         margin-inline: var(--space-sm);

@@ -1,6 +1,7 @@
 /*
  * Easter eggs that reach the whole page, run by the front page's chat
- * (components/page/dialogue-actions.ts) and its terminal (blocks/terminal/).
+ * (components/page/dialogue-actions.ts), its terminal (blocks/terminal/) and
+ * the gallery's dialogue stories (gallery/dialogue-actions.ts).
  * Browser only: call them from page scripts.
  */
 import Uwuifier from "uwuifier";

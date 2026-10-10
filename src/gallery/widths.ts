@@ -13,8 +13,6 @@ export const PREVIEW_WIDTHS = [
     { id: "tiny", name: "Tiny", icon: "lucide:watch", width: "24rem" },
 ] as const;
 
-export type PreviewWidth = (typeof PREVIEW_WIDTHS)[number]["id"];
-
 /** Name of the page-wide radio group; each group's own is this plus its id. */
 export const PREVIEW_WIDTH_NAME = "preview-width";
 
