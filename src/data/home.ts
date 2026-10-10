@@ -28,6 +28,7 @@ import wantYouGoneCover from "../audio/radio/want-you-gone.jpg";
 import wantYouGone from "../audio/radio/want-you-gone.ogg";
 import warWithoutReasonCover from "../audio/radio/war-without-reason.jpg";
 import warWithoutReason from "../audio/radio/war-without-reason.ogg";
+import type Heatmap from "../components/blocks/heatmap/heatmap.astro";
 import type MediaCard from "../components/blocks/media-card.astro";
 import type { DialogueNode } from "../components/blocks/message/dialogue.ts";
 import type Quote from "../components/blocks/quote.astro";
@@ -100,6 +101,32 @@ export const stats: ComponentProps<typeof Stat>[] = [
         tone: "warning",
     },
 ];
+
+/**
+ * Placeholder: a year of commits, a level from 0 to 4 for each day, Sunday to
+ * Saturday down each week's column. Made up, but the same on every build:
+ * busier midweek, quieter at weekends.
+ */
+const activity = Array.from({ length: 52 * 7 }, (_, i) => {
+    const noise = Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1;
+    const weekend = i < 52 || i >= 52 * 6;
+    return Math.max(0, Math.round(noise * 5 - (weekend ? 3 : 1.5)));
+});
+
+/** The commit graph under the stats, which comes alive once scrolled to. */
+export const commits = {
+    /** Placeholder, like the levels. */
+    title: "1,204 contributions in the last year",
+    heatmap: {
+        columns: 52,
+        rows: 7,
+        values: activity,
+        until: new Date(),
+        life: true,
+        label: "Commits over the last year, as a heatmap playing the Game of Life",
+        tone: "success",
+    } satisfies ComponentProps<typeof Heatmap>,
+};
 
 /** The first is featured across the full width, above the rest. */
 export const reviews: {

@@ -1,0 +1,307 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../../lib/tone.ts";
+import PauseButton from "../../ui/pause-button.astro";
+
+/**
+ * A grid of small squares shaded by level, like a year of commits: from 0
+ * (none) to 4 (most), in steps of its tone, over a Less–More key. Anything
+ * in the default slot sits beside the key, like a total.
+ *
+ * With `until`, it is laid out as a calendar like GitHub's: seven rows,
+ * Sunday to Saturday, and a column per week, the last holding `until`, with
+ * the months above and every other weekday beside.
+ *
+ * With `life`, it plays Conway's Game of Life on its cells once scrolled
+ * into view, with a button to pause it. It starts paused under reduced
+ * motion, and shows `values` without JS.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    columns: number;
+    rows: number;
+    /** Each cell's level, row by row, from 0 to 4. Missing cells are 0. */
+    values?: number[];
+    /** Names the heatmap for screen readers. */
+    label: string;
+    /** The last day shown, as a calendar. Takes 7 rows. */
+    until?: Date;
+    /** Plays Conway's Game of Life, from `values`' busiest cells. */
+    life?: boolean;
+    tone?: Tone;
+}
+
+const {
+    columns,
+    rows,
+    values = [],
+    label,
+    until,
+    life = false,
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+const LEVELS = [0, 1, 2, 3, 4];
+
+// Calendar labels, in UTC so the build machine's time zone can't shift a day.
+const DAY = 86_400_000;
+const locale = Astro.currentLocale ?? "en";
+const month = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    timeZone: "UTC",
+});
+const weekday = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    timeZone: "UTC",
+});
+
+const months = (() => {
+    if (!until) return [];
+    // The Sunday that starts each column's week.
+    const last =
+        Date.UTC(
+            until.getUTCFullYear(),
+            until.getUTCMonth(),
+            until.getUTCDate(),
+        ) -
+        until.getUTCDay() * DAY;
+    const weeks = Array.from(
+        { length: columns },
+        (_, column) => new Date(last - (columns - 1 - column) * 7 * DAY),
+    );
+    const starts = weeks.flatMap((week, column) =>
+        column > 0 && week.getUTCMonth() === weeks[column - 1].getUTCMonth()
+            ? []
+            : [{ column, name: month.format(week) }],
+    );
+    // As GitHub does, drop a month with too few weeks shown to fit its name.
+    return starts.filter(
+        (start, i) => (starts[i + 1]?.column ?? columns) - start.column >= 3,
+    );
+})();
+
+// Mon, Wed and Fri, from 4 January 1970, a Sunday.
+const days = Array.from({ length: 7 }, (_, day) =>
+    day % 2 ? weekday.format(new Date((3 + day) * DAY)) : "",
+);
+---
+
+<figure
+    class:list={["heatmap", `tone-${tone}`, className]}
+    style={`--columns: ${columns}; --rows: ${rows}`}
+    data-life={life || undefined}
+    {...rest}
+>
+    <div class="heatmap__scroll">
+        <div class:list={["heatmap__body", until && "heatmap__body--calendar"]}>
+            {until && (
+                <>
+                    <div class="heatmap__months text-meta" aria-hidden="true">
+                        {months.map(({ column, name }) => (
+                            <span style={`grid-column-start: ${column + 1}`}>
+                                {name}
+                            </span>
+                        ))}
+                    </div>
+                    <div class="heatmap__days text-meta" aria-hidden="true">
+                        {days.map((day) => (
+                            <span>{day}</span>
+                        ))}
+                    </div>
+                </>
+            )}
+            <div class="heatmap__grid" role="img" aria-label={label}>
+                {Array.from({ length: columns * rows }, (_, i) => (
+                    <span
+                        class="heatmap__cell"
+                        data-level={values[i] || undefined}
+                    ></span>
+                ))}
+            </div>
+        </div>
+    </div>
+    <figcaption class="heatmap__footer text-meta">
+        <slot />
+        {/* Shown by the script, once there is something to pause. */}
+        {life && (
+            <span hidden data-heatmap-pause>
+                <PauseButton target=".heatmap" label="Pause animation" />
+            </span>
+        )}
+        <span class="heatmap__key" aria-hidden="true">
+            Less
+            {LEVELS.map((level) => (
+                <span
+                    class="heatmap__cell"
+                    data-level={level || undefined}
+                ></span>
+            ))}
+            More
+        </span>
+    </figcaption>
+</figure>
+
+<script>
+import { bindHeatmap } from "./heatmap.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>(
+    ".heatmap[data-life]",
+)) {
+    bindHeatmap(root);
+}
+</script>
+
+<style>
+.heatmap {
+    --heatmap-empty: color-mix(
+        in oklab,
+        var(--color-text-muted) 15%,
+        transparent
+    );
+    /* Tighter as the page narrows. */
+    --heatmap-gap: clamp(1px, 0.25cqi, 3px);
+    /* The sizes a cell can take; set them on the heatmap to change them. */
+    --heatmap-cell: 1.25rem;
+    --heatmap-cell-min: 0.625rem;
+    /* Shared by the cells and the month labels, so the two line up. */
+    --heatmap-columns: repeat(
+        var(--columns),
+        minmax(var(--heatmap-cell-min), var(--heatmap-cell))
+    );
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    /* As wide as its cells at full size, or narrower, shrinking them. */
+    width: fit-content;
+    max-width: 100%;
+    margin: 0;
+
+    /*
+     * Past its smallest cells, it scrolls sideways, starting from the end as
+     * GitHub's does, so the latest weeks show first: right-to-left only to
+     * start there, with the content itself left-to-right.
+     */
+    .heatmap__scroll {
+        overflow-x: auto;
+        direction: rtl;
+        scrollbar-width: thin;
+    }
+
+    .heatmap__body {
+        direction: ltr;
+        display: grid;
+        justify-content: start;
+        gap: var(--space-xs) var(--space-sm);
+        /* Never narrower than its smallest cells, so it overflows to scroll. */
+        min-width: min-content;
+    }
+
+    .heatmap__body--calendar {
+        grid-template-columns: auto auto;
+        grid-template-areas:
+            ". months"
+            "days grid";
+    }
+
+    .heatmap__grid {
+        grid-area: grid;
+        display: grid;
+        grid-template-columns: var(--heatmap-columns);
+        gap: var(--heatmap-gap);
+    }
+
+    /* Each name starts at its first week, and runs on over the next. */
+    .heatmap__months {
+        grid-area: months;
+        display: grid;
+        grid-template-columns: var(--heatmap-columns);
+        column-gap: var(--heatmap-gap);
+        white-space: nowrap;
+    }
+
+    /* A row each, the same heights as the cells'. */
+    .heatmap__days {
+        grid-area: days;
+        display: grid;
+        grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+        row-gap: var(--heatmap-gap);
+        align-items: center;
+        line-height: 1;
+    }
+
+    /* Steps of the tone over the empty shade, as a commit graph has them. */
+    .heatmap__cell {
+        aspect-ratio: 1;
+        background-color: var(--heatmap-empty);
+        border-radius: min(var(--radius), 2px);
+        /* A hairline, so empty cells still read on any surface. */
+        outline: 1px solid
+            color-mix(in oklab, var(--color-text) 6%, transparent);
+        outline-offset: -1px;
+
+        &[data-level="1"] {
+            background-color: color-mix(
+                in oklab,
+                var(--tone) 30%,
+                var(--heatmap-empty)
+            );
+        }
+
+        &[data-level="2"] {
+            background-color: color-mix(
+                in oklab,
+                var(--tone) 55%,
+                var(--heatmap-empty)
+            );
+        }
+
+        &[data-level="3"] {
+            background-color: color-mix(
+                in oklab,
+                var(--tone) 80%,
+                var(--heatmap-empty)
+            );
+        }
+
+        &[data-level="4"] {
+            background-color: var(--tone);
+        }
+    }
+
+    /* The shades are the content, so keep them. */
+    @media (forced-colors: active) {
+        .heatmap__cell {
+            forced-color-adjust: none;
+        }
+    }
+
+    .heatmap__footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-xs) var(--space-md);
+    }
+
+    .heatmap__key {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-inline-start: auto;
+
+        .heatmap__cell {
+            inline-size: 0.75rem;
+        }
+
+        /* Clear of the words either side. */
+        & > :first-child {
+            margin-inline-start: var(--space-xs);
+        }
+
+        & > :last-child {
+            margin-inline-end: var(--space-xs);
+        }
+    }
+}
+</style>
