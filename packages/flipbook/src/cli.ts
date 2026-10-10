@@ -3,26 +3,27 @@
 /**
  * Usage: cli.ts <video file or URL> --out <dir> [options]
  *
- * Turns a video into a flipbook: each frame scaled down to a coarse grid,
- * and its brightness split into a few levels. Also keeps its soundtrack. A
- * URL is downloaded with yt-dlp first; ffmpeg does the rest, so both need
- * to be installed.
+ * Shrinks a video for the terminal's players: a picture only a few dozen
+ * pixels across, in full colour, with its soundtrack inside as mono Opus.
+ * The browser decodes and streams it, so it suits anything up to a whole
+ * film. A URL is downloaded with yt-dlp first; ffmpeg does the rest, so both
+ * need to be installed.
  *
- *   --columns <n>   grid width (default 40)
- *   --rows <n>      grid height (default 30)
- *   --fps <n>       frames per second (default 15)
- *   --levels <n>    shades, from 2 for black and white (default 2)
- *   --fit <mode>    contain: the whole picture, centred between empty
- *                   cells; cover: fill the grid, cropping the picture
- *                   (default contain)
- *   --invert        dark, rather than bright, becomes the high levels
- *   --no-audio      skip the soundtrack
+ *   --columns <n>         width in pixels, even (default 40)
+ *   --rows <n>            height in pixels, even (default 30)
+ *   --fps <n>             frames per second (default: the video's own)
+ *   --fit <mode>          contain: the whole picture, centred on black;
+ *                         cover: fill the frame, cropping the picture
+ *                         (default contain)
+ *   --crf <n>             picture quality, lower is better (default 35)
+ *   --audio-bitrate <n>   in kbps (default 16: clear speech, lo-fi music)
+ *   --no-audio            skip the soundtrack
  *
- * Writes <dir>/frames.bin, the flipbook, and <dir>/audio.ogg, the
- * soundtrack as Opus.
+ * Writes <dir>/video.webm.
  */
 
-import { encode } from "./codec.ts";
+// A module, for top-level await, though it exports nothing.
+export {};
 
 const usage = "Usage: cli.ts <video file or URL> --out <dir> [options]";
 
@@ -43,28 +44,31 @@ const number = (name: string, fallback: number) => {
 const out = option("out");
 const columns = number("columns", 40);
 const rows = number("rows", 30);
-const fps = number("fps", 15);
-const levels = number("levels", 2);
+const fps = number("fps", 0);
+const crf = number("crf", 35);
+const audioBitrate = number("audio-bitrate", 16);
 const fit = option("fit") ?? "contain";
-const invert = args.includes("--invert");
 const audio = !args.includes("--no-audio");
 const source = args.find((arg) => !arg.startsWith("--"));
 if (!out || !source || (fit !== "contain" && fit !== "cover")) {
     console.error(usage);
     Deno.exit(2);
 }
+// VP9 keeps colour at half resolution, which needs even sides.
+if (columns % 2 || rows % 2) {
+    console.error("--columns and --rows need to be even.");
+    Deno.exit(2);
+}
 
 const run = async (command: string, commandArgs: string[]) => {
     const result = await new Deno.Command(command, {
         args: commandArgs,
-        stdout: "piped",
         stderr: "inherit",
     }).output();
     if (!result.success) {
         console.error(`${command} failed.`);
         Deno.exit(1);
     }
-    return result.stdout;
 };
 
 /** A local copy of the video, and a way to clean up after it. */
@@ -72,7 +76,7 @@ const fetchVideo = async (): Promise<[path: string, done: () => void]> => {
     if (!/^https?:\/\//.test(source)) return [source, () => {}];
     const dir = await Deno.makeTempDir();
     console.log(`Downloading ${source}`);
-    // Small, with sound: it is about to become a few dozen cells wide.
+    // Small, with sound: it is about to become a few dozen pixels wide.
     await run("yt-dlp", [
         "--quiet",
         "--no-warnings",
@@ -92,53 +96,38 @@ const fetchVideo = async (): Promise<[path: string, done: () => void]> => {
 const [video, done] = await fetchVideo();
 await Deno.mkdir(out, { recursive: true });
 
-// Level 0 is the empty cell, so the picture is padded in its colour.
-const empty = invert ? "white" : "black";
 const size = `${columns}:${rows}`;
 const sizing =
     fit === "contain"
-        ? `scale=${size}:force_original_aspect_ratio=decrease:flags=area,pad=${size}:(ow-iw)/2:(oh-ih)/2:color=${empty}`
+        ? `scale=${size}:force_original_aspect_ratio=decrease:flags=area,pad=${size}:(ow-iw)/2:(oh-ih)/2:color=black`
         : `scale=${size}:force_original_aspect_ratio=increase:flags=area,crop=${size}`;
-console.log(`Converting to ${columns} × ${rows} at ${fps} fps`);
-const raw = await run("ffmpeg", [
+console.log(`Converting to ${columns} × ${rows}`);
+await run("ffmpeg", [
     "-loglevel",
     "error",
+    "-y",
     "-i",
     video,
     "-vf",
-    `fps=${fps},${sizing},format=gray`,
-    "-f",
-    "rawvideo",
-    "-",
+    fps ? `fps=${fps},${sizing}` : sizing,
+    "-c:v",
+    "libvpx-vp9",
+    "-crf",
+    String(crf),
+    "-b:v",
+    "0",
+    "-deadline",
+    "good",
+    "-cpu-used",
+    "4",
+    "-row-mt",
+    "1",
+    ...(audio
+        ? ["-ac", "1", "-c:a", "libopus", "-b:a", `${audioBitrate}k`]
+        : ["-an"]),
+    `${out}/video.webm`,
 ]);
-if (audio) {
-    console.log("Extracting the soundtrack");
-    await run("ffmpeg", [
-        "-loglevel",
-        "error",
-        "-y",
-        "-i",
-        video,
-        "-vn",
-        "-c:a",
-        "libopus",
-        "-b:a",
-        "48k",
-        `${out}/audio.ogg`,
-    ]);
-}
 done();
 
-const cells = columns * rows;
-const frames = Array.from({ length: Math.floor(raw.length / cells) }, (_, f) =>
-    raw.subarray(f * cells, (f + 1) * cells).map((gray) => {
-        const level = Math.round((gray / 255) * (levels - 1));
-        return invert ? levels - 1 - level : level;
-    }),
-);
-
-const bytes = encode({ columns, rows, fps, levels, frames });
-await Deno.writeFile(`${out}/frames.bin`, bytes);
-console.log(
-    `Wrote ${frames.length} frames (${(bytes.length / 1024).toFixed(0)} KB) to ${out}`,
-);
+const { size: bytes } = await Deno.stat(`${out}/video.webm`);
+console.log(`Wrote ${(bytes / 1024 / 1024).toFixed(1)} MB to ${out}`);

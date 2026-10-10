@@ -1,5 +1,6 @@
+import badApple from "../../../data/bad-apple/video.webm?url";
 import { shake, uwuify } from "../../../lib/page-effects.ts";
-import { badApple } from "./bad-apple.ts";
+import { playVideo } from "./video.ts";
 
 export interface Entry {
     command: string;
@@ -73,7 +74,7 @@ const commands: {
     {
         names: ["badapple"],
         description: "Play Bad Apple!!, with sound (Ctrl+C to stop)",
-        run: () => badApple,
+        run: () => playVideo(badApple, "Bad Apple!!"),
     },
 ];
 

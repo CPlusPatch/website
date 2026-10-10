@@ -46,7 +46,7 @@ deno run preview    # serve the build
 deno run check      # lint, typecheck and tests (same as CI)
 deno run lint:fix   # format and autofix
 deno run theme      # regenerate the theme colours
-deno run frames     # regenerate the terminal's Bad Apple!! (needs ffmpeg and yt-dlp)
+deno run bad-apple  # regenerate the terminal's Bad Apple!! (needs ffmpeg and yt-dlp)
 ```
 
 ## Layout
@@ -65,7 +65,7 @@ website/
 ├── packages/
 │   ├── palette/        theme colour generator
 │   ├── destructor/     the gravity gun
-│   └── flipbook/       turns a video into text-art frames
+│   └── flipbook/       shrinks videos for the terminal
 └── docs/               guides, linked below
 ```
 

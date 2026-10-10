@@ -2372,13 +2372,6 @@
           ]
         }
       },
-      "packages/flipbook": {
-        "packageJson": {
-          "dependencies": [
-            "npm:@jsr/std__assert@1"
-          ]
-        }
-      },
       "packages/palette": {
         "packageJson": {
           "dependencies": [
