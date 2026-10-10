@@ -20,6 +20,14 @@ interface Props extends HTMLAttributes<"header"> {
     sticky?: boolean;
 }
 
+/*
+ * The `actions` slot is for controls rather than links, like a settings
+ * dropdown. They sit after the final link, and stay in the top row beside
+ * the menu button on a narrow screen (give a dropdown collapseBelow="48rem"
+ * to make it icon-only there).
+ */
+const hasActions = Astro.slots.has("actions");
+
 const {
     title,
     links,
@@ -102,6 +110,12 @@ const {
                 )}
             </div>
         </div>
+
+        {hasActions && (
+            <div class="navbar__actions">
+                <slot name="actions" />
+            </div>
+        )}
     </div>
 </header>
 
@@ -179,6 +193,28 @@ for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
         display: none;
     }
 
+    .navbar__actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    /*
+     * With actions as a fourth item, auto margins keep the nav centred
+     * between the brand and the end, and the actions close to the final link.
+     */
+    @container not (max-width: 48rem) {
+        &:has(.navbar__actions) {
+            .navbar__nav {
+                margin-inline: auto;
+            }
+
+            .navbar__actions {
+                margin-inline-start: calc(var(--space-sm) - var(--space-lg));
+            }
+        }
+    }
+
     .navbar__nav {
         display: flex;
         align-items: center;
@@ -202,6 +238,26 @@ for (const navbar of document.querySelectorAll<HTMLElement>(".navbar")) {
 
         .navbar__brand {
             padding-block: var(--space-sm);
+        }
+
+        /* The actions join the menu button in the top row, the menu below. */
+        &:has(.navbar__actions) {
+            .navbar__toggle {
+                margin-inline-start: auto;
+            }
+
+            .navbar__menu {
+                order: 1;
+            }
+        }
+
+        .navbar__actions {
+            margin-inline-start: var(--space-sm);
+
+            /* As tall as the menu button beside it. */
+            :global(.dropdown__trigger) {
+                height: var(--control-height-md);
+            }
         }
 
         .navbar__toggle {
