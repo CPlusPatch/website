@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="catppuccin"` on <html>, or while a
- * [data-theme-select] has it selected (see the gallery). Colour only: shape,
+ * [data-theme-select] has it selected (the Display menu). Colour only: shape,
  * motion and type are the defaults from tokens.css.
  */
 
 :root[data-theme="catppuccin"],
-html:has([data-theme-select] option[value="catppuccin"]:checked) {
+html:has([data-theme-select] [value="catppuccin"]:checked),
+[data-theme-preview="catppuccin"] {
     --color-bg: light-dark(#e6e9ef, #1e1e2e);
     --color-bg-alt: light-dark(#dce0e8, #181825);
     --color-surface: light-dark(#eff1f5, #313244);

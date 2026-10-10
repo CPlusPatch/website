@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="tokyo-night"` on <html>, or while a
- * [data-theme-select] has it selected (see the gallery). Colour only: shape,
+ * [data-theme-select] has it selected (the Display menu). Colour only: shape,
  * motion and type are the defaults from tokens.css.
  */
 
 :root[data-theme="tokyo-night"],
-html:has([data-theme-select] option[value="tokyo-night"]:checked) {
+html:has([data-theme-select] [value="tokyo-night"]:checked),
+[data-theme-preview="tokyo-night"] {
     --color-bg: light-dark(#e1e2e7, #1a1b26);
     --color-bg-alt: light-dark(#d0d5e3, #16161e);
     --color-surface: light-dark(#e9e9ed, #24283b);

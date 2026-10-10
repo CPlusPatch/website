@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="solarized"` on <html>, or while a [data-theme-select]
- * has it selected (see the gallery). Colour only: shape, motion and type are
+ * has it selected (the Display menu). Colour only: shape, motion and type are
  * the defaults from tokens.css.
  */
 
 :root[data-theme="solarized"],
-html:has([data-theme-select] option[value="solarized"]:checked) {
+html:has([data-theme-select] [value="solarized"]:checked),
+[data-theme-preview="solarized"] {
     --color-bg: light-dark(#fdf6e3, #002b36);
     --color-bg-alt: light-dark(#eee8d5, #073642);
     --color-surface: light-dark(#fdf6e3, #073642);

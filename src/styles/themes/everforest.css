@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="everforest"` on <html>, or while a
- * [data-theme-select] has it selected (see the gallery). Colour only: shape,
+ * [data-theme-select] has it selected (the Display menu). Colour only: shape,
  * motion and type are the defaults from tokens.css.
  */
 
 :root[data-theme="everforest"],
-html:has([data-theme-select] option[value="everforest"]:checked) {
+html:has([data-theme-select] [value="everforest"]:checked),
+[data-theme-preview="everforest"] {
     --color-bg: light-dark(#f4f0d9, #2d353b);
     --color-bg-alt: light-dark(#efebd4, #232a2e);
     --color-surface: light-dark(#fdf6e3, #343f44);

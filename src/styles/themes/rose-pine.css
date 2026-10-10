@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="rose-pine"` on <html>, or while a [data-theme-select]
- * has it selected (see the gallery). Colour only: shape, motion and type are
+ * has it selected (the Display menu). Colour only: shape, motion and type are
  * the defaults from tokens.css.
  */
 
 :root[data-theme="rose-pine"],
-html:has([data-theme-select] option[value="rose-pine"]:checked) {
+html:has([data-theme-select] [value="rose-pine"]:checked),
+[data-theme-preview="rose-pine"] {
     --color-bg: light-dark(#faf4ed, #191724);
     --color-bg-alt: light-dark(#f2e9e1, #21202e);
     --color-surface: light-dark(#fffaf3, #1f1d2e);

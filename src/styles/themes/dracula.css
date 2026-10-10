@@ -13,12 +13,13 @@
  * role one step further from the background.
  *
  * Applied by `data-theme="dracula"` on <html>, or while a [data-theme-select]
- * has it selected (see the gallery). Colour only: shape, motion and type are
+ * has it selected (the Display menu). Colour only: shape, motion and type are
  * the defaults from tokens.css.
  */
 
 :root[data-theme="dracula"],
-html:has([data-theme-select] option[value="dracula"]:checked) {
+html:has([data-theme-select] [value="dracula"]:checked),
+[data-theme-preview="dracula"] {
     --color-bg: light-dark(#fffbeb, #282a36);
     --color-bg-alt: light-dark(#f2eedb, #21222c);
     --color-surface: light-dark(#fffdf5, #343746);

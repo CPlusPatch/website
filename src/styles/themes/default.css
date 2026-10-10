@@ -15,9 +15,14 @@
  *   accent tier   --color-<role>-accent. Decoration only (borders, shadows,
  *                 rules). Never text or an icon that is the sole carrier
  *                 of meaning.
+ *
+ * Each theme's colours also apply to any [data-theme-preview="<theme>"],
+ * whatever the page's theme, which is how the Display menu's swatches show
+ * them.
  */
 
-:root {
+:root,
+[data-theme-preview="default"] {
     /* palette:start -- generated from palette.config.ts by `deno run theme` */
 
     /* Neutrals */
