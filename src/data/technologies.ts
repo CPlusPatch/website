@@ -112,7 +112,7 @@ export const technologies: {
     },
     {
         name: "jQuery",
-        logo: "logos:jquery",
+        logo: "jquery",
     },
     {
         name: "Rust",
