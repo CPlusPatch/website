@@ -15,7 +15,8 @@
     "npm:matter-js@0.20": "0.20.0",
     "npm:sharp@~0.35.5": "0.35.5",
     "npm:shiki@^4.5.0": "4.5.0",
-    "npm:typescript@^6.0.3": "6.0.3"
+    "npm:typescript@^6.0.3": "6.0.3",
+    "npm:uwuifier@^4.2.2": "4.2.2"
   },
   "npm": {
     "@antfu/install-pkg@2.1.0": {
@@ -2096,6 +2097,9 @@
       ],
       "bin": true
     },
+    "uwuifier@4.2.2": {
+      "integrity": "sha512-Fhtj3Yg3rrDTEs+L1fqkgM3VYGJrP4U9GY+4fPdw08T5kzOB8NSosZnZfa5Zhv1Hh7NCpH5G6t1DIZyM1wPK1w=="
+    },
     "verkit@0.4.1": {
       "integrity": "sha512-mMVzj0TXExtVdlDEq+Mzp0eyOuyznNpFobNM3uAqe3HVm/Ps2c+u17BligMkZjZCA6EiXpoon8iRTer3iu40SQ=="
     },
@@ -2354,7 +2358,8 @@
         "npm:lightningcss@^1.33.0",
         "npm:sharp@~0.35.5",
         "npm:shiki@^4.5.0",
-        "npm:typescript@^6.0.3"
+        "npm:typescript@^6.0.3",
+        "npm:uwuifier@^4.2.2"
       ]
     },
     "members": {
