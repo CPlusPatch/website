@@ -31,6 +31,7 @@ import { scrollCue } from "./scroll-cue.ts";
 import { sections } from "./sections.ts";
 import { stats } from "./stats.ts";
 import { status } from "./status.ts";
+import { statusBoard } from "./status-board.ts";
 import { terminal } from "./terminal.ts";
 
 /** Every group. Within a category, groups keep this order. */
@@ -68,6 +69,7 @@ export const groups: StoryGroup[] = [
     ...terminal,
     ...destructor,
     ...rack,
+    ...statusBoard,
     ...sections,
 ];
 

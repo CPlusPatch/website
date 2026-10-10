@@ -1,0 +1,151 @@
+---
+import Status from "../../ui/status.astro";
+import {
+    beatState,
+    beatsOf,
+    describe,
+    type Probe,
+    type StatusFeed,
+    stateOf,
+    statusTone,
+} from "./feed.ts";
+
+/**
+ * A row of a <StatusBoard>: a probe's name and target, a timeline of its
+ * latest results, oldest first, and its latest response time and state.
+ * The board draws the beats, and its script keeps the row up to date.
+ */
+interface Props extends Probe {
+    feed?: StatusFeed;
+    /** Results on the timeline. */
+    beats: number;
+}
+
+const { name, target, feed, beats } = Astro.props;
+const results = beatsOf(feed, name, beats);
+const { latency, label, tone } = stateOf(feed, name);
+---
+
+<li class="status-probe" data-probe={name}>
+    <span class="status-probe__name">
+        <span class="text-label">{name}</span>
+        <span class="status-probe__target text-meta">{target}</span>
+    </span>
+    <span
+        class="status-probe__beats"
+        role="img"
+        aria-label={describe(results)}
+        data-beats
+    >
+        {results.map((result) => (
+            <span
+                class="status-board__beat"
+                data-state={beatState(result)}
+            ></span>
+        ))}
+    </span>
+    <span class="status-probe__state text-meta">
+        <span class="status-probe__latency" data-latency>{latency}</span>
+        <Status tone={statusTone(tone)} data-probe-status>
+            <span data-status-text>{label}</span>
+        </Status>
+    </span>
+</li>
+
+<style>
+/*
+ * The name, the timeline and the state side by side, or the timeline under
+ * the other two where that would squeeze it. Sized from the board's width.
+ */
+.status-probe {
+    display: grid;
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+    grid-template-areas: "name beats state";
+    align-items: center;
+    gap: var(--space-xs) var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+
+    & + .status-probe {
+        border-top: var(--border-width) solid
+            color-mix(in oklab, var(--border-color) 50%, transparent);
+    }
+
+    @container (max-width: 34rem) {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "name state"
+            "beats beats";
+    }
+
+    .status-probe__name {
+        grid-area: name;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        .status-probe__target {
+            overflow: hidden;
+            color: var(--color-text-muted);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    /* Oldest on the left, so the newest comes in at the right. */
+    .status-probe__beats {
+        grid-area: beats;
+        display: flex;
+        gap: var(--beat-gap);
+        height: var(--beat-height);
+
+        .status-board__beat {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* A narrow board keeps the latest 20. */
+        @container (max-width: 24rem) {
+            .status-board__beat:nth-child(-n + 10) {
+                display: none;
+            }
+        }
+
+        /* The newest, coming in. */
+        .status-board__beat:last-child {
+            animation: status-probe-beat 0.3s ease-out;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+    }
+
+    .status-probe__state {
+        grid-area: state;
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        gap: var(--space-md);
+
+        /* Fixed widths, so every row's timeline lines up whatever its state. */
+        .status-probe__latency {
+            width: 7ch;
+            color: var(--color-text-muted);
+            font-variant-numeric: tabular-nums;
+            text-align: end;
+        }
+
+        /* As wide as "Unknown", the longest label. */
+        .status {
+            width: 9.5ch;
+        }
+    }
+}
+
+@keyframes status-probe-beat {
+    from {
+        opacity: 0;
+        scale: 1 0.4;
+    }
+}
+</style>
