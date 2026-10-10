@@ -1,0 +1,178 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * <Radio>'s tracklist. Each track links to its file, so it works without
+ * JS; the script plays them in place instead, marking the current one
+ * with aria-current.
+ */
+interface Props extends HTMLAttributes<"ol"> {
+    tracks: {
+        src: string;
+        title: string;
+        artist?: string;
+        /** An optimised image URL. */
+        cover?: string;
+    }[];
+}
+
+const { tracks, class: className, ...rest } = Astro.props;
+---
+
+<ol
+    class:list={["radio-tracklist", className]}
+    aria-label="Tracklist"
+    {...rest}
+>
+    {tracks.map((track, index) => (
+        <li>
+            <a
+                class="radio-tracklist__track"
+                href={track.src}
+                aria-current={index === 0 ? "true" : undefined}
+                data-radio-track
+                data-title={track.title}
+                data-artist={track.artist}
+                data-cover={track.cover}
+            >
+                <span class="radio-tracklist__number text-meta">
+                    <span>{index + 1}</span>
+                    {/* Bars that bounce while it plays. */}
+                    <span class="radio-tracklist__bars" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </span>
+                <span class="radio-tracklist__title text-body-sm">
+                    {track.title}
+                </span>
+                {track.artist && (
+                    <span class="radio-tracklist__artist text-meta">
+                        {track.artist}
+                    </span>
+                )}
+            </a>
+        </li>
+    ))}
+</ol>
+
+<style>
+.radio-tracklist {
+    min-height: 0;
+    margin: 0;
+    padding: var(--space-xs) 0 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    list-style: none;
+    border-top: var(--border-width) solid var(--color-border);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+}
+
+.radio-tracklist__track {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: var(--radius);
+    transition: background-color var(--transition);
+
+    &:hover {
+        background-color: var(--color-surface);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tone);
+        outline-offset: -2px;
+    }
+
+    &[aria-current="true"] {
+        color: var(--tone);
+        background-color: color-mix(
+            in oklab,
+            var(--tone) 10%,
+            var(--color-surface-raised)
+        );
+    }
+}
+
+.radio-tracklist__number {
+    display: grid;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+
+    > * {
+        grid-area: 1 / 1;
+    }
+}
+
+.radio-tracklist__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.radio-tracklist__artist {
+    /* Capped, so a long name never crowds out the title. */
+    max-width: 10rem;
+    overflow: hidden;
+    color: var(--color-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    /* Narrow, the title needs the room more. */
+    @container (width < 22rem) {
+        display: none;
+    }
+}
+
+/* The current track's number gives way to bars while it plays. */
+.radio-tracklist__bars {
+    display: none;
+    align-items: end;
+    gap: 2px;
+    height: 0.75em;
+
+    > span {
+        width: 3px;
+        height: 100%;
+        background-color: var(--tone);
+        transform-origin: bottom;
+        animation: radio-tracklist-bounce 0.9s ease-in-out infinite alternate;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+            scale: 1 0.6;
+        }
+    }
+
+    > :nth-child(2) {
+        animation-delay: -0.3s;
+    }
+
+    > :nth-child(3) {
+        animation-delay: -0.6s;
+    }
+}
+
+/* data-playing is set on the <Radio> by its script. */
+:global([data-playing]) [aria-current="true"] .radio-tracklist__number {
+    > :first-child {
+        visibility: hidden;
+    }
+
+    .radio-tracklist__bars {
+        display: flex;
+    }
+}
+
+@keyframes radio-tracklist-bounce {
+    from {
+        scale: 1 0.25;
+    }
+}
+</style>

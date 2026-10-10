@@ -1,0 +1,239 @@
+---
+import { getImage } from "astro:assets";
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import type { Tone } from "../../../lib/tone.ts";
+import Button from "../../ui/button.astro";
+import Slider from "../../ui/slider.astro";
+import Status from "../../ui/status.astro";
+import RadioCover from "./radio-cover.astro";
+import RadioTracklist from "./radio-tracklist.astro";
+
+/**
+ * A playlist in the style of <AudioPlayer>: the playing track with its
+ * cover, a play toggle flanked by previous and next, a seek bar, and the
+ * tracklist. Tracks play one after another, round again from the top.
+ *
+ * Without JS it is the browser's own player for the first track, and the
+ * tracklist links to each file. Caps on its height (max-block-size) scroll
+ * the tracklist, keeping the player in view above it.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    tracks: {
+        src: string;
+        title: string;
+        artist?: string;
+        /** Square works best. Without one, a disc stands in. */
+        cover?: ImageMetadata;
+    }[];
+    /** The station's name, over the player, and its accessible name. */
+    name?: string;
+    tone?: Tone;
+    /**
+     * Its own bordered panel. Turn off inside something that already frames
+     * it, like a CornerWindow.
+     */
+    framed?: boolean;
+}
+
+const {
+    tracks,
+    name,
+    tone = "primary",
+    framed = true,
+    class: className,
+    ...rest
+} = Astro.props;
+
+// Covers are swapped in by the script, so each is optimised up front.
+const optimised = await Promise.all(
+    tracks.map(async (track) => ({
+        ...track,
+        cover:
+            track.cover &&
+            (await getImage({ src: track.cover, width: 160, height: 160 })).src,
+    })),
+);
+const [first] = optimised;
+---
+
+<figure
+    class:list={["radio", framed && "panel", `tone-${tone}`, className]}
+    aria-label={name}
+    data-radio
+    {...rest}
+>
+    {name && (
+        <header class="radio__header">
+            <span class="radio__name text-label">{name}</span>
+            {/* Shown by the script, which knows whether it's playing. */}
+            <span class="radio__air text-meta" hidden data-radio-air>
+                <Status class="radio__on-air" tone={tone} pulse>
+                    On air
+                </Status>
+                <Status class="radio__off-air">Off air</Status>
+            </span>
+        </header>
+    )}
+
+    <div class="radio__now">
+        <RadioCover src={first?.cover} />
+        <div class="radio__meta">
+            <span class="text-body-strong" data-radio-title
+                >{first?.title}</span
+            >
+            <span class="radio__artist text-meta" data-radio-artist>
+                {first?.artist}
+            </span>
+        </div>
+    </div>
+
+    {/* biome-ignore lint/a11y/useMediaCaption: captions are for video; audio needs a transcript, which is page content */}
+    <audio
+        src={first?.src}
+        preload="metadata"
+        controls
+        aria-label={name}
+    ></audio>
+    <div class="radio__controls" hidden data-radio-controls>
+        <Button
+            size="icon-sm"
+            variant="ghost"
+            tone="neutral"
+            lift={false}
+            aria-label="Previous track"
+            data-radio-previous
+        >
+            <Icon name="lucide:skip-back" aria-hidden="true" />
+        </Button>
+        <Button
+            class="radio__toggle"
+            size="icon"
+            variant="outline"
+            tone="neutral"
+            lift={false}
+            aria-pressed="false"
+            aria-label="Play"
+            data-radio-toggle
+        >
+            <Icon name="lucide:play" aria-hidden="true" />
+            <Icon name="lucide:pause" aria-hidden="true" />
+        </Button>
+        <Button
+            size="icon-sm"
+            variant="ghost"
+            tone="neutral"
+            lift={false}
+            aria-label="Next track"
+            data-radio-next
+        >
+            <Icon name="lucide:skip-forward" aria-hidden="true" />
+        </Button>
+        <Slider
+            class="radio__seek"
+            min="0"
+            max="0"
+            step="any"
+            value="0"
+            aria-label="Seek"
+            data-radio-seek
+        />
+        <span class="radio__time" data-radio-time>0:00 / 0:00</span>
+    </div>
+
+    {/* Kept for one track too, hidden, as the script reads tracks from it. */}
+    <RadioTracklist tracks={optimised} hidden={tracks.length < 2} />
+</figure>
+
+<style>
+.radio {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+    min-height: 0;
+
+    &.panel {
+        padding: var(--space-md);
+    }
+
+    audio {
+        width: 100%;
+    }
+
+    .radio__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+    }
+
+    .radio__name,
+    .radio__air,
+    .radio__artist {
+        color: var(--color-text-muted);
+    }
+
+    /* Only one of the two shows, by whether it's playing. */
+    &:not([data-playing]) :global(.radio__on-air),
+    &[data-playing] :global(.radio__off-air) {
+        display: none;
+    }
+
+    .radio__now {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        min-width: 0;
+    }
+
+    .radio__meta {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        > * {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .radio__controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+
+    /* The toggle shows play while paused, and pause while playing. */
+    .radio__toggle > :last-child,
+    .radio__toggle[aria-pressed="true"] > :first-child {
+        display: none;
+    }
+
+    .radio__toggle[aria-pressed="true"] > :last-child {
+        display: block;
+    }
+
+    .radio__seek {
+        flex: 1;
+        margin-inline: var(--space-sm);
+    }
+
+    .radio__time {
+        color: var(--color-text-muted);
+        font: var(--type-meta);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+}
+</style>
+
+<script>
+import { bindRadio } from "./radio.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>("[data-radio]")) {
+    bindRadio(root);
+}
+</script>
