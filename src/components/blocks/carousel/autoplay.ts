@@ -1,3 +1,4 @@
+import { setPaused } from "../../ui/pause-button.ts";
 import type { Track } from "./track.ts";
 
 /**
@@ -29,10 +30,7 @@ export const bindAutoplay = (
     root.style.setProperty("--carousel-interval", `${root.dataset.autoplay}s`);
 
     const stopped = () => root.hasAttribute("data-paused");
-    const stop = () => {
-        pause.setAttribute("aria-pressed", "true");
-        root.setAttribute("data-paused", "");
-    };
+    const stop = () => setPaused(pause, true);
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) stop();
 
