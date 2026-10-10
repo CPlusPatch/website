@@ -33,14 +33,13 @@ const { target, label = "Pause scrolling", class: className } = Astro.props;
 </Button>
 
 <script>
+import { setPaused } from "./pause-button.ts";
+
 for (const button of document.querySelectorAll<HTMLElement>(
     "[data-pause-target]",
 )) {
-    const target = button.closest(button.dataset.pauseTarget ?? "");
-    button.addEventListener("click", () => {
-        const paused = button.getAttribute("aria-pressed") !== "true";
-        button.setAttribute("aria-pressed", String(paused));
-        target?.toggleAttribute("data-paused", paused);
-    });
+    button.addEventListener("click", () =>
+        setPaused(button, button.getAttribute("aria-pressed") !== "true"),
+    );
 }
 </script>
