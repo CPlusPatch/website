@@ -149,7 +149,7 @@ const prompt = promptFor(cwd);
 </style>
 
 <script>
-import { run } from "./terminal.ts";
+import { CLEAR, run } from "./terminal.ts";
 
 interface TerminalState {
     history: string[];
@@ -223,7 +223,13 @@ document.addEventListener("keydown", (e) => {
             state.stop?.();
             state.stop = undefined;
             const result = run(command);
-            if (typeof result === "string") {
+            if (result === CLEAR) {
+                for (const row of root.querySelectorAll(
+                    ":scope > .terminal__pair",
+                )) {
+                    row.remove();
+                }
+            } else if (typeof result === "string") {
                 appendRow(root, command, result);
             } else {
                 const stop = result(appendRow(root, command, ""), () => {

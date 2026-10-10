@@ -45,6 +45,11 @@ export const uwu = (): string => {
     return "Evewything is uwu now (ᵘʷᵘ)";
 };
 
+/** What a command returns to have the terminal empty itself, like `clear`. */
+export const CLEAR = Symbol("clear");
+
+export type Result = string | Program | typeof CLEAR;
+
 /**
  * The film for the `movie` command: the one `deno run movie` made, which is
  * gitignored, or else one hosted elsewhere at PUBLIC_MOVIE_URL, as CI sets.
@@ -63,7 +68,7 @@ const movie: string | undefined =
 const commands: {
     names: string[];
     description: string;
-    run: () => string | Program;
+    run: () => Result;
 }[] = [
     {
         names: ["fastfetch", "neofetch"],
@@ -76,6 +81,7 @@ const commands: {
         description: "Display this help message",
         run: () => help(),
     },
+    { names: ["clear"], description: "Clear the terminal", run: () => CLEAR },
     { names: ["uwu"], description: "Uwuify the page, or undo it", run: uwu },
     {
         names: ["shake"],
@@ -109,6 +115,6 @@ export const help = (): string =>
         )
         .join("")}`;
 
-export const run = (command: string): string | Program =>
+export const run = (command: string): Result =>
     commands.find(({ names }) => names.includes(command))?.run() ??
     `bash: ${command}: command not found`;
