@@ -15,13 +15,16 @@ export const setPaused = (button: HTMLElement, paused: boolean) => {
  * not paused by its <PauseButton>, and marks it `data-running` meanwhile.
  * Animations under way in it pause and resume with it.
  * Moving content needs a way to stop it, so this also shows `control`, the
- * button's hidden wrapper, and presses the button under reduced motion.
+ * button's hidden wrapper, and presses the button under reduced motion,
+ * unless `pauseForReducedMotion` is false, for content that updates without
+ * moving.
  */
 export const playWhileVisible = (
     root: HTMLElement,
     control: HTMLElement | null,
     interval: number,
     tick: () => void,
+    { pauseForReducedMotion = true } = {},
 ) => {
     let visible = false;
     let timer = 0;
@@ -46,6 +49,7 @@ export const playWhileVisible = (
     if (control) control.hidden = false;
     if (
         button &&
+        pauseForReducedMotion &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
         setPaused(button, true);
