@@ -46,16 +46,18 @@ export const uwu = (): string => {
 };
 
 /**
- * The film made by `deno run movie`, if there is one. It is gitignored, so a
- * checkout without it builds fine, just without the `movie` command.
+ * The film for the `movie` command: the one `deno run movie` made, which is
+ * gitignored, or else one hosted elsewhere at PUBLIC_MOVIE_URL, as CI sets.
+ * Without either, the build has no `movie` command.
  */
-const movie: string | undefined = Object.values(
-    import.meta.glob<string>("../../../data/movie/video.webm", {
-        query: "?url",
-        import: "default",
-        eager: true,
-    }),
-)[0];
+const movie: string | undefined =
+    Object.values(
+        import.meta.glob<string>("../../../data/movie/video.webm", {
+            query: "?url",
+            import: "default",
+            eager: true,
+        }),
+    )[0] || import.meta.env.PUBLIC_MOVIE_URL;
 
 /** Every command, in the order `help` lists them. */
 const commands: {
