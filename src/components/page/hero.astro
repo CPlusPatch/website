@@ -2,7 +2,7 @@
 import { details } from "../../data/home.ts";
 import BlueprintFrame from "../blocks/blueprint-frame.astro";
 import Terminal from "../blocks/terminal/terminal.astro";
-import { neofetch } from "../blocks/terminal/terminal.ts";
+import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
 import IconList from "../ui/icon-list.astro";
 import ScrollCue from "../ui/scroll-cue.astro";
 ---
@@ -27,7 +27,10 @@ import ScrollCue from "../ui/scroll-cue.astro";
         <BlueprintFrame label="fig. 01" meta="jessew@website">
             <Terminal
                 interactive
-                entries={[{ command: "neofetch", output: neofetch() }]}
+                entries={[
+                    { command: "whoami", output: whoami() },
+                    { command: "neofetch", output: neofetch() },
+                ]}
             />
         </BlueprintFrame>
     </div>

@@ -81,7 +81,7 @@ export const effects: ComponentProps<typeof EffectsBar>["effects"] = [
 export const details = [
     { icon: "lucide:map-pin", label: "France" },
     { icon: "lucide:clock", label: "UTC+1" },
-    { icon: "lucide:cpu", label: "Runs Arch and NixOS" },
+    { icon: "lucide:cpu", label: "Arch and NixOS" },
 ];
 
 export const stats: ComponentProps<typeof Stat>[] = [
