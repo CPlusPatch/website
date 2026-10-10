@@ -108,12 +108,20 @@ if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 .stat {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-md);
     width: 100%;
     padding: var(--space-md);
+    /* A wash of the tone, fading down from the panel's top rule */
+    background-image: linear-gradient(
+        color-mix(in oklab, var(--tone) 10%, transparent),
+        transparent
+    );
 
     .stat__value {
         color: var(--tone);
+        /* Larger than display type: the number is the whole point */
+        font-size: clamp(2.5rem, 3vw + 1.5rem, 4rem);
+        letter-spacing: -0.03em;
         /* Equal-width digits, so the number doesn't jitter as it counts */
         font-variant-numeric: tabular-nums;
 
@@ -132,9 +140,11 @@ if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         }
     }
 
+    /* At the foot, so labels line up across a row of stats */
     .stat__label {
-        /* The gap spaces it, not typography.css's p + p margin */
-        margin-top: 0;
+        margin-top: auto;
+        padding-top: var(--space-sm);
+        border-top: var(--border-width) dashed var(--color-border-strong);
         color: var(--color-text-muted);
     }
 }
