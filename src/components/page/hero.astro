@@ -7,7 +7,7 @@ import IconList from "../ui/icon-list.astro";
 import ScrollCue from "../ui/scroll-cue.astro";
 ---
 
-<section class="section hero" aria-labelledby="hero-title">
+<section class="section hero wash" aria-labelledby="hero-title">
     <div class="container hero__inner">
         <div class="hero__intro">
             <p class="hero__eyebrow text-meta">
@@ -43,8 +43,9 @@ import ScrollCue from "../ui/scroll-cue.astro";
  * Fills the screen under the effects bar and navbar (up to a point, on very
  * tall screens), with the scroll cue at its foot.
  */
+/* The wash of the accent sits behind the terminal. */
 .hero {
-    position: relative;
+    --wash-at: 72% 50%;
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
@@ -54,20 +55,6 @@ import ScrollCue from "../ui/scroll-cue.astro";
         var(--header-height) -
         var(--control-height-lg)
     );
-
-    /* A soft wash of the accent behind the terminal. */
-    &::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: var(--z-backdrop);
-        pointer-events: none;
-        background: radial-gradient(
-            ellipse 50% 60% at 72% 50%,
-            color-mix(in oklab, var(--color-primary) 10%, transparent),
-            transparent
-        );
-    }
 
     .hero__inner {
         display: grid;
