@@ -24,6 +24,9 @@ export const playVideo =
         output.textContent = `Loading ${title}... (Ctrl+C to stop)`;
         const video = document.createElement("video");
         video.playsInline = true;
+        // Its pixels are read back, which another site's video only allows
+        // when that site sends CORS headers; without them, it won't load.
+        video.crossOrigin = "anonymous";
         video.src = url;
         // Started now, while the keypress still counts as one for sound.
         video.play().catch(() => {

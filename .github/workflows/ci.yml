@@ -30,6 +30,9 @@ jobs:
 
       - name: Build
         run: deno run build
+        env:
+          # Streamed from the CDN rather than built in: see terminal.ts.
+          PUBLIC_MOVIE_URL: https://cdn-web.cpluspatch.com/video.webm
 
       # Only builds of main are published; PR builds just have to succeed.
       - name: Upload Pages artifact
