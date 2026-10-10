@@ -1,11 +1,22 @@
 ---
-import { stats } from "../../data/home.ts";
+import { commits, stats } from "../../data/home.ts";
+import Heatmap from "../blocks/heatmap/heatmap.astro";
 import Stat from "../blocks/stat.astro";
 import Section from "../sections/section.astro";
 ---
 
 <Section id="stats" title="By the numbers" alt>
+    <p class="lead">
+        Rough figures from the last few years, and a year of commits.
+    </p>
     <div class="stats">{stats.map((stat) => <Stat {...stat} />)}</div>
+
+    <div class="commits panel">
+        <h3 class="commits__title">{commits.title}</h3>
+        <Heatmap {...commits.heatmap}>
+            <span>Conway's Game of Life, seeded from the graph.</span>
+        </Heatmap>
+    </div>
 </Section>
 
 <style>
@@ -20,6 +31,16 @@ import Section from "../sections/section.astro";
 
     @container (min-width: 52rem) {
         grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.commits {
+    width: 100%;
+    margin-top: var(--space-md);
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+
+    .commits__title {
+        margin-bottom: var(--space-md);
     }
 }
 </style>
