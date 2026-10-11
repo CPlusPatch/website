@@ -47,23 +47,22 @@ import Button from "../ui/button.astro";
         label="Shorts"
         videos={downloaded}
         muted={false}
+        arrows={false}
     />
 </div>
 
 <style>
 .doomscroll {
     /*
-     * What the header, the padding and the borders (the header's, and the
-     * window's top and bottom) take from the feed's height.
+     * What the header and the borders (the header's, and the window's top
+     * and bottom) take from the feed's height. The feed fills the rest.
      */
     --doomscroll-chrome: calc(
         var(--control-height-md) +
         var(--space-xs) *
         2 +
         var(--border-width) *
-        3 +
-        var(--space-md) *
-        2
+        3
     );
     --shorts-height: calc(
         100dvh -
@@ -75,6 +74,8 @@ import Button from "../ui/button.astro";
 
     flex-direction: column;
     padding: 0;
+    /* The feed's square corners are clipped to the window's */
+    overflow: hidden;
 
     &:popover-open {
         display: flex;
@@ -88,10 +89,6 @@ import Button from "../ui/button.astro";
         gap: var(--space-sm);
         padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
         border-bottom: var(--border-width) solid var(--color-border);
-    }
-
-    .doomscroll__feed {
-        padding: var(--space-md);
     }
 
     /* A narrow or short screen gets the sheet instead (see .sheet). */
@@ -113,15 +110,9 @@ import Button from "../ui/button.astro";
 
         /*
          * Sized by hand, as the feed sizes itself to its container: the
-         * feed at 9:16, the arrows beside it, and the padding.
+         * feed at 9:16, and the window's borders.
          */
-        width: calc(
-            var(--shorts-height) *
-            9 / 16 +
-            var(--control-height-lg) +
-            var(--space-md) *
-            3
-        );
+        width: calc(var(--shorts-height) * 9 / 16 + var(--border-width) * 2);
         inset: auto calc(var(--space-md) + env(safe-area-inset-right))
             var(--doomscroll-bottom) auto;
         margin: 0;

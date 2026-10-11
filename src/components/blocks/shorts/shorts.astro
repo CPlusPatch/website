@@ -44,6 +44,11 @@ interface Props extends HTMLAttributes<"section"> {
      * when the feed opens from a click; before then it plays muted.
      */
     muted?: boolean;
+    /**
+     * The previous and next buttons beside the feed. Without them the
+     * feed still scrolls, swipes and answers the keys.
+     */
+    arrows?: boolean;
 }
 
 const {
@@ -51,6 +56,7 @@ const {
     videos,
     tone = "primary",
     muted = true,
+    arrows = true,
     class: className,
     ...rest
 } = Astro.props;
@@ -77,28 +83,30 @@ const {
             />
         ))}
     </div>
-    <div class="shorts__nav" hidden data-shorts-nav>
-        <Button
-            size="icon-lg"
-            variant="outline"
-            tone="neutral"
-            lift={false}
-            aria-label="Previous short"
-            data-shorts-previous
-        >
-            <Icon name="lucide:arrow-up" aria-hidden="true" />
-        </Button>
-        <Button
-            size="icon-lg"
-            variant="outline"
-            tone="neutral"
-            lift={false}
-            aria-label="Next short"
-            data-shorts-next
-        >
-            <Icon name="lucide:arrow-down" aria-hidden="true" />
-        </Button>
-    </div>
+    {arrows && (
+        <div class="shorts__nav" hidden data-shorts-nav>
+            <Button
+                size="icon-lg"
+                variant="outline"
+                tone="neutral"
+                lift={false}
+                aria-label="Previous short"
+                data-shorts-previous
+            >
+                <Icon name="lucide:arrow-up" aria-hidden="true" />
+            </Button>
+            <Button
+                size="icon-lg"
+                variant="outline"
+                tone="neutral"
+                lift={false}
+                aria-label="Next short"
+                data-shorts-next
+            >
+                <Icon name="lucide:arrow-down" aria-hidden="true" />
+            </Button>
+        </div>
+    )}
     {/* Says which short is showing once it changes, and what the actions did. */}
     <p class="visually-hidden" aria-live="polite" data-shorts-status></p>
 </section>

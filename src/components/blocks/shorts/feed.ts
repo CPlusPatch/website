@@ -25,9 +25,11 @@ export const bindFeed = (root: HTMLElement): Feed => {
     const part = (name: string) =>
         root.querySelector(`[data-shorts-${name}]`) as HTMLElement;
     const feed = part("feed");
-    const previous = part("previous");
-    const next = part("next");
     const status = part("status");
+    // The arrows are optional (see shorts.astro).
+    const nav = root.querySelector<HTMLElement>("[data-shorts-nav]");
+    const previous = root.querySelector("[data-shorts-previous]");
+    const next = root.querySelector("[data-shorts-next]");
     const shorts = [...feed.querySelectorAll<HTMLElement>("[data-short]")];
     const count = shorts.length;
 
@@ -52,8 +54,8 @@ export const bindFeed = (root: HTMLElement): Feed => {
         current = i;
         // Shorts that are off screen must not be reachable by keyboard.
         for (const [n, short] of shorts.entries()) short.inert = n !== current;
-        previous.setAttribute("aria-disabled", String(current === 0));
-        next.setAttribute("aria-disabled", String(current === count - 1));
+        previous?.setAttribute("aria-disabled", String(current === 0));
+        next?.setAttribute("aria-disabled", String(current === count - 1));
         // Not on load: only a change is news.
         if (before !== -1) {
             const name = shorts[current].getAttribute("aria-label");
@@ -68,9 +70,9 @@ export const bindFeed = (root: HTMLElement): Feed => {
             behavior: motion(),
         });
 
-    previous.addEventListener("click", () => goTo(current - 1));
-    next.addEventListener("click", () => goTo(current + 1));
-    part("nav").hidden = false;
+    previous?.addEventListener("click", () => goTo(current - 1));
+    next?.addEventListener("click", () => goTo(current + 1));
+    if (nav) nav.hidden = false;
 
     // Makes the feed keyboard-scrollable (WCAG 2.1.1). The keys move a whole
     // short: native key scrolling nudges, and leaves snapping to sort it out.
