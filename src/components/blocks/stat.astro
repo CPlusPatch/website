@@ -72,12 +72,15 @@ const formatter = (el: HTMLElement) =>
 const count = (el: HTMLElement) => {
     const value = Number(el.dataset.value);
     const format = formatter(el);
+    // Updating the existing text node's data, rather than replacing it with
+    // textContent, avoids a relayout of the whole stat on every frame
+    const text = el.firstChild as Text;
     let start: number | undefined;
 
     const frame = (now: number) => {
         start ??= now;
         const t = Math.min((now - start) / DURATION, 1);
-        el.textContent = format.format(value * easeOut(t));
+        text.data = format.format(value * easeOut(t));
         if (t < 1) requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);

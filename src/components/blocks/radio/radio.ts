@@ -84,9 +84,13 @@ export const bindRadio = (root: HTMLElement) => {
         current = 0;
         list.append(...tracks.map(rowOf));
         list.scrollTop = 0;
+        // All the writes, then all the reads, or each row's position read
+        // forces its own layout
         for (const [index, track] of tracks.entries()) {
             const number = track.querySelector("[data-radio-number]");
             if (number) number.textContent = String(index + 1);
+        }
+        for (const track of tracks) {
             const moved =
                 (before.get(track) ?? 0) - track.getBoundingClientRect().top;
             if (moved && !reducedMotion()) {
