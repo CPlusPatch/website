@@ -26,12 +26,15 @@ jobs:
 
       # The videos `deno run shorts` makes, zipped, as they are not in git
       # (see data/shorts.ts). Skipped where the variable is not set, as on
-      # forks, and the build carries on with the samples alone.
+      # forks, and the build carries on with the samples alone. The query
+      # string is new on every run, so a copy Cloudflare cached from before
+      # an upload is never served; the bucket ignores it.
       - name: Download Shorts videos
         if: vars.SHORTS_ZIP_URL != ''
         run: |
           curl --fail --location --silent --show-error --retry 3 \
-            --output "$RUNNER_TEMP/shorts.zip" "$SHORTS_ZIP_URL"
+            --output "$RUNNER_TEMP/shorts.zip" \
+            "$SHORTS_ZIP_URL?v=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           mkdir -p src/data/shorts
           unzip -q -o "$RUNNER_TEMP/shorts.zip" -d src/data/shorts
         env:
@@ -42,7 +45,8 @@ jobs:
         if: vars.RADIO_ZIP_URL != ''
         run: |
           curl --fail --location --silent --show-error --retry 3 \
-            --output "$RUNNER_TEMP/radio.zip" "$RADIO_ZIP_URL"
+            --output "$RUNNER_TEMP/radio.zip" \
+            "$RADIO_ZIP_URL?v=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           mkdir -p src/data/radio
           unzip -q -o "$RUNNER_TEMP/radio.zip" -d src/data/radio
         env:
