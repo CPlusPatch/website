@@ -2,7 +2,7 @@
 # have their own ids and cover art, not the same recording's videos.
 # `deno run radio src/data/radio-tracks.txt` downloads them into
 # src/data/radio/ (see packages/mixtape). After a URL, `| Title | Artist`
-# replaces the upload's own.
+# replaces the upload's own, and `| Album` after those the album.
 https://music.youtube.com/watch?v=5w3rRFWzjcM
 https://music.youtube.com/watch?v=maWHojZTnTg
 https://music.youtube.com/watch?v=kK81m-A3qpU | otherside | Lena Raine
@@ -15,3 +15,33 @@ https://music.youtube.com/watch?v=Achqe_GDUTM
 https://music.youtube.com/watch?v=EQ-bpi2Tdj0 | UltraChurch | Keygen Church
 https://music.youtube.com/watch?v=wXk3u5V5qk0 | Still Alive (Radio Mix) | Aperture Science Psychoacoustic Laboratories
 https://music.youtube.com/watch?v=fEnpB9fPUbg
+https://music.youtube.com/watch?v=tdlq_dDtSqw | The Data Stream | The Stupendium, Cami-Cat
+https://music.youtube.com/watch?v=yV_76cm2BWU
+https://music.youtube.com/watch?v=YpFweSMfEYs | Suite New Day | Michael Giacchino | Spider-Man: Brand New Day
+https://music.youtube.com/watch?v=2o9KfyPqQzY
+https://music.youtube.com/watch?v=qQzdAsjWGPg | My Way | Frank Sinatra
+https://music.youtube.com/watch?v=XJoAKzkpYQI
+https://music.youtube.com/watch?v=8IFSa_Shvuw
+https://music.youtube.com/watch?v=4gZdE5dimMg
+https://music.youtube.com/watch?v=G01DHYr-teA | Look Up | David Fleming | Superman
+https://music.youtube.com/watch?v=hRAeGYHNLag
+https://music.youtube.com/watch?v=m-VPYzBU7YE
+https://music.youtube.com/watch?v=adHW2XXBFrc | Night on Fire | JT Music, Andrea Storm Kaden
+https://music.youtube.com/watch?v=0cBHeagy-S4
+https://music.youtube.com/watch?v=dp6cLZisGuA | GigaChad Theme (Phonk House Version) | g3ox_em | GigaChad Theme
+https://music.youtube.com/watch?v=ndxbnXWINs8
+https://music.youtube.com/watch?v=TaV1r341wYk
+https://music.youtube.com/watch?v=xgcap-5IBsY | Showdown | Jose Pavli | Project Wingman
+https://music.youtube.com/watch?v=VM81QKfmAGw
+https://music.youtube.com/watch?v=g2qteuFPdZQ | The Fantastic Four: First Steps Main Theme | Michael Giacchino | The Fantastic Four: First Steps
+https://music.youtube.com/watch?v=SPWKAiRhZcs
+https://music.youtube.com/watch?v=1J6_NCoh8tY
+https://music.youtube.com/watch?v=GumqmIeKY_0 | Real Gone | Sheryl Crow | Cars
+https://music.youtube.com/watch?v=5zfu8C-Cmpo
+https://music.youtube.com/watch?v=QtxeJ703w18
+https://music.youtube.com/watch?v=LX0nr9akt9M | You Were Loved (Burial) | Daniel Pemberton | Project Hail Mary
+https://music.youtube.com/watch?v=p_ygvX0xarw | Pacific Rim | Ramin Djawadi, Tom Morello | Pacific Rim
+https://music.youtube.com/watch?v=d8eEIT4CRhQ
+https://music.youtube.com/watch?v=IUuhdIFllok | Make Me Pretty | JT Music, Andrea Storm Kaden
+https://music.youtube.com/watch?v=qN4ooNx77u0 | Sign of the Times | Harry Styles | Harry Styles
+https://music.youtube.com/watch?v=7tYh1Q3gvdc | The Heist | P.T. Adamczyk | Cyberpunk 2077
