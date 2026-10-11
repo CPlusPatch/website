@@ -9,11 +9,11 @@
  * fetches and ffmpeg converts, so both need to be installed.
  *
  * A list file has one URL per line; blank lines and lines starting with #
- * are skipped. A line can also give the title and the artist, which the
- * site shows instead of what the upload is called (often a video title, or
- * an uploader's name):
+ * are skipped. A line can also give the title, the artist and the album,
+ * which the site shows instead of what the upload is called (often a video
+ * title, or an uploader's name):
  *
- *   https://music.youtube.com/watch?v=... | Aria Math | C418
+ *   https://music.youtube.com/watch?v=... | Aria Math | C418 | Minecraft
  *
  * Tracks already in <dir> are not downloaded again, so a list can grow over
  * time and be re-run.
@@ -56,9 +56,27 @@ if (!out || !sources.length) {
 
 /** A list's lines, split into the URL and what it overrides. */
 const requests = readUrls(sources).map((line) => {
-    const [url, title, artist] = line.split("|").map((part) => part.trim());
-    return { url, title: title || undefined, artist: artist || undefined };
+    const [url, title, artist, album] = line
+        .split("|")
+        .map((part) => part.trim());
+    return {
+        url,
+        title: title || undefined,
+        artist: artist || undefined,
+        album: album || undefined,
+    };
 });
+
+/**
+ * YouTube Music's text, tidied: full-width commas (as in "Ray Parker， Jr.")
+ * become plain ones.
+ */
+const tidy = (text: string | undefined) =>
+    text?.replace(/\s*，\s*/g, ", ").trim() || undefined;
+
+/** An album without the "(Original Game Soundtrack)" every one is sold with. */
+const tidyAlbum = (album: string | undefined) =>
+    tidy(album?.replace(/\s*\([^()]*\b(?:Soundtrack|Score)\)$/i, ""));
 
 /** The fields of yt-dlp's info JSON used here. */
 interface Info {
@@ -165,6 +183,7 @@ const download = async ({
     url,
     title,
     artist,
+    album,
 }: (typeof requests)[number]): Promise<Entry | undefined> => {
     let info: Info | undefined;
     let skipped = false;
@@ -199,9 +218,9 @@ const download = async ({
         // ids, and webpage_url would turn a music.youtube.com link into the
         // video's.
         url,
-        title: title ?? info.track ?? info.title,
-        artist: artist ?? info.artist ?? info.creator ?? channel,
-        album: info.album,
+        title: tidy(title ?? info.track ?? info.title) ?? info.id,
+        artist: tidy(artist ?? info.artist ?? info.creator ?? channel),
+        album: tidyAlbum(album ?? info.album),
     };
 };
 
