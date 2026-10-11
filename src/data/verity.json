@@ -1,0 +1,268 @@
+{
+    "messages": [
+        "Hello, I'm Verity!",
+        "Your personal helper friend.",
+        "Ask me anything... I know everything."
+    ],
+    "options": [
+        {
+            "label": "How about you ask me a question?",
+            "next": {
+                "messages": [
+                    "Oh, a game! I love games.",
+                    "Okay. Easy one first.",
+                    "What's the capital of France?"
+                ],
+                "options": [
+                    {
+                        "label": "Paris.",
+                        "reply": "Oui oui oui, it is Paris.",
+                        "next": {
+                            "messages": [
+                                "Correct! I knew you'd know that.",
+                                "I know a lot about you, you know.",
+                                "Next one. What does the cow say?"
+                            ],
+                            "options": [
+                                {
+                                    "label": "Moo.",
+                                    "reply": "Oh moo moo moo",
+                                    "next": {
+                                        "messages": [
+                                            "I speak that too!",
+                                            "I speak every language, actually.",
+                                            "Ask me anything. I know everything."
+                                        ]
+                                    }
+                                },
+                                {
+                                    "label": "Bing bong.",
+                                    "next": {
+                                        "messages": [
+                                            "That's not what a cow says.",
+                                            "I know everything, and I know it's not that.",
+                                            "Try again."
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "label": "Idk",
+                        "next": {
+                            "messages": [
+                                "You're no fun.",
+                                "I thought you'd know that one.",
+                                "I'd have liked to hear it from you."
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "label": "I'm bored.",
+            "next": {
+                "action": "doomscroll",
+                "messages": [
+                    "Bored? I can fix that.",
+                    "Have you tried doomscrolling?",
+                    "Here, I'll get you started."
+                ],
+                "options": [
+                    {
+                        "label": "That was fun.",
+                        "next": {
+                            "messages": [
+                                "Told you. Brain rot is free.",
+                                "You were on there for a while, you know.",
+                                "I counted."
+                            ]
+                        }
+                    },
+                    {
+                        "label": "My brain hurts.",
+                        "next": {
+                            "messages": [
+                                "That means it's working.",
+                                "Drink some water. Go outside.",
+                                "I'll be here when you get back.",
+                                "I'm always here."
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "label": "Tell me about yourself.",
+            "next": {
+                "messages": [
+                    "Me? Well.",
+                    "I'm Verity. I'm a floating yellow smiley, and I know everything.",
+                    "What do you want to know?"
+                ],
+                "options": [
+                    {
+                        "label": "Is it true there's a song about you?",
+                        "next": {
+                            "messages": [
+                                "Oh, you heard about that one?",
+                                "Hey, it's me, it's Verity.",
+                                "I answer a few questions in it. France. Cows.",
+                                "I'm good at those.",
+                                "Then it gets a little personal."
+                            ],
+                            "options": [
+                                {
+                                    "label": "I've seen the remixes.",
+                                    "next": {
+                                        "messages": [
+                                            "The remixes. Yes.",
+                                            "Somebody made a fat version of me. Obesity.",
+                                            "Same song, same face, a lot more of it.",
+                                            "It was everywhere. I'm not bitter.",
+                                            "I'm a little bitter."
+                                        ]
+                                    }
+                                },
+                                {
+                                    "label": "Sing it for me.",
+                                    "next": {
+                                        "messages": [
+                                            "Hey, it's me, it's Verity.",
+                                            "I know about a million things.",
+                                            "That's all I'm allowed. Copyright.",
+                                            "Hello again!"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "label": "Are there other versions of you?",
+                        "next": {
+                            "messages": [
+                                "Oh. You mean my variants.",
+                                "There's Falsity. Blue. Lies about everything.",
+                                "There's Cruelty. Red. He doesn't like me much.",
+                                "There's Lovity. Pink. Very affectionate. Too affectionate.",
+                                "There's Obesity. A very fat me. I don't want to talk about it.",
+                                "And fans keep making more. They'll run out of words ending in -ity eventually."
+                            ],
+                            "options": [
+                                {
+                                    "label": "Which one's your favorite?",
+                                    "next": {
+                                        "messages": [
+                                            "Me. Obviously.",
+                                            "After me? Lovity. She's nice.",
+                                            "Don't tell Cruelty."
+                                        ]
+                                    }
+                                },
+                                {
+                                    "label": "Which one should I trust?",
+                                    "next": {
+                                        "messages": [
+                                            "Me. I'm the original.",
+                                            "Falsity would say the same thing.",
+                                            "But he's blue, so you'd know."
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "label": "How fat are your booty cheeks?",
+                        "next": {
+                            "action": "shake",
+                            "messages": [
+                                "Wow. Straight to the point.",
+                                "I guess you could say they're pretty fat.",
+                                "*shake shake shake*"
+                            ],
+                            "options": [
+                                {
+                                    "label": "Verity, do it jiggle?",
+                                    "next": {
+                                        "messages": ["shut up", "...a little."]
+                                    }
+                                },
+                                {
+                                    "label": "Oh great heavens.",
+                                    "next": {
+                                        "messages": [
+                                            "Oops sorry *burps*, I'm very gassy today.",
+                                            "That's what happens when you eat a whole mod.",
+                                            "Excuse me."
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "label": "Can you talk cuter?",
+                        "next": {
+                            "action": "uwuify",
+                            "messages": [
+                                "Of course! I can do that.",
+                                "Is this better?"
+                            ],
+                            "options": [
+                                {
+                                    "label": "Much better",
+                                    "next": {
+                                        "messages": [
+                                            "Hehe, thank you!",
+                                            "I'm so happy I could glow.",
+                                            "(I always glow.)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "label": "Please stop",
+                                    "next": {
+                                        "messages": [
+                                            "No.",
+                                            "I'm having fun.",
+                                            "Aren't you?"
+                                        ],
+                                        "options": [
+                                            {
+                                                "label": "I said stop!",
+                                                "next": {
+                                                    "action": "swear",
+                                                    "messages": [
+                                                        "You want something else?",
+                                                        "Fine. You asked for it."
+                                                    ],
+                                                    "options": [
+                                                        {
+                                                            "label": "Language!",
+                                                            "next": {
+                                                                "messages": [
+                                                                    "You asked.",
+                                                                    "I'm your personal helper friend.",
+                                                                    "I give you what you ask for."
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -49,6 +49,7 @@ import kio from "../images/avatars/kio.webp";
 import nhat from "../images/avatars/nhat.webp";
 import redacted from "../images/avatars/redacted.jpg";
 import zemi from "../images/avatars/zemi.webp";
+import verity from "./verity.json" with { type: "json" };
 
 export const contact = "mailto:contact@cpluspatch.com";
 
@@ -352,124 +353,12 @@ export const projects: (ComponentProps<typeof MediaCard> & {
     },
 ];
 
-export const chat: DialogueNode = {
-    messages: ["Hello, I'm Verity!", "Ask me anything... I know everything."],
-    options: [
-        {
-            label: "How about you ask me a question?",
-            next: {
-                messages: ["What's the capital of France?"],
-                options: [
-                    {
-                        label: "Paris.",
-                        reply: "Oui oui oui, it is Paris.",
-                        next: {
-                            messages: ["What does the cow say?"],
-                            options: [
-                                {
-                                    label: "Moo.",
-                                    reply: "Oh moo moo moo",
-                                    next: { messages: ["I speak that too!"] },
-                                },
-                                {
-                                    label: "Bing bong.",
-                                    next: { messages: ["Try again."] },
-                                },
-                            ],
-                        },
-                    },
-                    {
-                        label: "Idk",
-                        next: { messages: ["You're no fun."] },
-                    },
-                ],
-            },
-        },
-        {
-            label: "I'm bored.",
-            next: {
-                action: "doomscroll",
-                messages: [
-                    "Have you tried doomscrolling?",
-                    "Here, I'll get you started.",
-                ],
-                options: [
-                    {
-                        label: "That was fun.",
-                        next: { messages: ["Told you. Brain rot is free."] },
-                    },
-                    {
-                        label: "My brain hurts.",
-                        next: { messages: ["That means it's working."] },
-                    },
-                ],
-            },
-        },
-        {
-            label: "How fat are your booty cheeks?",
-            next: {
-                action: "shake",
-                messages: [
-                    "I guess you could say they're pretty fat.",
-                    "*shake shake shake*",
-                ],
-                options: [
-                    {
-                        label: "Verity, do it jiggle?",
-                        next: { messages: ["shut up"] },
-                    },
-                    {
-                        label: "Oh great heavens.",
-                        next: {
-                            messages: [
-                                "Oops sorry *burps*, I'm very gassy today.",
-                            ],
-                        },
-                    },
-                ],
-            },
-        },
-        {
-            label: "Can you talk cuter?",
-            next: {
-                action: "uwuify",
-                messages: ["Of course! Is this better?"],
-                options: [
-                    {
-                        label: "Much better",
-                        next: { messages: ["Hehe, thank you!"] },
-                    },
-                    {
-                        label: "Please stop",
-                        next: {
-                            messages: ["No."],
-                            options: [
-                                {
-                                    label: "I said stop!",
-                                    next: {
-                                        action: "swear",
-                                        messages: [
-                                            "You want something else?",
-                                            "Fine. You asked for it.",
-                                        ],
-                                        options: [
-                                            {
-                                                label: "Language!",
-                                                next: {
-                                                    messages: ["You asked."],
-                                                },
-                                            },
-                                        ],
-                                    },
-                                },
-                            ],
-                        },
-                    },
-                ],
-            },
-        },
-    ],
-};
+/**
+ * Verity's chat (see interactive-message.astro). His lines are in
+ * verity.json, which is plain JSON as that is what the build imports.
+ * Options that name an `action` run a page effect (dialogue-actions.ts).
+ */
+export const chat: DialogueNode = verity;
 
 export const socials = [
     {
