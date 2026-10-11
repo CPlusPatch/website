@@ -21,6 +21,23 @@ export const fill = (range: HTMLInputElement) => {
     );
 };
 
+/**
+ * Sets a seek <Slider> from where `media` has got to, and returns the
+ * duration it went by: 0 until the metadata loads, and for streams.
+ */
+export const renderSeek = (media: HTMLMediaElement, seek: HTMLInputElement) => {
+    // Infinite for streams, NaN until the metadata loads
+    const duration = Number.isFinite(media.duration) ? media.duration : 0;
+    seek.max = String(duration);
+    seek.value = String(media.currentTime);
+    seek.setAttribute(
+        "aria-valuetext",
+        `${formatTime(media.currentTime)} of ${formatTime(duration)}`,
+    );
+    fill(seek);
+    return duration;
+};
+
 /** Swaps the browser's controls for ours and keeps them in sync. */
 export const bindTransport = (
     media: HTMLMediaElement,
@@ -40,17 +57,9 @@ export const bindTransport = (
     controls.hidden = false;
 
     const render = () => {
-        // Infinite for streams, NaN until the metadata loads
-        const duration = Number.isFinite(media.duration) ? media.duration : 0;
+        const duration = renderSeek(media, seek);
         const { buffered } = media;
         const loaded = buffered.length ? buffered.end(buffered.length - 1) : 0;
-        seek.max = String(duration);
-        seek.value = String(media.currentTime);
-        seek.setAttribute(
-            "aria-valuetext",
-            `${formatTime(media.currentTime)} of ${formatTime(duration)}`,
-        );
-        fill(seek);
         seek.style.setProperty(
             "--buffered",
             `${duration ? (loaded / duration) * 100 : 0}%`,
