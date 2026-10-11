@@ -27,6 +27,11 @@ export interface DisplayEffect {
     checked?: boolean;
     /** Hide the switch where the effect can't show, like the crosshair on touch. */
     fine?: boolean;
+    /**
+     * Leave the switch out of the menu's sight. It is still there: its choice
+     * is kept, and its key still works.
+     */
+    hidden?: boolean;
 }
 
 interface Props {
@@ -76,8 +81,8 @@ const { id, effects, size, collapseBelow, class: className } = Astro.props;
 
     <fieldset class="display-menu__group display-menu__effects" data-persist>
         <legend class="display-menu__heading text-ui">Effects</legend>
-        {effects.map(({ name, label, key, checked, fine }) => (
-            <DisplayRow {key} {fine}>
+        {effects.map(({ name, label, key, checked, fine, hidden }) => (
+            <DisplayRow {key} {fine} {hidden}>
                 <Toggle
                     {label}
                     {checked}

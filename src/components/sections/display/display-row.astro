@@ -52,6 +52,11 @@ const { label, key, fine, class: className, ...rest } = Astro.props;
         color: var(--color-text-muted);
     }
 
+    /* Out of sight, though its control is still in the page. */
+    &[hidden] {
+        display: none;
+    }
+
     &[data-fine] {
         @media not ((hover: hover) and (pointer: fine)) {
             display: none;
