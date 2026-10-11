@@ -48,7 +48,8 @@ deno run lint:fix   # format and autofix
 deno run theme      # regenerate the theme colours
 deno run bad-apple  # regenerate the terminal's Bad Apple!! (needs ffmpeg and yt-dlp)
 deno run movie <file or URL>  # a colour film for the terminal's `movie` (kept out of git; or set PUBLIC_MOVIE_URL)
-deno run shorts <URLs or list file>  # videos for <Shorts> (needs ffmpeg and yt-dlp; kept out of git)
+deno run shorts src/data/shorts-videos.txt  # videos for <Shorts> (needs ffmpeg and yt-dlp; kept out of git)
+deno run radio src/data/radio-tracks.txt  # music for <Radio>, from YouTube Music links (same needs; kept out of git)
 ```
 
 ## Layout
@@ -68,6 +69,8 @@ website/
 │   ├── palette/        theme colour generator
 │   ├── destructor/     the gravity gun
 │   ├── reel/           downloads videos for <Shorts>
+│   ├── mixtape/        downloads music for <Radio>
+│   ├── grab/           what reel and mixtape share (yt-dlp, retries)
 │   └── flipbook/       shrinks videos for the terminal
 └── docs/               guides, linked below
 ```
