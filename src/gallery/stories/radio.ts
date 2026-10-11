@@ -1,29 +1,29 @@
-import stillAlive from "../../audio/radio/still-alive-radio-mix-clean.ogg";
+import testTone from "../../audio/test-tone.ogg";
 import Radio from "../../components/blocks/radio/radio.astro";
 import greg from "../../images/greg.jpg";
 import testPattern from "../../images/test-pattern.jpg";
 import { type StoryGroup, story } from "../story.ts";
 
-// One file stands in for every track.
+// One sound stands in for every track: a tone made with ffmpeg.
 const tracks = [
     {
-        src: stillAlive,
-        title: "Still Alive (Radio Mix)",
-        artist: "Jonathan Coulton",
+        src: testTone,
+        title: "Test Tone",
+        artist: "ffmpeg",
         cover: testPattern,
     },
     {
-        src: stillAlive,
+        src: testTone,
         title: "Test Pattern Blues",
         artist: "Greg",
         cover: greg,
     },
     {
-        src: stillAlive,
+        src: testTone,
         title: "Untitled Demo With No Cover",
         artist: "Unknown",
     },
-    { src: stillAlive, title: "Instrumental" },
+    { src: testTone, title: "Instrumental" },
 ];
 
 export const radio: StoryGroup[] = [

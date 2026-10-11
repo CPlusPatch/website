@@ -1,4 +1,4 @@
-import stillAlive from "../../audio/radio/still-alive-radio-mix-clean.ogg";
+import testTone from "../../audio/test-tone.ogg";
 import AudioPlayer from "../../components/blocks/audio-player.astro";
 import { type StoryGroup, story } from "../story.ts";
 
@@ -11,19 +11,19 @@ export const audioPlayer: StoryGroup[] = [
         description: "Falls back to the browser's own player without JS.",
         min: 24,
         stories: [
-            story("default", AudioPlayer, { src: stillAlive }),
+            story("default", AudioPlayer, { src: testTone }),
             story("titled", AudioPlayer, {
-                src: stillAlive,
-                title: "Still Alive (Radio Mix)",
+                src: testTone,
+                title: "Test Tone",
             }),
             story("secondary", AudioPlayer, {
-                src: stillAlive,
-                title: "Still Alive (Radio Mix)",
+                src: testTone,
+                title: "Test Tone",
                 tone: "secondary",
             }),
             story("unframed", AudioPlayer, {
-                src: stillAlive,
-                title: "Still Alive (Radio Mix)",
+                src: testTone,
+                title: "Test Tone",
                 framed: false,
             }),
         ],
