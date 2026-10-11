@@ -125,11 +125,14 @@ export const bindDialogue = (root: HTMLElement) => {
     };
 
     const pick = async (option: DialogueOption) => {
-        // Keep focus in the component while the options are away. They
-        // stay in place, hidden, so the row holds its height (see the CSS).
+        // Keep focus in the component while the options are away. The next
+        // ones are laid out already, hidden, so the row is the height it
+        // will be (see the CSS) rather than the height of the ones just
+        // used, which left a gap, or a jolt, while the other side typed.
         const focused = root.contains(document.activeElement);
         options.dataset.waiting = "";
         if (focused) options.focus();
+        options.replaceChildren(...buttonsFor(option.next?.options ?? []));
 
         const mine = clone("group");
         add(log, mine);
@@ -162,13 +165,16 @@ export const bindDialogue = (root: HTMLElement) => {
         offer(tree.options ?? [], true);
     });
 
-    /** Fills in the reader's options; their buttons animate in by CSS. */
-    const render = (choices: DialogueOption[]) => {
-        const buttons = choices.map((option) => {
+    const buttonsFor = (choices: DialogueOption[]) =>
+        choices.map((option) => {
             const button = say("option", option.label);
             button.addEventListener("click", () => pick(option));
             return button;
         });
+
+    /** Fills in the reader's options; their buttons animate in by CSS. */
+    const render = (choices: DialogueOption[]) => {
+        const buttons = buttonsFor(choices);
         options.replaceChildren(...buttons);
         delete options.dataset.waiting;
         return buttons;

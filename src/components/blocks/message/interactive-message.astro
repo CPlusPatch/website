@@ -216,8 +216,8 @@ for (const root of document.querySelectorAll<HTMLElement>(
         }
 
         /*
-         * Between turns the used options fade out but keep their space, so
-         * the row doesn't collapse and jolt everything below it.
+         * Between turns the next options are in place but hidden, so the
+         * row holds the height it will have and nothing below it jolts.
          */
         &[data-waiting] > :global(*) {
             visibility: hidden;
