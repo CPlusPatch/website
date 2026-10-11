@@ -14,29 +14,61 @@ const SKIPPED = "script, style, template, textarea, input, svg, code, pre";
  * Rewrites every visible piece of text on the page, and returns a function
  * that puts it all back. Only text nodes change, so markup, links and
  * listeners stay intact. Their surrounding whitespace is kept, as it is
- * layout rather than words.
+ * layout rather than words. Only the text that changes is remembered.
+ *
+ * With `live`, text the page adds or changes later (a chat's replies, say)
+ * is rewritten as it appears, until it is undone. `rewrite` has to give the
+ * same result when run on its own output.
  */
-const rewriteText = (rewrite: (text: string) => string) => {
+const rewriteText = (rewrite: (text: string) => string, live = false) => {
     const originals = new Map<Text, string>();
-    const walker = document.createTreeWalker(
-        document.body,
-        NodeFilter.SHOW_TEXT,
-        {
-            acceptNode: (node) =>
-                node.parentElement?.closest(SKIPPED) || !node.nodeValue?.trim()
-                    ? NodeFilter.FILTER_REJECT
-                    : NodeFilter.FILTER_ACCEPT,
-        },
-    );
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-        const text = node as Text;
+    // What each node was last set to here, to tell our writes from the page's.
+    const written = new Map<Text, string>();
+
+    const visit = (text: Text) => {
+        if (text.parentElement?.closest(SKIPPED) || !text.data.trim()) return;
         const value = text.data;
         const [, before, words, after] =
             value.match(/^(\s*)([\s\S]*?)(\s*)$/) ?? [];
-        originals.set(text, value);
-        text.data = before + rewrite(words ?? "") + after;
-    }
+        const next = before + rewrite(words ?? "") + after;
+        if (next === value) return;
+        if (!originals.has(text)) originals.set(text, value);
+        written.set(text, next);
+        text.data = next;
+    };
+    const visitAll = (root: Node) => {
+        if (root.nodeType === Node.TEXT_NODE) return visit(root as Text);
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            visit(node as Text);
+        }
+    };
+    visitAll(document.body);
+
+    const observer = live
+        ? new MutationObserver((records) => {
+              for (const record of records) {
+                  if (record.type === "characterData") {
+                      const text = record.target as Text;
+                      // Our own writes come back as mutations too.
+                      if (text.data === written.get(text)) continue;
+                      // The page's new text is the original now.
+                      originals.delete(text);
+                      visit(text);
+                  } else {
+                      for (const node of record.addedNodes) visitAll(node);
+                  }
+              }
+          })
+        : undefined;
+    observer?.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+    });
+
     return () => {
+        observer?.disconnect();
         for (const [text, value] of originals) text.data = value;
     };
 };
@@ -125,3 +157,38 @@ export const uwuify = () =>
  */
 export const swear = () =>
     rewriteText((text) => text.replace(/\p{L}+/gu, swearFor));
+
+/**
+ * A word on its own, not part of an address, a path, a handle or a longer
+ * word: nothing joined to it by a letter, digit, @, /, :, #, - or a dot
+ * before it, and no @, / or - after it, nor a dot that carries on with more
+ * (as in a domain). A dot ending a sentence is fine. So "cpluspatch.com"
+ * and "github.com/CPlusPatch/site" are left alone, and "Heaven" is not "He".
+ */
+const standalone = (words: string) =>
+    new RegExp(String.raw`(?<![\w@./:#-])(?:${words})(?![\w@/-]|\.\w)`, "g");
+const NAME = standalone("CPlusPatch");
+const HE = standalone("he|He|HE");
+
+/** The name and pronoun swapped, as "Jesse" and "she" (see `jesse`). */
+export const swapNames = (text: string) =>
+    text
+        .replace(NAME, "Jesse")
+        .replace(HE, (he) =>
+            he === "he" ? "she" : he === "HE" ? "SHE" : "She",
+        );
+
+/**
+ * Does a funny, in the words on the page and in its title,
+ * including text it adds later. Not in addresses or links.
+ * Returns a function that undoes it.
+ */
+export const jesse = () => {
+    const title = document.title;
+    document.title = swapNames(title);
+    const undo = rewriteText(swapNames, true);
+    return () => {
+        undo();
+        document.title = title;
+    };
+};

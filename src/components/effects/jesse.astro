@@ -1,0 +1,28 @@
+<script>
+// Switches the page's names with the hidden Jesse switch in the Display menu
+// (see data/home.ts), which has no look of its own.
+import { jesse } from "../../lib/page-effects.ts";
+
+let undo: (() => void) | undefined;
+
+const sync = () => {
+    const on = [
+        ...document.querySelectorAll<HTMLInputElement>(
+            "[data-jesse-toggle] > input",
+        ),
+    ].some((input) => input.checked);
+    if (on && !undo) undo = jesse();
+    else if (!on && undo) {
+        undo();
+        undo = undefined;
+    }
+};
+
+document.addEventListener("change", (e) => {
+    if ((e.target as Element).closest("[data-jesse-toggle]")) sync();
+});
+// Once the menu has put back its saved choices, which fire no change.
+document.addEventListener("DOMContentLoaded", sync);
+// Back to a page kept whole in the cache, after the menu has done the same
+window.addEventListener("pageshow", (e) => e.persisted && setTimeout(sync));
+</script>

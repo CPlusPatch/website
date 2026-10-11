@@ -3,6 +3,7 @@ import "../styles/index.css";
 
 import { Font } from "astro:assets";
 import Crosshair from "../components/effects/crosshair.astro";
+import Jesse from "../components/effects/jesse.astro";
 import Scanlines from "../components/effects/scanlines.astro";
 import Signal from "../components/effects/signal.astro";
 import { STORAGE_KEY } from "../lib/display.ts";
@@ -104,6 +105,7 @@ const PAINTED = ["theme", ...OVERRIDES.map(({ name }) => name)];
         <Signal />
         <Scanlines />
         <Crosshair />
+        <Jesse />
         <a class="skip-link" href="#main">Skip to content</a>
         <slot />
     </body>

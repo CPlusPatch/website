@@ -42,6 +42,8 @@ export const navLinks = [
 export const effects: DisplayEffect[] = [
     { name: "scanlines", label: "Scanlines", key: "s", checked: true },
     { name: "crosshair", label: "Crosshair", key: "c", fine: true },
+    // Not in the menu: Alt+Shift+J only (see lib/page-effects.ts, jesse).
+    { name: "jesse", label: "Jesse", key: "j", hidden: true },
 ];
 
 export const details = [
