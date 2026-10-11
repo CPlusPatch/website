@@ -1,0 +1,19 @@
+# The videos for <Shorts>, in the order they play. `deno run shorts
+# src/data/shorts-videos.txt` downloads them into src/data/shorts/ (see
+# packages/reel).
+https://www.youtube.com/watch?v=WvUJkOQrJWA
+https://www.youtube.com/watch?v=htLkig1ZVzU
+https://www.youtube.com/watch?v=92tfeCv9ASY
+https://www.youtube.com/watch?v=O3nA0Tku_xU
+https://www.youtube.com/watch?v=GuQVXVio17o
+https://www.youtube.com/watch?v=7lDfyDTYuUw
+https://www.youtube.com/watch?v=n2QDG2sGdT4
+https://www.youtube.com/watch?v=r-xTAgGTUXI
+https://www.youtube.com/watch?v=xXBciL0e2Wk
+https://www.youtube.com/watch?v=jqC2YpH6guc
+https://www.youtube.com/watch?v=768H9PhmogU
+https://www.youtube.com/watch?v=gqjDEm1RmxA
+https://www.youtube.com/watch?v=NkdMqNn6_2M
+https://www.youtube.com/watch?v=d1_gwx8I4_4
+https://www.youtube.com/watch?v=9CDC678MlHc
+https://www.youtube.com/watch?v=rjHl2pUnGME
