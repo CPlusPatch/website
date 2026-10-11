@@ -32,3 +32,6 @@ src/data/movie/
 
 # videos for <Shorts>, made by `deno run shorts`; never ours to publish
 src/data/shorts/
+
+# music for <Radio>, made by `deno run radio`; never ours to publish
+src/data/radio/
