@@ -1,3 +1,4 @@
+import { reducedMotion } from "../../../lib/motion.ts";
 import { setPaused } from "../../ui/pause-button.ts";
 import type { Track } from "./track.ts";
 
@@ -32,7 +33,7 @@ export const bindAutoplay = (
     const stopped = () => root.hasAttribute("data-paused");
     const stop = () => setPaused(pause, true);
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) stop();
+    if (reducedMotion()) stop();
 
     // The user taking over stops rotation. The control itself is exempt, or
     // pressing it would stop rotation and then toggle it straight back on.

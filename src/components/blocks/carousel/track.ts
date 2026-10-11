@@ -4,11 +4,7 @@
  * slide derived from wherever it is. The controls only build on this.
  */
 
-/** Smooth, unless the user prefers reduced motion. */
-export const motion = (): ScrollBehavior =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth";
+import { motion } from "../../../lib/motion.ts";
 
 export interface Track {
     readonly count: number;

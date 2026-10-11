@@ -1,4 +1,5 @@
-import { motion, type Track } from "./track.ts";
+import { motion } from "../../../lib/motion.ts";
+import type { Track } from "./track.ts";
 
 /**
  * Fills a <CarouselPips> row with one pip per slide, from its template.

@@ -5,9 +5,7 @@
  * Browser only: call them from page scripts.
  */
 import Uwuifier from "uwuifier";
-
-const reducedMotion = () =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+import { reducedMotion } from "./motion.ts";
 
 /** Text the reader never sees as words, and fields they may be typing in. */
 const SKIPPED = "script, style, template, textarea, input, svg, code, pre";

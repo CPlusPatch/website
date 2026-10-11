@@ -1,3 +1,5 @@
+import { reducedMotion } from "../../lib/motion.ts";
+
 /**
  * Presses a <PauseButton> or releases it, and pauses or resumes its target
  * to match, as clicking it does. For scripts that pause on the reader's
@@ -47,11 +49,7 @@ export const playWhileVisible = (
 
     const button = control?.querySelector<HTMLElement>("[data-pause-target]");
     if (control) control.hidden = false;
-    if (
-        button &&
-        pauseForReducedMotion &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (button && pauseForReducedMotion && reducedMotion()) {
         setPaused(button, true);
     }
 
