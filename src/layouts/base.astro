@@ -50,11 +50,14 @@ const PAINTED = ["theme", ...OVERRIDES.map(({ name }) => name)];
          * doesn't flash the defaults. The menu takes over from these once it
          * loads (see lib/display.ts).
          */}
-        <script is:inline define:vars={{ key: STORAGE_KEY, names: PAINTED }}>
+        <script is:inline data-key={STORAGE_KEY} data-names={PAINTED.join(" ")}>
         try {
+            // Read from the tag rather than define:vars, whose variables the
+            // type checker can't see.
+            const { key, names } = document.currentScript.dataset;
             const choices = JSON.parse(localStorage.getItem(key) ?? "{}");
             const root = document.documentElement;
-            for (const name of names) {
+            for (const name of names.split(" ")) {
                 const attr = `data-${name}`;
                 if (
                     typeof choices[name] === "string" &&
