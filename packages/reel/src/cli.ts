@@ -21,6 +21,8 @@
  *                        black (default cover)
  *   --crf <n>            picture quality, lower is better (default 30)
  *   --max-duration <s>   skip anything longer (default 180, as YouTube)
+ *   --retries <n>        times to try again when fetching a video fails,
+ *                        as it does now and then (default 3)
  *
  * Writes, per video, <dir>/<id>.mp4 and <id>.jpg; each channel's avatar
  * as <dir>/avatars/<channel id>.jpg; and <dir>/manifest.json, which lists
@@ -51,6 +53,7 @@ const out = option("out");
 const height = number("height", 1024);
 const crf = number("crf", 30);
 const maxDuration = number("max-duration", 180);
+const retries = number("retries", 3);
 const fit = option("fit") ?? "cover";
 const sources = args.filter((arg) => !arg.startsWith("--"));
 if (!out || !sources.length || (fit !== "contain" && fit !== "cover")) {
@@ -95,6 +98,20 @@ const capture = async (command: string, commandArgs: string[]) => {
         stderr: "inherit",
     }).output();
     return result.success ? new TextDecoder().decode(result.stdout) : undefined;
+};
+
+/**
+ * Runs a task until it gives a result, trying again after a pause that
+ * doubles each time, up to `retries` more times. Sites fail now and then
+ * (a 403, a dropped connection) and work on the next go.
+ */
+const attempt = async <T>(task: () => Promise<T | undefined | false>) => {
+    for (let tries = 0; ; tries++) {
+        const result = await task();
+        if (result || tries >= retries) return result;
+        console.warn(`  Trying again (${tries + 1} of ${retries})`);
+        await new Promise((done) => setTimeout(done, 2000 * 2 ** tries));
+    }
 };
 
 const ytdlp = (ytdlpArgs: string[]) => [
@@ -285,9 +302,8 @@ const fetchVideo = async (json: string, base: string) => {
 
 /** Downloads one video, unless it already is, and describes it. */
 const download = async (url: string): Promise<Entry | undefined> => {
-    const json = await capture(
-        "yt-dlp",
-        ytdlp(["--dump-single-json", "--no-playlist", url]),
+    const json = await attempt(() =>
+        capture("yt-dlp", ytdlp(["--dump-single-json", "--no-playlist", url])),
     );
     if (!json) return undefined;
     const info = JSON.parse(json) as Info;
@@ -299,7 +315,7 @@ const download = async (url: string): Promise<Entry | undefined> => {
     const base = `${out}/${info.id}`;
     if (exists(`${base}.mp4`) && exists(`${base}.jpg`)) {
         console.log("  Already downloaded");
-    } else if (!(await fetchVideo(json, base))) {
+    } else if (!(await attempt(() => fetchVideo(json, base)))) {
         return undefined;
     }
 
