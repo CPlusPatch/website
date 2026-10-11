@@ -8,10 +8,6 @@ import { browserslistToTargets } from "lightningcss";
 export default defineConfig({
     // Alpha deployment. Used for canonical and og:url links.
     site: "https://test.cpluspatch.com",
-    // Until the content pages exist, the site is a UI toolkit showcase.
-    redirects: {
-        "/": "/gallery/",
-    },
     // src/icons must exist, or the dev server stops watching src/. See its README.
     integrations: [icon()],
     fonts: [
