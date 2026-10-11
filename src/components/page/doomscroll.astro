@@ -1,6 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
-import { samples } from "../../data/shorts.ts";
+import { downloaded } from "../../data/shorts.ts";
 import Shorts from "../blocks/shorts/shorts.astro";
 import Button from "../ui/button.astro";
 
@@ -45,7 +45,7 @@ import Button from "../ui/button.astro";
     <Shorts
         class="doomscroll__feed"
         label="Shorts"
-        videos={samples}
+        videos={downloaded}
         muted={false}
     />
 </div>
