@@ -40,7 +40,7 @@ const { tracks, class: className, ...rest } = Astro.props;
                 data-cover={track.coverUrl}
             >
                 <span class="radio-tracklist__number text-meta">
-                    <span>{index + 1}</span>
+                    <span data-radio-number>{index + 1}</span>
                     {/* Bars that bounce while it plays. */}
                     <span class="radio-tracklist__bars" aria-hidden="true">
                         <span></span>

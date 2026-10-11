@@ -1,4 +1,5 @@
 import { bindTransport } from "../../../lib/media.ts";
+import { reducedMotion } from "../../../lib/motion.ts";
 
 /**
  * Plays a <Radio>'s tracklist. The transport (play, seek, time) is the
@@ -14,7 +15,8 @@ export const bindRadio = (root: HTMLElement) => {
     const cover = part<HTMLImageElement>("cover");
     const air = part("air");
     // Always at least one, as the tracklist is there (if hidden) for one.
-    const tracks = [
+    // In the list's order, which shuffling changes.
+    let tracks = [
         ...root.querySelectorAll<HTMLAnchorElement>("[data-radio-track]"),
     ];
 
@@ -63,12 +65,45 @@ export const bindRadio = (root: HTMLElement) => {
         else select(current - 1);
     };
 
+    // Shuffles the list itself, so what is shown is what plays: the playing
+    // track stays on top and the rest follow in a new random order. The rows
+    // slide to their places (FLIP: measured, moved, then animated from where
+    // they were).
+    const rowOf = (track: HTMLElement) => track.closest("li") as HTMLLIElement;
+    part("shuffle").addEventListener("click", () => {
+        const list = rowOf(tracks[0]).parentElement as HTMLElement;
+        const before = new Map(
+            tracks.map((track) => [track, track.getBoundingClientRect().top]),
+        );
+        const rest = tracks.filter((_, index) => index !== current);
+        for (let i = rest.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [rest[i], rest[j]] = [rest[j], rest[i]];
+        }
+        tracks = [tracks[current], ...rest];
+        current = 0;
+        list.append(...tracks.map(rowOf));
+        list.scrollTop = 0;
+        for (const [index, track] of tracks.entries()) {
+            const number = track.querySelector("[data-radio-number]");
+            if (number) number.textContent = String(index + 1);
+            const moved =
+                (before.get(track) ?? 0) - track.getBoundingClientRect().top;
+            if (moved && !reducedMotion()) {
+                rowOf(track).animate(
+                    [{ translate: `0 ${moved}px` }, { translate: "0 0" }],
+                    { duration: 300, easing: "ease-out" },
+                );
+            }
+        }
+    });
+
     part("next").addEventListener("click", next);
     part("previous").addEventListener("click", previous);
-    for (const [index, track] of tracks.entries()) {
+    for (const track of tracks) {
         track.addEventListener("click", (event) => {
             event.preventDefault();
-            select(index, true);
+            select(tracks.indexOf(track), true);
         });
     }
     // A single track stops at its end, rather than looping.

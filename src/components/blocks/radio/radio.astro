@@ -11,8 +11,8 @@ import RadioTracklist from "./radio-tracklist.astro";
 
 /**
  * A playlist in the style of <AudioPlayer>: the playing track with its
- * cover, a play toggle flanked by previous and next, a seek bar, and the
- * tracklist. Tracks play one after another, round again from the top.
+ * cover, a play toggle flanked by previous and next, a shuffle button, a
+ * seek bar, and the tracklist. Tracks play one after another, round again from the top.
  *
  * Without JS it is the browser's own player for the first track, and the
  * tracklist links to each file. Caps on its height (max-block-size) scroll
@@ -128,6 +128,17 @@ const [first] = optimised;
             data-radio-next
         >
             <Icon name="lucide:skip-forward" aria-hidden="true" />
+        </Button>
+        <Button
+            size="icon-sm"
+            variant="ghost"
+            tone="neutral"
+            lift={false}
+            aria-label="Shuffle"
+            hidden={tracks.length < 2}
+            data-radio-shuffle
+        >
+            <Icon name="lucide:shuffle" aria-hidden="true" />
         </Button>
         <Slider
             class="radio__seek"
