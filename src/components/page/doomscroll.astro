@@ -109,10 +109,39 @@ import Button from "../ui/button.astro";
         );
 
         /*
-         * Sized by hand, as the feed sizes itself to its container: the
-         * feed at 9:16, and the window's borders.
+         * Sized by hand to start with: the feed at 9:16, and the window's
+         * borders. The reader can then drag the corner to change the width,
+         * and the feed follows at 9:16 (see below), up to what fits.
          */
         width: calc(var(--shorts-height) * 9 / 16 + var(--border-width) * 2);
+        min-width: 15rem;
+        max-width: calc(
+            (
+                100dvh -
+                var(--doomscroll-bottom) -
+                var(--space-md) -
+                var(--doomscroll-chrome)
+            ) *
+            9 / 16 +
+            var(--border-width) *
+            2
+        );
+        resize: horizontal;
+        /*
+         * Puts the resize handle in the bottom left, where dragging outwards
+         * grows a window that is fixed to the right; the contents read as
+         * normal.
+         */
+        direction: rtl;
+
+        > * {
+            direction: ltr;
+        }
+
+        .doomscroll__feed {
+            --shorts-height: calc(100cqw * 16 / 9);
+        }
+
         inset: auto calc(var(--space-md) + env(safe-area-inset-right))
             var(--doomscroll-bottom) auto;
         margin: 0;
