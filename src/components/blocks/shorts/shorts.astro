@@ -17,7 +17,9 @@ import Short from "./short.astro";
  * A vertical feed of short videos in the style of YouTube Shorts: one
  * fills the frame at a time, and swiping, scrolling or the arrows move a
  * whole one. The one in view plays, looping, and the rest wait at their
- * start. Sound is off until unmuted, and stays on or off across the feed.
+ * start. Muted to begin with, unless `muted` is false, and then sound
+ * plays if the browser allows it; either way it stays on or off across the
+ * feed.
  * The keys work while focus is inside: Up/Down (or Page Up/Down) move,
  * K plays and pauses, M mutes.
  *
@@ -36,12 +38,19 @@ interface Props extends HTMLAttributes<"section"> {
     videos: Omit<ComponentProps<typeof Short>, "class">[];
     /** Colours the seek bar, the pressed actions and the panel's top rule. */
     tone?: Tone;
+    /**
+     * Start without sound, which browsers allow to autoplay anywhere. With
+     * sound, they only allow it once the page has been interacted with, as
+     * when the feed opens from a click; before then it plays muted.
+     */
+    muted?: boolean;
 }
 
 const {
     label,
     videos,
     tone = "primary",
+    muted = true,
     class: className,
     ...rest
 } = Astro.props;
@@ -51,6 +60,7 @@ const {
     class:list={["shorts", `tone-${tone}`, className]}
     aria-label={label}
     data-shorts
+    data-muted={muted ? "" : undefined}
     {...rest}
 >
     <div

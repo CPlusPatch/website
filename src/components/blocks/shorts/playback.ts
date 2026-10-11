@@ -18,9 +18,10 @@ export const bindPlayback = (root: HTMLElement, feed: Feed) => {
     // Moving pictures wait for a press under reduced motion. After one, the
     // reader has asked for them.
     let autoplay = !reducedMotion();
-    // Browsers only autoplay without sound, until the page is interacted
-    // with. The mute buttons start pressed to match.
-    let muted = true;
+    // As the feed's `muted` prop says. Sound may still be refused, before
+    // the page has been interacted with, and then it carries on muted (see
+    // play).
+    let muted = root.hasAttribute("data-muted");
     let onScreen = false;
     // Paused by hand, so it stays paused until it is pressed again or left.
     let held = false;
@@ -44,8 +45,26 @@ export const bindPlayback = (root: HTMLElement, feed: Feed) => {
         });
     };
 
-    /** Plays the current short if it should be, and pauses all the rest. */
+    /**
+     * Starts loading a short and its poster, which wait until then (see
+     * short.astro). Once is enough: the browser keeps what it has.
+     */
+    const prepare = (video: HTMLVideoElement | undefined) => {
+        if (!video || video.preload === "auto") return;
+        if (video.dataset.poster) video.poster = video.dataset.poster;
+        video.preload = "auto";
+    };
+
+    /**
+     * Plays the current short if it should be, and pauses all the rest.
+     * While the feed is on screen, the current one loads, and the next too,
+     * so a swipe to it does not wait.
+     */
     const sync = () => {
+        if (onScreen) {
+            prepare(videos[feed.current]);
+            prepare(videos[feed.current + 1]);
+        }
         const active = onScreen && !document.hidden ? feed.current : -1;
         for (const [i, video] of videos.entries()) {
             if (i === active && autoplay && !held) {
@@ -139,4 +158,5 @@ export const bindPlayback = (root: HTMLElement, feed: Feed) => {
         { threshold: 0.6 },
     ).observe(feedElement as Element);
     document.addEventListener("visibilitychange", sync);
+    setMuted(muted);
 };

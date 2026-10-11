@@ -25,13 +25,16 @@ import ShortButton from "./short-button.astro";
  * One video in a <Shorts> feed, filling it edge to edge. The overlay is
  * drawn over the picture in every theme, so it takes the dark scheme.
  *
+ * Nothing of the video loads, not even its poster, until the feed's script
+ * asks for it as it comes up, so a long feed costs nothing up front.
+ *
  * Without JS it is the browser's own player, with the title over the top
- * where it clears the native controls; the rest needs the script and stays
- * hidden until it runs.
+ * where it clears the native controls, loading once pressed; the rest
+ * needs the script and stays hidden until it runs.
  */
 interface Props extends HTMLAttributes<"article"> {
     src: string;
-    /** Shown until the first frame loads. */
+    /** Shown until it plays. Loaded with the video, not before. */
     poster?: ImageMetadata;
     title: string;
     /** Without the @, which is added. */
@@ -63,8 +66,8 @@ const posterImage = poster && (await getImage({ src: poster, width: 540 }));
     {/* biome-ignore lint/a11y/useMediaCaption: these clips have no speech */}
     <video
         src={src}
-        poster={posterImage?.src}
-        preload="metadata"
+        preload="none"
+        data-poster={posterImage?.src}
         controls
         playsinline
         loop
@@ -88,7 +91,7 @@ const posterImage = poster && (await getImage({ src: poster, width: 540 }));
         <ShortButton
             icon="lucide:volume-2"
             pressedIcon="lucide:volume-x"
-            aria-pressed="true"
+            aria-pressed="false"
             aria-label="Mute"
             data-short-mute
         />

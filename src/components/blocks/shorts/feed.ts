@@ -33,8 +33,11 @@ export const bindFeed = (root: HTMLElement): Feed => {
 
     const clamp = (i: number) => Math.max(0, Math.min(i, count - 1));
     // Each short is the feed's height, so that is the step between them.
+    // Hidden, the feed has none, so the current short stays as it was.
     const fromScroll = () =>
-        clamp(Math.round(feed.scrollTop / feed.clientHeight));
+        feed.clientHeight
+            ? clamp(Math.round(feed.scrollTop / feed.clientHeight))
+            : Math.max(current, 0);
 
     const listeners: ((current: number, previous: number) => void)[] = [];
     let current = -1;
