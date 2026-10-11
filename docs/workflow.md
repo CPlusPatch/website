@@ -37,3 +37,16 @@ The prefix is one of `feat`, `fix`, `refactor`, `perf`, `style`, `docs`, `test`,
 ## Deploying
 
 Pushing to `main` runs CI, and if it passes, the site is deployed to GitHub Pages. Pull requests only run the checks.
+
+## Hosting the downloaded media
+
+The videos for Shorts (`deno run shorts`) and the music for the Radio (`deno run radio`) are kept out of git, so CI downloads each folder as a zip from a repository variable (`SHORTS_ZIP_URL` and `RADIO_ZIP_URL`, under Settings → Secrets and variables → Actions → Variables). The terminal's movie works the same way with `MOVIE_URL`, but it is a single file and needs no zip.
+
+To zip a folder and upload it to a Cloudflare R2 bucket in one go (replace `my-bucket`; run `wrangler login` once first):
+
+```sh
+(cd src/data/shorts && zip -qr - .) | wrangler r2 object put my-bucket/shorts.zip --pipe --content-type application/zip --remote
+(cd src/data/radio && zip -qr - .) | wrangler r2 object put my-bucket/radio.zip --pipe --content-type application/zip --remote
+```
+
+Then set the variable to the object's public address, such as `https://media.example.com/shorts.zip`, once the bucket has a custom domain or its `r2.dev` URL turned on. The zip has the folder's files at its root, which is what CI unpacks.
