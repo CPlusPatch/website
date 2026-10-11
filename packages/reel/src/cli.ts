@@ -4,8 +4,9 @@
  * Usage: cli.ts <URL or list file>... --out <dir> [options]
  *
  * Downloads short videos for <Shorts>, in the order given: each one's
- * video, cut to 9:16 as H.264 with AAC sound; its thumbnail, cut to match,
- * for the poster; its title, channel and likes; and the channel's avatar.
+ * video, cut to 9:16 as H.264 with AAC sound, at no more than 30 frames
+ * a second; its thumbnail, cut to match, for the poster; its title,
+ * channel and likes; and the channel's avatar.
  * yt-dlp fetches and ffmpeg converts, so both need to be installed.
  *
  * A list file has one URL per line; blank lines and lines starting with #
@@ -13,11 +14,12 @@
  * can grow over time and be re-run.
  *
  *   --height <n>         frame height in pixels, even; the width is 9/16
- *                        of it (default 1280)
+ *                        of it (default 1024, for a
+ *                        feed about 350 wide)
  *   --fit <mode>         cover: fill the frame, cropping a picture of
  *                        another shape; contain: the whole picture, on
  *                        black (default cover)
- *   --crf <n>            picture quality, lower is better (default 28)
+ *   --crf <n>            picture quality, lower is better (default 30)
  *   --max-duration <s>   skip anything longer (default 180, as YouTube)
  *
  * Writes, per video, <dir>/<id>.mp4 and <id>.jpg; each channel's avatar
@@ -46,8 +48,8 @@ const number = (name: string, fallback: number) => {
 };
 
 const out = option("out");
-const height = number("height", 1280);
-const crf = number("crf", 28);
+const height = number("height", 1024);
+const crf = number("crf", 30);
 const maxDuration = number("max-duration", 180);
 const fit = option("fit") ?? "cover";
 const sources = args.filter((arg) => !arg.startsWith("--"));
@@ -117,8 +119,8 @@ const ffmpeg = (
         input,
         "-vf",
         fit === "cover"
-            ? `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h},setsar=1`
-            : `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1`,
+            ? `scale=${w}:${h}:force_original_aspect_ratio=increase:flags=lanczos,crop=${w}:${h},setsar=1`
+            : `scale=${w}:${h}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1`,
         ...options,
         output,
     ]);
@@ -194,7 +196,7 @@ const fetchAvatar = async (info: Info) => {
         thumbnails
             .filter((t) => t.width && t.width === t.height)
             .sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0];
-    if (!avatar || !(await still(avatar.url, path, 128, 128))) {
+    if (!avatar || !(await still(avatar.url, path, 96, 96))) {
         console.warn(`  No avatar for ${info.channel_url}`);
         return undefined;
     }
@@ -215,7 +217,11 @@ const fetchVideo = async (json: string, base: string) => {
                 "--load-info-json",
                 `${dir}/info.json`,
                 "--format",
-                `bv*[height<=${Math.max(height, 1920)}]+ba/b`,
+                "bv*+ba/b",
+                // The smallest stream that is still as wide as the frame
+                // (res is the shorter side), and the lightest sound.
+                "--format-sort",
+                `res:${width},+abr`,
                 "--write-thumbnail",
                 "--output",
                 `${dir}/video.%(ext)s`,
@@ -247,12 +253,19 @@ const fetchVideo = async (json: string, base: string) => {
                 "-c:a",
                 "aac",
                 "-b:a",
-                "128k",
+                "64k",
                 "-ac",
                 "2",
                 // So it starts playing before it has all downloaded
                 "-movflags",
                 "+faststart",
+                // Phone screens gain nothing from more, and it costs a lot.
+                "-fpsmax",
+                "30",
+                "-map_metadata",
+                "-1",
+                "-sn",
+                "-dn",
             ],
         );
         // Without a thumbnail, the first frame is the poster.
