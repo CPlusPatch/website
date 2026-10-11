@@ -1,0 +1,17 @@
+# The tracks for <Radio>, in the order they play: YouTube Music songs, which
+# have their own ids and cover art, not the same recording's videos.
+# `deno run radio src/data/radio-tracks.txt` downloads them into
+# src/data/radio/ (see packages/mixtape). After a URL, `| Title | Artist`
+# replaces the upload's own.
+https://music.youtube.com/watch?v=5w3rRFWzjcM
+https://music.youtube.com/watch?v=maWHojZTnTg
+https://music.youtube.com/watch?v=kK81m-A3qpU | otherside | Lena Raine
+https://music.youtube.com/watch?v=BTthtlT80Rc | Pigstep | Lena Raine
+https://music.youtube.com/watch?v=D30XUYgqoo8 | Time Go Fishing | Daniel Pemberton
+https://music.youtube.com/watch?v=nxnyuByDOyY | A Cup of Liber-Tea | Wilbert Roget, II
+https://music.youtube.com/watch?v=tkLVbp0IH_E
+https://music.youtube.com/watch?v=Gcj9-iF_lTw
+https://music.youtube.com/watch?v=Achqe_GDUTM
+https://music.youtube.com/watch?v=EQ-bpi2Tdj0 | UltraChurch | Keygen Church
+https://music.youtube.com/watch?v=wXk3u5V5qk0 | Still Alive (Radio Mix) | Aperture Science Psychoacoustic Laboratories
+https://music.youtube.com/watch?v=fEnpB9fPUbg
