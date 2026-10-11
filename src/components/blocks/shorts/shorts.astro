@@ -141,6 +141,8 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-shorts]")) {
         flex-direction: column;
         block-size: var(--shorts-height, min(40rem, 85dvh));
         aspect-ratio: 9 / 16;
+        /* Narrower than 9:16 rather than past the edge, when room is short */
+        min-inline-size: 0;
         max-inline-size: 100%;
         /* Clip the shorts to the panel's corners when --radius is set */
         overflow: hidden auto;
@@ -160,12 +162,22 @@ for (const root of document.querySelectorAll<HTMLElement>("[data-shorts]")) {
 
     .shorts__nav {
         display: flex;
+        flex: none;
         flex-direction: column;
         gap: var(--space-sm);
     }
 
-    /* Swiping does the job on a narrow screen, and the keys still work. */
-    @container (width < 28rem) {
+    /*
+     * Swiping does the job on a touch screen, as in YouTube's app, and
+     * where there is barely room for the feed. The keys still work.
+     */
+    @media (pointer: coarse) {
+        .shorts__nav {
+            display: none;
+        }
+    }
+
+    @container (width < 20rem) {
         .shorts__nav {
             display: none;
         }
