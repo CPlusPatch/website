@@ -29,3 +29,6 @@ pnpm-debug.log*
 
 # a colour film for the terminal, made by `deno run movie`; often not ours to publish
 src/data/movie/
+
+# videos for <Shorts>, made by `deno run shorts`; never ours to publish
+src/data/shorts/

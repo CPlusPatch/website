@@ -1,5 +1,8 @@
 /**
- * The videos for <Shorts>: samples, which are ours to publish.
+ * The videos for <Shorts>: the samples, which are ours, and the ones
+ * `deno run shorts` downloaded, which are gitignored as they are not, so
+ * never show those anywhere that is published. Without any, as on CI,
+ * `downloaded` is empty.
  */
 import type { ComponentProps } from "astro/types";
 import type Shorts from "../components/blocks/shorts/shorts.astro";
@@ -50,3 +53,66 @@ export const samples: Video[] = [
         likes: 2_400_000,
     },
 ];
+
+/** One video in the downloader's manifest.json (see packages/reel). */
+interface Downloaded {
+    id: string;
+    title: string;
+    channel: string;
+    /** The channel's id, naming its file in avatars/. */
+    avatar?: string;
+    likes: number;
+}
+
+/** Each file in `files`, by its name without the extension. */
+const byName = <T>(files: Record<string, T>) =>
+    new Map(
+        Object.entries(files).map(([path, value]) => [
+            path.replace(/^.*\/|\.\w+$/g, ""),
+            value,
+        ]),
+    );
+
+// Empty when the folder is missing, so the build never needs it. Vite
+// only takes the options written out in each call.
+const manifest = Object.values(
+    import.meta.glob<Downloaded[]>("./shorts/manifest.json", {
+        eager: true,
+        import: "default",
+    }),
+)[0];
+const videos = byName(
+    import.meta.glob<string>("./shorts/*.mp4", {
+        eager: true,
+        import: "default",
+        query: "?url",
+    }),
+);
+const posters = byName(
+    import.meta.glob<ImageMetadata>("./shorts/*.jpg", {
+        eager: true,
+        import: "default",
+    }),
+);
+const avatars = byName(
+    import.meta.glob<ImageMetadata>("./shorts/avatars/*.jpg", {
+        eager: true,
+        import: "default",
+    }),
+);
+
+/** In the downloaded list's order, leaving out any whose video is missing. */
+export const downloaded: Video[] = (manifest ?? []).flatMap((video) => {
+    const src = videos.get(video.id);
+    if (!src) return [];
+    return [
+        {
+            src,
+            poster: posters.get(video.id),
+            title: video.title,
+            channel: video.channel,
+            avatar: video.avatar ? avatars.get(video.avatar) : undefined,
+            likes: video.likes,
+        },
+    ];
+});

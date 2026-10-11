@@ -1,0 +1,9 @@
+{
+    "name": "@cpluspatch/reel",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "reel": "./src/cli.ts"
+    }
+}
