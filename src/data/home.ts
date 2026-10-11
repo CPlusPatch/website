@@ -386,6 +386,26 @@ export const chat: DialogueNode = {
             },
         },
         {
+            label: "I'm bored.",
+            next: {
+                action: "doomscroll",
+                messages: [
+                    "Have you tried doomscrolling?",
+                    "Here, I'll get you started.",
+                ],
+                options: [
+                    {
+                        label: "That was fun.",
+                        next: { messages: ["Told you. Brain rot is free."] },
+                    },
+                    {
+                        label: "My brain hurts.",
+                        next: { messages: ["That means it's working."] },
+                    },
+                ],
+            },
+        },
+        {
             label: "How fat are your booty cheeks?",
             next: {
                 action: "shake",

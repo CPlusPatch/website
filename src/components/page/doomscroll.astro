@@ -1,0 +1,153 @@
+---
+import { Icon } from "astro-icon/components";
+import { samples } from "../../data/shorts.ts";
+import Shorts from "../blocks/shorts/shorts.astro";
+import Button from "../ui/button.astro";
+
+/**
+ * An easter egg: a Shorts feed in a window that nothing on the page opens.
+ * Verity's chat does, with its `doomscroll` action (dialogue-actions.ts).
+ *
+ * On a wide screen it floats in the bottom corner, over the chat's button,
+ * like the chat's own window, and the page stays usable beside it. On a
+ * narrow or short one it slides up as a sheet (see .sheet). A popover, as
+ * a CornerWindow is: Esc or a click elsewhere closes it.
+ *
+ * Only ever the samples: this page is published, and the downloaded videos
+ * are not ours. The feed loads nothing until it is opened, however many
+ * there are, and its playback stops while it is closed.
+ */
+---
+
+<div
+    class="doomscroll sheet"
+    id="doomscroll"
+    popover
+    role="dialog"
+    aria-labelledby="doomscroll-title"
+>
+    <div class="doomscroll__header">
+        <p class="text-label" id="doomscroll-title">Shorts</p>
+        <Button
+            size="icon"
+            variant="ghost"
+            tone="neutral"
+            lift={false}
+            popovertarget="doomscroll"
+            popovertargetaction="hide"
+            aria-label="Close Shorts"
+            autofocus
+        >
+            <Icon name="lucide:x" aria-hidden="true" />
+        </Button>
+    </div>
+    {/* With sound: it opens from a click in the chat, so it is allowed. */}
+    <Shorts
+        class="doomscroll__feed"
+        label="Shorts"
+        videos={samples}
+        muted={false}
+    />
+</div>
+
+<style>
+.doomscroll {
+    /*
+     * What the header, the padding and the borders (the header's, and the
+     * window's top and bottom) take from the feed's height.
+     */
+    --doomscroll-chrome: calc(
+        var(--control-height-md) +
+        var(--space-xs) *
+        2 +
+        var(--border-width) *
+        3 +
+        var(--space-md) *
+        2
+    );
+    --shorts-height: calc(
+        100dvh -
+        var(--space-xl) -
+        env(safe-area-inset-top) -
+        env(safe-area-inset-bottom) -
+        var(--doomscroll-chrome)
+    );
+
+    flex-direction: column;
+    padding: 0;
+
+    &:popover-open {
+        display: flex;
+    }
+
+    .doomscroll__header {
+        display: flex;
+        flex: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
+        border-bottom: var(--border-width) solid var(--color-border);
+    }
+
+    .doomscroll__feed {
+        padding: var(--space-md);
+    }
+
+    /* A narrow or short screen gets the sheet instead (see .sheet). */
+    @media (width >= 40rem) and (height >= 32rem) {
+        /* The corner windows' gap, and their buttons, which it sits over. */
+        --doomscroll-bottom: calc(
+            var(--space-md) +
+            var(--control-height-lg) +
+            var(--space-sm) +
+            env(safe-area-inset-bottom)
+        );
+        --shorts-height: min(
+            36rem,
+            100dvh -
+            var(--doomscroll-bottom) -
+            var(--space-md) -
+            var(--doomscroll-chrome)
+        );
+
+        /*
+         * Sized by hand, as the feed sizes itself to its container: the
+         * feed at 9:16, the arrows beside it, and the padding.
+         */
+        width: calc(
+            var(--shorts-height) *
+            9 / 16 +
+            var(--control-height-lg) +
+            var(--space-md) *
+            3
+        );
+        inset: auto calc(var(--space-md) + env(safe-area-inset-right))
+            var(--doomscroll-bottom) auto;
+        margin: 0;
+        color: var(--color-text);
+        background-color: var(--color-surface-raised);
+        border: var(--border-width) solid var(--color-border-strong);
+        border-radius: var(--radius);
+        box-shadow: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
+        transform-origin: bottom right;
+        transition:
+            opacity var(--transition),
+            scale var(--transition),
+            display var(--transition) allow-discrete,
+            overlay var(--transition) allow-discrete;
+
+        &:popover-open {
+            @starting-style {
+                opacity: 0;
+                scale: 0.96;
+            }
+        }
+
+        &:not(:popover-open) {
+            opacity: 0;
+            scale: 0.96;
+        }
+    }
+}
+</style>
