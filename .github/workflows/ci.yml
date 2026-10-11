@@ -37,6 +37,17 @@ jobs:
         env:
           SHORTS_ZIP_URL: ${{ vars.SHORTS_ZIP_URL }}
 
+      # The same for the music `deno run radio` makes.
+      - name: Download Radio music
+        if: vars.RADIO_ZIP_URL != ''
+        run: |
+          curl --fail --location --silent --show-error --retry 3 \
+            --output "$RUNNER_TEMP/radio.zip" "$RADIO_ZIP_URL"
+          mkdir -p src/data/radio
+          unzip -q -o "$RUNNER_TEMP/radio.zip" -d src/data/radio
+        env:
+          RADIO_ZIP_URL: ${{ vars.RADIO_ZIP_URL }}
+
       # Biome (format and lint), astro check (types), then theme drift check
       - name: Check
         run: deno run check
