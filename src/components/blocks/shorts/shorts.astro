@@ -1,0 +1,164 @@
+---
+import type { ComponentProps, HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+import type { Tone } from "../../../lib/tone.ts";
+import Button from "../../ui/button.astro";
+import Short from "./short.astro";
+
+/**
+ * Shorts shape:
+ *
+ *   ┌───────────┐
+ *   │           │  ▲
+ *   │   short   │      up and down, beside the feed when there is room
+ *   │           │  ▼
+ *   └───────────┘
+ *
+ * A vertical feed of short videos in the style of YouTube Shorts: one
+ * fills the frame at a time, and swiping, scrolling or the arrows move a
+ * whole one. The one in view plays, looping, and the rest wait at their
+ * start. Sound is off until unmuted, and stays on or off across the feed.
+ * The keys work while focus is inside: Up/Down (or Page Up/Down) move,
+ * K plays and pauses, M mutes.
+ *
+ * Nothing plays by itself under prefers-reduced-motion, or until the feed
+ * is on screen. Once a short is played by hand, the rest follow.
+ *
+ * Without JS it is the same feed, scrolling natively, of the browser's own
+ * players.
+ *
+ * The script is split by concern: feed.ts scrolls, playback.ts plays,
+ * actions.ts runs the rail and subscribe, and this file wires them up.
+ */
+interface Props extends HTMLAttributes<"section"> {
+    /** Names the feed for screen readers. */
+    label: string;
+    videos: Omit<ComponentProps<typeof Short>, "class">[];
+    /** Colours the seek bar, the pressed actions and the panel's top rule. */
+    tone?: Tone;
+}
+
+const {
+    label,
+    videos,
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<section
+    class:list={["shorts", `tone-${tone}`, className]}
+    aria-label={label}
+    data-shorts
+    {...rest}
+>
+    <div
+        class="shorts__feed panel"
+        role="feed"
+        aria-label={`${label} videos`}
+        data-shorts-feed
+    >
+        {videos.map((video, i) => (
+            <Short
+                {...video}
+                aria-posinset={i + 1}
+                aria-setsize={videos.length}
+            />
+        ))}
+    </div>
+    <div class="shorts__nav" hidden data-shorts-nav>
+        <Button
+            size="icon-lg"
+            variant="outline"
+            tone="neutral"
+            lift={false}
+            aria-label="Previous short"
+            data-shorts-previous
+        >
+            <Icon name="lucide:arrow-up" aria-hidden="true" />
+        </Button>
+        <Button
+            size="icon-lg"
+            variant="outline"
+            tone="neutral"
+            lift={false}
+            aria-label="Next short"
+            data-shorts-next
+        >
+            <Icon name="lucide:arrow-down" aria-hidden="true" />
+        </Button>
+    </div>
+    {/* Says which short is showing once it changes, and what the actions did. */}
+    <p class="visually-hidden" aria-live="polite" data-shorts-status></p>
+</section>
+
+<script>
+import { bindActions } from "./actions.ts";
+import { bindFeed } from "./feed.ts";
+import { bindPlayback } from "./playback.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>("[data-shorts]")) {
+    if (!root.querySelector("[data-short]")) continue;
+
+    // What only works with the script, and the layout that goes with it.
+    for (const element of root.querySelectorAll<HTMLElement>(
+        "[data-short-script]",
+    )) {
+        element.hidden = false;
+    }
+    for (const short of root.querySelectorAll<HTMLElement>("[data-short]")) {
+        short.dataset.ready = "";
+    }
+
+    const feed = bindFeed(root);
+    bindPlayback(root, feed);
+    bindActions(root, feed.announce);
+}
+</script>
+
+<style>
+.shorts {
+    container-type: inline-size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    inline-size: 100%;
+
+    .shorts__feed {
+        display: flex;
+        flex-direction: column;
+        block-size: var(--shorts-height, min(40rem, 85dvh));
+        aspect-ratio: 9 / 16;
+        max-inline-size: 100%;
+        /* Clip the shorts to the panel's corners when --radius is set */
+        overflow: hidden auto;
+        overscroll-behavior-block: contain;
+        scroll-snap-type: block mandatory;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Drawn inside, as the panel clips anything outside its edge. */
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+    }
+
+    .shorts__nav {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    /* Swiping does the job on a narrow screen, and the keys still work. */
+    @container (width < 28rem) {
+        .shorts__nav {
+            display: none;
+        }
+    }
+}
+</style>

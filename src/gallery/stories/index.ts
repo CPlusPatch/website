@@ -28,6 +28,7 @@ import { quotes } from "./quotes.ts";
 import { radio } from "./radio.ts";
 import { scrollCue } from "./scroll-cue.ts";
 import { sections } from "./sections.ts";
+import { shorts } from "./shorts.ts";
 import { stats } from "./stats.ts";
 import { status } from "./status.ts";
 import { statusBoard } from "./status-board.ts";
@@ -65,6 +66,7 @@ export const groups: StoryGroup[] = [
     ...audioPlayer,
     ...mediaPlayer,
     ...radio,
+    ...shorts,
     ...terminal,
     ...destructor,
     ...statusBoard,

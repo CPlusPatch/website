@@ -1,0 +1,109 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon } from "astro-icon/components";
+
+/**
+ * A button drawn over a <Short>'s picture: an icon on a dark square, and
+ * optionally a label under it, as in the rail.
+ *
+ * As a toggle (with aria-pressed), it shows it is pressed by swapping to
+ * `pressedIcon` if it has one, or else by filling in its tone. Without
+ * aria-pressed, `pressedIcon` shows while `data-done` is set instead, as
+ * Share's tick does once the link is copied.
+ *
+ * Its square is --short-button-size across, defaulting to a large control.
+ */
+interface Props extends Omit<HTMLAttributes<"button">, "type"> {
+    icon: string;
+    pressedIcon?: string;
+    /** Under the icon. The accessible name is aria-label, which says more. */
+    label?: string;
+}
+
+const { icon, pressedIcon, label, class: className, ...rest } = Astro.props;
+---
+
+<button
+    class:list={[
+        "short-button",
+        pressedIcon && "short-button--swap",
+        className,
+    ]}
+    type="button"
+    {...rest}
+>
+    <span class="short-button__icon">
+        <Icon name={icon} aria-hidden="true" />
+        {pressedIcon && <Icon name={pressedIcon} aria-hidden="true" />}
+    </span>
+    {label && (
+        <span class="short-button__label" aria-hidden="true" data-short-label>
+            {label}
+        </span>
+    )}
+</button>
+
+<style>
+.short-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 0;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    .short-button__icon {
+        display: grid;
+        place-items: center;
+        inline-size: var(--short-button-size, var(--control-height-lg));
+        block-size: var(--short-button-size, var(--control-height-lg));
+        background: rgb(0 0 0 / 0.5);
+        border-radius: var(--radius);
+        transition:
+            background-color var(--transition),
+            color var(--transition);
+
+        svg {
+            grid-area: 1 / 1;
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+    }
+
+    /* On the square, which is what looks like the button. */
+    &:focus-visible {
+        outline: none;
+
+        .short-button__icon {
+            outline: 2px solid var(--tone);
+            outline-offset: 2px;
+        }
+    }
+
+    &:hover .short-button__icon {
+        background: rgb(0 0 0 / 0.7);
+    }
+
+    &[aria-pressed="true"]:not(.short-button--swap) .short-button__icon {
+        color: var(--color-on-accent);
+        background: var(--tone);
+    }
+
+    /* The second icon only while pressed, or done; the first only otherwise. */
+    &.short-button--swap {
+        &:is([aria-pressed="true"], [data-done]) svg:first-child,
+        &:not([aria-pressed="true"], [data-done]) svg:last-child {
+            display: none;
+        }
+    }
+
+    .short-button__label {
+        font: var(--type-label);
+        font-size: var(--font-size-xs);
+        text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+    }
+}
+</style>
