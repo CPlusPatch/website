@@ -30,24 +30,23 @@
  * Files of videos no longer listed are left alone.
  */
 
-// A module, for top-level await, though it exports nothing.
-export {};
+import {
+    attempt,
+    capture,
+    exists,
+    readUrls,
+    run,
+    takeNumber,
+    takeOption,
+    ytdlp,
+} from "../../grab/src/mod.ts";
 
 const usage = "Usage: cli.ts <URL or list file>... --out <dir> [options]";
 
 const args = [...Deno.args];
-const option = (name: string): string | undefined => {
-    const index = args.indexOf(`--${name}`);
-    return index === -1 ? undefined : args.splice(index, 2)[1];
-};
-const number = (name: string, fallback: number) => {
-    const value = Number(option(name) ?? fallback);
-    if (!Number.isFinite(value) || value < 0) {
-        console.error(`--${name} takes a number.`);
-        Deno.exit(2);
-    }
-    return value;
-};
+const option = (name: string) => takeOption(args, name);
+const number = (name: string, fallback: number) =>
+    takeNumber(args, name, fallback);
 
 const out = option("out");
 const height = number("height", 1024);
@@ -67,58 +66,7 @@ if (height % 2) {
     Deno.exit(2);
 }
 
-/** URLs as given, with list files read in their place. */
-const urls = sources.flatMap((source) =>
-    /^https?:\/\//.test(source)
-        ? [source]
-        : Deno.readTextFileSync(source)
-              .split("\n")
-              .map((line) => line.trim())
-              .filter((line) => line && !line.startsWith("#")),
-);
-
-/**
- * Runs a command, returning whether it worked. Its errors show as they
- * happen.
- */
-const run = async (command: string, commandArgs: string[]) =>
-    (
-        await new Deno.Command(command, {
-            args: commandArgs,
-            stdout: "null",
-            stderr: "inherit",
-        }).output()
-    ).success;
-
-/** Runs a command, returning what it printed, or undefined if it failed. */
-const capture = async (command: string, commandArgs: string[]) => {
-    const result = await new Deno.Command(command, {
-        args: commandArgs,
-        stdout: "piped",
-        stderr: "inherit",
-    }).output();
-    return result.success ? new TextDecoder().decode(result.stdout) : undefined;
-};
-
-/**
- * Runs a task until it gives a result, trying again after a pause that
- * doubles each time, up to `retries` more times. Sites fail now and then
- * (a 403, a dropped connection) and work on the next go.
- */
-const attempt = async <T>(task: () => Promise<T | undefined | false>) => {
-    for (let tries = 0; ; tries++) {
-        const result = await task();
-        if (result || tries >= retries) return result;
-        console.warn(`  Trying again (${tries + 1} of ${retries})`);
-        await new Promise((done) => setTimeout(done, 2000 * 2 ** tries));
-    }
-};
-
-const ytdlp = (ytdlpArgs: string[]) => [
-    "--quiet",
-    "--no-warnings",
-    ...ytdlpArgs,
-];
+const urls = readUrls(sources);
 
 /** Converts `input` (a file or a URL) to `output`, sized to w × h. */
 const ffmpeg = (
@@ -145,15 +93,6 @@ const ffmpeg = (
 /** A still image as a JPEG. */
 const still = (input: string, output: string, w: number, h: number) =>
     ffmpeg(input, output, w, h, ["-frames:v", "1", "-q:v", "3"]);
-
-const exists = (path: string) => {
-    try {
-        Deno.statSync(path);
-        return true;
-    } catch {
-        return false;
-    }
-};
 
 /** The fields of yt-dlp's info JSON used here. */
 interface Info {
@@ -300,24 +239,34 @@ const fetchVideo = async (json: string, base: string) => {
     }
 };
 
-/** Downloads one video, unless it already is, and describes it. */
+/**
+ * Downloads one video, unless it already is, and describes it. Each try
+ * asks the site again: the links in an old answer expire, and a 403 on one
+ * does not go away by trying it again.
+ */
 const download = async (url: string): Promise<Entry | undefined> => {
-    const json = await attempt(() =>
-        capture("yt-dlp", ytdlp(["--dump-single-json", "--no-playlist", url])),
-    );
-    if (!json) return undefined;
-    const info = JSON.parse(json) as Info;
-    if (info.duration && info.duration > maxDuration) {
-        console.warn(`  Longer than ${maxDuration}s`);
-        return undefined;
-    }
-
-    const base = `${out}/${info.id}`;
-    if (exists(`${base}.mp4`) && exists(`${base}.jpg`)) {
-        console.log("  Already downloaded");
-    } else if (!(await attempt(() => fetchVideo(json, base)))) {
-        return undefined;
-    }
+    let info: Info | undefined;
+    let skipped = false;
+    const done = await attempt(retries, async () => {
+        const json = await capture(
+            "yt-dlp",
+            ytdlp(["--dump-single-json", "--no-playlist", url]),
+        );
+        if (!json) return false;
+        info = JSON.parse(json) as Info;
+        if (info.duration && info.duration > maxDuration) {
+            console.warn(`  Longer than ${maxDuration}s`);
+            skipped = true;
+            return true;
+        }
+        const base = `${out}/${info.id}`;
+        if (exists(`${base}.mp4`) && exists(`${base}.jpg`)) {
+            console.log("  Already downloaded");
+            return true;
+        }
+        return await fetchVideo(json, base);
+    });
+    if (!done || skipped || !info) return undefined;
 
     // YouTube's uploader_id is the @handle.
     const channel = (info.uploader_id ?? info.channel ?? info.uploader ?? "")
