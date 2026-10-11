@@ -11,7 +11,7 @@ const SUPPORT: DialogueNode = {
             label: "Who made this site?",
             next: {
                 messages: [
-                    "Jesse did. I just answer the questions.",
+                    "CPlusPatch did. I just answer the questions.",
                     "Badly, according to Rodrick.",
                 ],
             },

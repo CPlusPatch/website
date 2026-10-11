@@ -125,14 +125,14 @@ export const sections: StoryGroup[] = [
         source: "sections/navbar.astro",
         min: "full",
         stories: [
-            story("default", Navbar, { title: "Jesse", links: NAV_LINKS }),
+            story("default", Navbar, { title: "CPlusPatch", links: NAV_LINKS }),
             story("final-link", Navbar, {
-                title: "Jesse",
+                title: "CPlusPatch",
                 links: NAV_LINKS,
                 finalLink: { href: "/contact", label: "Contact" },
             }),
             story("external", Navbar, {
-                title: "Jesse",
+                title: "CPlusPatch",
                 links: [
                     ...NAV_LINKS,
                     {
@@ -147,7 +147,7 @@ export const sections: StoryGroup[] = [
                     external: true,
                 },
             }),
-            story("no-links", Navbar, { title: "Jesse", links: [] }),
+            story("no-links", Navbar, { title: "CPlusPatch", links: [] }),
             story("many-links", Navbar, {
                 title: "A rather long site title",
                 links: Array.from({ length: 8 }, (_, i) => ({

@@ -36,10 +36,10 @@ export const radio: StoryGroup[] = [
             "Without JS, the browser's own player for the first track, and links to each file.",
         min: 24,
         stories: [
-            story("default", Radio, { tracks, name: "Jesse FM" }),
+            story("default", Radio, { tracks, name: "CPlusPatch FM" }),
             story("secondary", Radio, {
                 tracks,
-                name: "Jesse FM",
+                name: "CPlusPatch FM",
                 tone: "secondary",
             }),
             story("capped", Radio, {
@@ -49,7 +49,7 @@ export const radio: StoryGroup[] = [
             story("single track", Radio, { tracks: tracks.slice(0, 1) }),
             story("unframed", Radio, {
                 tracks,
-                name: "Jesse FM",
+                name: "CPlusPatch FM",
                 framed: false,
             }),
         ],
