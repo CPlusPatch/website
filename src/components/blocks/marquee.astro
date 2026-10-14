@@ -55,6 +55,10 @@ const {
 </div>
 
 <script>
+import { markOffscreen } from "../../lib/motion.ts";
+
+markOffscreen(document.querySelectorAll(".marquee"));
+
 // The duplicate groups are aria-hidden but deliberately not inert (inert
 // would stop them reacting to hover), so take any focusable content inside
 // them out of the tab order instead.
@@ -136,11 +140,13 @@ for (const el of document.querySelectorAll<HTMLElement>(
 
     /*
      * Paused by a PauseButton on the marquee itself, or on an ancestor (Logos
-     * pauses every lane at once). Kept after the [data-reverse] rule, which
-     * has equal specificity and would otherwise reset the play state.
+     * pauses every lane at once), and while off screen. Kept after the
+     * [data-reverse] rule, which has equal specificity and would otherwise
+     * reset the play state.
      */
     &[data-paused] .marquee__track,
-    :global([data-paused]) & .marquee__track {
+    :global([data-paused]) & .marquee__track,
+    &[data-offscreen] .marquee__track {
         animation-play-state: paused;
     }
 }

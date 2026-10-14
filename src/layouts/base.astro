@@ -179,6 +179,11 @@ body {
             var(--grid-marks) calc(var(--grid-offset) + 0.5px)
             calc(var(--grid-offset) + 0.5px) / var(--grid-marks-size)
             var(--grid-marks-size);
+        /*
+         * Its own layer, so the masked marks are drawn once and scrolled.
+         * Without it, Firefox redraws the SVG mask on every scrolled frame.
+         */
+        will-change: transform;
     }
 
     .skip-link {

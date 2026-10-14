@@ -8,12 +8,17 @@
         inset: 0;
         z-index: var(--z-scanlines);
         pointer-events: none;
+        /*
+         * One 3px line tiled down the page, not a repeating-linear-gradient,
+         * which WebKit repaints on every scrolled frame.
+         */
         background:
-            repeating-linear-gradient(
+            linear-gradient(
                 to bottom,
                 var(--color-scanline) 0 1px,
-                transparent 1px 3px
-            ),
+                transparent 1px
+            )
+            0 0 / 100% 3px,
             radial-gradient(
                 ellipse at center,
                 transparent 55%,

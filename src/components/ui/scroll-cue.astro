@@ -35,6 +35,10 @@ const { href, label = "Scroll", class: className, ...rest } = Astro.props;
             animation: none;
         }
     }
+
+    &[data-offscreen] svg {
+        animation-play-state: paused;
+    }
 }
 
 @keyframes scroll-cue-nudge {
@@ -47,3 +51,9 @@ const { href, label = "Scroll", class: className, ...rest } = Astro.props;
     }
 }
 </style>
+
+<script>
+import { markOffscreen } from "../../lib/motion.ts";
+
+markOffscreen(document.querySelectorAll(".scroll-cue"));
+</script>
