@@ -20,7 +20,7 @@ Source code for my website, and the components it's built from.
 
 ## About
 
-There's no real content on the site yet, so for now it's mostly a component library. Every component is in the [gallery](https://test.cpluspatch.com/gallery/), where you can try it in different themes, screen sizes and colour schemes.
+This is my website with a collection of web components I used to make it. Every component is in the [gallery](https://test.cpluspatch.com/gallery/), where you can try it in different themes, screen sizes and colour schemes.
 
 Some things it has:
 
@@ -62,7 +62,7 @@ website/
 │   │   ├── blocks/     larger components (messages, carousel, ...)
 │   │   ├── sections/   navbar, footer, sidebar
 │   │   ├── page/       the front page's sections
-│   │   └── effects/    page-wide effects like the crosshair
+│   │   └── effects/    page-wide effects like the scanlines
 │   ├── gallery/        the gallery and its stories
 │   └── styles/         tokens, themes and global CSS
 ├── packages/

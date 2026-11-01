@@ -1,5 +1,5 @@
 /**
- * Keeps page-wide overlays (scanlines, crosshair) drawn over popovers and
+ * Keeps page-wide overlays (scanlines) drawn over popovers and
  * modal dialogs. Those render in the browser's top layer, above any
  * z-index, so the only way over them is to join it: each overlay becomes a
  * manual popover, opened at once and reopened whenever anything else opens
