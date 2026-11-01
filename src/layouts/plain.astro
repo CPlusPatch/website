@@ -1,4 +1,6 @@
 ---
+import Analytics from "../components/analytics.astro";
+
 interface Props {
     title: string;
     description?: string;
@@ -22,6 +24,7 @@ const { title, description, lang = "en", noindex = false, icon } = Astro.props;
         <title>{title}</title>
         {description && <meta name="description" content={description} />}
         {noindex && <meta name="robots" content="noindex, nofollow" />}
+        {import.meta.env.PROD && <Analytics />}
     </head>
     <body>
         <slot />

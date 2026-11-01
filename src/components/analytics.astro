@@ -1,0 +1,14 @@
+---
+import { analytics } from "../site.ts";
+
+const src = new URL(analytics.script, analytics.host).href;
+---
+
+<meta name="analytics" content={analytics.domain} data-src={src}>
+
+<script>
+import { loadAnalytics } from "./analytics.ts";
+
+const meta = document.querySelector<HTMLMetaElement>("meta[name=analytics]");
+if (meta?.dataset.src) loadAnalytics(meta.content, meta.dataset.src);
+</script>

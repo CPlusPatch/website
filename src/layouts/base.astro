@@ -2,6 +2,7 @@
 import "../styles/index.css";
 
 import { Font } from "astro:assets";
+import Analytics from "../components/analytics.astro";
 import Crosshair from "../components/effects/crosshair.astro";
 import Jesse from "../components/effects/jesse.astro";
 import Scanlines from "../components/effects/scanlines.astro";
@@ -100,6 +101,7 @@ const PAINTED = ["theme", ...OVERRIDES.map(({ name }) => name)];
          */}
         <Font cssVariable="--font-nunito" />
         <Font cssVariable="--font-fira-code" />
+        {import.meta.env.PROD && <Analytics />}
     </head>
     <body>
         <Signal />
