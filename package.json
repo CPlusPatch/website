@@ -30,6 +30,7 @@
     "dependencies": {
         "@cpluspatch/destructor": "workspace:*",
         "@cpluspatch/palette": "workspace:*",
+        "@gouvfr/dsfr": "~1.14.4",
         "@iconify-json/lucide": "^1.2.138",
         "astro": "^7.3.5",
         "astro-icon": "^1.2.0",

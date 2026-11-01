@@ -3,6 +3,7 @@
   "specifiers": {
     "npm:@astrojs/check@~0.9.10": "0.9.10_typescript@6.0.3_@emnapi+runtime@1.11.3",
     "npm:@biomejs/biome@^2.5.15": "2.5.15",
+    "npm:@gouvfr/dsfr@~1.14.4": "1.14.4",
     "npm:@iconify-json/logos@^1.2.15": "1.2.15",
     "npm:@iconify-json/lucide@^1.2.138": "1.2.138",
     "npm:@jsr/std__assert@1": "1.0.19",
@@ -537,6 +538,9 @@
       "integrity": "sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g==",
       "os": ["win32"],
       "cpu": ["x64"]
+    },
+    "@gouvfr/dsfr@1.14.4": {
+      "integrity": "sha512-Ca17apmTyAF2tMFwMcLwQN7fTlbfMFeyYSLUIUmjoSg1XVF4vDDkbvvKBpWJWaoTLDSFZBbvvHzcDyxw9wSkLA=="
     },
     "@iconify-json/logos@1.2.15": {
       "integrity": "sha512-87zwqEFatvpcK7lIIp0RnCbDAPWcG8bTK5hZI5SuD71za+opSuqtGvFUiSNt6wiyuY+nolrW/JW1K4/mBczWhQ==",
@@ -2349,6 +2353,7 @@
       "dependencies": [
         "npm:@astrojs/check@~0.9.10",
         "npm:@biomejs/biome@^2.5.15",
+        "npm:@gouvfr/dsfr@~1.14.4",
         "npm:@iconify-json/logos@^1.2.15",
         "npm:@iconify-json/lucide@^1.2.138",
         "npm:@types/deno@^2.7.0",

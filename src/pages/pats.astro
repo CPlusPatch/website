@@ -1,0 +1,386 @@
+---
+import "@gouvfr/dsfr/dist/core/core.main.min.css";
+import "@gouvfr/dsfr/dist/component/component.main.min.css";
+import "@gouvfr/dsfr/dist/utility/utility.main.min.css";
+import "@gouvfr/dsfr/dist/scheme/scheme.min.css";
+import Layout from "../layouts/plain.astro";
+
+const serviceTitle = "Ministère des câlins et de la tendresse";
+const serviceDescription = "Rendre le pays plus doux, un câlin à la fois.";
+
+// Remix Icon paths (ri-home-2-line, ri-flag-line), drawn inline like the old page.
+const quickLinks = [
+    {
+        label: "Accueil",
+        href: "/pats",
+        icon: "M19 21H5a1 1 0 0 1-1-1v-9H1l10.327-9.388a1 1 0 0 1 1.346 0L23 11h-3v9a1 1 0 0 1-1 1M6 19h12V9.157l-6-5.454l-6 5.454z",
+    },
+    {
+        label: "Site Principal",
+        href: "/",
+        icon: "M12.382 3a1 1 0 0 1 .894.553L14 5h6a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-6.382a1 1 0 0 1-.894-.553L12 16H5v6H3V3zm-.618 2H5v9h8.236l1 2H19V7h-6.236z",
+    },
+];
+
+const footerLinks = [
+    ["info.gouv.fr", "Informations gouvernementales"],
+    ["service-public.gouv.fr", "Informations et démarches administratives"],
+    ["legifrance.gouv.fr", "Service public de diffusion du droit"],
+    ["data.gouv.fr", "Plateforme des données publiques"],
+];
+
+const qualifiers = [
+    ["affectueux", "Affectueux·se"],
+    ["mignon", "Mignon·ne"],
+    ["gentil", "Gentil·le"],
+    ["sympathique", "Sympathique"],
+];
+---
+
+<Layout
+    title="Page d’accueil • Gouvernement"
+    description="Ministère des câlins et de la tendresse : une parodie."
+    lang="fr"
+    noindex
+    icon="/favicon-gouv.ico"
+>
+    <div class="fr-skiplinks">
+        <nav class="fr-container" aria-label="Accès rapide">
+            <ul class="fr-skiplinks__list">
+                <li>
+                    <a class="fr-link" href="#content">Accéder au contenu</a>
+                </li>
+                <li>
+                    <a class="fr-link" href="#footer"
+                        >Accéder au pied de page</a
+                    >
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <header class="fr-header">
+        <div class="fr-header__body">
+            <div class="fr-container width-inherit">
+                <div class="fr-header__body-row">
+                    <div class="fr-header__brand fr-enlarge-link">
+                        <div class="fr-header__brand-top">
+                            <div class="fr-header__logo">
+                                <p class="fr-logo">
+                                    Ministère des<br>câlins et de<br>la
+                                    tendresse
+                                </p>
+                            </div>
+                            <div class="fr-header__navbar">
+                                <button
+                                    type="button"
+                                    id="button-menu"
+                                    class="fr-btn--menu fr-btn"
+                                    data-fr-opened="false"
+                                    aria-controls="header-navigation"
+                                    aria-haspopup="menu"
+                                    title="Menu"
+                                >
+                                    Menu
+                                </button>
+                            </div>
+                        </div>
+                        <div class="fr-header__service">
+                            <a href="/pats" title={`Accueil - ${serviceTitle}`}>
+                                <p class="fr-header__service-title">
+                                    {serviceTitle}
+                                </p>
+                            </a>
+                            <p class="fr-header__service-tagline">
+                                {serviceDescription}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="fr-header__tools">
+                        <div class="fr-header__tools-links">
+                            <ul class="fr-btns-group">
+                                {quickLinks.map(({ label, href, icon }) => (
+                                    <li>
+                                        <a class="fr-btn" href={href}>
+                                            <svg
+                                                class="fr-mr-1w quick-icon"
+                                                aria-hidden="true"
+                                                viewBox="0 0 24 24"
+                                                width="1em"
+                                                height="1em"
+                                            >
+                                                <path
+                                                    fill="currentColor"
+                                                    d={icon}
+                                                />
+                                            </svg>{" "}
+                                            {label}{" "}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="fr-header__menu fr-modal" id="header-navigation">
+            <div class="fr-container">
+                <button
+                    type="button"
+                    class="fr-btn--close fr-btn"
+                    aria-controls="header-navigation"
+                    title="Fermer"
+                >
+                    Fermer
+                </button>
+                <div class="fr-header__menu-links"></div>
+            </div>
+        </div>
+    </header>
+
+    <main id="content" class="fr-container">
+        <div class="fr-container fr-mb-5w">
+            <h1 class="fr-mt-3w fr-mt-md-5w fr-mb-5w">Accueil</h1>
+
+            <p>
+                Remplissez ce formulaire rapide afin de valider votre
+                éligibilité à un câlin du ministère.
+            </p>
+
+            <div
+                class="fr-notice fr-notice--info fr-mb-5w"
+                id="sent"
+                role="status"
+                hidden
+            >
+                <div class="fr-container">
+                    <div class="fr-notice__body">
+                        <p>
+                            <span class="fr-notice__title"
+                                >Votre demande a été envoyée</span
+                            >
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="pats-form">
+                <div>
+                    <label class="fr-label" for="firstname">
+                        Prénom <span class="required">*</span>
+                    </label>
+                    <input
+                        class="fr-input"
+                        id="firstname"
+                        name="firstname"
+                        type="text"
+                        autocomplete="given-name"
+                        required
+                    >
+                </div>
+                <div>
+                    <label class="fr-label" for="lastname">
+                        Nom <span class="required">*</span>
+                    </label>
+                    <input
+                        class="fr-input"
+                        id="lastname"
+                        name="lastname"
+                        type="text"
+                        autocomplete="family-name"
+                        required
+                    >
+                </div>
+                <div>
+                    <div class="fr-form-group">
+                        <fieldset class="fr-fieldset">
+                            <legend
+                                class="fr-fieldset__legend fr-fieldset__legend--regular"
+                            >
+                                Avez-vous déjà été câliné par le
+                                ministère&nbsp;?
+                                <span class="required"> *</span>
+                            </legend>
+                            {[
+                                ["yes", "Oui"],
+                                ["no", "Non"],
+                            ].map(([value, label]) => (
+                                <div class="fr-fieldset__element">
+                                    <div class="fr-radio-group">
+                                        <input
+                                            type="radio"
+                                            id={`calinage-${value}`}
+                                            name="calinage"
+                                            value={value}
+                                            required
+                                        >
+                                        <label
+                                            class="fr-label"
+                                            for={`calinage-${value}`}
+                                        >
+                                            {label}
+                                        </label>
+                                    </div>
+                                </div>
+                            ))}
+                        </fieldset>
+                    </div>
+                </div>
+                <div>
+                    <div class="fr-form-group">
+                        <fieldset class="fr-fieldset">
+                            <legend
+                                class="fr-fieldset__legend fr-text--regular"
+                            >
+                                Lesquels de ces qualificateurs vous décrivent?
+                            </legend>
+                            {qualifiers.map(([value, label]) => (
+                                <div class="fr-fieldset__element">
+                                    <div class="fr-checkbox-group">
+                                        <input
+                                            type="checkbox"
+                                            id={`qualificateur-${value}`}
+                                            name="qualificateurs"
+                                            value={value}
+                                        >
+                                        <label
+                                            class="fr-label"
+                                            for={`qualificateur-${value}`}
+                                        >
+                                            {label}
+                                        </label>
+                                    </div>
+                                </div>
+                            ))}
+                        </fieldset>
+                    </div>
+                </div>
+                <div>
+                    <label class="fr-label" for="address">
+                        Courriel <span class="required">*</span>
+                        <span class="fr-hint-text" id="address-hint"
+                            >Vous pouvez aussi utiliser votre addresse
+                            Fedi.</span
+                        >
+                    </label>
+                    <input
+                        class="fr-input"
+                        id="address"
+                        name="address"
+                        type="email"
+                        autocomplete="email"
+                        aria-describedby="address-hint"
+                        required
+                    >
+                </div>
+                <button type="submit" class="fr-btn fr-btn--md inline-flex">
+                    Confirmer
+                </button>
+                <div
+                    class="fr-alert fr-alert--error fr-mt-3w"
+                    role="alert"
+                    data-pats-error
+                    hidden
+                >
+                    <h2 class="fr-alert__title">Une erreur est survenue</h2>
+                    <p>
+                        Votre demande n’a pas pu être envoyée. Veuillez
+                        réessayer dans quelques instants.
+                    </p>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="fr-footer" id="footer">
+        <div class="fr-container">
+            <div class="fr-footer__body">
+                <div class="fr-footer__brand fr-enlarge-link">
+                    <a href="/" title="Retour à l’accueil">
+                        <p class="fr-logo">République<br>Française</p>
+                    </a>
+                </div>
+                <div class="fr-footer__content">
+                    <ul class="fr-footer__content-list">
+                        {footerLinks.map(([host, title]) => (
+                            <li class="fr-footer__content-item">
+                                <a
+                                    class="fr-footer__content-link"
+                                    href={`https://${host}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={`${host}, ${title}, ouvre une nouvelle fenêtre`}
+                                >
+                                    {host}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+            <div class="fr-footer__bottom">
+                <ul class="fr-footer__bottom-list">
+                    {[
+                        "Accessibilité : non conforme",
+                        "Mentions légales",
+                        "Données personnelles",
+                        "Gestion des cookies",
+                    ].map((label) => (
+                        <li class="fr-footer__bottom-item">
+                            <a class="fr-footer__bottom-link" href="/">
+                                {" "}
+                                {label}{" "}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+                <div class="fr-footer__bottom-copy">
+                    <p>
+                        Sauf mention explicite de propriété intellectuelle
+                        détenue par des tiers, les contenus de ce site sont
+                        proposés sous{" "}
+                        <a
+                            class="fr-link-licence no-content-after"
+                            href="https://github.com/etalab/licence-ouverte/blob/master/LO.md"
+                            target="_blank"
+                            title="licence etalab-2.0 (nouvelle fenêtre)"
+                            rel="noopener noreferrer"
+                            >licence etalab-2.0</a
+                        >
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</Layout>
+
+<script>
+import "@gouvfr/dsfr/dist/dsfr.module.min.js";
+import { bindPatsForm } from "../components/pats/form.ts";
+
+const form = document.querySelector<HTMLFormElement>("#pats-form");
+if (form) bindPatsForm(form);
+
+if (new URLSearchParams(location.search).get("sent") === "true") {
+    const notice = document.querySelector<HTMLElement>("#sent");
+    if (notice) notice.hidden = false;
+}
+</script>
+
+<style>
+/* The groups sit 1.25rem apart, as with Tailwind's space-y-5 on the old page. */
+#pats-form > div:not([data-pats-error]) {
+    margin-bottom: 1.25rem;
+}
+
+.quick-icon {
+    display: inline-block;
+    font-size: 1.2rem;
+    vertical-align: -0.2em;
+}
+
+.inline-flex {
+    display: inline-flex;
+}
+</style>

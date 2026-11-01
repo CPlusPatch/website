@@ -1,0 +1,29 @@
+---
+interface Props {
+    title: string;
+    description?: string;
+    lang?: string;
+    /** Keep the page out of search results. */
+    noindex?: boolean;
+    /** A path to the favicon. */
+    icon?: string;
+}
+
+const { title, description, lang = "en", noindex = false, icon } = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang}>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {icon && <link rel="icon" href={icon} />}
+        <meta name="generator" content={Astro.generator}>
+        <title>{title}</title>
+        {description && <meta name="description" content={description} />}
+        {noindex && <meta name="robots" content="noindex, nofollow" />}
+    </head>
+    <body>
+        <slot />
+    </body>
+</html>
