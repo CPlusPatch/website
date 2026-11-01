@@ -1,0 +1,140 @@
+---
+import { Icon } from "astro-icon/components";
+import video from "../../../video/jumpscare.mp4";
+import Button from "../../ui/button.astro";
+---
+
+<div class="john" data-john>
+    <section class="john__card panel" aria-labelledby="john-title">
+        <header class="john__head">
+            <span class="john__icon" aria-hidden="true">
+                <Icon name="lucide:cookie" />
+            </span>
+            <h1 id="john-title" class="text-subheading">
+                Cookies and user-generated content
+            </h1>
+        </header>
+        <p class="john__text">
+            This website uses cookies to offer you the most relevant information
+            and better understand how you use this website. Please accept
+            cookies for optimal performance.
+        </p>
+        <p class="john__text">
+            User-generated content may not be suitable for visitors who are at{" "}
+            <strong>high risk of photosensitive epileptic seizures</strong>.
+        </p>
+        <div class="john__actions">
+            <Button size="lg" data-john-choice>Accept</Button>
+            <Button size="lg" variant="outline" data-john-choice>
+                Essential Only
+            </Button>
+        </div>
+        <p class="john__thanks text-meta" role="status" hidden data-john-thanks>
+            <Icon name="lucide:check" aria-hidden="true" />
+            Thanks, your preferences have been saved.
+        </p>
+    </section>
+
+    {/* The file isn't fetched until a button is clicked. */}
+    <div class="john__stage" hidden data-john-stage>
+        {/* biome-ignore lint/a11y/useMediaCaption: a prank clip, not content */}
+        <video
+            src={video}
+            preload="none"
+            loop
+            playsinline
+            disablepictureinpicture
+            data-john-video
+        ></video>
+    </div>
+</div>
+
+<script>
+import { bindJohn } from "./john.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>("[data-john]")) {
+    bindJohn(root);
+}
+</script>
+
+<style>
+.john {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    padding: var(--space-lg) var(--space-md);
+
+    /* Above the fx overlays and the skip link, covering everything. */
+    .john__stage {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background-color: black;
+
+        &[hidden] {
+            display: none;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    .john__card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        width: min(100%, 32rem);
+        padding: var(--space-lg);
+
+        & p {
+            margin: 0;
+        }
+
+        .john__head {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+
+            & h1 {
+                margin: 0;
+            }
+
+            .john__icon {
+                display: grid;
+                flex: none;
+                place-items: center;
+                width: var(--control-height-lg);
+                height: var(--control-height-lg);
+                font-size: var(--font-size-xl);
+                color: var(--color-on-accent);
+                background-color: var(--color-primary);
+                border-radius: var(--radius);
+            }
+        }
+
+        .john__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            margin-block-start: var(--space-xs);
+
+            & > :global(.button) {
+                flex: 1 1 10rem;
+            }
+        }
+
+        .john__thanks {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+
+            &[hidden] {
+                display: none;
+            }
+        }
+    }
+}
+</style>

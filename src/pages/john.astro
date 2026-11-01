@@ -1,0 +1,22 @@
+---
+import Footer from "../components/page/footer.astro";
+import Header from "../components/page/header.astro";
+import John from "../components/page/john/john.astro";
+import Layout from "../layouts/base.astro";
+---
+
+<Layout title="Cookies and user-generated content" noindex>
+    <Header current="/john" />
+    <main id="main" class="john-page">
+        <John />
+    </main>
+    <Footer />
+</Layout>
+
+<style>
+.john-page {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+</style>
