@@ -1,0 +1,34 @@
+---
+import { socials } from "../../data/home.ts";
+import ContactMethod from "../blocks/contact-method.astro";
+import Section from "../sections/section.astro";
+---
+
+<Section id="methods" aria-label="Ways to contact me">
+    <h1>Contact</h1>
+    <p class="methods__blurb">
+        I get a lot of spam and scams, so make sure your message request isn't
+        just "Hello".
+    </p>
+    <div class="methods__grid">
+        {socials.map((social) => <ContactMethod {...social} />)}
+    </div>
+</Section>
+
+<style>
+.methods__blurb {
+    margin-block: var(--space-sm) var(--space-lg);
+    color: var(--color-text-muted);
+}
+
+/* Two by two, then all four across. */
+.methods__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+
+    @container (min-width: 52rem) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+</style>

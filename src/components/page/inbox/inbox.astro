@@ -1,0 +1,218 @@
+---
+import { Icon } from "astro-icon/components";
+import { inbox } from "../../../data/home.ts";
+import Message from "../../blocks/message/message.astro";
+import Alert from "../../ui/alert.astro";
+import Button from "../../ui/button.astro";
+import Input from "../../ui/input.astro";
+import Status from "../../ui/status.astro";
+import Textarea from "../../ui/textarea.astro";
+
+/** The message's own text, filled in by the script from the templates below. */
+const placeholder = { time: "00:00", datetime: "1970-01-01T00:00:00Z" };
+---
+
+<div class="inbox" data-inbox>
+    <section class="inbox__panel panel" aria-labelledby="inbox-compose">
+        <h3 id="inbox-compose" class="text-subheading">Leave a note</h3>
+        {/* Hidden until the script runs, as sending needs it. */}
+        <form
+            class="inbox__form"
+            data-topic={inbox.topic}
+            data-inbox-form
+            hidden
+        >
+            <Input
+                name="author"
+                label="Author"
+                placeholder="Author"
+                autocomplete="nickname"
+                maxlength={64}
+            />
+            <Textarea
+                name="message"
+                label="Message"
+                placeholder="Hello I am nigerian prince and I have a lot of money to give you"
+                rows={5}
+                maxRows={10}
+                maxlength={1000}
+                required
+            />
+            <div class="inbox__actions">
+                <Button type="submit">
+                    <Icon name="lucide:send" aria-hidden="true" />
+                    Send
+                </Button>
+                <span class="inbox__hint text-meta">
+                    <span data-inbox-count>0</span>/1000 · Ctrl+Enter to send
+                </span>
+            </div>
+            <Alert
+                variant="success"
+                icon="lucide:check"
+                live="polite"
+                hidden
+                data-inbox-ok
+            >
+                Sent!
+            </Alert>
+            <Alert
+                variant="destructive"
+                icon="lucide:triangle-alert"
+                live="assertive"
+                hidden
+                data-inbox-error
+            >
+                <span data-inbox-reason></span>
+            </Alert>
+        </form>
+        <noscript>
+            <p class="inbox__noscript">Sending messages needs JavaScript.</p>
+        </noscript>
+    </section>
+
+    <section
+        class="inbox__panel panel"
+        aria-labelledby="inbox-feed-title"
+        data-inbox-feed
+        data-topic={inbox.topic}
+    >
+        <header class="inbox__bar">
+            <h3 id="inbox-feed-title" class="text-subheading">Live feed</h3>
+            <span class="inbox__status text-meta" aria-live="polite">
+                <Status data-inbox-state="connecting">Connecting...</Status>
+                <Status data-inbox-state="live" tone="success" pulse hidden>
+                    Live
+                </Status>
+                <Status data-inbox-state="reconnecting" tone="warning" hidden>
+                    Reconnecting...
+                </Status>
+            </span>
+        </header>
+        <div class="inbox__body">
+            <div class="inbox__empty" data-inbox-empty>
+                <p class="text-ui">Listening for new messages...</p>
+                <p class="text-body-sm">
+                    Only messages sent while this page is open show up here.
+                </p>
+            </div>
+            <div
+                class="inbox__list"
+                role="log"
+                aria-label="Incoming"
+                hidden
+                data-inbox-list
+            ></div>
+        </div>
+        <template data-side="start">
+            <Message author="Anonymous" {...placeholder}>
+                <span data-inbox-body></span>
+            </Message>
+        </template>
+        <template data-side="end">
+            <Message align="end" author="Anonymous" {...placeholder}>
+                <span data-inbox-body></span>
+            </Message>
+        </template>
+    </section>
+</div>
+
+<script>
+import { bindInboxFeed } from "./feed.ts";
+import { bindInboxForm } from "./form.ts";
+
+for (const root of document.querySelectorAll<HTMLElement>("[data-inbox]")) {
+    const feed = bindInboxFeed(
+        root.querySelector<HTMLElement>("[data-inbox-feed]") as HTMLElement,
+    );
+    const form = root.querySelector<HTMLFormElement>("[data-inbox-form]");
+    if (form) bindInboxForm(form, feed);
+}
+</script>
+
+<style>
+/* Side by side when there is room, the log as tall as the composer. */
+.inbox {
+    display: grid;
+    gap: var(--space-md);
+
+    @container (min-width: 52rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inbox__panel {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        min-inline-size: 0;
+        padding: var(--space-md);
+    }
+
+    /* The form fills its panel and the message field fills the form, so a
+       taller feed alongside leaves no empty space under the composer. */
+    .inbox__form {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: var(--space-sm);
+
+        :global(.textarea) {
+            flex: 1;
+        }
+    }
+
+    .inbox__actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-sm) var(--space-md);
+    }
+
+    /* Full text colour: muted is under 4.5:1 on a raised panel in several
+       dark themes. Size and the mono face keep these secondary. */
+    .inbox__hint,
+    .inbox__noscript,
+    .inbox__status {
+        color: var(--color-text);
+    }
+
+    .inbox__bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-xs) var(--space-md);
+    }
+
+    /* The list fills the body and scrolls within it, whatever its height. */
+    .inbox__body {
+        position: relative;
+        flex: 1;
+        min-block-size: 16rem;
+    }
+
+    .inbox__empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-xs);
+        padding: var(--space-md);
+        color: var(--color-text);
+        text-align: center;
+    }
+
+    .inbox__list {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border-strong) transparent;
+    }
+}
+</style>

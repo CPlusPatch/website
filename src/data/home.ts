@@ -28,10 +28,19 @@ import verity from "./verity.json" with { type: "json" };
 
 export const contact = "mailto:contact@cpluspatch.com";
 
+/**
+ * The anonymous inbox on the contact page: messages are PUT to the ntfy
+ * topic, which pushes them to my phone, and the same topic's event stream
+ * feeds the live list.
+ */
+export const inbox = {
+    topic: "https://ntfy.sh/3MFIHQw4F23Gs7dz",
+};
+
 export const navLinks = [
-    { href: "/", label: "Home", active: true },
+    { href: "/", label: "Home" },
     { href: "#projects", label: "Projects" },
-    { href: "/blog", label: "Blog" },
+    { href: "/contact", label: "Contact" },
     {
         href: "https://github.com/cpluspatch",
         label: "GitHub",
@@ -337,21 +346,42 @@ export const projects: (ComponentProps<typeof MediaCard> & {
  */
 export const chat: DialogueNode = verity;
 
-export const socials = [
+/**
+ * Where to reach me. `handle` is shown on the contact page, and `copy` adds a
+ * copy button for the value that isn't just the link.
+ */
+export const socials: {
+    name: string;
+    href: string;
+    icon: string;
+    handle: string;
+    copy?: string;
+}[] = [
     {
-        name: "GitHub",
-        href: "https://github.com/cpluspatch",
-        icon: "logos:github-icon",
+        name: "Matrix",
+        href: "https://matrix.to/#/@jesse:cpluspatch.dev",
+        icon: "matrix",
+        handle: "@jesse:cpluspatch.dev",
+        copy: "@jesse:cpluspatch.dev",
+    },
+    {
+        name: "Email",
+        href: contact,
+        icon: "lucide:at-sign",
+        handle: "contact@cpluspatch.com",
+        copy: "contact@cpluspatch.com",
     },
     {
         name: "Signal",
         href: "https://signal.me/#eu/29gu1hAuAfCAifqIvTWNB2u4hmlVvk9VnCEP15r25Hix_8nBBEBEx7OHuTsuemPX",
         icon: "logos:signal",
+        handle: "@cpluspatch.95",
+        copy: "cpluspatch.95",
     },
-    { name: "Email", href: contact, icon: "lucide:at-sign" },
     {
-        name: "Matrix",
-        href: "https://matrix.to/#/@jesse:cpluspatch.dev",
-        icon: "matrix",
+        name: "GitHub",
+        href: "https://github.com/cpluspatch",
+        icon: "lucide:github",
+        handle: "github.com/cpluspatch",
     },
 ];

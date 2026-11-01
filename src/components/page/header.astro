@@ -2,13 +2,20 @@
 import { contact, effects, navLinks } from "../../data/home.ts";
 import DisplayMenu from "../sections/display/display-menu.astro";
 import Navbar from "../sections/navbar.astro";
+
+interface Props {
+    /** The path of the page being shown, which marks its link as active. */
+    current?: string;
+}
+
+const { current = "/" } = Astro.props;
 ---
 
 <Navbar
     sticky
     title="CPlusPatch"
-    links={navLinks}
-    finalLink={{ href: contact, label: "Contact" }}
+    links={navLinks.map((link) => ({ ...link, active: link.href === current }))}
+    finalLink={{ href: contact, label: "Email" }}
 >
     <DisplayMenu
         slot="actions"

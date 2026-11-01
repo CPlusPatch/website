@@ -1,0 +1,182 @@
+---
+import type { ComponentProps } from "astro/types";
+import { Icon } from "astro-icon/components";
+import Button from "../ui/button.astro";
+import Card from "../ui/card.astro";
+
+/**
+ * A way to reach someone: the whole card is a link, with the icon, the name
+ * and the handle under it. `copy` adds a button that copies that value, shown
+ * once the script runs as copying needs it.
+ */
+interface Props extends ComponentProps<typeof Card> {
+    name: string;
+    href: string;
+    icon: string;
+    handle?: string;
+    /** What the copy button puts on the clipboard. */
+    copy?: string;
+}
+
+const {
+    name,
+    href,
+    icon,
+    handle,
+    copy,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const external = /^https?:/.test(href);
+---
+
+<Card class:list={["contact-method", className]} {...rest}>
+    <a
+        class="contact-method__link"
+        {href}
+        {...external && {
+            target: "_blank",
+            rel: "noopener noreferrer",
+            referrerpolicy: "no-referrer",
+        }}
+    >
+        <Icon name={icon} class="contact-method__icon" aria-hidden="true" />
+        <h3 class="contact-method__name">{name}</h3>
+        {handle && (
+            <span class="contact-method__handle">
+                {/* May break after a : or /, or before an @, rather than anywhere. */}
+                {handle.split(/(?<=[:/])|(?<=.)(?=@)/).map((part) => (
+                    <Fragment>
+                        {part}
+                        <wbr>
+                    </Fragment>
+                ))}
+            </span>
+        )}
+        {external && <span class="visually-hidden">(opens in new tab)</span>}
+    </a>
+    {copy && (
+        <Button
+            class="contact-method__copy"
+            size="icon-sm"
+            variant="ghost"
+            tone="neutral"
+            aria-label={`Copy ${name} address`}
+            aria-pressed="false"
+            data-copy={copy}
+            hidden
+        >
+            <Icon name="lucide:copy" aria-hidden="true" />
+            <Icon name="lucide:check" aria-hidden="true" />
+        </Button>
+    )}
+</Card>
+
+<script>
+for (const button of document.querySelectorAll<HTMLButtonElement>(
+    "[data-copy]",
+)) {
+    button.hidden = false;
+    let reset: number | undefined;
+
+    button.addEventListener("click", async () => {
+        try {
+            await navigator.clipboard.writeText(button.dataset.copy ?? "");
+        } catch {
+            return;
+        }
+        button.setAttribute("aria-pressed", "true");
+        clearTimeout(reset);
+        reset = setTimeout(
+            () => button.setAttribute("aria-pressed", "false"),
+            2000,
+        );
+    });
+}
+</script>
+
+<style>
+/*
+ * Surface, border, tone and lift come from <Card>. This file lays out the
+ * icon, name and handle, and stretches the link over the whole card.
+ */
+.contact-method.card {
+    position: relative;
+    padding: 0;
+
+    .contact-method__link {
+        /* Icon beside the name and handle, which stack in the second column. */
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: var(--space-sm);
+        align-items: center;
+        inline-size: 100%;
+        padding: var(--space-md);
+        color: inherit;
+        text-decoration: none;
+
+        /* Links fill with the primary on hover; the card shows it by its
+           border and title instead, so keep the link itself clear. */
+        &:hover {
+            color: inherit;
+            background-color: transparent;
+        }
+
+        /* The link covers the card; the copy button sits above it. */
+        &::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+        }
+
+        &:focus-visible {
+            outline: none;
+
+            &::after {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 2px;
+            }
+        }
+    }
+
+    .contact-method__icon {
+        inline-size: 1.75rem;
+        block-size: 1.75rem;
+        grid-row: 1 / span 2;
+        color: var(--tone);
+    }
+
+    .contact-method__name {
+        grid-column: 2;
+        margin: 0;
+        transition: color var(--transition);
+    }
+
+    &:hover .contact-method__name,
+    &:has(.contact-method__link:focus-visible) .contact-method__name {
+        color: var(--tone);
+    }
+
+    .contact-method__handle {
+        grid-column: 2;
+        font: var(--type-body-sm);
+        color: var(--color-text-muted);
+        overflow-wrap: anywhere;
+    }
+
+    /* Centred on the card's end edge, with room kept for it beside the text. */
+    &:has(.contact-method__copy:not([hidden])) .contact-method__link {
+        padding-inline-end: calc(var(--space-md) + 2.5rem);
+    }
+
+    :global(.contact-method__copy) {
+        position: absolute;
+        inset-block: 0;
+        inset-inline-end: var(--space-sm);
+        margin-block: auto;
+        z-index: 1;
+    }
+}
+</style>

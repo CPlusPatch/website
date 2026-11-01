@@ -11,6 +11,7 @@ import { cardGrid } from "./card-grid.ts";
 import { cards } from "./cards.ts";
 import { carousel } from "./carousel.ts";
 import { code } from "./code.ts";
+import { contactMethod } from "./contact-method.ts";
 import { cornerWindows } from "./corner-windows.ts";
 import { destructor } from "./destructor.ts";
 import { dropdowns } from "./dropdowns.ts";
@@ -62,6 +63,7 @@ export const groups: StoryGroup[] = [
     ...carousel,
     ...blueprintFrame,
     ...cardGrid,
+    ...contactMethod,
     ...figures,
     ...audioPlayer,
     ...mediaPlayer,
