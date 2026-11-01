@@ -101,13 +101,12 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
     flex-direction: column;
     align-items: center;
     gap: var(--space-md);
-    padding: var(--space-lg);
+    padding: var(--space-lg) var(--space-md);
     background-color: var(--color-surface);
     border-top: var(--border-width) solid var(--border-color);
 
     & > :global(*) {
-        max-width: 80rem;
-        width: 100%;
+        width: min(100%, var(--container-width));
     }
 
     .footer__content {
@@ -160,6 +159,7 @@ const { copyright, tagline, socials, badge88x31, friends } = Astro.props;
                     &:hover,
                     &:focus-visible {
                         color: var(--color-primary);
+                        background-color: transparent;
                     }
                 }
             }

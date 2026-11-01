@@ -114,11 +114,6 @@ if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     gap: var(--space-md);
     width: 100%;
     padding: var(--space-md);
-    /* A wash of the tone, fading down from the panel's top rule */
-    background-image: linear-gradient(
-        color-mix(in oklab, var(--tone) 10%, transparent),
-        transparent
-    );
 
     .stat__value {
         color: var(--tone);

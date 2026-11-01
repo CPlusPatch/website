@@ -6,8 +6,8 @@ import browserslist from "browserslist";
 import { browserslistToTargets } from "lightningcss";
 
 export default defineConfig({
-    // Alpha deployment. Used for canonical and og:url links.
-    site: "https://test.cpluspatch.com",
+    // Used for canonical and og:url links.
+    site: "https://cpluspatch.com",
     // src/icons must exist, or the dev server stops watching src/. See its README.
     integrations: [icon()],
     fonts: [

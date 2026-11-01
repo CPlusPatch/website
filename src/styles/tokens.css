@@ -72,8 +72,6 @@
     --shadow-offset: 4px;
     --shadow-color: var(--color-primary-accent);
     --transition: 120ms ease-out;
-
-    --breakpoint-xl: 80rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

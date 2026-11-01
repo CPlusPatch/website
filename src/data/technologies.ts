@@ -71,7 +71,7 @@ export const technologies: {
         logo: "logos:unrealengine-icon",
     },
     {
-        name: "Github",
+        name: "GitHub",
         logo: "logos:github-icon",
     },
     {

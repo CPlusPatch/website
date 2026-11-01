@@ -39,7 +39,7 @@ export const inbox = {
 
 export const navLinks = [
     { href: "/", label: "Home" },
-    { href: "#projects", label: "Projects" },
+    { href: "/#projects", label: "Projects" },
     { href: "/contact", label: "Contact" },
     {
         href: "https://github.com/cpluspatch",
@@ -62,19 +62,9 @@ export const details = [
 
 export const stats: ComponentProps<typeof Stat>[] = [
     { value: 8, suffix: "+", label: "Years in software development" },
-    {
-        value: 1,
-        suffix: "M+",
-        label: "Lines of code written",
-        tone: "secondary",
-    },
-    { value: 4.1, suffix: "k", label: "Commits pushed", tone: "success" },
-    {
-        value: 99.9,
-        suffix: "%",
-        label: "Uptime of my homelab",
-        tone: "warning",
-    },
+    { value: 1, suffix: "M+", label: "Lines of code written" },
+    { value: 4.1, suffix: "k", label: "Commits pushed" },
+    { value: 99.9, suffix: "%", label: "Uptime of my homelab" },
 ];
 
 /**
@@ -111,7 +101,7 @@ export const reviews: {
     {
         author: {
             name: "Erik Uden",
-            title: "CEO, Uden AI",
+            title: "Head, Uden AI",
             avatar: erik,
         },
         body: "Developers that are fast, utilize the newest available technology with ease, swiftly understand what you asked for, and can immerse themselves into your project to make case-by-case decisions in a way you would've made them, are already impossible to find. What makes CPlusPatch extraordinary is not just that, but is aided by the fact that CPlusPatch completes such tasks in a speed you'd expect there to be a full-time paid development team on the other end rather than a singular person.",
@@ -123,7 +113,7 @@ export const reviews: {
     {
         author: {
             name: "Kio",
-            title: "CEO, 10Tails Inc",
+            title: "Head, 10Tails Inc",
             avatar: kio,
         },
         body: "CPlusPatch is very intelligent and resourceful when it comes to clear, on-point design. No matter what project he is tasked with, you'll get an honest answer, and a quicker turnaround.",

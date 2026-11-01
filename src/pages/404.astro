@@ -16,17 +16,18 @@ import Layout from "../layouts/base.astro";
                     <span class="not-found__headline">Nothing lives here.</span>
                 </h1>
                 <p class="lead">
-                    This address doesn't lead anywhere. The site is a UI toolkit
-                    showcase for now, so the gallery is the place to look.
+                    This address doesn't lead anywhere. It may have moved, or it
+                    never existed. Try the terminal, or head back to the front
+                    page.
                 </p>
                 <div class="not-found__actions">
-                    <Button href="/gallery/" size="lg">
-                        <Icon name="lucide:layout-grid" aria-hidden="true" />
-                        Go to the gallery
-                    </Button>
-                    <Button href="/" size="lg" variant="outline">
+                    <Button href="/" size="lg">
                         <Icon name="lucide:house" aria-hidden="true" />
                         Front page
+                    </Button>
+                    <Button href="/contact" size="lg" variant="outline">
+                        <Icon name="lucide:mail" aria-hidden="true" />
+                        Contact
                     </Button>
                 </div>
             </div>

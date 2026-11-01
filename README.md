@@ -9,7 +9,7 @@ Source code for my website, and the components it's built from.
 [![Astro](https://img.shields.io/badge/Astro-7-bc52ee?style=flat-square&logo=astro&logoColor=white)](https://astro.build)
 [![Deno](https://img.shields.io/badge/Deno-2-000000?style=flat-square&logo=deno&logoColor=white)](https://deno.com)
 
-**[Open the gallery](https://test.cpluspatch.com/gallery/)** · [Docs](docs/) · [License](LICENSE)
+**[Open the gallery](https://cpluspatch.com/gallery/)** · [Docs](docs/) · [License](LICENSE)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/gallery-dark.webp">
@@ -20,7 +20,7 @@ Source code for my website, and the components it's built from.
 
 ## About
 
-This is my website with a collection of web components I used to make it. Every component is in the [gallery](https://test.cpluspatch.com/gallery/), where you can try it in different themes, screen sizes and colour schemes.
+This is my website with a collection of web components I used to make it. Every component is in the [gallery](https://cpluspatch.com/gallery/), where you can try it in different themes, screen sizes and colour schemes.
 
 Some things it has:
 

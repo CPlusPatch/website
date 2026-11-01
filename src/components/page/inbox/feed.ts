@@ -6,7 +6,12 @@ export interface Feed {
     add: (data: NtfyMessage, mine?: boolean) => void;
 }
 
-type State = "connecting" | "live" | "reconnecting";
+type State = "connecting" | "live" | "reconnecting" | "offline";
+
+/** Failed attempts in a row before the feed says it is offline. */
+const OFFLINE_AFTER = 3;
+const RETRY_MIN = 5000;
+const RETRY_MAX = 60000;
 
 /**
  * Follows the topic's event stream and lists each message, cloned from the
@@ -21,6 +26,8 @@ export const bindInboxFeed = (root: HTMLElement): Feed | undefined => {
         end: root.querySelector<HTMLTemplateElement>("[data-side=end]"),
     };
     const states = root.querySelectorAll<HTMLElement>("[data-inbox-state]");
+    const offlineNote = root.querySelector<HTMLElement>("[data-inbox-offline]");
+    const waitingNote = root.querySelector<HTMLElement>("[data-inbox-waiting]");
     const topic = root.dataset.topic;
     if (!list || !empty || !templates.start || !templates.end || !topic) return;
 
@@ -71,19 +78,30 @@ export const bindInboxFeed = (root: HTMLElement): Feed | undefined => {
         for (const element of states) {
             element.hidden = element.dataset.inboxState !== state;
         }
+        if (offlineNote) offlineNote.hidden = state !== "offline";
+        if (waitingNote) waitingNote.hidden = state === "offline";
     };
 
     let events: EventSource | undefined;
+    let failures = 0;
 
     const connect = () => {
-        show("connecting");
+        if (failures === 0) show("connecting");
         events = new EventSource(`${topic}/sse`);
-        events.addEventListener("open", () => show("live"));
+        events.addEventListener("open", () => {
+            failures = 0;
+            show("live");
+        });
         events.addEventListener("error", () => {
-            show("reconnecting");
-            // The browser retries on its own unless the server refused.
+            failures++;
+            show(failures >= OFFLINE_AFTER ? "offline" : "reconnecting");
+            // The browser retries on its own unless the server refused, in
+            // which case we do, less often the longer it keeps failing.
             if (events?.readyState === EventSource.CLOSED) {
-                setTimeout(connect, 5000);
+                setTimeout(
+                    connect,
+                    Math.min(RETRY_MIN * 2 ** (failures - 1), RETRY_MAX),
+                );
             }
         });
         events.addEventListener("message", (event) => {

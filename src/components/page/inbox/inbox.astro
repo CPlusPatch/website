@@ -87,11 +87,20 @@ const placeholder = { time: "00:00", datetime: "1970-01-01T00:00:00Z" };
                 <Status data-inbox-state="reconnecting" tone="warning" hidden>
                     Reconnecting...
                 </Status>
+                <Status data-inbox-state="offline" tone="destructive" hidden>
+                    Offline
+                </Status>
             </span>
         </header>
         <div class="inbox__body">
             <div class="inbox__empty" data-inbox-empty>
-                <p class="text-ui">Listening for new messages...</p>
+                <p class="text-ui" data-inbox-waiting>
+                    Listening for new messages...
+                </p>
+                <p class="text-ui" data-inbox-offline hidden>
+                    Can't reach the live feed right now. It keeps retrying in
+                    the background.
+                </p>
                 <p class="text-body-sm">
                     Only messages sent while this page is open show up here.
                 </p>

@@ -39,7 +39,9 @@ const {
     {/*
      * astro-icon emits an icon's <symbol> only on its first render; every
      * later use is a bare <use href="#id">. This hidden copy takes that first
-     * render, so the symbols live outside the animated track.
+     * render, so the symbols live outside the animated track. Clipped to
+     * nothing rather than visibility: hidden, which a symbol's masks would
+     * inherit and so draw nothing (Next.js's logo is one).
      */}
     <div class="marquee__definitions" aria-hidden="true" inert><slot /></div>
     <div class="marquee__track">
@@ -105,7 +107,6 @@ for (const el of document.querySelectorAll<HTMLElement>(
         width: 0;
         height: 0;
         overflow: hidden;
-        visibility: hidden;
     }
 
     .marquee__track {
