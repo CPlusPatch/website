@@ -1,7 +1,7 @@
+import { TONES } from "@cpluspatch/ui/lib/tone.ts";
 import Badge88x31 from "../../components/blocks/badge-88x31.astro";
 import Badge from "../../components/ui/badge.astro";
 import { friends } from "../../data/friends.ts";
-import { TONES } from "../../lib/tone.ts";
 import { SIZES, type StoryGroup, story, title } from "../story.ts";
 
 const BADGE_VARIANTS = ["solid", "outline", "ghost"] as const;

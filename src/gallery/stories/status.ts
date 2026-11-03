@@ -1,6 +1,6 @@
+import { TONES } from "@cpluspatch/ui/lib/tone.ts";
 import Badge from "../../components/ui/badge.astro";
 import Status from "../../components/ui/status.astro";
-import { TONES } from "../../lib/tone.ts";
 import { type StoryGroup, story, title } from "../story.ts";
 
 export const status: StoryGroup[] = [

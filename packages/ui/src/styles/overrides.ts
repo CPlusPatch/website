@@ -1,5 +1,3 @@
-import type { SegmentedOption } from "../components/ui/segmented-control.astro";
-
 /**
  * Overrides for the theme's colour scheme, spacing, radius and font size,
  * picked in the Display menu. Each control is a radio group read through
@@ -115,7 +113,10 @@ export const OVERRIDES: Override[] = [
     },
 ];
 
-export const overrideOptions = (override: Override): SegmentedOption[] =>
+/** The radio options for a segmented control. */
+export const overrideOptions = (
+    override: Override,
+): { value: string; label: string }[] =>
     override.options.map(({ value, label }) => ({ value, label }));
 
 /**

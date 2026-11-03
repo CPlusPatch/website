@@ -2,7 +2,7 @@
  * The status feed, and what a <StatusBoard> shows from it. Used both to
  * render the board and by its script, so nothing here touches the DOM.
  */
-import type { Tone } from "../../../lib/tone.ts";
+import type { Tone } from "@cpluspatch/ui/lib/tone.ts";
 
 /** Something a <StatusBoard> probes, like an HTTPS endpoint. */
 export interface Probe {

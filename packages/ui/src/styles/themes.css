@@ -1,0 +1,18 @@
+/*
+ * Every theme. Each one switches on by itself (data-theme on <html>, or the
+ * checked option of a [data-theme-select]), so importing the lot is safe.
+ * Later themes override the default; to ship only some, import
+ * themes/default.css plus the ones you want.
+ */
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@import "./themes/default.css";
+@import "./themes/ocean.css";
+@import "./themes/gruvbox.css";
+@import "./themes/nord.css";
+@import "./themes/catppuccin.css";
+@import "./themes/solarized.css";
+@import "./themes/dracula.css";
+@import "./themes/rose-pine.css";
+@import "./themes/tokyo-night.css";
+@import "./themes/everforest.css";

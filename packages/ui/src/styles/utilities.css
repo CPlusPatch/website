@@ -1,0 +1,356 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+/*
+ * Shared primitives used across components.
+ *
+ * These live in global CSS rather than in one component's stylesheet so that
+ * card, alert and anything else added later share one implementation of the
+ * hover lift instead of each re-deriving it.
+ *
+ * Almost all of it is in ui.base, below ui.components: components build on
+ * these classes and override them freely. Only .visually-hidden, which must
+ * win wherever it is put, is in ui.utilities.
+ */
+
+@layer ui.base {
+    /*
+     * The offset-block hover lift. Off by default: without the effect enabled
+     * (html[data-lift-shadow], or the gallery's lift toggle) .lift only sets up
+     * the transition.
+     *
+     * Driven entirely by --shadow-color, so one custom property recolours the
+     * whole effect. .panel sets it from the element's tone.
+     *
+     * Deliberately does not touch border-color -- consumers own their border, and
+     * .panel below pairs the two.
+     */
+    .lift {
+        transition:
+            border-color var(--transition),
+            translate var(--transition);
+    }
+
+    html[data-lift-shadow] .lift,
+    html:has([data-lift-shadow-toggle] > input:checked) .lift {
+        transition:
+            border-color var(--transition),
+            box-shadow var(--transition),
+            translate var(--transition);
+
+        &:hover {
+            box-shadow: var(--shadow-offset) var(--shadow-offset) 0
+                var(--shadow-color);
+            translate: calc(var(--shadow-offset) * -1)
+                calc(var(--shadow-offset) * -1);
+        }
+    }
+
+    /* Pressing a lifted element sinks it back onto its shadow. */
+    html[data-lift-shadow] .lift:active,
+    html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
+        box-shadow: none;
+        translate: 0 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html[data-lift-shadow] .lift:hover,
+        html:has([data-lift-shadow-toggle] > input:checked) .lift:hover {
+            translate: none;
+        }
+    }
+
+    /*
+     * Tones. One set of hooks for every toneable component: --tone is the text and
+     * fill colour, --tone-hover its hover step, --tone-accent the decorative one.
+     * Declared here as classes (not pre-composed) so they resolve on the element
+     * that consumes them -- see the note on border and shadow in tokens.css.
+     */
+    .tone-primary {
+        --tone: var(--color-primary);
+        --tone-hover: var(--color-primary-hover);
+        --tone-accent: var(--color-primary-accent);
+    }
+
+    .tone-secondary {
+        --tone: var(--color-secondary);
+        --tone-hover: var(--color-secondary-hover);
+        --tone-accent: var(--color-secondary-accent);
+    }
+
+    .tone-destructive {
+        --tone: var(--color-destructive);
+        --tone-hover: var(--color-destructive-hover);
+        --tone-accent: var(--color-destructive-accent);
+    }
+
+    .tone-warning {
+        --tone: var(--color-warning);
+        --tone-hover: var(--color-warning-hover);
+        --tone-accent: var(--color-warning-accent);
+    }
+
+    .tone-success {
+        --tone: var(--color-success);
+        --tone-hover: var(--color-success-hover);
+        --tone-accent: var(--color-success-accent);
+    }
+
+    /* Not a brand colour: for chrome that should not compete with content. */
+    .tone-neutral {
+        --tone: var(--color-text-muted);
+        --tone-hover: var(--color-text);
+        --tone-accent: var(--color-border-strong);
+    }
+
+    /*
+     * A bordered surface with a coloured top rule. Card and alert are both this
+     * plus their own content layout. --panel-accent recolours the rule,
+     * --border-color the rest of the frame.
+     */
+    .panel {
+        --panel-accent: var(--tone-accent, var(--color-primary-accent));
+        --shadow-color: var(--panel-accent);
+
+        background-color: var(--color-surface-raised);
+        border: var(--border-width) solid var(--border-color);
+        border-top: 2px solid var(--panel-accent);
+        border-radius: var(--radius);
+
+        &.lift:hover {
+            border-color: var(--shadow-color);
+        }
+    }
+
+    /*
+     * A text-entry well, shared by Input and Textarea. Sunk slightly below the
+     * surface at rest; focus thickens the border to the accent. --field-accent
+     * recolours the border and caret, --field-tint the text selection (both turn
+     * destructive when invalid).
+     */
+    .field {
+        --field-accent: var(--color-primary);
+        --field-tint: var(--color-primary-accent);
+        --field-ring: inset 0 0 0 0 transparent;
+        --field-sink: inset 0 1px 2px rgb(0 0 0 / 0.06);
+
+        inline-size: 100%;
+        min-inline-size: 0;
+        font: var(--type-ui);
+        color: var(--color-text);
+        caret-color: var(--field-accent);
+        background-color: var(--color-surface-raised);
+        border: var(--border-width) solid var(--color-border-strong);
+        border-radius: var(--radius);
+        box-shadow: var(--field-ring), var(--field-sink);
+        transition:
+            border-color var(--transition),
+            box-shadow var(--transition);
+
+        &::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        &::selection {
+            background-color: var(--field-tint);
+        }
+
+        &:hover:not(:disabled, [readonly], :focus) {
+            border-color: var(--color-text-muted);
+        }
+
+        /*
+         * The ring is a second border drawn inside the first, so focus reads as
+         * one 2px edge rather than a border with an outline floating outside it.
+         * The transparent outline is for forced colours, which drop box-shadow
+         * and paint it in instead.
+         */
+        &:focus {
+            --field-ring: inset 0 0 0 1px var(--field-accent);
+            border-color: var(--field-accent);
+            outline: 2px solid transparent;
+        }
+
+        /*
+         * Only once touched, so an untouched required field is not red on load.
+         * Primary and destructive can be close in hue, so the red alone would not
+         * tell an invalid field from a focused one: the tint marks invalid, the
+         * 2px ring marks focus, and the two combine.
+         */
+        &:user-invalid,
+        &[aria-invalid="true"] {
+            --field-accent: var(--color-destructive);
+            --field-tint: var(--color-destructive-accent);
+            border-color: var(--field-accent);
+            background-color: light-dark(
+                color-mix(
+                    in oklab,
+                    var(--color-destructive) 8%,
+                    var(--color-surface-raised)
+                ),
+                color-mix(
+                    in oklab,
+                    var(--color-destructive) 12%,
+                    var(--color-surface-raised)
+                )
+            );
+        }
+
+        &[readonly] {
+            --field-sink: none;
+            background-color: var(--color-bg-alt);
+            border-style: dashed;
+        }
+
+        &:disabled {
+            --field-sink: none;
+            opacity: 0.5;
+            background-color: var(--color-bg-alt);
+            cursor: not-allowed;
+        }
+
+        /*
+         * Forced colours repaint the border in a system colour, which would hide
+         * the invalid state, so mark it with a heavier one (dashed is taken by
+         * readonly).
+         */
+        @media (forced-colors: active) {
+            &:user-invalid,
+            &[aria-invalid="true"] {
+                border-width: 2px;
+            }
+        }
+    }
+
+    /*
+     * A bottom sheet. On a narrow or short screen, a popover or modal dialog
+     * with this class slides up from the bottom edge at full width, over a
+     * dimmed page that holds still; outside it, the class does nothing. A
+     * component using it keeps its own box styles to the opposite query,
+     * (width >= 40rem) and (height >= 32rem), so the two never meet.
+     *
+     * It sizes to its content, up to a gap at the top that leaves the page in
+     * view; the content scrolls within.
+     */
+    @media (width < 40rem), (height < 32rem) {
+        .sheet {
+            inset: auto 0 0;
+            width: 100%;
+            max-width: none;
+            height: auto;
+            max-height: calc(
+                100dvh -
+                var(--space-xl) -
+                env(safe-area-inset-top)
+            );
+            padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom)
+                env(safe-area-inset-left);
+            color: var(--color-text);
+            background-color: var(--color-surface-raised);
+            border-top: var(--border-width) solid var(--color-border-strong);
+            border-radius: var(--radius) var(--radius) 0 0;
+            box-shadow: 0 calc(var(--space-sm) * -1) var(--space-lg)
+                rgb(0 0 0 / 0.2);
+            overscroll-behavior: contain;
+            transition:
+                translate 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                display 250ms allow-discrete,
+                overlay 250ms allow-discrete;
+
+            &:popover-open,
+            &[open] {
+                @starting-style {
+                    translate: 0 100%;
+                }
+            }
+
+            &:not(:popover-open, [open]) {
+                translate: 0 100%;
+            }
+
+            &::backdrop {
+                background-color: rgb(0 0 0 / 0.4);
+                transition:
+                    opacity 250ms,
+                    display 250ms allow-discrete,
+                    overlay 250ms allow-discrete;
+            }
+
+            &:popover-open::backdrop,
+            &[open]::backdrop {
+                @starting-style {
+                    opacity: 0;
+                }
+            }
+
+            &:not(:popover-open, [open])::backdrop {
+                opacity: 0;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                &,
+                &::backdrop {
+                    transition: none;
+                }
+            }
+        }
+
+        html:has(.sheet:popover-open, .sheet[open]) {
+            overflow: hidden;
+        }
+    }
+
+    /*
+     * A page-wide overlay that lib/top-layer.ts has made a popover, so it can
+     * draw over other popovers. Undoes the popover's default box (border,
+     * padding, Canvas background, centring); each overlay's own enabled styles
+     * outrank this and draw over the reset.
+     */
+    .fx-top-layer:popover-open {
+        inset: 0;
+        width: auto;
+        height: auto;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+        color: inherit;
+        background: none;
+        border: 0;
+        pointer-events: none;
+    }
+
+    /*
+     * A soft wash of the accent behind a section's centrepiece. --wash-at places
+     * it, as a radial-gradient position.
+     */
+    .wash {
+        position: relative;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: var(--z-backdrop);
+            pointer-events: none;
+            background: radial-gradient(
+                ellipse 50% 60% at var(--wash-at, 50% 50%),
+                color-mix(in oklab, var(--color-primary) 10%, transparent),
+                transparent
+            );
+        }
+    }
+}
+
+/* A true utility: the last word on the element it is put on. */
+@layer ui.utilities {
+    /* Visually hidden, still announced by screen readers. */
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+}

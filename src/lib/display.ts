@@ -6,7 +6,7 @@
  * Browser only, apart from STORAGE_KEY, which layouts/base.astro hands to its
  * head script: that applies the saved theme and overrides before first paint.
  */
-import { THEMES } from "../styles/themes/index.ts";
+import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 
 export const STORAGE_KEY = "display";
 

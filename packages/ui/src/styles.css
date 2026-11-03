@@ -1,0 +1,15 @@
+/*
+ * Every global stylesheet, in cascade order: reset first, then tokens and
+ * themes (later themes override the default), then the shared classes.
+ *
+ * Opt out of the reset by importing the parts you want instead
+ * (styles/tokens.css, styles/themes.css, ...); components.css is separate.
+ */
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@import "./styles/preflight.css";
+@import "./styles/tokens.css";
+@import "./styles/themes.css";
+@import "./styles/containers.css";
+@import "./styles/typography.css";
+@import "./styles/utilities.css";

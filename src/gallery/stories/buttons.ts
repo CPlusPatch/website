@@ -1,6 +1,6 @@
+import { TONES } from "@cpluspatch/ui/lib/tone.ts";
 import Button from "../../components/ui/button.astro";
 import ButtonGroup from "../../components/ui/button-group.astro";
-import { TONES } from "../../lib/tone.ts";
 import { SIZES, type StoryGroup, story, title } from "../story.ts";
 
 const VARIANTS = ["solid", "outline", "ghost", "link"] as const;

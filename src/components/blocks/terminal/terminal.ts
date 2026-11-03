@@ -1,7 +1,7 @@
+import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 import badApple from "../../../data/bad-apple/video.webm?url";
 import { currentTheme, setTheme } from "../../../lib/display.ts";
 import { shake, uwuify } from "../../../lib/page-effects.ts";
-import { THEMES } from "../../../styles/themes/index.ts";
 import { playVideo } from "./video.ts";
 
 export interface Entry {

@@ -1,0 +1,16 @@
+{
+    "name": "@cpluspatch/ui",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "sideEffects": [
+        "*.css"
+    ],
+    "exports": {
+        "./styles.css": "./src/styles.css",
+        "./styles/*": "./src/styles/*",
+        "./lib/*": "./src/lib/*",
+        "./components.css": "./src/components.css",
+        "./components/*.css": "./src/components/*.css"
+    }
+}

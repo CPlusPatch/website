@@ -1,5 +1,5 @@
+import { TONES } from "@cpluspatch/ui/lib/tone.ts";
 import Progress from "../../components/ui/progress.astro";
-import { TONES } from "../../lib/tone.ts";
 import { type StoryGroup, story } from "../story.ts";
 
 export const progress: StoryGroup[] = [

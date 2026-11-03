@@ -1,7 +1,7 @@
+import { TONES } from "@cpluspatch/ui/lib/tone.ts";
 import MediaCard from "../../components/blocks/media-card.astro";
 import Card from "../../components/ui/card.astro";
 import greg from "../../images/greg.jpg";
-import { TONES } from "../../lib/tone.ts";
 import { BODY, type StoryGroup, story, title } from "../story.ts";
 
 const MEDIA_LINKS = [

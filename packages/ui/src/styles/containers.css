@@ -1,0 +1,21 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.base {
+    .container {
+        width: min(100% - 2 * var(--space-md), var(--container-width));
+        margin-inline: auto;
+    }
+
+    .section {
+        padding-block: var(--space-xl);
+
+        @container (max-width: 40rem) {
+            padding-block: var(--space-lg);
+        }
+    }
+
+    .section--alt {
+        background-color: var(--color-bg-alt);
+        border-block: var(--border-width) solid var(--border-color);
+    }
+}
