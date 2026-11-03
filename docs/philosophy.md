@@ -12,7 +12,7 @@ Where the browser already does something, use that. The accordion is a `<details
 
 Each component should do one thing and be easy to combine with others. The media card is a card with a header image, and a message is a bubble with an avatar and a name.
 
-When a component grows, split it. It gets its own folder once it has several parts, and any JavaScript logic goes in a `.ts` file next to it (like `carousel/track.ts`). Code that doesn't depend on the site at all, like the colour generator, goes in its own package under `packages/`.
+When a component grows, split it. It gets its own folder once it has several parts, and any JavaScript logic goes in a `.ts` file next to it, or, for a component in the library, in `packages/ui/src/behaviours/` (like `carousel/track.ts`). Code that doesn't depend on the site at all, like the colour generator, goes in its own package under `packages/`.
 
 ## CSS variables are the source of truth
 

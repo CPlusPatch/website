@@ -66,7 +66,7 @@ website/
 │   ├── gallery/        the gallery and its stories
 │   └── styles/         imports the library's CSS
 ├── packages/
-│   ├── ui/             tokens, themes, global CSS and component CSS
+│   ├── ui/             tokens, themes, CSS, behaviours and class builders
 │   ├── palette/        theme colour generator
 │   ├── destructor/     the gravity gun
 │   ├── reel/           downloads videos for <Shorts>
