@@ -1,4 +1,8 @@
 ---
+import {
+    type CornerWindowCorner,
+    cornerWindowClasses,
+} from "@cpluspatch/ui/components/corner-window.ts";
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 import Button, { type ButtonTone, type ButtonVariant } from "./button.astro";
@@ -23,7 +27,7 @@ interface Props extends HTMLAttributes<"div"> {
     /** Shown on the button while the window is closed. */
     icon?: string;
     /** Which bottom corner the button sits in. */
-    corner?: "end" | "start";
+    corner?: CornerWindowCorner;
     /** In the flow rather than pinned to the viewport, as in the gallery. */
     inline?: boolean;
     variant?: ButtonVariant;
@@ -47,12 +51,7 @@ const titleId = `${id}-title`;
 ---
 
 <div
-    class:list={[
-        "corner-window",
-        `corner-window--${corner}`,
-        !inline && "corner-window--pinned",
-        className,
-    ]}
+    class:list={cornerWindowClasses({ corner, inline, class: className })}
     {...rest}
 >
     <Button

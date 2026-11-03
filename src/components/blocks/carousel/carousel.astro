@@ -1,4 +1,5 @@
 ---
+import { autoplaySeconds } from "@cpluspatch/ui/components/carousel.ts";
 import type { Tone } from "@cpluspatch/ui/lib/tone.ts";
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
@@ -58,7 +59,7 @@ const {
     class: className,
     ...rest
 } = Astro.props;
-const seconds = autoplay === true ? 6 : autoplay || undefined;
+const seconds = autoplaySeconds(autoplay);
 ---
 
 <section
@@ -124,51 +125,7 @@ const seconds = autoplay === true ? 6 : autoplay || undefined;
 </section>
 
 <script>
-import { bindAutoplay } from "./autoplay.ts";
-import { bindPips } from "./pips.ts";
-import { bindTrack } from "./track.ts";
+import { initCarousels } from "@cpluspatch/ui/behaviours/carousel.ts";
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
-for (const root of document.querySelectorAll<HTMLElement>(".carousel")) {
-    const part = (name: string) =>
-        root.querySelector<HTMLElement>(`[data-carousel-${name}]`);
-    const items = part("track");
-    const footer = part("footer");
-    if (!items?.children.length || !footer) continue;
-
-    const track = bindTrack(items);
-    footer.hidden = false;
-
-    const pips = part("pips");
-    if (pips) bindPips(pips, track);
-
-    const prev = part("prev");
-    const next = part("next");
-    prev?.addEventListener("click", () => track.goTo(track.current - 1));
-    next?.addEventListener("click", () => track.goTo(track.current + 1));
-
-    const index = part("index");
-    const total = part("total");
-    const status = part("status");
-    if (total) total.textContent = pad(track.count);
-    let first = true;
-    track.onChange((current) => {
-        prev?.setAttribute("aria-disabled", String(current === 0));
-        next?.setAttribute(
-            "aria-disabled",
-            String(current === track.count - 1),
-        );
-        if (index) index.textContent = pad(current + 1);
-        // Not on load: only a change is news.
-        if (status && !first) {
-            status.textContent = `Slide ${current + 1} of ${track.count}`;
-        }
-        first = false;
-    });
-
-    const pause = root.querySelector<HTMLElement>(".carousel__pause");
-    if (pause && pips)
-        bindAutoplay(root, track, { pause, timer: pips, status });
-}
+initCarousels();
 </script>

@@ -14,6 +14,7 @@
         "./styles/*": "./src/styles/*",
         "./lib/*": "./src/lib/*",
         "./components.css": "./src/components.css",
-        "./components/*.css": "./src/components/*.css"
+        "./components/*.css": "./src/components/*.css",
+        "./components/*.ts": "./src/components/*.ts"
     }
 }

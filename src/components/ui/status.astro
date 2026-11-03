@@ -1,4 +1,8 @@
 ---
+import {
+    statusClasses,
+    statusLightClasses,
+} from "@cpluspatch/ui/components/status.ts";
 import type { Tone } from "@cpluspatch/ui/lib/tone.ts";
 import type { HTMLAttributes } from "astro/types";
 
@@ -18,14 +22,9 @@ interface Props extends HTMLAttributes<"span"> {
 const { tone, pulse = false, class: className, ...rest } = Astro.props;
 ---
 
-<span class:list={["status", className]} {...rest}>
+<span class:list={statusClasses({ class: className })} {...rest}>
     <span
-        class:list={[
-            "status__light",
-            tone && `tone-${tone}`,
-            tone && "status__light--toned",
-            pulse && "status__light--pulse",
-        ]}
+        class:list={statusLightClasses({ tone, pulse })}
         aria-hidden="true"
     ></span>
     <slot />

@@ -1,14 +1,14 @@
 ---
+import {
+    type SegmentedOption,
+    type SegmentedSize,
+    type SegmentedVariant,
+    segmentedClasses,
+} from "@cpluspatch/ui/components/segmented-control.ts";
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 
-export interface SegmentedOption {
-    value: string;
-    /** Always the accessible name; also the visible text unless there is an icon. */
-    label: string;
-    /** Shows the icon instead of the label, which becomes its tooltip. */
-    icon?: string;
-}
+export type { SegmentedOption };
 
 /**
  * A row of mutually exclusive options, as plain radios in a fieldset, so it
@@ -22,9 +22,9 @@ interface Props extends Omit<HTMLAttributes<"fieldset">, "name"> {
     options: SegmentedOption[];
     /** The initially checked option, if any. */
     value?: string;
-    size?: "sm" | "default";
+    size?: SegmentedSize;
     /** `subtle` marks the checked option with a quiet fill, not the accent. */
-    variant?: "solid" | "subtle";
+    variant?: SegmentedVariant;
 }
 
 const {
@@ -40,12 +40,7 @@ const {
 ---
 
 <fieldset
-    class:list={[
-        "segmented",
-        `segmented--size-${size}`,
-        `segmented--${variant}`,
-        className,
-    ]}
+    class:list={segmentedClasses({ size, variant, class: className })}
     {...rest}
 >
     <legend class="visually-hidden">{label}</legend>

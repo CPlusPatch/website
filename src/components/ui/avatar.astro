@@ -1,8 +1,13 @@
 ---
 import { Image } from "astro:assets";
+import {
+    type AvatarSize,
+    avatarClasses,
+    initials as initialsOf,
+} from "@cpluspatch/ui/components/avatar.ts";
 import type { HTMLAttributes } from "astro/types";
 
-export type AvatarSize = "sm" | "default" | "lg";
+export type { AvatarSize };
 
 /**
  * A square profile picture. The initials of `alt` sit underneath the image,
@@ -17,17 +22,12 @@ interface Props extends HTMLAttributes<"div"> {
 
 const { src, alt, size = "default", class: className, ...rest } = Astro.props;
 
-// First and last word only, so long names don't overflow the box.
-const words = alt.split(/\s+/).filter(Boolean);
-const initials = [words[0], words.length > 1 ? words.at(-1) : undefined]
-    .map((word) => word?.[0] ?? "")
-    .join("")
-    .toUpperCase();
+const initials = initialsOf(alt);
 ---
 
 {/* The box carries the name, so it reads the same with or without an image. */}
 <div
-    class:list={["avatar", `avatar--size-${size}`, className]}
+    class:list={avatarClasses({ size, class: className })}
     role="img"
     aria-label={alt}
     {...rest}

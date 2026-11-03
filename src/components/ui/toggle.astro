@@ -1,4 +1,5 @@
 ---
+import { toggleClasses } from "@cpluspatch/ui/components/toggle.ts";
 import type { HTMLAttributes } from "astro/types";
 
 /**
@@ -29,7 +30,10 @@ const {
 const hasText = Astro.slots.has("default");
 ---
 
-<label class:list={["toggle", hasText && "toggle--text", className]} {...rest}>
+<label
+    class:list={toggleClasses({ text: hasText, class: className })}
+    {...rest}
+>
     {/* A range, because Biome reports this on the `role` line, not the element. */}
     {/* biome-ignore-start lint/a11y/useAriaPropsForRole: A native checkbox exposes its own checked state, so the switch role needs no aria-checked */}
     <input

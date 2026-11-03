@@ -1,4 +1,10 @@
 ---
+import {
+    type DropdownAlign,
+    type DropdownCollapse,
+    dropdownClasses,
+    dropdownPanelClasses,
+} from "@cpluspatch/ui/components/dropdown.ts";
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 import Button, {
@@ -27,7 +33,7 @@ interface Props extends HTMLAttributes<"div"> {
     /** Heading inside the panel, with a close button beside it. */
     title?: string;
     /** Which edge of the button the panel lines up with. */
-    align?: "start" | "end";
+    align?: DropdownAlign;
     variant?: ButtonVariant;
     tone?: ButtonTone;
     /** The button's size: one of the text sizes, as it always has a label. */
@@ -36,7 +42,7 @@ interface Props extends HTMLAttributes<"div"> {
      * Below this container width, the button drops its chevron and shows
      * its label to screen readers only, leaving the icon.
      */
-    collapseBelow?: "30rem" | "48rem";
+    collapseBelow?: DropdownCollapse;
 }
 
 const {
@@ -55,11 +61,7 @@ const {
 ---
 
 <div
-    class:list={[
-        "dropdown",
-        collapseBelow && `dropdown--collapse-${collapseBelow}`,
-        className,
-    ]}
+    class:list={dropdownClasses({ collapseBelow, class: className })}
     {...rest}
 >
     <Button
@@ -79,11 +81,7 @@ const {
         />
     </Button>
 
-    <div
-        class:list={["dropdown__panel", `dropdown__panel--align-${align}`]}
-        {id}
-        popover
-    >
+    <div class:list={dropdownPanelClasses(align)} {id} popover>
         {title && (
             <div class="dropdown__header">
                 <p class="dropdown__title text-label">{title}</p>
@@ -105,10 +103,7 @@ const {
 </div>
 
 <script>
-// Close the panel once an in-page link inside it has been followed.
-document.addEventListener("click", (event) => {
-    const link = (event.target as Element).closest?.('a[href^="#"]');
-    const panel = link?.closest<HTMLElement>(".dropdown__panel:popover-open");
-    panel?.hidePopover();
-});
+import { initDropdowns } from "@cpluspatch/ui/behaviours/dropdown.ts";
+
+initDropdowns();
 </script>

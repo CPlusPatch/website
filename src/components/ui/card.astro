@@ -1,4 +1,5 @@
 ---
+import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import type { Tone } from "@cpluspatch/ui/lib/tone.ts";
 import type { HTMLAttributes } from "astro/types";
 
@@ -20,7 +21,7 @@ const {
 ---
 
 <div
-    class:list={["card", "panel", lift && "lift", `tone-${tone}`, className]}
+    class:list={cardClasses({ tone, lift, class: className })}
     data-snap
     {...rest}
 >

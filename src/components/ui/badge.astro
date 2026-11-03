@@ -1,10 +1,13 @@
 ---
+import {
+    type BadgeSize,
+    type BadgeVariant,
+    badgeClasses,
+} from "@cpluspatch/ui/components/badge.ts";
 import type { Tone } from "@cpluspatch/ui/lib/tone.ts";
 import type { HTMLAttributes } from "astro/types";
 
-export type BadgeVariant = "solid" | "outline" | "ghost";
-
-export type BadgeSize = "sm" | "default" | "lg";
+export type { BadgeSize, BadgeVariant };
 
 interface Props extends HTMLAttributes<"span"> {
     variant?: BadgeVariant;
@@ -22,13 +25,7 @@ const {
 ---
 
 <span
-    class:list={[
-        "badge",
-        `badge--${variant}`,
-        `tone-${tone}`,
-        `badge--size-${size}`,
-        className,
-    ]}
+    class:list={badgeClasses({ variant, tone, size, class: className })}
     data-snap
     {...rest}
 >

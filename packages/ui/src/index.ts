@@ -6,6 +6,19 @@
  * ships the ones it uses.
  */
 
+export * from "./components/alert.ts";
+export * from "./components/avatar.ts";
+export * from "./components/badge.ts";
+export * from "./components/button.ts";
+export * from "./components/card.ts";
+export * from "./components/carousel.ts";
+export * from "./components/corner-window.ts";
+export * from "./components/dropdown.ts";
+export * from "./components/progress.ts";
+export * from "./components/segmented-control.ts";
+export * from "./components/status.ts";
+export * from "./components/toggle.ts";
+export * from "./lib/classes.ts";
 export * from "./lib/display.ts";
 export * from "./lib/media.ts";
 export * from "./lib/motion.ts";
