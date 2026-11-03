@@ -1,0 +1,74 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * A row on its group's guide. Hover marks its segment of the guide; the
+     * current link marks it in the accent and goes full strength. No fill, so
+     * the sidebar stays quiet beside the content.
+     */
+    .sidebar-link {
+        .sidebar-link__anchor {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-sm);
+            /* Sit on the guide, so the marker replaces that stretch of it. */
+            margin-left: calc(var(--border-width) * -1);
+            padding: var(--space-xs) var(--space-md);
+            /* WCAG 2.2's minimum target size, as the rows touch. */
+            min-height: 1.5rem;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            transition:
+                color var(--transition),
+                border-color var(--transition);
+
+            /* Also replaces the global link hover's highlighter fill. */
+            &:hover {
+                color: var(--color-text);
+                background-color: transparent;
+                border-left-color: var(--color-border-strong);
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: -2px;
+            }
+
+            /* "page" from `current`, or "location" from the scroll spy. */
+            &[aria-current] {
+                color: var(--color-text);
+                font-weight: 500;
+                border-left-color: var(--color-primary);
+            }
+
+            @media (pointer: coarse) {
+                min-height: var(--control-height-sm);
+            }
+
+            /*
+             * Forced colours paint every link's spare border, which would mark
+             * them all; draw the markers in system colours instead.
+             */
+            @media (forced-colors: active) {
+                forced-color-adjust: none;
+                color: LinkText;
+                border-left-color: transparent;
+
+                &:hover {
+                    border-left-color: CanvasText;
+                }
+
+                &[aria-current] {
+                    color: Highlight;
+                    border-left-color: Highlight;
+                }
+            }
+        }
+
+        .sidebar-link__meta {
+            flex-shrink: 0;
+        }
+    }
+}

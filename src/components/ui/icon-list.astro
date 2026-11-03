@@ -24,22 +24,3 @@ const { items, class: className, ...rest } = Astro.props;
         </li>
     ))}
 </ul>
-
-<style>
-.icon-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs) var(--space-md);
-    color: var(--color-text-muted);
-
-    li {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-xs);
-    }
-
-    svg {
-        flex: none;
-    }
-}
-</style>

@@ -1,0 +1,33 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .scroll-cue {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        color: var(--color-text-muted);
+        text-decoration: none;
+
+        svg {
+            animation: scroll-cue-nudge 2s ease-in-out infinite;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+
+        &[data-offscreen] svg {
+            animation-play-state: paused;
+        }
+    }
+
+    @keyframes scroll-cue-nudge {
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(0.25rem);
+        }
+    }
+}

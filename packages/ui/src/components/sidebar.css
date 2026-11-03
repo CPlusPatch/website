@@ -1,0 +1,86 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .sidebar {
+        background-color: var(--color-surface);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
+
+        .sidebar__toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            min-height: var(--control-height-lg);
+            padding: var(--space-sm) var(--space-md);
+            cursor: pointer;
+            list-style: none;
+
+            /* Safari still draws its own marker without this */
+            &::-webkit-details-marker {
+                display: none;
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: -2px;
+            }
+        }
+
+        .sidebar__label {
+            flex: 1;
+        }
+
+        .sidebar__chevron {
+            color: var(--color-text-muted);
+            transition: rotate var(--transition);
+        }
+
+        &[open] .sidebar__chevron {
+            rotate: 180deg;
+        }
+
+        .sidebar__nav {
+            padding: var(--space-md);
+            border-top: var(--border-width) solid var(--border-color);
+        }
+
+        /*
+         * Beside the content: always open and sticky, on the same surface as the
+         * panels it sits next to, with a gap below so it never touches the
+         * bottom of the viewport. The nav scrolls inside the frame, so its
+         * fading edges leave the border whole. Keep the query in step with
+         * sidebar-layout.astro. Only for the sidebar in the layout's own slot,
+         * not one nested in its content. Gated on ::details-content, as without
+         * it a closed <details> cannot be shown, and hiding the toggle would
+         * hide the whole menu.
+         */
+        @supports selector(::details-content) {
+            @container sidebar-layout (width >= 56rem) {
+                .sidebar-layout__aside > & {
+                    position: sticky;
+                    top: var(--sidebar-top, 0px);
+
+                    &::details-content {
+                        content-visibility: visible;
+                    }
+
+                    .sidebar__toggle {
+                        display: none;
+                    }
+
+                    /* No toggle above it, so no rule either. */
+                    .sidebar__nav {
+                        max-height: calc(
+                            100dvh -
+                            var(--sidebar-top, 0px) -
+                            var(--space-md) -
+                            2 *
+                            var(--border-width)
+                        );
+                        border-top: 0;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,25 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .message-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        inline-size: 100%;
+
+        > .message:not(:first-child) .message__header {
+            display: none;
+        }
+
+        > .message:not(.message--ghost, :last-child) .message__avatar {
+            visibility: hidden;
+        }
+
+        /* Spanning every row, it would still set a one-line message's height. */
+        > .message--ghost:not(:first-child) .message__avatar {
+            visibility: hidden;
+            block-size: 0;
+            border-block-width: 0;
+        }
+    }
+}

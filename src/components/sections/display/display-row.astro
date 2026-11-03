@@ -33,34 +33,3 @@ const { label, key, fine, class: className, ...rest } = Astro.props;
     <slot />
     {key && <Kbd class="display-key">{key.toUpperCase()}</Kbd>}
 </div>
-
-<style>
-.display-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-
-    /*
-     * The label, or the control without one, pushes the rest to the end.
-     * :global() as the control is a component, with its own scope.
-     */
-    > :global(:first-child) {
-        margin-inline-end: auto;
-    }
-
-    .display-row__label {
-        color: var(--color-text-muted);
-    }
-
-    /* Out of sight, though its control is still in the page. */
-    &[hidden] {
-        display: none;
-    }
-
-    &[data-fine] {
-        @media not ((hover: hover) and (pointer: fine)) {
-            display: none;
-        }
-    }
-}
-</style>

@@ -1,0 +1,79 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .media-player {
+        container-type: inline-size;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        width: 100%;
+        padding-bottom: var(--space-md);
+        /* Clip the video to the panel's corners when --radius is set */
+        overflow: hidden;
+
+        > :not(video) {
+            padding-inline: var(--space-md);
+        }
+
+        video {
+            display: block;
+            width: 100%;
+            aspect-ratio: var(--ratio);
+            /* Letterboxing is black in every theme, as on any screen */
+            background: #000;
+        }
+
+        /* The controls stay under the video, which takes the rest of the screen */
+        &:fullscreen video {
+            flex: 1;
+            min-height: 0;
+            aspect-ratio: auto;
+        }
+
+        figcaption {
+            color: var(--color-text-muted);
+        }
+
+        .media-player__controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .media-player__seek {
+            flex: 1;
+            margin-inline: var(--space-sm);
+        }
+
+        .media-player__time {
+            margin-inline-end: var(--space-sm);
+            color: var(--color-text-muted);
+            font: var(--type-meta);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .media-player__volume {
+            width: 4rem;
+            margin-inline-end: var(--space-sm);
+        }
+
+        /* Touch devices have hardware volume (iOS ignores ours), and narrow players no room */
+        @media (pointer: coarse) {
+            .media-player__volume {
+                display: none;
+            }
+        }
+
+        @container (width < 28rem) {
+            .media-player__volume {
+                display: none;
+            }
+        }
+
+        /* The browser sizes captions to the video; only the face is ours. */
+        video::cue {
+            font-family: var(--font-base);
+        }
+    }
+}

@@ -1,0 +1,34 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .button-group {
+        display: inline-flex;
+
+        & > .button {
+            border-radius: 0;
+
+            /* Overlap by one border so neighbours share a single line. */
+            &:not(:first-child) {
+                margin-inline-start: calc(var(--border-width) * -1);
+            }
+
+            &:first-child {
+                border-start-start-radius: var(--radius);
+                border-end-start-radius: var(--radius);
+            }
+
+            &:last-child {
+                border-start-end-radius: var(--radius);
+                border-end-end-radius: var(--radius);
+            }
+
+            /* The overlapped edge belongs to whichever button is being used. */
+            &:hover,
+            &:focus-visible,
+            &[aria-pressed="true"] {
+                position: relative;
+                z-index: 1;
+            }
+        }
+    }
+}

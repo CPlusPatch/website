@@ -1,0 +1,44 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * Each item spans two tracks of a grid twice as fine as its columns, so a
+     * leftover item can start half a column in, which centres its row.
+     */
+    .card-grid {
+        display: grid;
+        gap: var(--space-md);
+        width: 100%;
+
+        @container (min-width: 36rem) {
+            grid-template-columns: repeat(4, 1fr);
+
+            & > * {
+                grid-column: span 2;
+            }
+
+            /* One left over in a row of two. */
+            & > :last-child:nth-child(2n + 1) {
+                grid-column: 2 / span 2;
+            }
+        }
+
+        @container (min-width: 52rem) {
+            grid-template-columns: repeat(6, 1fr);
+
+            & > :last-child:nth-child(2n + 1) {
+                grid-column: span 2;
+            }
+
+            /* One left over in a row of three... */
+            & > :last-child:nth-child(3n + 1) {
+                grid-column: 3 / span 2;
+            }
+
+            /* ...or two, the second following on from the first. */
+            & > :nth-last-child(2):nth-child(3n + 1) {
+                grid-column: 2 / span 2;
+            }
+        }
+    }
+}

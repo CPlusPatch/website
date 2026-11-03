@@ -1,0 +1,9 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /* The look is .field in utilities.css; this is only the single-line geometry. */
+    .input {
+        height: var(--control-height-md);
+        padding: var(--space-xs) var(--space-sm);
+    }
+}

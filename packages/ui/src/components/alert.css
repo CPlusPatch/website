@@ -1,0 +1,44 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .alert {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: var(--space-md);
+        padding: var(--space-md);
+
+        &.alert--icon {
+            grid-template-columns: auto 1fr;
+            align-items: center;
+        }
+
+        .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: var(--tone);
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+
+            /*
+             * Slotted, so the roles come by token rather than class. Compact: a
+             * body-sized title over small text, a hair apart. The title is a
+             * label, not a heading role, so it drops heading tracking.
+             */
+            h3 {
+                margin-bottom: var(--space-xs);
+                font: var(--type-body-strong);
+                letter-spacing: normal;
+            }
+
+            p {
+                font: var(--type-body-sm);
+                color: var(--color-text-muted);
+            }
+        }
+    }
+}

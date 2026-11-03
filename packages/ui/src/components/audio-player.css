@@ -1,0 +1,39 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .audio-player {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        width: 100%;
+
+        &.panel {
+            padding: var(--space-md);
+        }
+
+        audio {
+            width: 100%;
+        }
+
+        figcaption {
+            color: var(--color-text-muted);
+        }
+
+        .audio-player__controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .audio-player__seek {
+            flex: 1;
+        }
+
+        .audio-player__time {
+            color: var(--color-text-muted);
+            font: var(--type-meta);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+    }
+}

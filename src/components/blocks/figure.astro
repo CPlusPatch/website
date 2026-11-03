@@ -45,30 +45,3 @@ const caption = (await Astro.slots.render("default")).trim();
     />
     {caption && <figcaption class="text-body-sm" set:html={caption} />}
 </figure>
-
-<style>
-.figure {
-    width: 100%;
-    margin: 0;
-    /* Clip the image to the panel's corners when --radius is set */
-    overflow: hidden;
-
-    img {
-        display: block;
-        width: 100%;
-        height: auto;
-        /* Only bites when `ratio` sets an aspect-ratio inline */
-        object-fit: cover;
-
-        /* Images with a light edge would otherwise run into the caption */
-        &:not(:last-child) {
-            border-bottom: var(--border-width) solid var(--border-color);
-        }
-    }
-
-    figcaption {
-        padding: var(--space-md);
-        color: var(--color-text-muted);
-    }
-}
-</style>

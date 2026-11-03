@@ -1,0 +1,17 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .masonry {
+        columns: var(--masonry-min) var(--masonry-columns);
+        column-gap: var(--space-md);
+    }
+
+    /*
+     * Its items are slotted. `.masonry` is repeated to outrank an item's own
+     * margin reset, like Quote's.
+     */
+    .masonry.masonry > * {
+        break-inside: avoid;
+        margin-bottom: var(--space-md);
+    }
+}

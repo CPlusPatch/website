@@ -1,0 +1,9 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .accordion {
+        width: 100%;
+        /* Clip the items to the panel's corners when --radius is set */
+        overflow: hidden;
+    }
+}

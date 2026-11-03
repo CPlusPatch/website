@@ -1,0 +1,61 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .display-menu {
+        .display-menu__group {
+            display: grid;
+            gap: var(--space-sm);
+            min-width: 0;
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        /* Ruled off from what's above, like a section of the panel. */
+        .display-menu__effects {
+            padding-top: var(--space-md);
+            border-top: var(--border-width) solid var(--border-color);
+        }
+
+        /* Floated, so the grid's gap applies below it like any other row. */
+        .display-menu__heading {
+            float: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-sm);
+            /* A legend shrinks to its text otherwise. */
+            width: 100%;
+            padding: 0;
+            color: var(--color-text-muted);
+        }
+
+        .display-menu__hint {
+            display: none;
+            justify-content: space-between;
+            gap: var(--space-sm);
+            margin: 0;
+            color: var(--color-text-muted);
+        }
+
+        /*
+         * Key hints, here and in each DisplayRow. They sit on Kbd's root.
+         */
+        .display-key {
+            display: none;
+        }
+
+        /* Shortcuts need JS and a keyboard, and so do their hints. */
+        &[data-shortcuts] {
+            @media (hover: hover) and (pointer: fine) {
+                .display-menu__hint {
+                    display: flex;
+                }
+
+                .display-key {
+                    display: inline-block;
+                }
+            }
+        }
+    }
+}

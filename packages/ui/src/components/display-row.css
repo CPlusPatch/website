@@ -1,0 +1,32 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .display-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+
+        /*
+         * The label, or the control without one, pushes the rest to the end.
+         * The control is a component, so it is matched by position.
+         */
+        > :first-child {
+            margin-inline-end: auto;
+        }
+
+        .display-row__label {
+            color: var(--color-text-muted);
+        }
+
+        /* Out of sight, though its control is still in the page. */
+        &[hidden] {
+            display: none;
+        }
+
+        &[data-fine] {
+            @media not ((hover: hover) and (pointer: fine)) {
+                display: none;
+            }
+        }
+    }
+}

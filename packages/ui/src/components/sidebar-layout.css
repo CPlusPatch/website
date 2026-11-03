@@ -1,0 +1,30 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .sidebar-layout {
+        --sidebar-width: 15rem;
+        container: sidebar-layout / inline-size;
+
+        .sidebar-layout__grid {
+            display: grid;
+            gap: var(--space-lg);
+        }
+
+        .sidebar-layout__main {
+            min-width: 0;
+        }
+
+        /* Keep in step with the same query in sidebar.astro. */
+        @container sidebar-layout (width >= 56rem) {
+            .sidebar-layout__grid {
+                grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+                align-items: start;
+            }
+
+            /* Full height, so the sidebar has room to stick within it. */
+            .sidebar-layout__aside {
+                align-self: stretch;
+            }
+        }
+    }
+}

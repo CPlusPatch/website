@@ -32,11 +32,3 @@ const { label, type = "text", class: className, ...rest } = Astro.props;
     aria-label={label}
     {...rest}
 >
-
-<style>
-/* The look is .field in utilities.css; this is only the single-line geometry. */
-.input {
-    height: var(--control-height-md);
-    padding: var(--space-xs) var(--space-sm);
-}
-</style>

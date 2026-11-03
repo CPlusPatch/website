@@ -1,0 +1,105 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * A grid, so the avatar sits level with the bottom of the bubble rather
+     * than the footer, and the header and footer line up with the bubble. A
+     * ghost message has no bubble to line up with, so it is laid out like a
+     * feed instead: the avatar at the top, beside the name.
+     */
+    .message {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "header" "bubble" "footer";
+        justify-items: start;
+        /* Header and footer space themselves, so absent ones leave no gap. */
+        column-gap: var(--space-sm);
+        inline-size: 100%;
+
+        &.message--avatar {
+            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-areas: ". header" "avatar bubble" ". footer";
+        }
+
+        &.message--end {
+            justify-items: end;
+
+            &.message--avatar {
+                grid-template-columns: minmax(0, 1fr) auto;
+                grid-template-areas: "header ." "bubble avatar" "footer .";
+            }
+        }
+
+        .message__header {
+            grid-area: header;
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: baseline;
+            gap: var(--space-sm);
+        }
+
+        .message__author {
+            font: var(--type-label);
+        }
+
+        .message__time {
+            font: var(--type-meta);
+            color: var(--color-text-muted);
+        }
+
+        .message__avatar {
+            grid-area: avatar;
+            align-self: end;
+        }
+
+        .message__bubble {
+            grid-area: bubble;
+        }
+
+        &.message--ghost.message--avatar {
+            grid-template-areas: "avatar header" "avatar bubble" "avatar footer";
+
+            .message__avatar {
+                align-self: start;
+            }
+
+            &.message--end {
+                grid-template-areas: "header avatar" "bubble avatar" "footer avatar";
+            }
+        }
+
+        .message__footer {
+            grid-area: footer;
+            margin-top: var(--space-xs);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font: var(--type-meta);
+            color: var(--color-text-muted);
+        }
+
+        /*
+         * With no frame to sit under, the outer icons line up with the text
+         * rather than their buttons' edges: an icon-sm button is
+         * control-height-sm square around a 1.2em icon (see Button).
+         */
+        &.message--ghost .message__footer {
+            --message-icon-inset: calc(
+                (1.2 * var(--font-size-sm) - var(--control-height-sm)) /
+                2
+            );
+        }
+
+        &.message--ghost.message--start
+            .message__footer
+            .button--size-icon-sm:first-child {
+            margin-inline-start: var(--message-icon-inset);
+        }
+
+        &.message--ghost.message--end
+            .message__footer
+            .button--size-icon-sm:last-child {
+            margin-inline-end: var(--message-icon-inset);
+        }
+    }
+}

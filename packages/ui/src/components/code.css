@@ -1,0 +1,108 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * Colours come from the theme's variables and their palette defaults (see
+     * lib/code-theme.ts). Shiki's markup is inserted as raw HTML, so it has no
+     * component classes beyond .code__pre: styles reach it by selector.
+     */
+    .code {
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        /*
+         * Its lines don't set its width: without this a long line widens a grid
+         * or flex track to fit, and the block never scrolls.
+         */
+        contain: inline-size;
+        /* The header shares the code's background, from the same variable. */
+        background-color: var(--code-background, var(--color-bg-alt));
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
+        /* Clip the scrolling code to the corners when --radius is set. */
+        overflow: hidden;
+
+        .code__header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            min-height: var(--control-height-md);
+            /* None on the right: the copy button fills that corner, edge to edge. */
+            padding-inline: var(--space-md) 0;
+            border-bottom: var(--border-width) solid var(--border-color);
+        }
+
+        .code__title {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--color-text);
+        }
+
+        /* Scripted: hidden until the script below reveals it. */
+        .code__copy[hidden] {
+            display: none;
+        }
+
+        .code__copy-done {
+            display: none;
+        }
+
+        .code__copy[data-copied] {
+            color: var(--color-success);
+
+            .code__copy-idle {
+                display: none;
+            }
+
+            .code__copy-done {
+                display: block;
+            }
+        }
+
+        .code__pre {
+            margin: 0;
+            padding: var(--space-sm) var(--space-md);
+            font: var(--type-code);
+            /* The characters as typed: != shouldn't read as ≠ in code to copy. */
+            font-variant-ligatures: none;
+            tab-size: 4;
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-border-strong) transparent;
+
+            /* The global code rule shrinks code to 0.9em; here it is the block. */
+            code {
+                font: inherit;
+            }
+
+            &:focus-visible {
+                outline-offset: -2px;
+            }
+        }
+
+        &.code--numbered .code__pre code {
+            counter-reset: line;
+
+            .line::before {
+                counter-increment: line;
+                content: counter(line);
+                display: inline-block;
+                width: 2ch;
+                margin-right: var(--space-md);
+                text-align: right;
+                color: var(--code-line-number, var(--color-border-strong));
+                user-select: none;
+            }
+        }
+    }
+
+    /* Within a sentence: a tinted chip, sized to the text around it. */
+    .code-inline {
+        padding: 0.1em 0.35em;
+        border-radius: var(--radius);
+        font-size: var(--font-size-code);
+        overflow-wrap: anywhere;
+    }
+}

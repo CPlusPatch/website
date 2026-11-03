@@ -14,25 +14,22 @@ interface Props extends HTMLAttributes<"div"> {
     columns?: number;
 }
 
-const { min = "18rem", columns = 3, class: className, ...rest } = Astro.props;
+const {
+    min = "18rem",
+    columns = 3,
+    class: className,
+    style,
+    ...rest
+} = Astro.props;
+
+// Set inline, which is what define:vars did, so the stylesheet can be plain CSS.
+const vars = { "--masonry-min": min, "--masonry-columns": columns };
+const merged =
+    typeof style === "string"
+        ? `--masonry-min:${min};--masonry-columns:${columns};${style}`
+        : { ...vars, ...style };
 ---
 
-<div class:list={["masonry", className]} {...rest}>
+<div class:list={["masonry", className]} style={merged} {...rest}>
     <slot />
 </div>
-
-<style define:vars={{ "masonry-min": min, "masonry-columns": columns }}>
-.masonry {
-    columns: var(--masonry-min) var(--masonry-columns);
-    column-gap: var(--space-md);
-}
-
-/*
- * Slotted, so its items carry their own scope. `.masonry` is repeated to
- * outrank an item's own margin reset, like Quote's.
- */
-.masonry.masonry > :global(*) {
-    break-inside: avoid;
-    margin-bottom: var(--space-md);
-}
-</style>

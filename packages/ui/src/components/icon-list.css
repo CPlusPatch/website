@@ -1,0 +1,20 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .icon-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs) var(--space-md);
+        color: var(--color-text-muted);
+
+        li {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        svg {
+            flex: none;
+        }
+    }
+}

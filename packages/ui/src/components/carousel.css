@@ -1,0 +1,64 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .carousel {
+        container-type: inline-size;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        /* Clip the slides to the panel's corners when --radius is set */
+        overflow: hidden;
+
+        .carousel__items {
+            display: flex;
+            min-block-size: var(--carousel-min-height, 0);
+            overflow: auto hidden;
+            overscroll-behavior-inline: contain;
+            scroll-snap-type: inline mandatory;
+            scrollbar-width: none;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Drawn inside, as the panel clips anything outside its edge. */
+            &:focus-visible {
+                outline-offset: -2px;
+            }
+        }
+
+        .carousel__footer {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-sm) var(--space-sm)
+                var(--space-md);
+            border-block-start: var(--border-width) solid var(--border-color);
+
+            /* A button at either end sits as close to the edge as the arrows. */
+            &:has(> .carousel__pause:not([hidden])) {
+                padding-inline-start: var(--space-sm);
+            }
+
+            .carousel__counter {
+                display: flex;
+                gap: 0.5ch;
+                margin: 0;
+                font: var(--type-meta);
+                font-variant-numeric: tabular-nums;
+                color: var(--color-text);
+                white-space: nowrap;
+
+                .carousel__total {
+                    color: var(--color-text-muted);
+                }
+            }
+
+            .carousel__arrows {
+                display: flex;
+                gap: var(--space-xs);
+                margin-inline-start: auto;
+            }
+        }
+    }
+}

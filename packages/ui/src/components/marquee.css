@@ -1,0 +1,106 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .marquee {
+        position: relative;
+
+        /*
+         * Hidden until the marquee is hovered or focused, but always reachable:
+         * focus-within reveals it for keyboard users, and touch screens (no hover)
+         * keep it visible.
+         */
+        .marquee__pause {
+            position: absolute;
+            top: var(--space-xs);
+            right: var(--space-xs);
+            z-index: 1;
+            background-color: var(--color-surface);
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        &:hover .marquee__pause,
+        &:focus-within .marquee__pause,
+        .marquee__pause[aria-pressed="true"] {
+            opacity: 1;
+        }
+
+        @media (hover: none) {
+            .marquee__pause {
+                opacity: 1;
+            }
+        }
+
+        .marquee__definitions {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .marquee__track {
+            display: flex;
+            gap: var(--gap);
+            width: max-content;
+            animation: marquee-scroll var(--duration) linear infinite;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+
+            .marquee__group {
+                display: flex;
+                flex: none;
+                align-items: center;
+                justify-content: space-around;
+                gap: var(--gap);
+                margin: 0;
+                padding: 0;
+                list-style: none;
+            }
+        }
+
+        &[data-reverse] .marquee__track {
+            animation: marquee-scroll-reverse var(--duration) linear infinite;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+
+        /*
+         * Paused by a PauseButton on the marquee itself, or on an ancestor (Logos
+         * pauses every lane at once), and while off screen. Kept after the
+         * [data-reverse] rule, which has equal specificity and would otherwise
+         * reset the play state.
+         */
+        &[data-paused] .marquee__track,
+        /* biome-ignore lint/style/noDescendingSpecificity: deliberately after the [data-reverse] rule, see above */
+            [data-paused]
+            &
+            .marquee__track,
+        &[data-offscreen] .marquee__track {
+            animation-play-state: paused;
+        }
+    }
+
+    @keyframes marquee-scroll {
+        from {
+            transform: translate3d(0, 0, 0);
+        }
+
+        to {
+            transform: translate3d(calc(-33.333333% - var(--gap) / 3), 0, 0);
+        }
+    }
+
+    @keyframes marquee-scroll-reverse {
+        from {
+            transform: translate3d(calc(-33.333333% - var(--gap) / 3), 0, 0);
+        }
+
+        to {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+}

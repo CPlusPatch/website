@@ -1,0 +1,88 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .footer {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-lg) var(--space-md);
+        background-color: var(--color-surface);
+        border-top: var(--border-width) solid var(--border-color);
+
+        & > * {
+            width: min(100%, var(--container-width));
+        }
+
+        .footer__content {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-md);
+
+            .footer__tagline {
+                color: var(--color-text-muted);
+                /* Keeps the tagline's \n line breaks */
+                white-space: pre;
+            }
+
+            .footer__branding {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: var(--space-sm);
+
+                .footer__badge {
+                    width: 88px;
+                    height: 31px;
+                }
+            }
+
+            .footer__socials {
+                display: flex;
+                gap: var(--space-sm);
+                list-style: none;
+                padding: 0;
+
+                li {
+                    filter: grayscale(100%);
+                    transition: filter 0.3s ease;
+
+                    &:hover,
+                    &:focus-within {
+                        filter: grayscale(0%);
+                    }
+
+                    /* Sizes the icons, which are 1em. */
+                    a {
+                        color: var(--color-text);
+                        font-size: var(--font-size-2xl);
+
+                        &:hover,
+                        &:focus-visible {
+                            color: var(--color-primary);
+                            background-color: transparent;
+                        }
+                    }
+                }
+            }
+        }
+
+        .footer__copyright {
+            color: var(--color-text-muted);
+        }
+
+        .footer__friends {
+            .footer__friends-list {
+                display: grid;
+                width: 100%;
+                grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+                gap: var(--space-xs);
+            }
+        }
+    }
+}

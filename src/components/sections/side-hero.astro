@@ -33,37 +33,3 @@ const { side = "right", image, class: className, ...rest } = Astro.props;
         />
     </div>
 </div>
-
-<style>
-.side-hero {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
-    gap: var(--space-lg);
-    align-items: center;
-    width: 100%;
-
-    .side-hero__content {
-        padding: var(--space-lg);
-        max-width: 30rem;
-        justify-self: center;
-
-        /* Slotted, so the role comes by token rather than class. */
-        p {
-            color: var(--color-text);
-            font: var(--type-lead);
-        }
-    }
-
-    .side-hero__media {
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    /* Also puts the image first when the columns stack. */
-    &.side-hero--left .side-hero__media {
-        order: -1;
-    }
-}
-</style>

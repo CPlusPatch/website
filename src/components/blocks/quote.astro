@@ -40,39 +40,3 @@ const { author, cite, class: className, ...rest } = Astro.props;
         </span>
     </figcaption>
 </figure>
-
-<style>
-.quote {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    width: 100%;
-    margin: 0;
-    padding: var(--space-md);
-
-    /* The quote itself, a step up from the byline under it. */
-    .quote__body {
-        margin: 0;
-        font: var(--type-lead);
-    }
-
-    .quote__author {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-        min-width: 0;
-        padding-top: var(--space-md);
-        border-top: var(--border-width) solid var(--border-color);
-
-        .quote__byline {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-
-            .quote__title {
-                color: var(--color-text-muted);
-            }
-        }
-    }
-}
-</style>

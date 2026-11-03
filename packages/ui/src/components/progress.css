@@ -1,0 +1,47 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * Registered, so it can be animated and transitioned. Inherited, for the
+     * ::before fill. The transition is on the value rather than the fill's
+     * scale: an animation of the value overrides it, where a transition on
+     * scale would restart on every frame of one.
+     */
+    @property --progress-value {
+        syntax: "<number>";
+        inherits: true;
+        initial-value: 0;
+    }
+
+    .progress {
+        --progress-fill: var(--tone, var(--color-primary));
+        --progress-track: color-mix(
+            in oklab,
+            var(--progress-fill) 20%,
+            transparent
+        );
+
+        display: flex;
+        inline-size: 100%;
+        block-size: 0.25rem;
+        background-color: var(--progress-track);
+        transition: --progress-value var(--transition);
+
+        &::before {
+            content: "";
+            flex: 1;
+            background-color: var(--progress-fill);
+            scale: var(--progress-value) 1;
+            transform-origin: left;
+        }
+
+        &:dir(rtl)::before {
+            transform-origin: right;
+        }
+
+        @media (forced-colors: active) {
+            --progress-fill: Highlight;
+            --progress-track: GrayText;
+        }
+    }
+}

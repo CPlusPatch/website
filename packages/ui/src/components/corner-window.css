@@ -1,0 +1,142 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .corner-window {
+        --corner-window-gap: var(--space-md);
+
+        &.corner-window--end {
+            --corner-window-area: top span-left;
+            --corner-window-origin: bottom right;
+        }
+
+        &.corner-window--start {
+            --corner-window-area: top span-right;
+            --corner-window-origin: bottom left;
+        }
+
+        &.corner-window--pinned {
+            position: fixed;
+            inset-block-end: calc(
+                var(--corner-window-gap) +
+                env(safe-area-inset-bottom)
+            );
+            z-index: var(--z-sticky);
+
+            &.corner-window--end {
+                inset-inline-end: calc(
+                    var(--corner-window-gap) +
+                    env(safe-area-inset-right)
+                );
+            }
+
+            &.corner-window--start {
+                inset-inline-start: calc(
+                    var(--corner-window-gap) +
+                    env(safe-area-inset-left)
+                );
+            }
+        }
+
+        /* The icon turns into a close cross while the window is open. */
+        .corner-window__close {
+            display: none;
+        }
+
+        &:has(.corner-window__panel:popover-open) {
+            .corner-window__open {
+                display: none;
+            }
+
+            .corner-window__close {
+                display: block;
+            }
+        }
+
+        .corner-window__panel {
+            flex-direction: column;
+
+            &:popover-open {
+                display: flex;
+            }
+        }
+
+        /* A narrow or short screen gets the sheet instead (see .sheet). */
+        @media (width >= 40rem) and (height >= 32rem) {
+            .corner-window__panel {
+                width: 24rem;
+                /* Clear of the button and the viewport's edges. */
+                max-height: min(
+                    36rem,
+                    100dvh -
+                    3 *
+                    var(--corner-window-gap) -
+                    var(--control-height-lg)
+                );
+                color: var(--color-text);
+                background-color: var(--color-surface-raised);
+                border: var(--border-width) solid var(--color-border-strong);
+                border-radius: var(--radius);
+                box-shadow: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
+                transform-origin: var(--corner-window-origin);
+                transition:
+                    opacity var(--transition),
+                    scale var(--transition),
+                    display var(--transition) allow-discrete,
+                    overlay var(--transition) allow-discrete;
+
+                &:popover-open {
+                    @starting-style {
+                        opacity: 0;
+                        scale: 0.96;
+                    }
+                }
+
+                &:not(:popover-open) {
+                    opacity: 0;
+                    scale: 0.96;
+                }
+
+                /*
+                 * Over the button, from its corner, where anchor positioning
+                 * exists: flipped to whichever side has room when it sits in
+                 * the flow. Centred elsewhere.
+                 */
+                @supports (position-area: top) {
+                    margin-block-end: var(--space-sm);
+                    position-area: var(--corner-window-area);
+                    position-try-fallbacks:
+                        flip-block,
+                        flip-inline,
+                        flip-block flip-inline;
+                }
+
+                @supports not (position-area: top) {
+                    margin: auto;
+                }
+            }
+        }
+
+        .corner-window__header {
+            display: flex;
+            flex: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-sm);
+            padding: var(--space-xs) var(--space-xs) var(--space-xs)
+                var(--space-md);
+            border-bottom: var(--border-width) solid var(--color-border);
+        }
+
+        /* Its content may cap itself and scroll within; otherwise this scrolls. */
+        .corner-window__body {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            gap: var(--space-md);
+            min-height: 0;
+            padding: var(--space-md);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+    }
+}

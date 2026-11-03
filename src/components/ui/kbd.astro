@@ -37,37 +37,6 @@ const { keys, class: className, ...rest } = Astro.props;
     </kbd>
 )}
 
-<style>
-.kbd {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2em;
-    font: var(--type-meta);
-    color: var(--color-text-muted);
-    white-space: nowrap;
-
-    &.kbd__key,
-    .kbd__key {
-        display: inline-block;
-        min-width: 1.75em;
-        padding: 0.0625rem 0.3125rem 0;
-        font: inherit;
-        line-height: 1.4;
-        text-align: center;
-        color: var(--color-text);
-        background-color: var(--color-surface-raised);
-        border: var(--border-width) solid var(--color-border-strong);
-        /* A thicker bottom edge, so it reads as a keycap. */
-        border-bottom-width: 2px;
-        border-radius: var(--radius);
-    }
-
-    &[data-apple] .kbd__plus {
-        display: none;
-    }
-}
-</style>
-
 <script>
 const APPLE: Record<string, [symbol: string, name: string]> = {
     Alt: ["⌥", "Option"],

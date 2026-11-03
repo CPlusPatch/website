@@ -1,2 +1,3 @@
-/* The library's global styles. */
+/* The library's global styles and component styles, in that order. */
 @import "@cpluspatch/ui/styles.css";
+@import "@cpluspatch/ui/components.css";

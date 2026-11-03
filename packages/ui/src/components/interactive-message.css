@@ -1,0 +1,114 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .interactive-message {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        inline-size: 100%;
+        min-block-size: 0;
+
+        .interactive-message__log {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            min-block-size: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-border-strong) transparent;
+
+            @media (prefers-reduced-motion: reduce) {
+                scroll-behavior: auto;
+            }
+
+            /*
+             * Added by the script, so the server-rendered opening holds still.
+             * Grown from the corner on its sender's side, and never past its
+             * own box: anything poking out would make the log scrollable for a
+             * moment, flashing a scrollbar.
+             */
+            .message[data-new] {
+                transform-origin: bottom left;
+                animation: interactive-message-in 200ms ease-out;
+
+                @media (prefers-reduced-motion: reduce) {
+                    animation: none;
+                }
+            }
+
+            .message--end[data-new] {
+                transform-origin: bottom right;
+            }
+        }
+
+        /* Set by the script when a height cap means the log will scroll. */
+        &[data-capped] .interactive-message__log {
+            scrollbar-gutter: stable;
+        }
+
+        .interactive-message__footer {
+            display: flex;
+            justify-content: end;
+        }
+
+        .interactive-message__options {
+            display: flex;
+            flex: 1;
+            flex-wrap: wrap;
+            justify-content: end;
+            gap: var(--space-xs);
+
+            /* Only ever focused by the script, between turns. */
+            &:focus {
+                outline: none;
+            }
+
+            > * {
+                animation: interactive-message-in 200ms ease-out backwards;
+
+                @media (prefers-reduced-motion: reduce) {
+                    animation: none;
+                }
+            }
+
+            /* Staggered, so a row of options reads as arriving in order. */
+            > :nth-child(2) {
+                animation-delay: 50ms;
+            }
+
+            > :nth-child(n + 3) {
+                animation-delay: 100ms;
+            }
+
+            /*
+             * Between turns the next options are in place but hidden, so the
+             * row holds the height it will have and nothing below it jolts.
+             */
+            &[data-waiting] > * {
+                visibility: hidden;
+                opacity: 0;
+                transition:
+                    opacity var(--transition),
+                    visibility var(--transition);
+            }
+        }
+
+        /* Animates each time it is unhidden, as display none restarts it. */
+        .interactive-message__restart {
+            animation: interactive-message-in 200ms ease-out;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+    }
+
+    @keyframes interactive-message-in {
+        from {
+            opacity: 0;
+            scale: 0.96;
+        }
+    }
+}

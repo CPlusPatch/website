@@ -9,19 +9,3 @@ const { class: className, ...rest } = Astro.props;
 <div class:list={["carousel-item", className]} {...rest}>
     <slot />
 </div>
-
-<style>
-/*
- * No frame of its own: the carousel's panel is the frame. A grid, so slotted
- * content stretches to the tallest slide in both axes without being forced
- * to a fixed height (and clipped below it).
- */
-.carousel-item {
-    display: grid;
-    flex: 0 0 100%;
-    min-inline-size: 0;
-    scroll-snap-align: start;
-    /* One swipe moves one slide, however hard it is flung. */
-    scroll-snap-stop: always;
-}
-</style>

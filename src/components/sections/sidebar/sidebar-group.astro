@@ -22,35 +22,3 @@ const { title, icon, class: className, ...rest } = Astro.props;
         <slot />
     </ul>
 </div>
-
-<style>
-/*
- * A heading over its links, which hang off a hairline guide lined up under
- * the heading's icon (or its first letter, without one).
- */
-.sidebar-group {
-    --sidebar-icon: 0.875rem;
-
-    .sidebar-group__title {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-        margin: 0 0 var(--space-sm);
-        color: var(--color-text);
-    }
-
-    .sidebar-group__icon {
-        flex-shrink: 0;
-        width: var(--sidebar-icon);
-        height: var(--sidebar-icon);
-        color: var(--color-text-muted);
-    }
-
-    .sidebar-group__list {
-        margin: 0 0 0 calc(var(--sidebar-icon) / 2);
-        padding: 0;
-        list-style: none;
-        border-left: var(--border-width) solid var(--border-color);
-    }
-}
-</style>
