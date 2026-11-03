@@ -64,8 +64,9 @@ website/
 │   │   ├── page/       the front page's sections
 │   │   └── effects/    page-wide effects like the scanlines
 │   ├── gallery/        the gallery and its stories
-│   └── styles/         tokens, themes and global CSS
+│   └── styles/         imports the library's CSS
 ├── packages/
+│   ├── ui/             tokens, themes, global CSS and component CSS
 │   ├── palette/        theme colour generator
 │   ├── destructor/     the gravity gun
 │   ├── reel/           downloads videos for <Shorts>

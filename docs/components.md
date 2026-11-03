@@ -13,7 +13,8 @@ blocks/message/
 
 The easiest way to get the style right is to copy a similar component and go from there. A few things to keep in mind:
 
-- Use the CSS variables from `src/styles/` instead of hardcoding sizes, fonts or colours. That way it works with every theme.
+- A component's CSS lives in `packages/ui/src/components/<name>.css`, not in the `.astro` file: plain CSS inside `@layer ui.components`, with every selector starting from the component's own BEM class (`.button--outline`, `.dropdown__panel`). Add it to `packages/ui/src/components.css`, after any component it styles the parts of.
+- Use the CSS variables from `packages/ui/src/styles/` instead of hardcoding sizes, fonts or colours. That way it works with every theme.
 - If it needs an accent colour, add a `tone` prop and the matching `tone-*` class, then use `var(--tone)` in the CSS.
 - It should still work with JavaScript disabled. If a control only works with JS, keep it hidden until the script runs.
 - Turn off animations under `prefers-reduced-motion: reduce`.

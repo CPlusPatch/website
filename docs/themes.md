@@ -12,12 +12,12 @@ The `-accent` variants (`--color-primary-accent` etc.) are only meant for border
 
 ## Editing the colours
 
-The default and Ocean themes are generated from `src/styles/themes/palette.config.ts`. After changing it, run `deno run theme` to update the stylesheets. It also prints a contrast report.
+The default and Ocean themes are generated from `packages/ui/src/styles/themes/palette.config.ts`. After changing it, run `deno run theme` to update the stylesheets. It also prints a contrast report.
 
 Don't edit the generated colours by hand, CI fails if they don't match the config.
 
 ## Adding a theme
 
-Copy one of the existing files in `src/styles/themes/` (`nord.css` is a good starting point), then import it in `src/styles/index.css` and add it to `THEMES` in `src/styles/themes/index.ts` so it shows up in the Display menu. Keep its first block's selectors in the same form as the others: the `[data-theme-preview]` one is what colours its swatch in the menu. If you'd rather have the colours generated, add it to `themes` in `palette.config.ts` instead.
+Copy one of the existing files in `packages/ui/src/styles/themes/` (`nord.css` is a good starting point), then import it in `packages/ui/src/styles/themes.css` and add it to `THEMES` in `packages/ui/src/styles/themes/index.ts` so it shows up in the Display menu. Keep its first block's selectors in the same form as the others: the `[data-theme-preview]` one is what colours its swatch in the menu. If you'd rather have the colours generated, add it to `themes` in `palette.config.ts` instead.
 
 Text should have at least 4.5:1 contrast with the background, and input borders at least 3:1.

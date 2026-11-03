@@ -31,7 +31,7 @@ export default defineConfig({
             subsets: ["latin", "latin-ext"],
             fallbacks: ["monospace", "ui-monospace"],
         },
-        // Ocean theme only (src/styles/themes/ocean.css). Not preloaded, so
+        // Ocean theme only (packages/ui/src/styles/themes/ocean.css). Not preloaded, so
         // the files are only fetched once text is drawn with them.
         {
             provider: fontProviders.fontsource(),

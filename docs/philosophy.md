@@ -16,7 +16,7 @@ When a component grows, split it. It gets its own folder once it has several par
 
 ## CSS variables are the source of truth
 
-Colours, spacing, font sizes, corner radius and animation timing are all CSS variables, defined in `src/styles/`. Components use those variables instead of their own values, which is what lets a theme restyle the whole site by overriding them.
+Colours, spacing, font sizes, corner radius and animation timing are all CSS variables, defined in `packages/ui/src/styles/`. Components use those variables instead of their own values, which is what lets a theme restyle the whole site by overriding them.
 
 The default colours are generated from one config file, so they can't drift apart or lose contrast. See [Themes and colours](themes.md).
 
