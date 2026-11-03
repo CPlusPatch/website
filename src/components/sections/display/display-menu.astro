@@ -13,7 +13,7 @@ import ThemePicker from "./theme-picker.astro";
  * effects. None of it needs JS -- each control is read through :has()
  * wherever it lives, so it works while the panel is closed, and the browser
  * restores it on reload. With JS, the choices carry over to other pages (see
- * lib/display.ts), and controls with a key get an Alt+Shift shortcut.
+ * @cpluspatch/ui lib/display.ts), and controls with a key get an Alt+Shift shortcut.
  *
  * Anything in the default slot goes between the look and the effects, for
  * settings of the page's own: use DisplayRow, so they line up.
@@ -102,11 +102,7 @@ const { id, effects, size, collapseBelow, class: className } = Astro.props;
 </Dropdown>
 
 <script>
-import { bindDisplayMenu } from "../../../lib/display.ts";
-import { bindShortcuts } from "../../../lib/shortcuts.ts";
+import { initDisplayMenus } from "@cpluspatch/ui/behaviours/display-menu.ts";
 
-for (const menu of document.querySelectorAll<HTMLElement>(".display-menu")) {
-    bindDisplayMenu(menu);
-    bindShortcuts(menu);
-}
+initDisplayMenus();
 </script>

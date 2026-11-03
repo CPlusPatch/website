@@ -1,4 +1,4 @@
-import type { DialogueNode } from "../../components/blocks/message/dialogue.ts";
+import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import InteractiveMessage from "../../components/blocks/message/interactive-message.astro";
 import CornerWindow from "../../components/ui/corner-window.astro";
 import greg from "../../images/greg.jpg";

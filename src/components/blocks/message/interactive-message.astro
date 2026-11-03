@@ -1,8 +1,8 @@
 ---
+import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import type { HTMLAttributes } from "astro/types";
 import { Icon } from "astro-icon/components";
 import Button from "../../ui/button.astro";
-import type { DialogueNode } from "./dialogue.ts";
 import Message from "./message.astro";
 import MessageGroup from "./message-group.astro";
 
@@ -124,11 +124,7 @@ const json = JSON.stringify(tree).replaceAll("<", "\\u003c");
 </div>
 
 <script>
-import { bindDialogue } from "./dialogue.ts";
+import { initInteractiveMessages } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 
-for (const root of document.querySelectorAll<HTMLElement>(
-    "[data-interactive-message]",
-)) {
-    bindDialogue(root);
-}
+initInteractiveMessages();
 </script>

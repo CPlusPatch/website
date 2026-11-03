@@ -21,7 +21,7 @@ const { href, label = "Scroll", class: className, ...rest } = Astro.props;
 </a>
 
 <script>
-import { markOffscreen } from "../../lib/motion.ts";
+import { initScrollCues } from "@cpluspatch/ui/behaviours/scroll-cue.ts";
 
-markOffscreen(document.querySelectorAll(".scroll-cue"));
+initScrollCues();
 </script>

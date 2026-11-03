@@ -2,11 +2,12 @@
  * The actions the front page's chat runs (see the `chat` tree in
  * data/home.ts). The text ones last until the reader starts over.
  */
-import { shake, swear, uwuify } from "../../lib/page-effects.ts";
+
 import {
     type DialogueAction,
     defineDialogueActions,
-} from "../blocks/message/dialogue.ts";
+} from "@cpluspatch/ui/behaviours/interactive-message.ts";
+import { shake, swear, uwuify } from "../../lib/page-effects.ts";
 
 /**
  * Opens the Shorts easter egg (doomscroll.astro). Opening it closes the

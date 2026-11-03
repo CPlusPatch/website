@@ -1,5 +1,5 @@
+import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import Attachment from "../../components/blocks/attachment/attachment.astro";
-import type { DialogueNode } from "../../components/blocks/message/dialogue.ts";
 import InteractiveMessage from "../../components/blocks/message/interactive-message.astro";
 import Message from "../../components/blocks/message/message.astro";
 import MessageBubble from "../../components/blocks/message/message-bubble.astro";

@@ -33,13 +33,7 @@ const { target, label = "Pause scrolling", class: className } = Astro.props;
 </Button>
 
 <script>
-import { setPaused } from "./pause-button.ts";
+import { initPauseButtons } from "@cpluspatch/ui/behaviours/pause-button.ts";
 
-for (const button of document.querySelectorAll<HTMLElement>(
-    "[data-pause-target]",
-)) {
-    button.addEventListener("click", () =>
-        setPaused(button, button.getAttribute("aria-pressed") !== "true"),
-    );
-}
+initPauseButtons();
 </script>

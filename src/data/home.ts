@@ -2,11 +2,12 @@
  * The front page's content.
  * The sections in components/page/ read it from here.
  */
+
+import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import type { ComponentProps } from "astro/types";
 import componentScreenshot from "../../docs/assets/gallery-dark.webp";
 import type Heatmap from "../components/blocks/heatmap/heatmap.astro";
 import type MediaCard from "../components/blocks/media-card.astro";
-import type { DialogueNode } from "../components/blocks/message/dialogue.ts";
 import type Quote from "../components/blocks/quote.astro";
 import type Stat from "../components/blocks/stat.astro";
 import type { DisplayEffect } from "../components/sections/display/display-menu.astro";

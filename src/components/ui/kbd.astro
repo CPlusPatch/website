@@ -38,25 +38,7 @@ const { keys, class: className, ...rest } = Astro.props;
 )}
 
 <script>
-const APPLE: Record<string, [symbol: string, name: string]> = {
-    Alt: ["⌥", "Option"],
-    Shift: ["⇧", "Shift"],
-    Ctrl: ["⌃", "Control"],
-    Meta: ["⌘", "Command"],
-};
+import { initKbds } from "@cpluspatch/ui/behaviours/kbd.ts";
 
-const platform =
-    (navigator as { userAgentData?: { platform: string } }).userAgentData
-        ?.platform ?? navigator.platform;
-
-if (/mac|iphone|ipad/i.test(platform)) {
-    for (const key of document.querySelectorAll<HTMLElement>(
-        ".kbd__key[data-key]",
-    )) {
-        const apple = APPLE[key.dataset.key ?? ""];
-        if (!apple) continue;
-        [key.textContent, key.title] = apple;
-        key.closest(".kbd")?.toggleAttribute("data-apple", true);
-    }
-}
+initKbds();
 </script>

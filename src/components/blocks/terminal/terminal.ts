@@ -1,6 +1,10 @@
+import {
+    CLEAR,
+    type TerminalResult,
+} from "@cpluspatch/ui/behaviours/terminal.ts";
+import { currentTheme, setTheme } from "@cpluspatch/ui/lib/display.ts";
 import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 import badApple from "../../../data/bad-apple/video.webm?url";
-import { currentTheme, setTheme } from "../../../lib/display.ts";
 import { shake, uwuify } from "../../../lib/page-effects.ts";
 import { playVideo } from "./video.ts";
 
@@ -11,13 +15,6 @@ export interface Entry {
 
 export const promptFor = (cwd: string): string =>
     `guest@cpluspatch.com:${cwd}$ `;
-
-/**
- * A command that runs on after it returns, drawing into its output itself.
- * It calls `done` when it finishes, and returns a function that stops it
- * sooner, called on Ctrl+C or the next command.
- */
-export type Program = (output: HTMLElement, done: () => void) => () => void;
 
 export const neofetch =
     (): string => `                            jessew@website
@@ -47,10 +44,7 @@ export const uwu = (): string => {
     return "Evewything is uwu now (ᵘʷᵘ)";
 };
 
-/** What a command returns to have the terminal empty itself, like `clear`. */
-export const CLEAR = Symbol("clear");
-
-export type Result = string | Program | typeof CLEAR;
+export type Result = TerminalResult;
 
 /** Lists the themes, or switches to one, as the Display menu would. */
 export const theme = ([name]: string[]): string => {

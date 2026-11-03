@@ -1,4 +1,4 @@
-import type { Program } from "./terminal.ts";
+import type { Program } from "@cpluspatch/ui/behaviours/terminal.ts";
 
 /**
  * Scales the picture down to the terminal's width, if it is wider, from now

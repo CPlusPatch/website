@@ -58,51 +58,7 @@ const formatted = new Intl.NumberFormat(locale, {
 </div>
 
 <script>
-const DURATION = 1500;
+import { initStats } from "@cpluspatch/ui/behaviours/stat.ts";
 
-// Fast start, slow finish, so the last digits settle rather than stop dead
-const easeOut = (t: number) => 1 - (1 - t) ** 4;
-
-const formatter = (el: HTMLElement) =>
-    new Intl.NumberFormat(el.dataset.locale, {
-        minimumFractionDigits: Number(el.dataset.decimals),
-        maximumFractionDigits: Number(el.dataset.decimals),
-    });
-
-const count = (el: HTMLElement) => {
-    const value = Number(el.dataset.value);
-    const format = formatter(el);
-    // Updating the existing text node's data, rather than replacing it with
-    // textContent, avoids a relayout of the whole stat on every frame
-    const text = el.firstChild as Text;
-    let start: number | undefined;
-
-    const frame = (now: number) => {
-        start ??= now;
-        const t = Math.min((now - start) / DURATION, 1);
-        text.data = format.format(value * easeOut(t));
-        if (t < 1) requestAnimationFrame(frame);
-    };
-    requestAnimationFrame(frame);
-};
-
-if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    const observer = new IntersectionObserver(
-        (entries) => {
-            for (const entry of entries) {
-                if (!entry.isIntersecting) continue;
-                observer.unobserve(entry.target);
-                count(entry.target as HTMLElement);
-            }
-        },
-        { threshold: 1 },
-    );
-
-    for (const el of document.querySelectorAll<HTMLElement>(".stat__count")) {
-        // Zeroed now rather than when it scrolls in, or stats already on
-        // screen would flash their final number first
-        el.textContent = formatter(el).format(0);
-        observer.observe(el);
-    }
-}
+initStats();
 </script>

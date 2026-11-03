@@ -64,14 +64,7 @@ const {
 </figure>
 
 <script>
-import { bindTransport } from "../../lib/media.ts";
+import { initAudioPlayers } from "@cpluspatch/ui/behaviours/audio-player.ts";
 
-for (const root of document.querySelectorAll<HTMLElement>(".audio-player")) {
-    bindTransport(root.querySelector("audio") as HTMLAudioElement, {
-        controls: root.querySelector(".audio-player__controls") as HTMLElement,
-        toggle: root.querySelector(".audio-player__toggle") as HTMLElement,
-        seek: root.querySelector(".audio-player__seek") as HTMLInputElement,
-        time: root.querySelector(".audio-player__time") as HTMLElement,
-    });
-}
+initAudioPlayers();
 </script>

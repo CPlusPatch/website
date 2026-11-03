@@ -2,7 +2,7 @@
  * The actions the gallery's dialogue stories run: a page-wide easter egg
  * or two, to show what a dialogue tree's `action` can reach.
  */
-import { defineDialogueActions } from "../components/blocks/message/dialogue.ts";
+import { defineDialogueActions } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import { shake } from "../lib/page-effects.ts";
 
 let overlay: HTMLElement | undefined;
