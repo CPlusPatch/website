@@ -4,8 +4,9 @@
  * the gallery's dialogue stories (gallery/dialogue-actions.ts).
  * Browser only: call them from page scripts.
  */
+
+import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import Uwuifier from "uwuifier";
-import { reducedMotion } from "./motion.ts";
 
 /** Text the reader never sees as words, and fields they may be typing in. */
 const SKIPPED = "script, style, template, textarea, input, svg, code, pre";

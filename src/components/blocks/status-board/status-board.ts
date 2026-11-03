@@ -1,4 +1,4 @@
-import { playWhileVisible } from "../../ui/pause-button.ts";
+import { playWhileVisible } from "@cpluspatch/ui/behaviours/pause-button.ts";
 import {
     beatState,
     beatsOf,

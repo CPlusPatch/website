@@ -1,4 +1,4 @@
-import { motion } from "../../../lib/motion.ts";
+import { motion } from "@cpluspatch/ui/lib/motion.ts";
 import type { NtfyMessage } from "./ntfy.ts";
 
 export interface Feed {

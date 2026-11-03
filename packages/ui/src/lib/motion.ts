@@ -17,8 +17,10 @@ let offscreen: IntersectionObserver | undefined;
  * Marks each element `data-offscreen` while it is out of view, so its CSS
  * can pause looping animations there. WebKit keeps running them off screen,
  * and scrolling anywhere on the page gets slower for it.
+ *
+ * Returns a function that stops watching them and clears the mark.
  */
-export const markOffscreen = (elements: Iterable<Element>) => {
+export const markOffscreen = (elements: Iterable<Element>): (() => void) => {
     offscreen ??= new IntersectionObserver((entries) => {
         for (const entry of entries) {
             entry.target.toggleAttribute(
@@ -27,5 +29,12 @@ export const markOffscreen = (elements: Iterable<Element>) => {
             );
         }
     });
-    for (const element of elements) offscreen.observe(element);
+    const watched = [...elements];
+    for (const element of watched) offscreen.observe(element);
+    return () => {
+        for (const element of watched) {
+            offscreen?.unobserve(element);
+            element.removeAttribute("data-offscreen");
+        }
+    };
 };

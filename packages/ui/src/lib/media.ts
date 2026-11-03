@@ -38,7 +38,10 @@ export const renderSeek = (media: HTMLMediaElement, seek: HTMLInputElement) => {
     return duration;
 };
 
-/** Swaps the browser's controls for ours and keeps them in sync. */
+/**
+ * Swaps the browser's controls for ours and keeps them in sync. Returns a
+ * function that stops that and gives the browser's controls back.
+ */
 export const bindTransport = (
     media: HTMLMediaElement,
     {
@@ -52,7 +55,10 @@ export const bindTransport = (
         seek: HTMLInputElement;
         time: HTMLElement;
     },
-) => {
+): (() => void) => {
+    const controller = new AbortController();
+    const { signal } = controller;
+    const nativeControls = media.controls;
     media.controls = false;
     controls.hidden = false;
 
@@ -75,15 +81,29 @@ export const bindTransport = (
         "durationchange",
         "progress",
     ]) {
-        media.addEventListener(type, render);
+        media.addEventListener(type, render, { signal });
     }
-    toggle.addEventListener("click", () => {
-        if (media.paused) void media.play();
-        else media.pause();
-    });
-    seek.addEventListener("input", () => {
-        media.currentTime = seek.valueAsNumber;
-        render();
-    });
+    toggle.addEventListener(
+        "click",
+        () => {
+            if (media.paused) void media.play();
+            else media.pause();
+        },
+        { signal },
+    );
+    seek.addEventListener(
+        "input",
+        () => {
+            media.currentTime = seek.valueAsNumber;
+            render();
+        },
+        { signal },
+    );
     render();
+
+    return () => {
+        controller.abort();
+        media.controls = nativeControls;
+        controls.hidden = true;
+    };
 };

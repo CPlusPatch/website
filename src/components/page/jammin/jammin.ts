@@ -1,4 +1,4 @@
-import { setProgress } from "../../../lib/progress.ts";
+import { setProgress } from "@cpluspatch/ui/lib/progress.ts";
 import { gatherLines, type Line } from "./visitor.ts";
 
 /** Where the beat drops in the video, in seconds: the first line comes in. */

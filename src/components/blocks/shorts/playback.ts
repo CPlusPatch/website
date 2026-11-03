@@ -1,5 +1,5 @@
-import { renderSeek } from "../../../lib/media.ts";
-import { reducedMotion } from "../../../lib/motion.ts";
+import { renderSeek } from "@cpluspatch/ui/lib/media.ts";
+import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import type { Feed } from "./feed.ts";
 
 /**

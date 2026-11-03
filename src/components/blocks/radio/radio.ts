@@ -1,9 +1,9 @@
-import { bindTransport } from "../../../lib/media.ts";
-import { reducedMotion } from "../../../lib/motion.ts";
+import { bindTransport } from "@cpluspatch/ui/lib/media.ts";
+import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 
 /**
  * Plays a <Radio>'s tracklist. The transport (play, seek, time) is the
- * shared one from lib/media.ts; this adds moving between tracks, and keeps
+ * shared one from @cpluspatch/ui (lib/media.ts); this adds moving between tracks, and keeps
  * the "now playing" part and the OS's media controls up to date.
  */
 export const bindRadio = (root: HTMLElement) => {

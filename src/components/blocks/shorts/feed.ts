@@ -1,10 +1,10 @@
-import { motion } from "../../../lib/motion.ts";
+import { motion } from "@cpluspatch/ui/lib/motion.ts";
 
 /**
  * The shorts' scrolling: a feed that snaps to one short at a time, moved by
  * `goTo`, the arrows, the keys, or natively (swipe, wheel, trackpad), with
  * the current short derived from wherever it is, so they all agree. The
- * carousel's track (carousel/track.ts) is the same idea across.
+ * carousel's track (@cpluspatch/ui carousel/track.ts) is the same idea across.
  */
 
 export interface Feed {

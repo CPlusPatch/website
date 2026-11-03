@@ -3,10 +3,10 @@
  * pages in localStorage. Without JS the browser's own form restoration keeps
  * them instead, though only on the page they were made on.
  *
- * Browser only, apart from STORAGE_KEY, which layouts/base.astro hands to its
- * head script: that applies the saved theme and overrides before first paint.
+ * Browser only, apart from STORAGE_KEY, which theme-init.ts hands to the head
+ * script that applies the saved theme and overrides before first paint.
  */
-import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
+import { THEMES } from "../styles/themes/index.ts";
 
 export const STORAGE_KEY = "display";
 
@@ -58,24 +58,36 @@ const restore = (inputs: HTMLInputElement[]) => {
     for (const attr of painted) root.removeAttribute(attr);
 };
 
-/** Restores and saves the inputs in the menu's [data-persist] controls. */
-export const bindDisplayMenu = (menu: HTMLElement) => {
+/**
+ * Restores and saves the inputs in the menu's [data-persist] controls.
+ * Returns a function that stops saving them.
+ */
+export const bindDisplayMenu = (menu: HTMLElement): (() => void) => {
     const inputs = [
         ...menu.querySelectorAll<HTMLInputElement>("[data-persist] input"),
     ];
+    const controller = new AbortController();
+    const { signal } = controller;
     restore(inputs);
     // Back to a page kept whole in the cache, as it was before a later change
-    window.addEventListener("pageshow", (e) => e.persisted && restore(inputs));
-
-    menu.addEventListener("change", (e) => {
-        const input = e.target;
-        if (!(input instanceof HTMLInputElement) || !inputs.includes(input))
-            return;
-        saveChoice(
-            input.name,
-            input.type === "radio" ? input.value : input.checked,
-        );
+    window.addEventListener("pageshow", (e) => e.persisted && restore(inputs), {
+        signal,
     });
+
+    menu.addEventListener(
+        "change",
+        (e) => {
+            const input = e.target;
+            if (!(input instanceof HTMLInputElement) || !inputs.includes(input))
+                return;
+            saveChoice(
+                input.name,
+                input.type === "radio" ? input.value : input.checked,
+            );
+        },
+        { signal },
+    );
+    return () => controller.abort();
 };
 
 const picker = (value?: string) =>

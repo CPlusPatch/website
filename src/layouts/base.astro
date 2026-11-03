@@ -2,11 +2,11 @@
 import "../styles/index.css";
 
 import { Font } from "astro:assets";
-import { OVERRIDES, OVERRIDES_CSS } from "@cpluspatch/ui/styles/overrides.ts";
+import { themeInitScript } from "@cpluspatch/ui/lib/theme-init.ts";
+import { OVERRIDES_CSS } from "@cpluspatch/ui/styles/overrides.ts";
 import Analytics from "../components/analytics.astro";
 import Jesse from "../components/effects/jesse.astro";
 import Scanlines from "../components/effects/scanlines.astro";
-import { STORAGE_KEY } from "../lib/display.ts";
 import { site } from "../site.ts";
 
 interface Props {
@@ -30,9 +30,6 @@ const {
 
 const pageTitle = title === site.name ? title : `${title} — ${site.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
-
-// The Display menu's choices that change the whole page's look.
-const PAINTED = ["theme", ...OVERRIDES.map(({ name }) => name)];
 ---
 
 <!doctype html>
@@ -44,31 +41,8 @@ const PAINTED = ["theme", ...OVERRIDES.map(({ name }) => name)];
         <link rel="icon" href="/favicon.ico">
         <meta name="generator" content={Astro.generator}>
 
-        {/*
-         * The theme and overrides picked in the Display menu on another
-         * page, set on <html> as data-<name> before first paint, so the page
-         * doesn't flash the defaults. The menu takes over from these once it
-         * loads (see lib/display.ts).
-         */}
-        <script is:inline data-key={STORAGE_KEY} data-names={PAINTED.join(" ")}>
-        try {
-            // Read from the tag rather than define:vars, whose variables the
-            // type checker can't see.
-            const { key, names } = document.currentScript.dataset;
-            const choices = JSON.parse(localStorage.getItem(key) ?? "{}");
-            const root = document.documentElement;
-            for (const name of names.split(" ")) {
-                const attr = `data-${name}`;
-                if (
-                    typeof choices[name] === "string" &&
-                    !root.hasAttribute(attr)
-                )
-                    root.setAttribute(attr, choices[name]);
-            }
-        } catch {
-            // Blocked storage, or nothing saved yet
-        }
-        </script>
+        {/* The saved theme and overrides, before first paint */}
+        <script is:inline set:html={themeInitScript} />
         <style is:inline set:html={OVERRIDES_CSS} />
 
         <title>{pageTitle}</title>

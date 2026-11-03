@@ -300,7 +300,7 @@
     }
 
     /*
-     * A page-wide overlay that lib/top-layer.ts has made a popover, so it can
+     * A page-wide overlay that top-layer.ts has made a popover, so it can
      * draw over other popovers. Undoes the popover's default box (border,
      * padding, Canvas background, centring); each overlay's own enabled styles
      * outrank this and draw over the reset.
