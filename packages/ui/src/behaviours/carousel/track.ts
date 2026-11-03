@@ -4,7 +4,7 @@
  * slide derived from wherever it is. The controls only build on this.
  */
 
-import { motion } from "../../../lib/motion.ts";
+import { motion } from "../../lib/motion.ts";
 
 export interface Track {
     readonly count: number;
@@ -16,7 +16,11 @@ export interface Track {
     onChange(listener: (index: number) => void): void;
 }
 
-export const bindTrack = (track: HTMLElement): Track => {
+/**
+ * Binds the track. Everything it adds (listeners, observer, the slides'
+ * roles and `inert`, the track's tab stop) is undone when `signal` aborts.
+ */
+export const bindTrack = (track: HTMLElement, signal: AbortSignal): Track => {
     const slides = Array.from(track.children) as HTMLElement[];
     const count = slides.length;
 
@@ -27,6 +31,7 @@ export const bindTrack = (track: HTMLElement): Track => {
     });
 
     // Makes the track keyboard-scrollable (WCAG 2.1.1).
+    const tabindex = track.getAttribute("tabindex");
     track.tabIndex = 0;
 
     const rtl = getComputedStyle(track).direction === "rtl";
@@ -74,31 +79,53 @@ export const bindTrack = (track: HTMLElement): Track => {
     // Arrow keys, Home and End move a whole slide. Native key scrolling
     // nudges by a fixed amount and leaves mandatory snapping to sort it out,
     // which is unreliable at either end.
-    track.addEventListener("keydown", (event) => {
-        if (event.target !== track) return;
-        const to = {
-            [rtl ? "ArrowLeft" : "ArrowRight"]: current + 1,
-            [rtl ? "ArrowRight" : "ArrowLeft"]: current - 1,
-            Home: 0,
-            End: count - 1,
-        }[event.key];
-        if (to === undefined) return;
-        event.preventDefault();
-        goTo(to);
-    });
+    track.addEventListener(
+        "keydown",
+        (event) => {
+            if (event.target !== track) return;
+            const to = {
+                [rtl ? "ArrowLeft" : "ArrowRight"]: current + 1,
+                [rtl ? "ArrowRight" : "ArrowLeft"]: current - 1,
+                Home: 0,
+                End: count - 1,
+            }[event.key];
+            if (to === undefined) return;
+            event.preventDefault();
+            goTo(to);
+        },
+        { signal },
+    );
 
     const sync = () => {
         if (!scrolling) set(fromScroll());
     };
-    track.addEventListener("scroll", sync, { passive: true });
-    track.addEventListener("scrollend", () => {
-        scrolling = false;
-        sync();
-    });
+    track.addEventListener("scroll", sync, { passive: true, signal });
+    track.addEventListener(
+        "scrollend",
+        () => {
+            scrolling = false;
+            sync();
+        },
+        { signal },
+    );
     // Snapping keeps the slide aligned through a resize, but the step
     // changes, so re-read where the track is.
-    new ResizeObserver(sync).observe(track);
+    const resizes = new ResizeObserver(sync);
+    resizes.observe(track);
     update();
+
+    signal.addEventListener("abort", () => {
+        resizes.disconnect();
+        listeners.length = 0;
+        if (tabindex === null) track.removeAttribute("tabindex");
+        else track.setAttribute("tabindex", tabindex);
+        for (const slide of slides) {
+            slide.inert = false;
+            slide.removeAttribute("role");
+            slide.removeAttribute("aria-roledescription");
+            slide.removeAttribute("aria-label");
+        }
+    });
 
     return {
         count,

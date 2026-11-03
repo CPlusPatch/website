@@ -1,5 +1,5 @@
-import { reducedMotion } from "../../../lib/motion.ts";
-import { setPaused } from "../../ui/pause-button.ts";
+import { reducedMotion } from "../../lib/motion.ts";
+import { setPaused } from "../pause-button.ts";
 import type { Track } from "./track.ts";
 
 /**
@@ -16,16 +16,22 @@ export const bindAutoplay = (
         pause,
         timer,
         status,
+        signal,
     }: {
         pause: HTMLElement;
         /** Where the progress animation runs; see <CarouselPips>. */
         timer: HTMLElement;
         /** The live region announcing slide changes. */
         status: HTMLElement | null;
+        /** Aborted to stop rotating and undo what this set up. */
+        signal: AbortSignal;
     },
 ) => {
     if (track.count < 2) {
         pause.hidden = true;
+        signal.addEventListener("abort", () => {
+            pause.hidden = false;
+        });
         return;
     }
     root.style.setProperty("--carousel-interval", `${root.dataset.autoplay}s`);
@@ -40,8 +46,8 @@ export const bindAutoplay = (
     const takeOver = (event: Event) => {
         if (!pause.contains(event.target as Node)) stop();
     };
-    root.addEventListener("focusin", takeOver);
-    root.addEventListener("pointerdown", takeOver);
+    root.addEventListener("focusin", takeOver, { signal });
+    root.addEventListener("pointerdown", takeOver, { signal });
 
     // Hovering and a hidden tab only hold rotation, keeping the current
     // slide's progress for when it resumes.
@@ -50,28 +56,42 @@ export const bindAutoplay = (
         hovered = hover;
         root.toggleAttribute("data-held", hovered || document.hidden);
     };
-    root.addEventListener("pointerenter", (event) =>
-        hold(event.pointerType === "mouse"),
+    root.addEventListener(
+        "pointerenter",
+        (event) => hold(event.pointerType === "mouse"),
+        { signal },
     );
-    root.addEventListener("pointerleave", () => hold(false));
-    document.addEventListener("visibilitychange", () => hold());
+    root.addEventListener("pointerleave", () => hold(false), { signal });
+    document.addEventListener("visibilitychange", () => hold(), { signal });
     // Pressing play is a request to see it move, even with the mouse still
     // over the carousel.
-    pause.addEventListener("click", () => hold(false));
+    pause.addEventListener("click", () => hold(false), { signal });
 
     // The current pip's progress bar is the timer: it fills over the
     // interval and advances when full, so pausing or holding the bar
     // (both CSS) pauses the timer with it, and they never drift apart.
-    timer.addEventListener("animationend", () => {
-        if (!stopped()) track.goTo((track.current + 1) % track.count);
-    });
+    timer.addEventListener(
+        "animationend",
+        () => {
+            if (!stopped()) track.goTo((track.current + 1) % track.count);
+        },
+        { signal },
+    );
 
     // Announcing every rotation would talk over the rest of the page.
     const live = () =>
         status?.setAttribute("aria-live", stopped() ? "polite" : "off");
-    new MutationObserver(live).observe(root, {
+    const mutations = new MutationObserver(live);
+    mutations.observe(root, {
         attributes: true,
         attributeFilter: ["data-paused"],
     });
     live();
+
+    signal.addEventListener("abort", () => {
+        mutations.disconnect();
+        root.style.removeProperty("--carousel-interval");
+        root.removeAttribute("data-held");
+        status?.removeAttribute("aria-live");
+    });
 };

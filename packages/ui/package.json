@@ -8,6 +8,8 @@
     ],
     "exports": {
         ".": "./src/index.ts",
+        "./behaviours": "./src/behaviours/index.ts",
+        "./behaviours/*": "./src/behaviours/*",
         "./styles.css": "./src/styles.css",
         "./styles/*": "./src/styles/*",
         "./lib/*": "./src/lib/*",

@@ -1,4 +1,13 @@
-import { reducedMotion } from "../../lib/motion.ts";
+/**
+ * <PauseButton>: pause/play for moving content (WCAG 2.2.2).
+ *
+ * Root: `[data-pause-target]`, the button. Its value is a selector for the
+ * ancestor to pause. Clicking toggles `aria-pressed` on the button and
+ * `data-paused` on that ancestor, and the animated component styles its own
+ * paused state from that attribute.
+ */
+import { reducedMotion } from "../lib/motion.ts";
+import { behaviour } from "./behaviour.ts";
 
 /**
  * Presses a <PauseButton> or releases it, and pauses or resumes its target
@@ -12,6 +21,17 @@ export const setPaused = (button: HTMLElement, paused: boolean) => {
         ?.toggleAttribute("data-paused", paused);
 };
 
+const pauseButton = behaviour("[data-pause-target]", (button, signal) => {
+    button.addEventListener(
+        "click",
+        () => setPaused(button, button.getAttribute("aria-pressed") !== "true"),
+        { signal },
+    );
+});
+
+export const initPauseButton = pauseButton.init;
+export const initPauseButtons = pauseButton.initAll;
+
 /**
  * Calls `tick` every `interval` milliseconds while `root` is on screen and
  * not paused by its <PauseButton>, and marks it `data-running` meanwhile.
@@ -20,6 +40,9 @@ export const setPaused = (button: HTMLElement, paused: boolean) => {
  * button's hidden wrapper, and presses the button under reduced motion,
  * unless `pauseForReducedMotion` is false, for content that updates without
  * moving.
+ *
+ * Returns a function that stops all of that: the ticking, the observers and
+ * the markers, and hides `control` again.
  */
 export const playWhileVisible = (
     root: HTMLElement,
@@ -27,7 +50,7 @@ export const playWhileVisible = (
     interval: number,
     tick: () => void,
     { pauseForReducedMotion = true } = {},
-) => {
+): (() => void) => {
     let visible = false;
     let timer = 0;
     const play = () => {
@@ -53,11 +76,20 @@ export const playWhileVisible = (
         setPaused(button, true);
     }
 
-    new MutationObserver(play).observe(root, {
-        attributeFilter: ["data-paused"],
-    });
-    new IntersectionObserver(([entry]) => {
+    const mutations = new MutationObserver(play);
+    mutations.observe(root, { attributeFilter: ["data-paused"] });
+    const intersections = new IntersectionObserver(([entry]) => {
         visible = entry.isIntersecting;
         play();
-    }).observe(root);
+    });
+    intersections.observe(root);
+
+    return () => {
+        mutations.disconnect();
+        intersections.disconnect();
+        clearInterval(timer);
+        timer = 0;
+        root.removeAttribute("data-running");
+        if (control) control.hidden = true;
+    };
 };

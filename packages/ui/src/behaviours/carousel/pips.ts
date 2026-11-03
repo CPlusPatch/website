@@ -1,4 +1,4 @@
-import { motion } from "../../../lib/motion.ts";
+import { motion } from "../../lib/motion.ts";
 import type { Track } from "./track.ts";
 
 /**
@@ -6,7 +6,11 @@ import type { Track } from "./track.ts";
  * Built here rather than in the markup: the slide count is only known once
  * the slot has rendered, and without JS they would do nothing.
  */
-export const bindPips = (row: HTMLElement, track: Track) => {
+export const bindPips = (
+    row: HTMLElement,
+    track: Track,
+    signal: AbortSignal,
+) => {
     const template = row.querySelector<HTMLTemplateElement>(
         "template[data-carousel-pip]",
     );
@@ -15,7 +19,7 @@ export const bindPips = (row: HTMLElement, track: Track) => {
             true,
         ) as HTMLButtonElement;
         pip.ariaLabel = `Slide ${i + 1}`;
-        pip.addEventListener("click", () => track.goTo(i));
+        pip.addEventListener("click", () => track.goTo(i), { signal });
         row.append(pip);
         return pip;
     });
@@ -42,12 +46,19 @@ export const bindPips = (row: HTMLElement, track: Track) => {
         row.toggleAttribute("data-fade-start", at > 1);
         row.toggleAttribute("data-fade-end", at < max - 1);
     };
-    row.addEventListener("scroll", edges, { passive: true });
+    row.addEventListener("scroll", edges, { passive: true, signal });
 
-    new ResizeObserver(() => {
+    const resizes = new ResizeObserver(() => {
         reveal();
         edges();
-    }).observe(row);
+    });
+    resizes.observe(row);
+    signal.addEventListener("abort", () => {
+        resizes.disconnect();
+        for (const pip of pips) pip.remove();
+        row.removeAttribute("data-fade-start");
+        row.removeAttribute("data-fade-end");
+    });
 
     track.onChange((current) => {
         pips.forEach((pip, i) => {

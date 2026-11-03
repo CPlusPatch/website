@@ -1,0 +1,278 @@
+import { behaviour } from "./behaviour.ts";
+
+/**
+ * <InteractiveMessage>: plays a dialogue tree as a chat. The tree and the
+ * markup it clones come from the component, rendered on the server.
+ *
+ * Root: `[data-interactive-message]`. Parts inside it, by
+ * `data-dialogue-<part>`: `log` (the messages; what is in it at the start is
+ * the opening), `options` (the reader's buttons, hidden until script runs),
+ * `restart` (hidden once there are options) and `tree` (a JSON
+ * <script type="application/json"> holding a DialogueNode), plus
+ * `template[data-dialogue-template="group|message|typing|reply|option"]`,
+ * the latter four with a `[data-dialogue-text]` element for the text.
+ *
+ * Actions are looked up by name in the registry (see defineDialogueActions),
+ * or in the `actions` option, which takes their place for that dialogue.
+ */
+
+/** What the other side says, and the reader's ways to answer. */
+export interface DialogueNode {
+    /** One or more messages, sent one after another. */
+    messages: string[];
+    /** The reader's replies. With none, the conversation ends here. */
+    options?: DialogueOption[];
+    /** An action to run once the messages are sent (see defineDialogueActions). */
+    action?: string;
+}
+
+export interface DialogueOption {
+    /** Shown on the option's button. */
+    label: string;
+    /** What the reader sends, when it says more than the label. */
+    reply?: string;
+    /** The other side's answer. Without one, the conversation ends on the reply. */
+    next?: DialogueNode;
+    /** An action to run once the reply is sent (see defineDialogueActions). */
+    action?: string;
+}
+
+/**
+ * Browser code a dialogue tree can run by name, such as an easter egg that
+ * reaches the whole page. Trees are written on the server and arrive as
+ * JSON, which can't carry functions, so they name an action and a page
+ * script defines it.
+ *
+ * The conversation waits for an async action before going on. An action may
+ * return (or resolve to) a function that undoes it, which runs when the
+ * reader starts over; anything else it returns is ignored.
+ */
+export type DialogueAction = (context: {
+    /** The <InteractiveMessage> that ran it. */
+    root: HTMLElement;
+}) => unknown;
+
+type Undo = () => void;
+
+const registry = new Map<string, DialogueAction>();
+
+/**
+ * Defines actions for every dialogue on the page, from a page <script>:
+ *
+ *     defineDialogueActions({ confetti: () => { ... } });
+ *
+ * Names are shared by all of them. Defining one again replaces it.
+ */
+export const defineDialogueActions = (
+    defined: Record<string, DialogueAction>,
+) => {
+    for (const [name, action] of Object.entries(defined)) {
+        registry.set(name, action);
+    }
+};
+
+/** Resolves after `ms`, or at once if the dialogue is torn down meanwhile. */
+const sleep = (ms: number, signal: AbortSignal) =>
+    new Promise<void>((done) => {
+        const timer = setTimeout(done, ms);
+        signal.addEventListener(
+            "abort",
+            () => {
+                clearTimeout(timer);
+                done();
+            },
+            { once: true },
+        );
+    });
+
+/** A beat before the other side starts typing. */
+const PAUSE = 400;
+
+/** How long a message takes to "type": longer for longer ones, within reason. */
+const typingTime = (text: string) => Math.min(1800, 500 + text.length * 20);
+
+export interface InteractiveMessageOptions {
+    /** Actions to run by name instead of the ones defineDialogueActions made. */
+    actions?: Record<string, DialogueAction>;
+}
+
+/**
+ * Plays an <InteractiveMessage>'s dialogue tree. The markup comes from the
+ * component's templates, which are real Messages and Buttons rendered on the
+ * server, so the script only clones them and fills in text.
+ *
+ * Cleanup stops the conversation where it is (a reply in flight is dropped),
+ * undoes the actions it ran, and puts the log back to the server's opening.
+ */
+const interactiveMessage = behaviour<HTMLElement, InteractiveMessageOptions>(
+    "[data-interactive-message]",
+    (root, signal, { actions } = {}) => {
+        const part = (name: string) =>
+            root.querySelector<HTMLElement>(`[data-dialogue-${name}]`);
+        const log = part("log");
+        const options = part("options");
+        const restart = part("restart");
+        const data = part("tree");
+        if (!log || !options || !restart || !data?.textContent) return;
+        const actionFor = (name: string) =>
+            actions ? actions[name] : registry.get(name);
+        const wasRestartHidden = restart.hidden;
+
+        const tree: DialogueNode = JSON.parse(data.textContent);
+        const clone = (name: string) => {
+            const template = root.querySelector<HTMLTemplateElement>(
+                `template[data-dialogue-template="${name}"]`,
+            );
+            return template?.content.firstElementChild?.cloneNode(
+                true,
+            ) as HTMLElement;
+        };
+        /** A template with its text filled in. Text only, never markup. */
+        const say = (name: string, text: string) => {
+            const element = clone(name);
+            const slot = element.querySelector("[data-dialogue-text]");
+            if (slot) slot.textContent = text;
+            return element;
+        };
+        // Keeps the latest message in view. A no-op unless something caps the
+        // log's height; smooth, unless motion is reduced, by its CSS.
+        const follow = () => {
+            log.scrollTop = log.scrollHeight;
+        };
+        const add = (parent: HTMLElement, child: HTMLElement) => {
+            child.dataset.new = "";
+            parent.append(child);
+            follow();
+        };
+
+        // The server rendered the opening; a restart rewinds to it. Restarting
+        // is only offered once a branch has ended, so never mid-reply.
+        const opening = log.childElementCount;
+
+        // What the actions run so far left to undo, for a restart.
+        const undos: Undo[] = [];
+        /** Runs a named action. One that fails or is missing is skipped. */
+        const run = async (name: string | undefined) => {
+            if (!name) return;
+            const action = actionFor(name);
+            if (!action) {
+                console.warn(`No dialogue action named "${name}".`);
+                return;
+            }
+            try {
+                const undo = await action({ root });
+                if (typeof undo !== "function") return;
+                // Torn down while it ran: undo it now, as nothing else will
+                if (signal.aborted) (undo as Undo)();
+                else undos.push(undo as Undo);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        const pick = async (option: DialogueOption) => {
+            // Keep focus in the component while the options are away. The next
+            // ones are laid out already, hidden, so the row is the height it
+            // will be (see the CSS) rather than the height of the ones just
+            // used, which left a gap, or a jolt, while the other side typed.
+            const focused = root.contains(document.activeElement);
+            options.dataset.waiting = "";
+            if (focused) options.focus();
+            options.replaceChildren(...buttonsFor(option.next?.options ?? []));
+
+            const mine = clone("group");
+            add(log, mine);
+            add(mine, say("reply", option.reply ?? option.label));
+            await run(option.action);
+            if (signal.aborted) return;
+
+            const next = option.next;
+            if (next) {
+                await sleep(PAUSE, signal);
+                if (signal.aborted) return;
+                const theirs = clone("group");
+                add(log, theirs);
+                for (const text of next.messages) {
+                    const typing = clone("typing");
+                    add(theirs, typing);
+                    await sleep(typingTime(text), signal);
+                    if (signal.aborted) return;
+                    const message = say("message", text);
+                    message.dataset.new = "";
+                    typing.replaceWith(message);
+                    follow();
+                }
+                await run(next.action);
+                if (signal.aborted) return;
+            }
+            offer(next?.options ?? [], focused);
+        };
+
+        /** Last first, as each undoes what came before it. */
+        const rewind = () => {
+            for (const undo of undos.splice(0).reverse()) undo();
+            while (log.childElementCount > opening)
+                log.lastElementChild?.remove();
+        };
+
+        restart.addEventListener(
+            "click",
+            () => {
+                rewind();
+                offer(tree.options ?? [], true);
+            },
+            { signal },
+        );
+
+        const buttonsFor = (choices: DialogueOption[]) =>
+            choices.map((option) => {
+                const button = say("option", option.label);
+                button.addEventListener("click", () => pick(option), {
+                    signal,
+                });
+                return button;
+            });
+
+        /** Fills in the reader's options; their buttons animate in by CSS. */
+        const render = (choices: DialogueOption[]) => {
+            const buttons = buttonsFor(choices);
+            options.replaceChildren(...buttons);
+            delete options.dataset.waiting;
+            return buttons;
+        };
+
+        /** After a turn: the next options, or a way to start over once there are none. */
+        const offer = (choices: DialogueOption[], focus: boolean) => {
+            const buttons = render(choices);
+            restart.hidden = buttons.length > 0;
+            if (focus) (buttons[0] ?? restart).focus({ preventScroll: true });
+            // A new row of options can change the log's height.
+            follow();
+            options.scrollIntoView({ block: "nearest" });
+        };
+
+        // A capped log will scroll, so its scrollbar's room is kept from the
+        // start, rather than squeezing the conversation when it first appears.
+        // (A set height reads back in pixels whether capped or not, so only the
+        // documented max-block-size counts.)
+        root.toggleAttribute(
+            "data-capped",
+            getComputedStyle(root).maxBlockSize !== "none",
+        );
+
+        options.hidden = false;
+        render(tree.options ?? []);
+
+        return () => {
+            rewind();
+            root.removeAttribute("data-capped");
+            options.replaceChildren();
+            delete options.dataset.waiting;
+            options.hidden = true;
+            restart.hidden = wasRestartHidden;
+        };
+    },
+);
+
+export const initInteractiveMessage = interactiveMessage.init;
+export const initInteractiveMessages = interactiveMessage.initAll;
