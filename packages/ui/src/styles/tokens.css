@@ -12,8 +12,8 @@
         color-scheme: light dark;
 
         /* Typography */
-        --font-base: var(--font-inter);
-        --font-mono: var(--font-jetbrains-mono);
+        --font-base: var(--font-inter, system-ui, sans-serif);
+        --font-mono: var(--font-jetbrains-mono, ui-monospace, monospace);
         --font-size-base: 0.9375rem;
         --font-size-sm: 0.8125rem;
         --font-size-xs: 0.75rem;

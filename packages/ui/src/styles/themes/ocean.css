@@ -63,8 +63,8 @@
          * rendered by the layout without preload, so the files only download
          * while this theme is on.
          */
-        --font-base: var(--font-nunito);
-        --font-mono: var(--font-fira-code);
+        --font-base: var(--font-nunito, system-ui, sans-serif);
+        --font-mono: var(--font-fira-code, ui-monospace, monospace);
 
         /* This selector outranks tokens.css's :root, so repeat its motion opt-out. */
         @media (prefers-reduced-motion: reduce) {
