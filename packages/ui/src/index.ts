@@ -21,6 +21,7 @@ export * from "./components/toggle.ts";
 export * from "./icons.ts";
 export * from "./lib/classes.ts";
 export * from "./lib/display.ts";
+export * from "./lib/image.ts";
 export * from "./lib/media.ts";
 export * from "./lib/motion.ts";
 export * from "./lib/progress.ts";
