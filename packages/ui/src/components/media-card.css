@@ -7,6 +7,8 @@
      */
     .media-card.card {
         align-items: stretch;
+        /* Header, body and links butt together; the body spaces its own content. */
+        gap: 0;
         padding: 0;
         /* Clip the header image to the card's corners when --radius is set. */
         overflow: hidden;
@@ -22,14 +24,19 @@
 
         /* Set like Card's own content: small text, a hair under the title. */
         .media-card__body {
-            padding: var(--space-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            padding: var(--space-md-lg);
 
-            h3 {
-                margin-bottom: var(--space-xs);
+            h3,
+            p {
+                margin: 0;
             }
 
             p {
-                font: var(--type-body-sm);
+                font: var(--type-body);
+                line-height: var(--leading-normal);
                 color: var(--color-text-muted);
             }
         }
@@ -39,7 +46,7 @@
             flex-wrap: wrap;
             gap: var(--space-xs);
             margin: auto 0 0;
-            padding: var(--space-sm) var(--space-md);
+            padding: var(--space-sm) var(--space-md-lg);
             list-style: none;
             border-top: var(--border-width) solid var(--border-color);
 
