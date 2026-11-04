@@ -4,6 +4,8 @@
  Adapted from the TailwindCSS Preflight base styles, with Tailwind's
  `--theme()` calls replaced by their fallback values.
  Original source: https://github.com/tailwindlabs/tailwindcss/blob/main/packages/tailwindcss/preflight.css
+
+ The original is MIT licensed, Copyright (c) Tailwind Labs, Inc.
 */
 
 @layer ui.preflight {

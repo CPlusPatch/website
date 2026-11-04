@@ -6,6 +6,7 @@ Source code for my website, and the components it's built from.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CPlusPatch/website/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/CPlusPatch/website/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-98194b?style=flat-square)](LICENSE)
+[![UI library: LGPL v3](https://img.shields.io/badge/ui%20library-LGPL%20v3-98194b?style=flat-square)](packages/ui/COPYING.LESSER)
 [![Astro](https://img.shields.io/badge/Astro-7-bc52ee?style=flat-square&logo=astro&logoColor=white)](https://astro.build)
 [![Deno](https://img.shields.io/badge/Deno-2-000000?style=flat-square&logo=deno&logoColor=white)](https://deno.com)
 
@@ -64,8 +65,9 @@ website/
 │   ├── gallery/        the gallery and its stories
 │   └── styles/         imports the library's CSS
 ├── packages/
-│   ├── ui/             tokens, themes, CSS, behaviours, class builders, and
-│   │                   the Astro components (src/astro: ui/, blocks/, sections/)
+│   ├── ui/             @cpluspatch/ui: tokens, themes, CSS, behaviours, class builders,
+│   │                   and the Astro components (src/astro: ui/, blocks/, sections/).
+│   │                   See its README
 │   ├── palette/        theme colour generator
 │   ├── destructor/     the gravity gun
 │   ├── reel/           downloads videos for <Shorts>
@@ -77,6 +79,7 @@ website/
 
 ## Docs
 
+- [The UI library](packages/ui/README.md)
 - [Development workflow](docs/workflow.md)
 - [Design philosophy](docs/philosophy.md)
 - [Adding a component](docs/components.md)
@@ -84,4 +87,6 @@ website/
 
 ## License
 
-Licensed under the [GNU AGPL v3](LICENSE).
+The site is licensed under the [GNU AGPL v3](LICENSE).
+
+The component library in [`packages/ui`](packages/ui) (`@cpluspatch/ui`) is licensed under the [GNU LGPL v3](packages/ui/COPYING.LESSER) (with [the GPL it builds on](packages/ui/COPYING)), so you can use it in a site under any license. It is not published to a registry yet.
