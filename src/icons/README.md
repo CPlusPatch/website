@@ -12,6 +12,7 @@ Draw one-colour logos in black to get that, and brand colours to keep them.
 | -------- | ----------------------------- | -------------------------- |
 | `nixos`  | NixOS snowflake, in colour    | NixOS artwork, CC BY 4.0   |
 | `matrix` | Matrix [m] mark, text colour  | Simple Icons 13.21.0, CC0  |
+| `signal` | Signal mark, text colour      | Simple Icons 13.21.0, CC0  |
 | `jquery` | jQuery mark, in jQuery blue   | Simple Icons 13.21.0, CC0  |
 
 This directory must exist even when it holds no icons. astro-icon adds it to

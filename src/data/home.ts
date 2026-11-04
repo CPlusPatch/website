@@ -364,7 +364,7 @@ export const socials: {
     {
         name: "Signal",
         href: "https://signal.me/#eu/29gu1hAuAfCAifqIvTWNB2u4hmlVvk9VnCEP15r25Hix_8nBBEBEx7OHuTsuemPX",
-        icon: "logos:signal",
+        icon: "signal",
         handle: "@cpluspatch.95",
         copy: "cpluspatch.95",
     },

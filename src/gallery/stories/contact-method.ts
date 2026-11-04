@@ -51,7 +51,7 @@ export const contactMethod: StoryGroup[] = [
             story("tone-success", ContactMethod, {
                 name: "Signal",
                 href: "https://signal.me/#eu/example",
-                icon: "logos:signal",
+                icon: "signal",
                 handle: "@example.95",
                 copy: "example.95",
                 tone: "success",
