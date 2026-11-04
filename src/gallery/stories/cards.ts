@@ -26,12 +26,13 @@ export const cards: StoryGroup[] = [
         source: "packages/ui/src/astro/ui/card.astro",
         min: 16,
         stories: [
+            story("default", Card, {}, { slot: `<h3>Default</h3>${BODY}` }),
             ...TONES.map((tone) =>
                 story(
-                    tone,
+                    `rule-${tone}`,
                     Card,
-                    { tone },
-                    { slot: `<h3>${title(tone)}</h3>${BODY}` },
+                    { tone, rule: true },
+                    { slot: `<h3>${title(tone)} rule</h3>${BODY}` },
                 ),
             ),
             story(
@@ -40,6 +41,29 @@ export const cards: StoryGroup[] = [
                 { lift: false },
                 {
                     slot: "<h3>No lift</h3><p>Hover does nothing on this one.</p>",
+                },
+            ),
+            story(
+                "with-link",
+                Card,
+                {},
+                {
+                    slot: `<h3>With a link</h3>${BODY}<a href="https://example.com">Read more</a>`,
+                },
+            ),
+            story(
+                "short",
+                Card,
+                {},
+                { slot: "<h3>Short</h3><p>One line.</p>" },
+            ),
+            story("title-only", Card, {}, { slot: "<h3>Just a title</h3>" }),
+            story(
+                "long",
+                Card,
+                { rule: true },
+                {
+                    slot: `<h3>A considerably longer title that has to wrap onto a second line</h3>${BODY}<p>A second paragraph, to check the rhythm between paragraphs: Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.</p><a href="https://example.com">Continue reading the whole thing</a>`,
                 },
             ),
         ],

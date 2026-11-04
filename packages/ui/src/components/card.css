@@ -2,28 +2,46 @@
 
 @layer ui.components {
     /*
-     * Surface, border, top rule and hover lift all come from .panel / .lift in
-     * utilities.css. Tone colours come from .tone-* there too. This file only owns content layout.
+     * Surface, border and hover lift come from .panel / .lift in utilities.css,
+     * tone colours from .tone-*. The panel's coloured top rule is opt-in here
+     * (.card--rule); without it the top edge is an ordinary border. This file
+     * owns content layout and type.
      */
     .card {
         display: flex;
         flex-direction: column;
         align-items: start;
-        padding: var(--space-md);
+        gap: var(--space-sm);
+        padding: var(--space-md-lg);
         width: 100%;
 
-        /* Slotted, so the roles come by token. A compact panel: small text, a hair under its heading. */
-        & h3 {
-            margin-bottom: var(--space-xs);
+        &:not(.card--rule) {
+            border-top: var(--border-width) solid var(--border-color);
+
+            &.lift:hover {
+                border-color: var(--shadow-color);
+            }
+        }
+
+        /* Slotted, so the roles come by token. Spacing is the card's gap, not margins. */
+        & :is(h3, p) {
+            margin: 0;
         }
 
         & p {
-            font: var(--type-body-sm);
+            font: var(--type-body);
+            line-height: var(--leading-normal);
             color: var(--color-text-muted);
         }
 
-        & a {
-            align-self: flex-start;
+        /* The rule is 2px against the border's 1px; give the difference back so content lines up. */
+        &.card--rule {
+            padding-top: calc(var(--space-md-lg) - (2px - var(--border-width)));
+        }
+
+        /* A link after the prose. Scoped so a card whose content is itself a link (contact method) is untouched. */
+        & > :is(h3, p) ~ a {
+            margin-top: var(--space-xs);
             font: var(--type-ui);
         }
     }

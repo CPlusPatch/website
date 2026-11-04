@@ -10,18 +10,21 @@ interface Props extends HTMLAttributes<"div"> {
      * itself only shows while it is enabled site-wide.
      */
     lift?: boolean;
+    /** Draw the tone's accent as a rule along the top edge. */
+    rule?: boolean;
 }
 
 const {
     tone = "primary",
     lift = true,
+    rule = false,
     class: className,
     ...rest
 } = Astro.props;
 ---
 
 <div
-    class:list={cardClasses({ tone, lift, class: className })}
+    class:list={cardClasses({ tone, lift, rule, class: className })}
     data-snap
     {...rest}
 >

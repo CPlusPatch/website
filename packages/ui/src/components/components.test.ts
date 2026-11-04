@@ -69,6 +69,13 @@ Deno.test("badge, card, progress and toggle classes", () => {
         "panel",
         "tone-secondary",
     ]);
+    assertEquals(cardClasses({ rule: true }), [
+        "card",
+        "panel",
+        "lift",
+        "card--rule",
+        "tone-primary",
+    ]);
     assertEquals(progressClasses(), ["progress"]);
     assertEquals(progressClasses({ tone: "success" }), [
         "progress",

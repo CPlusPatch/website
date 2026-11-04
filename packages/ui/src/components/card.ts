@@ -5,6 +5,8 @@ export interface CardOptions {
     tone?: Tone;
     /** Rises on hover. */
     lift?: boolean;
+    /** A coloured rule along the top edge, in the tone's accent. Off by default. */
+    rule?: boolean;
     class?: ClassValue;
 }
 
@@ -12,6 +14,14 @@ export interface CardOptions {
 export const cardClasses = ({
     tone = "primary",
     lift = true,
+    rule = false,
     class: className,
 }: CardOptions = {}): string[] =>
-    cx("card", "panel", lift && "lift", `tone-${tone}`, className);
+    cx(
+        "card",
+        "panel",
+        lift && "lift",
+        rule && "card--rule",
+        `tone-${tone}`,
+        className,
+    );
