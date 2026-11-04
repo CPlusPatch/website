@@ -6,7 +6,7 @@ A few ideas that most decisions in this codebase come back to.
 
 Less code means less to break and less to read. Before adding a dependency, an abstraction or an option, check whether a few lines would do the job, and remove things once nothing uses them.
 
-Where the browser already does something, use that. The accordion is a `<details>` element, the dropdown is a native popover, and layouts are plain CSS. There's no UI framework running in the browser: Astro renders everything to static HTML at build time.
+Where the browser already does something, use that. The accordion is a `<details>` element, the dropdown is a native popover, and layouts are plain CSS. There's no UI framework running in the browser: Astro renders everything to static HTML at build time. The CSS and behaviours don't depend on Astro either; the `.astro` files in `packages/ui/src/astro/` are thin markup over them, so the same components can be written for other frameworks.
 
 ## Small, separate pieces
 

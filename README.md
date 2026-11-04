@@ -57,16 +57,15 @@ deno run radio src/data/radio-tracks.txt  # music for <Radio>, from YouTube Musi
 ```
 website/
 ├── src/
-│   ├── components/
-│   │   ├── ui/         buttons, inputs, badges, etc.
-│   │   ├── blocks/     larger components (messages, carousel, ...)
-│   │   ├── sections/   navbar, footer, sidebar
+│   ├── components/     what belongs to this site (the front page's sections, the radio, ...)
 │   │   ├── page/       the front page's sections
+│   │   ├── blocks/     site-specific blocks (radio, shorts, terminal, ...)
 │   │   └── effects/    page-wide effects like the scanlines
 │   ├── gallery/        the gallery and its stories
 │   └── styles/         imports the library's CSS
 ├── packages/
-│   ├── ui/             tokens, themes, CSS, behaviours and class builders
+│   ├── ui/             tokens, themes, CSS, behaviours, class builders, and
+│   │                   the Astro components (src/astro: ui/, blocks/, sections/)
 │   ├── palette/        theme colour generator
 │   ├── destructor/     the gravity gun
 │   ├── reel/           downloads videos for <Shorts>
