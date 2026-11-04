@@ -41,19 +41,23 @@ const external = /^https?:/.test(href);
             referrerpolicy: "no-referrer",
         }}
     >
-        <Icon name={icon} class="contact-method__icon" aria-hidden="true" />
-        <h3 class="contact-method__name">{name}</h3>
-        {handle && (
-            <span class="contact-method__handle">
-                {/* May break after a : or /, or before an @, rather than anywhere. */}
-                {handle.split(/(?<=[:/])|(?<=.)(?=@)/).map((part) => (
-                    <Fragment>
-                        {part}
-                        <wbr>
-                    </Fragment>
-                ))}
-            </span>
-        )}
+        <span class="contact-method__tile">
+            <Icon name={icon} class="contact-method__icon" aria-hidden="true" />
+        </span>
+        <span class="contact-method__text">
+            <h3 class="contact-method__name">{name}</h3>
+            {handle && (
+                <span class="contact-method__handle">
+                    {/* May break after a . : or /, or before an @, rather than anywhere. */}
+                    {handle.split(/(?<=[.:/])|(?<=.)(?=@)/).map((part) => (
+                        <Fragment>
+                            {part}
+                            <wbr>
+                        </Fragment>
+                    ))}
+                </span>
+            )}
+        </span>
         {external && <span class="visually-hidden">(opens in new tab)</span>}
     </a>
     {copy && (
@@ -99,18 +103,22 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(
 <style>
 /*
  * Surface, border, tone and lift come from <Card>. This file lays out the
- * icon, name and handle, and stretches the link over the whole card.
+ * icon tile, name and handle, and stretches the link over the whole card.
+ * Compact on purpose: --space-md padding rather than Card's roomier default.
+ * The card is its own container: stacked when narrow (four across), a row
+ * once there is room (phone, two across).
  */
 .contact-method.card {
     position: relative;
     padding: 0;
+    container: contact-method / inline-size;
 
     .contact-method__link {
-        /* Icon beside the name and handle, which stack in the second column. */
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        column-gap: var(--space-sm);
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: var(--space-sm);
         align-items: center;
+        justify-items: start;
         inline-size: 100%;
         padding: var(--space-md);
         color: inherit;
@@ -141,42 +149,94 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(
         }
     }
 
-    .contact-method__icon {
-        inline-size: 1.75rem;
-        block-size: 1.75rem;
-        grid-row: 1 / span 2;
+    /* The icon sits in a tile tinted with the tone. */
+    .contact-method__tile {
+        display: grid;
+        place-items: center;
+        inline-size: 2.75rem;
+        block-size: 2.75rem;
         color: var(--tone);
+        background-color: color-mix(in oklab, var(--tone) 14%, transparent);
+        border: var(--border-width) solid
+            color-mix(in oklab, var(--tone) 35%, transparent);
+        border-radius: var(--radius);
+    }
+
+    .contact-method__icon {
+        inline-size: 1.5rem;
+        block-size: 1.5rem;
+    }
+
+    .contact-method__text {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        min-inline-size: 0;
     }
 
     .contact-method__name {
-        grid-column: 2;
         margin: 0;
-        transition: color var(--transition);
-    }
-
-    &:hover .contact-method__name,
-    &:has(.contact-method__link:focus-visible) .contact-method__name {
-        color: var(--tone);
     }
 
     .contact-method__handle {
-        grid-column: 2;
         font: var(--type-body-sm);
-        color: var(--color-text-muted);
+        font-family: var(--font-mono);
+        /* Muted, but nearer the text colour: on the card's raised surface the
+           plain muted colour falls under 4.5:1 in several dark themes. */
+        color: color-mix(
+            in oklab,
+            var(--color-text) 60%,
+            var(--color-text-muted)
+        );
         overflow-wrap: anywhere;
     }
 
-    /* Centred on the card's end edge, with room kept for it beside the text. */
-    &:has(.contact-method__copy:not([hidden])) .contact-method__link {
-        padding-inline-end: calc(var(--space-md) + 2.5rem);
-    }
-
+    /* Top-right when stacked, centred on the tile and in line with the
+       content's end edge. An invisible hit area reaches the touch minimum
+       without crowding the card. */
     :global(.contact-method__copy) {
         position: absolute;
-        inset-block: 0;
-        inset-inline-end: var(--space-sm);
-        margin-block: auto;
+        inset-block-start: calc(
+            var(--space-md) +
+            var(--border-width) +
+            (2.75rem - var(--control-height-sm)) /
+            2
+        );
+        inset-inline-end: var(--space-md);
         z-index: 1;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: calc(var(--space-sm) * -1);
+        }
+    }
+
+    /* Room for it beside the text once the card is a row. */
+    @container contact-method (min-width: 18rem) {
+        .contact-method__link {
+            grid-template-columns: auto minmax(0, 1fr);
+            column-gap: var(--space-md);
+            align-items: start;
+        }
+
+        /* Keeps a one- or two-line text block centred on the tile. */
+        .contact-method__text {
+            justify-content: center;
+            min-block-size: 2.75rem;
+        }
+
+        &:has(.contact-method__copy:not([hidden])) .contact-method__link {
+            padding-inline-end: calc(
+                var(--space-md) *
+                2 +
+                var(--control-height-sm)
+            );
+        }
+
+        :global(.contact-method__copy) {
+            inset-inline-end: var(--space-sm);
+        }
     }
 }
 </style>

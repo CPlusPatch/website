@@ -21,11 +21,15 @@ import ContactMethod from "../blocks/contact-method.astro";
     color: var(--color-text-muted);
 }
 
-/* Two by two, then all four across. */
+/* One column, then two by two, then all four across. */
 .methods__grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-md);
+
+    @container (min-width: 36rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
     @container (min-width: 52rem) {
         grid-template-columns: repeat(4, minmax(0, 1fr));
