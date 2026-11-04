@@ -20,6 +20,7 @@ export * from "./components/status.ts";
 export * from "./components/toggle.ts";
 export * from "./icons.ts";
 export * from "./lib/classes.ts";
+export * from "./lib/code-theme.ts";
 export * from "./lib/display.ts";
 export * from "./lib/image.ts";
 export * from "./lib/media.ts";
