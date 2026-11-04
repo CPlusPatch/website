@@ -1,8 +1,9 @@
 ---
 /**
- * An interactive terminal widget
+ * The site's terminal: the library's, with this site's prompt and commands.
  */
 
+import Terminal from "@cpluspatch/ui/astro/blocks/terminal.astro";
 import { type Entry, promptFor } from "./terminal.ts";
 
 interface Props {
@@ -11,48 +12,9 @@ interface Props {
     interactive?: boolean;
 }
 const { entries = [], cwd = "~", interactive = false } = Astro.props;
-const prompt = promptFor(cwd);
 ---
 
-<div
-    class="terminal panel"
-    role="log"
-    aria-label="Terminal"
-    data-terminal={interactive ? "" : undefined}
-    style={`--prompt: ${JSON.stringify(prompt)}`}
->
-    {entries.map(({ command, output }) => (
-        <div class="terminal__pair">
-            <div class="terminal__command">{command}</div>
-            <div class="terminal__output">{output}</div>
-        </div>
-    ))}
-    {interactive ? (
-        <>
-            {/* Row blueprint: markup inside carries Astro's scope attribute, so scoped CSS applies to clones */}
-            <template>
-                <div class="terminal__pair">
-                    <div class="terminal__command"></div>
-                    <div class="terminal__output"></div>
-                </div>
-            </template>
-            <div class="terminal__input">
-                <span class="terminal__prompt">{prompt}</span>
-                <input
-                    type="text"
-                    class="terminal__input-field"
-                    aria-label="Terminal command"
-                    autocomplete="off"
-                    spellcheck="false"
-                />
-            </div>
-        </>
-    ) : (
-        <div class="terminal__input">
-            <span class="terminal__prompt">{prompt}</span>
-        </div>
-    )}
-</div>
+<Terminal {entries} prompt={promptFor(cwd)} {interactive} />
 
 <script>
 import { initTerminals } from "@cpluspatch/ui/behaviours/terminal.ts";

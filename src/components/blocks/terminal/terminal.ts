@@ -2,11 +2,11 @@ import {
     CLEAR,
     type TerminalResult,
 } from "@cpluspatch/ui/behaviours/terminal.ts";
+import { playVideo } from "@cpluspatch/ui/behaviours/terminal-video.ts";
 import { currentTheme, setTheme } from "@cpluspatch/ui/lib/display.ts";
 import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 import badApple from "../../../data/bad-apple/video.webm?url";
 import { shake, uwuify } from "../../../lib/page-effects.ts";
-import { playVideo } from "./video.ts";
 
 export interface Entry {
     command: string;

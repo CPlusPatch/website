@@ -59,7 +59,7 @@ website/
 ├── src/
 │   ├── components/     what belongs to this site (the front page's sections, the radio, ...)
 │   │   ├── page/       the front page's sections
-│   │   ├── blocks/     site-specific blocks (radio, shorts, terminal, ...)
+│   │   ├── blocks/     site-specific blocks (radio, shorts, the terminal's commands, ...)
 │   │   └── effects/    page-wide effects like the scanlines
 │   ├── gallery/        the gallery and its stories
 │   └── styles/         imports the library's CSS

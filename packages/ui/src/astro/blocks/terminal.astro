@@ -1,0 +1,62 @@
+---
+/**
+ * A terminal: finished commands with their output, and a prompt line.
+ *
+ * With `interactive`, the prompt takes input, but what the commands are is
+ * the page's business, so the component ships no script: the page binds it
+ * with `initTerminals(document, { run })` from
+ * `@cpluspatch/ui/behaviours/terminal.ts`. Without that it stays a
+ * read-only log. `playVideo` in `behaviours/terminal-video.ts` is a ready
+ * made program for `run` to return.
+ */
+
+interface Props {
+    /** Commands already run, shown above the prompt (and seeding the history). */
+    entries?: { command: string; output: string }[];
+    /** What stands before the cursor, such as `user@host:~$ `. */
+    prompt?: string;
+    /** Whether the prompt takes input. */
+    interactive?: boolean;
+}
+const { entries = [], prompt = "$ ", interactive = false } = Astro.props;
+---
+
+<div
+    class="terminal panel"
+    role="log"
+    aria-label="Terminal"
+    data-terminal={interactive ? "" : undefined}
+    style={`--prompt: ${JSON.stringify(prompt)}`}
+>
+    {entries.map(({ command, output }) => (
+        <div class="terminal__pair">
+            <div class="terminal__command">{command}</div>
+            <div class="terminal__output">{output}</div>
+        </div>
+    ))}
+    {interactive ? (
+        <>
+            {/* Row blueprint, cloned for every command that is run */}
+            <template>
+                <div class="terminal__pair">
+                    <div class="terminal__command"></div>
+                    <div class="terminal__output"></div>
+                </div>
+            </template>
+            <div class="terminal__input">
+                <span class="terminal__prompt">{prompt}</span>
+                <input
+                    type="text"
+                    class="terminal__input-field"
+                    aria-label="Terminal command"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+            </div>
+        </>
+    ) : (
+        <div class="terminal__input">
+            <span class="terminal__prompt">{prompt}</span>
+        </div>
+    )}
+</div>
