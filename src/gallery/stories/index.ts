@@ -24,6 +24,7 @@ import { logos } from "./logos.ts";
 import { masonry } from "./masonry.ts";
 import { mediaPlayer } from "./media-player.ts";
 import { messages } from "./messages.ts";
+import { postStories } from "./posts.ts";
 import { progress } from "./progress.ts";
 import { quotes } from "./quotes.ts";
 import { radio } from "./radio.ts";
@@ -58,6 +59,7 @@ export const groups: StoryGroup[] = [
     ...accordion,
     ...code,
     ...messages,
+    ...postStories,
     ...logos,
     ...badges88x31,
     ...carousel,
