@@ -8,6 +8,7 @@ import { cardClasses } from "./card.ts";
 import { autoplaySeconds } from "./carousel.ts";
 import { cornerWindowClasses } from "./corner-window.ts";
 import { dropdownClasses, dropdownPanelClasses } from "./dropdown.ts";
+import { formatCount, postActionClasses, postClasses } from "./post.ts";
 import { progressClasses } from "./progress.ts";
 import { segmentedClasses } from "./segmented-control.ts";
 import { statusClasses, statusLightClasses } from "./status.ts";
@@ -168,4 +169,35 @@ Deno.test("autoplay is off, the default, or a number of seconds", () => {
     assertEquals(autoplaySeconds(0), undefined);
     assertEquals(autoplaySeconds(true), 6);
     assertEquals(autoplaySeconds(10), 10);
+});
+
+Deno.test("post classes", () => {
+    assertEquals(postClasses(), ["post", "post--feed"]);
+    assertEquals(
+        postClasses({ variant: "boxed", featured: true, context: true }),
+        ["post", "post--boxed", "post--featured", "post--context"],
+    );
+});
+
+Deno.test("post action is pressed or filled only when asked", () => {
+    assertEquals(postActionClasses(), ["post-action"]);
+    assertEquals(postActionClasses({ pressed: true, filled: true }), [
+        "post-action",
+        "post-action--pressed",
+        "post-action--filled",
+    ]);
+    assertEquals(postActionClasses({ end: true }), [
+        "post-action",
+        "post-action--end",
+    ]);
+});
+
+Deno.test("counts are compact beside an action, whole in the stats row, and absent at zero", () => {
+    assertEquals(formatCount(0), "");
+    assertEquals(formatCount(undefined), "");
+    assertEquals(formatCount(Number.NaN), "");
+    assertEquals(formatCount(48), "48");
+    assertEquals(formatCount(1204), "1.2K");
+    assertEquals(formatCount(38900), "38.9K");
+    assertEquals(formatCount(1204, { compact: false }), "1,204");
 });

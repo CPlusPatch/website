@@ -1,0 +1,24 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Icon from "../../icon.astro";
+
+/**
+ * A line above a post saying why it is there: "Alice boosted", "Replying to
+ * @bob". The icon sits in the post's avatar column and the text lines up
+ * with the author. The text goes in the default slot, where a name can be a
+ * link or <strong>.
+ */
+interface Props extends HTMLAttributes<"p"> {
+    /** The icon in the avatar column, such as `lucide:repeat-2`. */
+    icon: string;
+}
+
+const { icon, class: className, ...rest } = Astro.props;
+---
+
+<p class:list={["post-context", className]} {...rest}>
+    <span class="post-context__icon"
+        ><Icon name={icon} aria-hidden="true" /></span
+    >
+    <span class="post-context__text"><slot /></span>
+</p>

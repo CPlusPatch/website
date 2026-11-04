@@ -1,0 +1,44 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .post-context {
+        display: flex;
+        align-items: center;
+        gap: var(--post-gap, var(--space-md));
+        margin: 0;
+        font: var(--type-ui);
+        color: var(--color-text-muted);
+
+        /* The icon takes the avatar's column, so the text meets the author. */
+        .post-context__icon {
+            display: grid;
+            place-items: center;
+            flex: none;
+            inline-size: var(--post-avatar, 2.5rem);
+
+            svg {
+                inline-size: 1.2em;
+                block-size: 1.2em;
+            }
+        }
+
+        .post-context__text {
+            min-inline-size: 0;
+            overflow-wrap: anywhere;
+        }
+
+        strong,
+        a {
+            font-weight: 600;
+            color: var(--color-text);
+            text-decoration: none;
+        }
+
+        a:hover {
+            background-color: transparent;
+            color: var(--color-text);
+            text-decoration: underline;
+            text-underline-offset: 0.2em;
+        }
+    }
+}

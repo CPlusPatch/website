@@ -1,0 +1,87 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageSource } from "../../../lib/image.ts";
+import Icon from "../../icon.astro";
+import Avatar from "../../ui/avatar.astro";
+
+/**
+ * A post embedded in another: its author, on one line, and a few lines of
+ * its text. With `href`, the author's name is a link stretched over the
+ * whole embed, so nothing else inside may be interactive.
+ *
+ * Mark a deleted, private or blocked post `unavailable`; the default slot
+ * then holds the explanation ("This post is unavailable") instead of text.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    author?: string;
+    handle?: string;
+    avatar?: ImageMetadata | ImageSource;
+    time?: string;
+    datetime?: string;
+    /** The quoted post's address. */
+    href?: string;
+    unavailable?: boolean;
+}
+
+const {
+    author,
+    handle,
+    avatar,
+    time,
+    datetime,
+    href,
+    unavailable = false,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const Name = href ? "a" : "span";
+---
+
+<div
+    class:list={[
+        "post-quote",
+        unavailable && "post-quote--unavailable",
+        href && !unavailable && "post-quote--link",
+        className,
+    ]}
+    {...rest}
+>
+    {unavailable || !author ? (
+        <>
+            {unavailable && (
+                <Icon
+                    class="post-quote__mark"
+                    name="lucide:file-x"
+                    aria-hidden="true"
+                />
+            )}
+            <p class="post-quote__body">
+                <slot />
+            </p>
+        </>
+    ) : (
+        <>
+            <div class="post-quote__header">
+                <Avatar src={avatar} alt={author} aria-hidden="true" />
+                <Name class="post-quote__author" href={href}>
+                    <span class="post-quote__name">{author}</span>
+                </Name>
+                {handle && <span class="post-quote__handle">{handle}</span>}
+                {time && (
+                    <>
+                        <span class="post-quote__dot" aria-hidden="true">
+                            ·
+                        </span>
+                        <time class="post-quote__time" datetime={datetime}>
+                            {time}
+                        </time>
+                    </>
+                )}
+            </div>
+            <blockquote class="post-quote__body" cite={href}>
+                <slot />
+            </blockquote>
+        </>
+    )}
+</div>

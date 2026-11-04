@@ -1,0 +1,88 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { formatCount, postActionClasses } from "../../../components/post.ts";
+import Icon from "../../icon.astro";
+
+/**
+ * One action under a post (reply, boost, favourite, share) with its count.
+ * With `href` it is a link, so it works without JS (to reply or favourite
+ * on the post's home server, say); without, a <button> for a script to wire.
+ *
+ * `pressed` means the reader has done this. A <button> says so with
+ * aria-pressed; a link cannot, so give it a label that names the next step
+ * ("Unfavourite") when it is pressed. Actions never take a colour of their
+ * own: a pressed one turns to the full text colour, with `filled` a filled
+ * icon, and otherwise a heavier stroke.
+ */
+type Props = Omit<HTMLAttributes<"button">, "type"> &
+    Omit<HTMLAttributes<"a">, "type"> & {
+        /** The icon, such as `lucide:heart`. */
+        icon: string;
+        /** What it does. Visually hidden: the icon and count are shown. */
+        label: string;
+        /** How many have done it. Zero shows no number. */
+        count?: number;
+        /** The reader has done this. Leave unset for an action that is not a toggle. */
+        pressed?: boolean;
+        /** Fill the icon while pressed. */
+        filled?: boolean;
+        /**
+         * A utility (bookmark, share) rather than a reaction: it sits at the
+         * row's end, apart from the counted ones.
+         */
+        end?: boolean;
+        disabled?: boolean;
+    };
+
+const {
+    icon,
+    label,
+    count,
+    pressed,
+    filled = false,
+    end = false,
+    disabled = false,
+    href,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const text = formatCount(count);
+const classes = postActionClasses({
+    pressed: pressed === true,
+    filled,
+    end,
+    class: className,
+});
+---
+
+{href ? (
+    <a
+        class:list={classes}
+        href={disabled ? undefined : href}
+        aria-disabled={disabled ? "true" : undefined}
+        {...rest}
+    >
+        <span class="post-action__body">
+            <Icon name={icon} aria-hidden="true" />
+            <span class="post-action__label">{label}</span>
+            {text && <span class="post-action__count">{text}</span>}
+        </span>
+    </a>
+) : (
+    <button
+        type="button"
+        class:list={classes}
+        aria-pressed={
+            pressed === undefined ? undefined : pressed ? "true" : "false"
+        }
+        disabled={disabled}
+        {...rest}
+    >
+        <span class="post-action__body">
+            <Icon name={icon} aria-hidden="true" />
+            <span class="post-action__label">{label}</span>
+            {text && <span class="post-action__count">{text}</span>}
+        </span>
+    </button>
+)}

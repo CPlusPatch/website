@@ -1,0 +1,31 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { PostVariant } from "../../../components/post.ts";
+
+/**
+ * Consecutive posts read as one: a self-reply thread, or the posts a reply
+ * answers above the one on show. A rail runs down the avatar column from
+ * one post to the next, and the posts share one frame. Give each <Post> the
+ * same `variant` as this.
+ *
+ * A post with a `context` row breaks the rail above it, which is right: it
+ * is not a direct continuation.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    variant?: PostVariant;
+    /** Names the thread for assistive technology. */
+    label?: string;
+}
+
+const { variant = "feed", label, class: className, ...rest } = Astro.props;
+---
+
+{/* biome-ignore lint/a11y/useSemanticElements: a <fieldset> is for form controls, and this is a run of posts */}
+<div
+    class:list={["post-thread", `post-thread--${variant}`, className]}
+    role="group"
+    aria-label={label}
+    {...rest}
+>
+    <slot />
+</div>

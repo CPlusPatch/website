@@ -1,0 +1,161 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { type PostVariant, postClasses } from "../../../components/post.ts";
+import type { ImageSource } from "../../../lib/image.ts";
+import Icon from "../../icon.astro";
+import Avatar from "../../ui/avatar.astro";
+
+export type { PostVariant };
+
+/**
+ * One post on a microblog, in the manner of Mastodon or Twitter: who wrote
+ * it, when, the text, and what was attached or quoted.
+ *
+ * The default slot is the text. The other slots, all optional:
+ * - `context`: <PostContext> lines above the author ("Alice boosted").
+ * - `media`: pictures or <Attachment>s, after the text.
+ * - `quote`: a <PostQuote>, after the media.
+ * - `meta`: a small icon with a hidden label beside the time, such as the
+ *   post's visibility.
+ * - `stats`: a <PostStats>, for a featured post.
+ * - `actions`: a <PostActions> row.
+ *
+ * Wrap consecutive posts in <PostThread> to join them with a rail. A
+ * `cw` (content warning) puts the text, media and quote behind a native
+ * <details>, so it opens without JS.
+ */
+interface Props extends HTMLAttributes<"article"> {
+    /** The author's display name. */
+    author: string;
+    /** Their address ("@greg@heffley.example"), quieter than the name. */
+    handle?: string;
+    /** Their picture. Without one the author's initials stand in. */
+    avatar?: ImageMetadata | ImageSource;
+    /** Where the name leads, usually the author's profile. */
+    profileHref?: string;
+    /** When it was posted, as shown ("2h"). A featured post shows it in full. */
+    time?: string;
+    /** The same moment, machine-readable, for the <time> element. */
+    datetime?: string;
+    /** The post's own address. Makes the time a link to it. */
+    href?: string;
+    variant?: PostVariant;
+    /** The post a page is about: larger text, with the time and stats below. */
+    featured?: boolean;
+    /** Hides the text, media and quote behind this warning until opened. */
+    cw?: string;
+    /** Start with the content warning open. */
+    open?: boolean;
+    showLabel?: string;
+    hideLabel?: string;
+}
+
+const {
+    author,
+    handle,
+    avatar,
+    profileHref,
+    time,
+    datetime,
+    href,
+    variant = "feed",
+    featured = false,
+    cw,
+    open = false,
+    showLabel = "Show more",
+    hideLabel = "Show less",
+    class: className,
+    ...rest
+} = Astro.props;
+
+// Rendered rather than checked with `slots.has`, which is also true for a
+// slot that renders to nothing. A slot that was not passed renders as undefined.
+const slot = async (name: string) =>
+    ((await Astro.slots.render(name)) ?? "").trim();
+const [context, media, quote, meta, stats, actions, body] = await Promise.all(
+    ["context", "media", "quote", "meta", "stats", "actions", "default"].map(
+        slot,
+    ),
+);
+
+const Author = profileHref ? "a" : "span";
+const When = href ? "a" : "span";
+---
+
+<article
+    class:list={postClasses({
+        variant,
+        featured,
+        context: Boolean(context),
+        class: className,
+    })}
+    {...rest}
+>
+    {context && <div class="post__context" set:html={context} />}
+
+    {/* The header names the author, so the avatar is decoration. */}
+    <div class="post__aside">
+        <Avatar src={avatar} alt={author} aria-hidden="true" />
+        <span class="post__rail" aria-hidden="true"></span>
+    </div>
+
+    <header class="post__header">
+        <Author class="post__author" href={profileHref}>
+            <span class="post__name">{author}</span>
+        </Author>
+        {handle && <span class="post__handle">{handle}</span>}
+        {!featured && (time || meta) && (
+            <span class="post__when">
+                {time && (
+                    <>
+                        <span class="post__dot" aria-hidden="true">
+                            ·
+                        </span>
+                        <When href={href}>
+                            <time datetime={datetime}>{time}</time>
+                        </When>
+                    </>
+                )}
+                {meta && <Fragment set:html={meta} />}
+            </span>
+        )}
+    </header>
+
+    <div class="post__main">
+        {cw ? (
+            <details class="post__cw" open={open}>
+                <summary>
+                    <Icon name="lucide:eye-off" aria-hidden="true" />
+                    <span class="post__cw-text">{cw}</span>
+                    <span class="post__cw-toggle">
+                        <span class="post__cw-label">
+                            <span class="post__cw-show">{showLabel}</span>
+                            <span class="post__cw-hide">{hideLabel}</span>
+                        </span>
+                        <Icon name="lucide:chevron-down" aria-hidden="true" />
+                    </span>
+                </summary>
+                <div class="post__content" set:html={body} />
+                {media && <div class="post__media" set:html={media} />}
+                {quote && <Fragment set:html={quote} />}
+            </details>
+        ) : (
+            <>
+                <div class="post__content" set:html={body} />
+                {media && <div class="post__media" set:html={media} />}
+                {quote && <Fragment set:html={quote} />}
+            </>
+        )}
+
+        {featured && time && (
+            <div class="post__timestamp">
+                <When href={href}>
+                    <time datetime={datetime}>{time}</time>
+                </When>
+                {meta && <Fragment set:html={meta} />}
+            </div>
+        )}
+        {stats && <Fragment set:html={stats} />}
+        {actions && <Fragment set:html={actions} />}
+    </div>
+</article>

@@ -1,0 +1,28 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { formatCount } from "../../../components/post.ts";
+
+/**
+ * The counts under a featured post: "12 boosts · 48 favourites". Whole
+ * numbers, where an action shows "1.2K". An item with no count is left out.
+ */
+interface Props extends HTMLAttributes<"ul"> {
+    items: { label: string; count: number }[];
+}
+
+const { items, class: className, ...rest } = Astro.props;
+const shown = items.filter((item) =>
+    formatCount(item.count, { compact: false }),
+);
+---
+
+{shown.length > 0 && (
+    <ul class:list={["post-stats", className]} {...rest}>
+        {shown.map((item) => (
+            <li>
+                <strong>{formatCount(item.count, { compact: false })}</strong>{" "}
+                {item.label}
+            </li>
+        ))}
+    </ul>
+)}

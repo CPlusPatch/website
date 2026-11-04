@@ -1,0 +1,133 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .post-action {
+        /* As wide as its content: the target is what is drawn on hover. */
+        position: relative;
+        display: flex;
+        flex: none;
+        align-items: center;
+        padding: 0;
+        font: var(--type-ui);
+        font-variant-numeric: tabular-nums;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        background-color: transparent;
+        border: 0;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition:
+            color var(--transition),
+            translate var(--transition);
+
+        .post-action__body {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            min-block-size: var(--control-height-sm);
+            padding: calc(var(--space-xs) / 2)
+                var(--post-action-pad, var(--space-xs));
+            border-radius: var(--radius);
+            transition: background-color var(--transition);
+        }
+
+        svg {
+            flex: none;
+            inline-size: 1.125rem;
+            block-size: 1.125rem;
+        }
+
+        /* The label is for assistive technology; the icon and count are shown. */
+        .post-action__label {
+            position: absolute;
+            inline-size: 1px;
+            block-size: 1px;
+            margin: -1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
+        @media (hover: hover) {
+            &:hover:where(:not(:disabled, [aria-disabled="true"])) {
+                color: var(--color-text);
+
+                .post-action__body {
+                    background-color: color-mix(
+                        in oklab,
+                        var(--color-text) 8%,
+                        transparent
+                    );
+                }
+            }
+        }
+
+        /* The first of the utilities takes the row's slack; the rest follow it. */
+        &.post-action--end:not(.post-action--end ~ .post-action--end) {
+            margin-inline-start: auto;
+        }
+
+        &.post-action--pressed {
+            color: var(--color-text);
+
+            svg {
+                stroke-width: 2.5;
+            }
+
+            .post-action__count {
+                font-weight: 600;
+            }
+        }
+
+        &.post-action--filled.post-action--pressed svg * {
+            fill: currentColor;
+        }
+
+        &:active:where(:not(:disabled, [aria-disabled="true"])) {
+            translate: 0 1px;
+        }
+
+        &:disabled,
+        &[aria-disabled="true"] {
+            cursor: not-allowed;
+            color: color-mix(
+                in oklab,
+                var(--color-text-muted) 60%,
+                transparent
+            );
+            text-decoration: line-through;
+
+            /* Icon-only, a strike-through shows nothing: the icon thins as well. */
+            svg {
+                stroke-width: 1.25;
+            }
+        }
+
+        /* The ring goes round what is shown, as the hover wash does. */
+        &:focus-visible {
+            outline: none;
+
+            .post-action__body {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 0;
+            }
+        }
+
+        /*
+         * A phone's text column has little room, so the buttons draw tight,
+         * but a finger needs more: the target reaches past what is drawn.
+         */
+        @media (max-width: 24rem) {
+            &::after {
+                content: "";
+                position: absolute;
+                inset: -0.5rem -2px;
+            }
+
+            svg {
+                inline-size: 1rem;
+                block-size: 1rem;
+            }
+        }
+    }
+}

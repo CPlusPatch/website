@@ -1,0 +1,24 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * The row of <PostAction>s under a post. Its first icon lines up with the
+ * text above it, not with the button's edge.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Names the group for assistive technology. */
+    label?: string;
+}
+
+const { label = "Post actions", class: className, ...rest } = Astro.props;
+---
+
+{/* biome-ignore lint/a11y/useSemanticElements: a <fieldset> is for form controls, and these are actions */}
+<div
+    class:list={["post-actions", className]}
+    role="group"
+    aria-label={label}
+    {...rest}
+>
+    <slot />
+</div>

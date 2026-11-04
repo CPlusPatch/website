@@ -1,0 +1,39 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * The reactions (reply, boost, favourite) come first, then the
+     * utilities (bookmark, share), marked `end`, at the other end of the
+     * row.
+     */
+    .post-actions {
+        --post-action-pad: var(--space-xs);
+        --post-action-gap: var(--space-sm);
+
+        display: flex;
+        align-items: center;
+        gap: var(--post-action-gap);
+        inline-size: 100%;
+
+        /* A phone's text column has little room: tighter buttons. */
+        @media (max-width: 24rem) {
+            --post-action-pad: calc(var(--space-xs) / 2);
+            --post-action-gap: var(--space-xs);
+        }
+    }
+
+    /*
+     * Inside a post the row reaches back by the cells' padding, so the first
+     * icon and the last line up with the text edges above, not the buttons'.
+     */
+    .post .post-actions {
+        margin-inline: calc(-1 * var(--post-action-pad));
+        margin-block: calc(-1 * var(--space-xs));
+        inline-size: calc(100% + 2 * var(--post-action-pad));
+    }
+
+    /* The stats line above the row already gives the full figures. */
+    .post--featured .post-action__count {
+        display: none;
+    }
+}

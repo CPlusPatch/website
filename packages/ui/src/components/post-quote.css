@@ -1,0 +1,136 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .post-quote {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        min-inline-size: 0;
+        padding: var(--post-embed-pad, var(--space-sm) var(--space-md));
+        background-color: var(--post-embed-bg, transparent);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
+        transition:
+            background-color var(--transition),
+            border-color var(--transition);
+
+        .avatar {
+            --avatar-size: 1.25rem;
+        }
+
+        /* One line, as the post's own header: avatar, name, handle, time. */
+        .post-quote__header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            min-inline-size: 0;
+            line-height: var(--leading-snug);
+        }
+
+        .post-quote__author {
+            display: flex;
+            flex: 0 1 auto;
+            min-inline-size: 0;
+            color: inherit;
+            text-decoration: none;
+
+            &:hover {
+                color: inherit;
+                background-color: transparent;
+            }
+        }
+
+        .post-quote__name {
+            min-inline-size: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font: var(--type-body-strong);
+            line-height: var(--leading-snug);
+        }
+
+        /* Gives way before the name does. */
+        .post-quote__handle {
+            flex: 0 100000 auto;
+            min-inline-size: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font: var(--type-ui);
+            color: var(--color-text-muted);
+        }
+
+        .post-quote__dot,
+        .post-quote__time {
+            flex: none;
+            font: var(--type-ui);
+            font-variant-numeric: tabular-nums;
+            color: var(--color-text-muted);
+        }
+
+        .post-quote__body {
+            margin: 0;
+            font: var(--type-body);
+            line-height: var(--leading-normal);
+            overflow-wrap: anywhere;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            line-clamp: 4;
+            overflow: hidden;
+        }
+
+        /* One link over the whole embed, as an attachment's name is. */
+        &.post-quote--link {
+            .post-quote__author::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+            }
+
+            &:hover {
+                background-color: var(
+                    --post-embed-bg-hover,
+                    var(--color-bg-alt)
+                );
+                border-color: var(--color-border-strong);
+            }
+
+            /* The ring goes round the whole embed, which the link covers. */
+            .post-quote__author:focus-visible {
+                outline: none;
+            }
+
+            &:has(.post-quote__author:focus-visible) {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 2px;
+            }
+        }
+
+        /* The same frame, with a mark in place of the header. */
+        &.post-quote--unavailable {
+            flex-direction: row;
+            align-items: center;
+            color: var(--color-text-muted);
+
+            .post-quote__mark {
+                flex: none;
+                inline-size: 1rem;
+                block-size: 1rem;
+            }
+
+            .post-quote__body {
+                font: var(--type-body);
+                line-height: var(--leading-snug);
+            }
+        }
+
+        /* Too little room for a stump of a handle. */
+        @media (max-width: 24rem) {
+            .post-quote__handle {
+                display: none;
+            }
+        }
+    }
+}

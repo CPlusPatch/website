@@ -1,0 +1,55 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * The posts share one frame, so each loses its own, and a rail joins
+     * their avatars. It leaves the avatar from just below it, runs through
+     * the post's padding, and the next post's stub meets it from above.
+     */
+    .post-thread {
+        --post-rail: color-mix(
+            in oklab,
+            var(--color-text-muted) 60%,
+            transparent
+        );
+
+        display: flex;
+        flex-direction: column;
+        inline-size: 100%;
+
+        &.post-thread--boxed {
+            background-color: var(--color-surface-raised);
+            border: var(--border-width) solid var(--border-color);
+            border-radius: var(--radius);
+        }
+
+        > .post {
+            background-color: transparent;
+            border: 0;
+            border-radius: 0;
+        }
+
+        &.post-thread--feed > .post:last-child {
+            border-bottom: var(--border-width) solid var(--border-color);
+        }
+
+        > .post:not(:last-child) .post__rail {
+            display: block;
+            flex: 1;
+            inline-size: 2px;
+            margin-block: var(--space-xs) calc(-1 * var(--post-pad));
+            background-color: var(--post-rail);
+        }
+
+        > .post:not(:first-child, .post--context) .post__aside::before {
+            content: "";
+            position: absolute;
+            inset-inline-start: 50%;
+            inset-block-end: calc(100% + var(--space-xs));
+            translate: -50% 0;
+            inline-size: 2px;
+            block-size: calc(var(--post-pad) - var(--space-xs));
+            background-color: var(--post-rail);
+        }
+    }
+}
