@@ -1,5 +1,5 @@
 ---
-import SegmentedControl from "../components/ui/segmented-control.astro";
+import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import type { StoryGroup } from "./story.ts";
 import StoryNode from "./story-node.astro";
 import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
@@ -38,7 +38,7 @@ const count = group.stories.length;
             variant="subtle"
         />
         <p class="story-group__meta text-meta">
-            <code>src/components/{group.source}</code>
+            <code>{group.source}</code>
             <span>{`${count} ${count === 1 ? "story" : "stories"}`}</span>
         </p>
         {group.description && (

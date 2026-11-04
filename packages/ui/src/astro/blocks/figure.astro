@@ -1,0 +1,48 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageSource } from "../../lib/image.ts";
+import type { Tone } from "../../lib/tone.ts";
+import Image from "../image.astro";
+
+/**
+ * An image with an optional caption, in the frame of <MediaPlayer>. The
+ * caption goes in the default slot, so it can hold links and emphasis.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    src: ImageMetadata | ImageSource;
+    alt: string;
+    /** As a CSS `aspect-ratio`, cropping to fit. Defaults to the image's own. */
+    ratio?: string;
+    /**
+     * How wide the figure is shown, as an `<img sizes>` value, so the
+     * browser picks the right file. Defaults to the full container width.
+     */
+    sizes?: string;
+    tone?: Tone;
+}
+
+const {
+    src,
+    alt,
+    ratio,
+    sizes = "(min-width: 70rem) 70rem, 100vw",
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+// Rendered rather than checked with `slots.has`, which is also true for a
+// slot that renders to nothing, like `{caption}` with no caption.
+const caption = (await Astro.slots.render("default")).trim();
+---
+
+<figure class:list={["figure", "panel", `tone-${tone}`, className]} {...rest}>
+    <Image
+        {src}
+        {alt}
+        widths={[480, 960, 1440]}
+        {sizes}
+        style={ratio && `aspect-ratio: ${ratio}`}
+    />
+    {caption && <figcaption class="text-body-sm" set:html={caption} />}
+</figure>

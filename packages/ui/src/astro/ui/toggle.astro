@@ -1,0 +1,57 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { toggleClasses } from "../../components/toggle.ts";
+
+/**
+ * A switch built on a native checkbox, so it works and submits without JS.
+ * Visible text, if any, goes in the default slot and sits after the switch.
+ */
+interface Props extends HTMLAttributes<"label"> {
+    /**
+     * Accessible name. Without slot text it is the only name the switch has;
+     * with slot text, keep the two the same.
+     */
+    label: string;
+    checked?: boolean;
+    disabled?: boolean;
+    name?: string;
+    value?: string;
+}
+const {
+    label,
+    checked = false,
+    disabled = false,
+    name,
+    value,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const hasText = Astro.slots.has("default");
+---
+
+<label
+    class:list={toggleClasses({ text: hasText, class: className })}
+    {...rest}
+>
+    {/* A range, because Biome reports this on the `role` line, not the element. */}
+    {/* biome-ignore-start lint/a11y/useAriaPropsForRole: A native checkbox exposes its own checked state, so the switch role needs no aria-checked */}
+    <input
+        type="checkbox"
+        role="switch"
+        aria-label={label}
+        class="toggle__input"
+        checked={checked}
+        disabled={disabled}
+        name={name}
+        value={value}
+    >
+    {/* biome-ignore-end lint/a11y/useAriaPropsForRole: see above */}
+    <span class="toggle__slider" aria-hidden="true"></span>
+    {/* Hidden from assistive tech: the input's aria-label already says it. */}
+    {hasText && (
+        <span class="toggle__text text-ui" aria-hidden="true">
+            <slot />
+        </span>
+    )}
+</label>

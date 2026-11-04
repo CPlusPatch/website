@@ -1,0 +1,34 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { Icon as AstroIcon } from "astro-icon/components";
+import { iconSvg, isIconName } from "../icons.ts";
+
+/**
+ * An icon by name, such as `lucide:x`. The names the library draws itself
+ * (see icons.ts) render from its own SVG, so they work with no icon
+ * package; any other name is looked up by astro-icon, which the site
+ * configures with the sets it wants. This is the only place the adapter
+ * touches astro-icon.
+ *
+ * A built-in icon forwards only `class` and `aria-hidden`.
+ */
+interface Props extends HTMLAttributes<"svg"> {
+    /** `set:name`, as astro-icon takes it. */
+    name: string;
+}
+
+const { name, class: className, ...rest } = Astro.props;
+const builtIn = name.startsWith("lucide:") ? name.slice("lucide:".length) : "";
+---
+
+{isIconName(builtIn) ? (
+    <Fragment
+        set:html={iconSvg(builtIn, {
+            class: className ?? undefined,
+            ariaHidden: rest["aria-hidden"] != null,
+        })}
+    />
+) : (
+    // @ts-expect-error astro-icon types `name` as the union of the site's icons
+    <AstroIcon {name} class={className} {...rest} />
+)}

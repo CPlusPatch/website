@@ -1,10 +1,12 @@
-import Footer from "../../components/sections/footer.astro";
-import Navbar from "../../components/sections/navbar.astro";
-import Section from "../../components/sections/section.astro";
-import SideHero from "../../components/sections/side-hero.astro";
-import Sidebar from "../../components/sections/sidebar/sidebar.astro";
-import SidebarGroup from "../../components/sections/sidebar/sidebar-group.astro";
-import SidebarLink from "../../components/sections/sidebar/sidebar-link.astro";
+import Footer from "@cpluspatch/ui/astro/sections/footer.astro";
+import Navbar from "@cpluspatch/ui/astro/sections/navbar.astro";
+import Section from "@cpluspatch/ui/astro/sections/section.astro";
+import SideHero from "@cpluspatch/ui/astro/sections/side-hero.astro";
+import Sidebar from "@cpluspatch/ui/astro/sections/sidebar/sidebar.astro";
+import SidebarGroup from "@cpluspatch/ui/astro/sections/sidebar/sidebar-group.astro";
+import SidebarLink from "@cpluspatch/ui/astro/sections/sidebar/sidebar-link.astro";
+import FooterBranding from "../../components/page/footer-branding.astro";
+import FooterFriend from "../../components/page/footer-friend.astro";
 import { friends } from "../../data/friends.ts";
 import jessew from "../../images/88x31s/jessew.png";
 import greg from "../../images/greg.jpg";
@@ -68,7 +70,7 @@ export const sections: StoryGroup[] = [
         id: "section",
         title: "Section",
         category: "sections",
-        source: "sections/section.astro",
+        source: "packages/ui/src/astro/sections/section.astro",
         description:
             "With an id, the heading names the section for screen readers.",
         min: "full",
@@ -107,7 +109,7 @@ export const sections: StoryGroup[] = [
         id: "side-hero",
         title: "Side hero",
         category: "sections",
-        source: "sections/side-hero.astro",
+        source: "packages/ui/src/astro/sections/side-hero.astro",
         min: "full",
         stories: (["right", "left"] as const).map((side) =>
             story(
@@ -122,7 +124,7 @@ export const sections: StoryGroup[] = [
         id: "navbar",
         title: "Navbar",
         category: "sections",
-        source: "sections/navbar.astro",
+        source: "packages/ui/src/astro/sections/navbar.astro",
         min: "full",
         stories: [
             story("default", Navbar, { title: "CPlusPatch", links: NAV_LINKS }),
@@ -163,61 +165,72 @@ export const sections: StoryGroup[] = [
         id: "footer",
         title: "Footer",
         category: "sections",
-        source: "sections/footer.astro",
+        source: "packages/ui/src/astro/sections/footer.astro",
         min: "full",
         stories: [
-            story("default", Footer, {
-                copyright: {
-                    license: "CC BY-SA 4.0",
-                    holder: "Testy McTestface",
+            story(
+                "default",
+                Footer,
+                {
+                    copyright: {
+                        license: "CC BY-SA 4.0",
+                        holder: "Testy McTestface",
+                    },
+                    tagline:
+                        "This was a triumph\nI'm making a note here\nHuge success",
+                    socials: [
+                        {
+                            name: "GitHub",
+                            href: "https://github.com/cpluspatch",
+                            icon: "logos:github-icon",
+                        },
+                        {
+                            name: "Twitter",
+                            href: "https://twitter.com/grok",
+                            icon: "logos:twitter",
+                        },
+                        {
+                            name: "Mastodon",
+                            href: "https://mastodon.social/@grok",
+                            icon: "logos:mastodon-icon",
+                        },
+                        {
+                            name: "LinkedIn",
+                            href: "https://www.linkedin.com/in/grok",
+                            icon: "logos:linkedin-icon",
+                        },
+                        {
+                            name: "Email",
+                            href: "mailto:grok@example.com",
+                            icon: "lucide:at-sign",
+                        },
+                    ],
                 },
-                tagline:
-                    "This was a triumph\nI'm making a note here\nHuge success",
-                socials: [
-                    {
-                        name: "GitHub",
-                        href: "https://github.com/cpluspatch",
-                        icon: "logos:github-icon",
+                {
+                    slots: {
+                        branding: [
+                            story("branding", FooterBranding, {
+                                image: jessew,
+                                alt: "A cool badge with a cool description.",
+                            }),
+                        ],
+                        friends: friends.map((friend) =>
+                            story(friend.name, FooterFriend, {
+                                image: friend.image,
+                                href: friend.href,
+                                alt: `A small icon representing ${friend.name}'s website`,
+                            }),
+                        ),
                     },
-                    {
-                        name: "Twitter",
-                        href: "https://twitter.com/grok",
-                        icon: "logos:twitter",
-                    },
-                    {
-                        name: "Mastodon",
-                        href: "https://mastodon.social/@grok",
-                        icon: "logos:mastodon-icon",
-                    },
-                    {
-                        name: "LinkedIn",
-                        href: "https://www.linkedin.com/in/grok",
-                        icon: "logos:linkedin-icon",
-                    },
-                    {
-                        name: "Email",
-                        href: "mailto:grok@example.com",
-                        icon: "lucide:at-sign",
-                    },
-                ],
-                badge88x31: {
-                    image: jessew,
-                    alt: "A cool badge with a cool description.",
                 },
-                friends: friends.map((friend) => ({
-                    name: friend.name,
-                    href: friend.href,
-                    image: friend.image,
-                    alt: `A small icon representing ${friend.name}'s website`,
-                })),
-            }),
+            ),
         ],
     },
     {
         id: "sidebar",
         title: "Sidebar",
         category: "sections",
-        source: "sections/sidebar/",
+        source: "packages/ui/src/astro/sections/sidebar/",
         description:
             "A collapsible menu on its own; open and sticky beside the content in a wide SidebarLayout, as on this page.",
         stories: [

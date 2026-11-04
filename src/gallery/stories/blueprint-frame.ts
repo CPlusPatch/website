@@ -1,6 +1,6 @@
-import BlueprintFrame from "../../components/blocks/blueprint-frame.astro";
+import BlueprintFrame from "@cpluspatch/ui/astro/blocks/blueprint-frame.astro";
+import Card from "@cpluspatch/ui/astro/ui/card.astro";
 import Terminal from "../../components/blocks/terminal/terminal.astro";
-import Card from "../../components/ui/card.astro";
 import { BODY, type StoryGroup, story } from "../story.ts";
 
 export const blueprintFrame: StoryGroup[] = [
@@ -8,7 +8,7 @@ export const blueprintFrame: StoryGroup[] = [
         id: "blueprint-frame",
         title: "Blueprint frames",
         category: "showcase",
-        source: "blocks/blueprint-frame.astro",
+        source: "packages/ui/src/astro/blocks/blueprint-frame.astro",
         description:
             "Draws around any content, which brings its own surface. The label is optional.",
         min: 24,

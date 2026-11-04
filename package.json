@@ -24,7 +24,7 @@
         "movie": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/flipbook/src/cli.ts --columns 70 --rows 30 --out src/data/movie",
         "radio": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/mixtape/src/cli.ts --out src/data/radio",
         "shorts": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/reel/src/cli.ts --out src/data/shorts",
-        "test": "deno test packages",
+        "test": "deno test --allow-read=packages packages",
         "check": "biome check . && astro check && deno run theme:check && deno run test"
     },
     "dependencies": {

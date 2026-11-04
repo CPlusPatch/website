@@ -1,4 +1,4 @@
-import Heatmap from "../../components/blocks/heatmap/heatmap.astro";
+import Heatmap from "@cpluspatch/ui/astro/blocks/heatmap/heatmap.astro";
 import { commits } from "../../data/home.ts";
 import { type StoryGroup, story } from "../story.ts";
 
@@ -11,7 +11,7 @@ export const heatmap: StoryGroup[] = [
         id: "heatmap",
         title: "Heatmap",
         category: "content",
-        source: "blocks/heatmap/",
+        source: "packages/ui/src/astro/blocks/heatmap/",
         description:
             "Levels from 0 to 4 on a grid of any size, optionally as a calendar. Can play the Game of Life on its cells.",
         min: "full",

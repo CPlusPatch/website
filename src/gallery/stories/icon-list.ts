@@ -1,4 +1,4 @@
-import IconList from "../../components/ui/icon-list.astro";
+import IconList from "@cpluspatch/ui/astro/ui/icon-list.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 export const iconList: StoryGroup[] = [
@@ -6,7 +6,7 @@ export const iconList: StoryGroup[] = [
         id: "icon-list",
         title: "Icon lists",
         category: "content",
-        source: "ui/icon-list.astro",
+        source: "packages/ui/src/astro/ui/icon-list.astro",
         min: 18,
         stories: [
             story("default", IconList, {

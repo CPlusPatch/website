@@ -1,4 +1,4 @@
-import type { SegmentedOption } from "../components/ui/segmented-control.astro";
+import type { SegmentedOption } from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 
 /**
  * Preview widths for the gallery's stories, and the single source of their

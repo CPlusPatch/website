@@ -15,6 +15,23 @@
         "./lib/*": "./src/lib/*",
         "./components.css": "./src/components.css",
         "./components/*.css": "./src/components/*.css",
-        "./components/*.ts": "./src/components/*.ts"
+        "./components/*.ts": "./src/components/*.ts",
+        "./astro/*": "./src/astro/*"
+    },
+    "peerDependencies": {
+        "astro": ">=7",
+        "astro-icon": "^1.2.0",
+        "shiki": ">=4"
+    },
+    "peerDependenciesMeta": {
+        "astro": {
+            "optional": true
+        },
+        "astro-icon": {
+            "optional": true
+        },
+        "shiki": {
+            "optional": true
+        }
     }
 }

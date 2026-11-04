@@ -1,4 +1,4 @@
-import Dropdown from "../../components/ui/dropdown.astro";
+import Dropdown from "@cpluspatch/ui/astro/ui/dropdown.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 const CONTENT =
@@ -9,7 +9,7 @@ export const dropdowns: StoryGroup[] = [
         id: "dropdown",
         title: "Dropdowns",
         category: "primitives",
-        source: "ui/dropdown.astro",
+        source: "packages/ui/src/astro/ui/dropdown.astro",
         description:
             "A native popover: opens, closes on Esc or an outside click, no JS.",
         stories: [

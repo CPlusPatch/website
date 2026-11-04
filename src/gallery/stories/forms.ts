@@ -1,8 +1,8 @@
-import Input from "../../components/ui/input.astro";
-import SegmentedControl from "../../components/ui/segmented-control.astro";
-import Select from "../../components/ui/select.astro";
-import Textarea from "../../components/ui/textarea.astro";
-import Toggle from "../../components/ui/toggle.astro";
+import Input from "@cpluspatch/ui/astro/ui/input.astro";
+import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
+import Select from "@cpluspatch/ui/astro/ui/select.astro";
+import Textarea from "@cpluspatch/ui/astro/ui/textarea.astro";
+import Toggle from "@cpluspatch/ui/astro/ui/toggle.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 const SELECT_OPTIONS = [
@@ -28,7 +28,7 @@ export const forms: StoryGroup[] = [
         id: "toggle",
         title: "Toggles",
         category: "forms",
-        source: "ui/toggle.astro",
+        source: "packages/ui/src/astro/ui/toggle.astro",
         min: 10,
         stories: [
             story("default", Toggle, { label: "Example" }),
@@ -51,7 +51,7 @@ export const forms: StoryGroup[] = [
         id: "select",
         title: "Selects",
         category: "forms",
-        source: "ui/select.astro",
+        source: "packages/ui/src/astro/ui/select.astro",
         min: 10,
         stories: [
             story("default", Select, {
@@ -74,7 +74,7 @@ export const forms: StoryGroup[] = [
         id: "input",
         title: "Inputs",
         category: "forms",
-        source: "ui/input.astro",
+        source: "packages/ui/src/astro/ui/input.astro",
         min: 14,
         stories: [
             story("default", Input, {
@@ -119,7 +119,7 @@ export const forms: StoryGroup[] = [
         id: "textarea",
         title: "Textareas",
         category: "forms",
-        source: "ui/textarea.astro",
+        source: "packages/ui/src/astro/ui/textarea.astro",
         min: 16,
         stories: [
             story("default", Textarea, {
@@ -163,7 +163,7 @@ export const forms: StoryGroup[] = [
         id: "segmented-control",
         title: "Segmented controls",
         category: "forms",
-        source: "ui/segmented-control.astro",
+        source: "packages/ui/src/astro/ui/segmented-control.astro",
         description:
             "Plain radios: they submit with a form and can drive CSS via :has().",
         stories: [

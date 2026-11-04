@@ -1,0 +1,66 @@
+---
+import Icon from "../icon.astro";
+
+/**
+ * A site's closing strip: tagline, social links, copyright, and two slots
+ * for whatever else it wants to show off.
+ *
+ * Slots (each is left out of the markup when empty):
+ *   branding -- beside the socials: the site's own badge, say. Anything.
+ *   friends  -- `<li>`s, laid out in a grid of small badges.
+ */
+interface Props {
+    copyright: {
+        license: string;
+        holder: string;
+    };
+    /** Line breaks (`\n`) are kept as written. */
+    tagline?: string;
+    socials?: {
+        name: string;
+        href: string;
+        icon: string;
+    }[];
+}
+
+const { copyright, tagline, socials } = Astro.props;
+---
+
+<footer class="footer">
+    <div class="footer__content">
+        {tagline && <p class="footer__tagline text-body-sm">{tagline}</p>}
+        {socials && socials.length > 0 && (
+            <ul class="footer__socials">
+                {socials.map((social) => (
+                    <li>
+                        <a
+                            href={social.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`${social.name} (opens in new tab)`}
+                        >
+                            <Icon name={social.icon} aria-hidden="true" />
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        )}
+        {Astro.slots.has("branding") && (
+            <div class="footer__branding">
+                <slot name="branding" />
+            </div>
+        )}
+    </div>
+    <hr>
+    {/* One string: Astro would drop the line break between "under" and the licence. */}
+    <div class="footer__copyright text-body-sm">
+        {`© ${copyright.holder} ${new Date().getFullYear()}. Licensed under ${copyright.license}.`}
+    </div>
+    {Astro.slots.has("friends") && (
+        <div class="footer__friends">
+            <ul class="footer__friends-list">
+                <slot name="friends" />
+            </ul>
+        </div>
+    )}
+</footer>

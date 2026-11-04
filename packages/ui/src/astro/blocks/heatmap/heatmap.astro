@@ -1,0 +1,149 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../../lib/tone.ts";
+import PauseButton from "../../ui/pause-button.astro";
+
+/**
+ * A grid of small squares shaded by level, like a year of commits: from 0
+ * (none) to 4 (most), in steps of its tone, over a Less–More key. Anything
+ * in the default slot sits beside the key, like a total.
+ *
+ * With `until`, it is laid out as a calendar like GitHub's: seven rows,
+ * Sunday to Saturday, and a column per week, the last holding `until`, with
+ * the months above and every other weekday beside.
+ *
+ * With `life`, it plays Conway's Game of Life on its cells once scrolled
+ * into view, with a button to pause it. It starts paused under reduced
+ * motion, and shows `values` without JS.
+ */
+interface Props extends HTMLAttributes<"figure"> {
+    columns: number;
+    rows: number;
+    /** Each cell's level, row by row, from 0 to 4. Missing cells are 0. */
+    values?: number[];
+    /** Names the heatmap for screen readers. */
+    label: string;
+    /** The last day shown, as a calendar. Takes 7 rows. */
+    until?: Date;
+    /** Plays Conway's Game of Life, from `values`' busiest cells. */
+    life?: boolean;
+    tone?: Tone;
+}
+
+const {
+    columns,
+    rows,
+    values = [],
+    label,
+    until,
+    life = false,
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+const LEVELS = [0, 1, 2, 3, 4];
+
+// Calendar labels, in UTC so the build machine's time zone can't shift a day.
+const DAY = 86_400_000;
+const locale = Astro.currentLocale ?? "en";
+const month = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    timeZone: "UTC",
+});
+const weekday = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    timeZone: "UTC",
+});
+
+const months = (() => {
+    if (!until) return [];
+    // The Sunday that starts each column's week.
+    const last =
+        Date.UTC(
+            until.getUTCFullYear(),
+            until.getUTCMonth(),
+            until.getUTCDate(),
+        ) -
+        until.getUTCDay() * DAY;
+    const weeks = Array.from(
+        { length: columns },
+        (_, column) => new Date(last - (columns - 1 - column) * 7 * DAY),
+    );
+    const starts = weeks.flatMap((week, column) =>
+        column > 0 && week.getUTCMonth() === weeks[column - 1].getUTCMonth()
+            ? []
+            : [{ column, name: month.format(week) }],
+    );
+    // As GitHub does, drop a month with too few weeks shown to fit its name.
+    return starts.filter(
+        (start, i) => (starts[i + 1]?.column ?? columns) - start.column >= 3,
+    );
+})();
+
+// Mon, Wed and Fri, from 4 January 1970, a Sunday.
+const days = Array.from({ length: 7 }, (_, day) =>
+    day % 2 ? weekday.format(new Date((3 + day) * DAY)) : "",
+);
+---
+
+<figure
+    class:list={["heatmap", `tone-${tone}`, className]}
+    style={`--columns: ${columns}; --rows: ${rows}`}
+    data-life={life || undefined}
+    {...rest}
+>
+    <div class="heatmap__scroll">
+        <div class:list={["heatmap__body", until && "heatmap__body--calendar"]}>
+            {until && (
+                <>
+                    <div class="heatmap__months text-meta" aria-hidden="true">
+                        {months.map(({ column, name }) => (
+                            <span style={`grid-column-start: ${column + 1}`}>
+                                {name}
+                            </span>
+                        ))}
+                    </div>
+                    <div class="heatmap__days text-meta" aria-hidden="true">
+                        {days.map((day) => (
+                            <span>{day}</span>
+                        ))}
+                    </div>
+                </>
+            )}
+            <div class="heatmap__grid" role="img" aria-label={label}>
+                {Array.from({ length: columns * rows }, (_, i) => (
+                    <span
+                        class="heatmap__cell"
+                        data-level={values[i] || undefined}
+                    ></span>
+                ))}
+            </div>
+        </div>
+    </div>
+    <figcaption class="heatmap__footer text-meta">
+        <slot />
+        {/* Shown by the script, once there is something to pause. */}
+        {life && (
+            <span hidden data-heatmap-pause>
+                <PauseButton target=".heatmap" label="Pause animation" />
+            </span>
+        )}
+        <span class="heatmap__key" aria-hidden="true">
+            Less
+            {LEVELS.map((level) => (
+                <span
+                    class="heatmap__cell"
+                    data-level={level || undefined}
+                ></span>
+            ))}
+            More
+        </span>
+    </figcaption>
+</figure>
+
+<script>
+import { initHeatmaps } from "../../../behaviours/heatmap.ts";
+
+initHeatmaps();
+</script>

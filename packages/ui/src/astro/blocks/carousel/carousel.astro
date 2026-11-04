@@ -1,0 +1,131 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { autoplaySeconds } from "../../../components/carousel.ts";
+import type { Tone } from "../../../lib/tone.ts";
+import Icon from "../../icon.astro";
+import Button from "../../ui/button.astro";
+import PauseButton from "../../ui/pause-button.astro";
+import CarouselPips from "./carousel-pips.astro";
+
+/**
+ * Carousel shape:
+ *
+ *   ┌──────────────────────────┐
+ *   │                          │
+ *   │          slide           │
+ *   │                          │
+ *   ├──────────────────────────┤
+ *   │ ‖ 02 / 04  ━ ━ ━ ━   < > │   footer: pause (autoplay only),
+ *   └──────────────────────────┘           counter, pips, arrows
+ *
+ * A scroll-snapping track of arbitrary content in a panel. Controls sit in a
+ * footer below the track, never over slide content. The track is as tall as
+ * its tallest slide, so content is never clipped and the panel does not jump
+ * between slides.
+ *
+ * Without JS it is just the track, which still swipes and scrolls natively;
+ * the footer only drives it, so it stays hidden until the script runs.
+ *
+ * The script is split by concern: track.ts scrolls, pips.ts and
+ * autoplay.ts build on it, and this file wires them to the footer.
+ *
+ * Slots:
+ *   default    -- one <CarouselItem> per slide
+ */
+interface Props extends HTMLAttributes<"section"> {
+    /** Names the region for screen readers. */
+    label: string;
+    /** Colours the panel's top rule and the current pip. */
+    tone?: Tone;
+    /**
+     * Advance on a timer: seconds per slide, or `true` for 6. Off by
+     * default, as moving content distracts and is easy to miss. Follows the
+     * WAI-ARIA carousel pattern and WCAG 2.2.2:
+     *
+     * - A pause control, so rotation can always be stopped.
+     * - Rotation stops for good once the user takes over -- keyboard focus or
+     *   a press anywhere in the carousel -- and only the control restarts it.
+     * - Hovering, or the tab being hidden, holds it without stopping it.
+     * - It starts stopped under prefers-reduced-motion.
+     * - Slide changes are only announced while it is stopped.
+     */
+    autoplay?: boolean | number;
+}
+
+const {
+    label,
+    tone = "primary",
+    autoplay = false,
+    class: className,
+    ...rest
+} = Astro.props;
+const seconds = autoplaySeconds(autoplay);
+---
+
+<section
+    class:list={["carousel", "panel", `tone-${tone}`, className]}
+    aria-roledescription="carousel"
+    aria-label={label}
+    data-autoplay={seconds}
+    {...rest}
+>
+    {/* biome-ignore lint/a11y/useSemanticElements: a second <section> would announce as a second region inside the carousel */}
+    <div
+        class="carousel__items"
+        role="group"
+        data-carousel-track
+        aria-label={`${label} slides`}
+    >
+        <slot />
+    </div>
+    <div class="carousel__footer" data-carousel-footer hidden>
+        {/*
+         * The pattern puts this control first in the carousel's tab order so
+         * rotation stops before focus reaches the slides. Here the track
+         * comes first, but focusing anything in the carousel stops it, so
+         * the slides still never move under a keyboard user.
+         */}
+        {seconds && (
+            <PauseButton
+                class="carousel__pause"
+                target=".carousel"
+                label="Pause slideshow"
+            />
+        )}
+        <p class="carousel__counter" aria-hidden="true">
+            <span data-carousel-index>01</span>
+            <span class="carousel__total">/ <span data-carousel-total /></span>
+        </p>
+        <CarouselPips />
+        <div class="carousel__arrows">
+            <Button
+                size="icon"
+                variant="outline"
+                tone="neutral"
+                lift={false}
+                data-carousel-prev
+                aria-label="Previous slide"
+            >
+                <Icon name="lucide:chevron-left" aria-hidden="true" />
+            </Button>
+            <Button
+                size="icon"
+                variant="outline"
+                tone="neutral"
+                lift={false}
+                data-carousel-next
+                aria-label="Next slide"
+            >
+                <Icon name="lucide:chevron-right" aria-hidden="true" />
+            </Button>
+        </div>
+        {/* Says which slide is showing once it changes; the counter is for sighted users. */}
+        <p class="visually-hidden" aria-live="polite" data-carousel-status />
+    </div>
+</section>
+
+<script>
+import { initCarousels } from "../../../behaviours/carousel.ts";
+
+initCarousels();
+</script>

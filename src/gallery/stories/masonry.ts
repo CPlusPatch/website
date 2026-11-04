@@ -1,5 +1,5 @@
-import Masonry from "../../components/blocks/masonry.astro";
-import Quote from "../../components/blocks/quote.astro";
+import Masonry from "@cpluspatch/ui/astro/blocks/masonry.astro";
+import Quote from "@cpluspatch/ui/astro/blocks/quote.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 const QUOTES = [
@@ -16,7 +16,7 @@ export const masonry: StoryGroup[] = [
         id: "masonry",
         title: "Masonry",
         category: "content",
-        source: "blocks/masonry.astro",
+        source: "packages/ui/src/astro/blocks/masonry.astro",
         description:
             "Columns of uneven items. `min` sets the narrowest column, `columns` the most there are.",
         min: "full",

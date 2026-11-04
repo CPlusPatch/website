@@ -1,4 +1,4 @@
-import MediaPlayer from "../../components/blocks/media-player.astro";
+import MediaPlayer from "@cpluspatch/ui/astro/blocks/media-player.astro";
 import poster from "../../images/test-pattern.jpg";
 import captions from "../../video/test-pattern.en.vtt?url";
 import mp4 from "../../video/test-pattern.mp4";
@@ -15,7 +15,7 @@ export const mediaPlayer: StoryGroup[] = [
         id: "media-player",
         title: "Media player",
         category: "media",
-        source: "blocks/media-player.astro",
+        source: "packages/ui/src/astro/blocks/media-player.astro",
         description:
             "Falls back to the browser's own player without JS. K, J/L, M, C and F work while focus is inside.",
         min: 24,

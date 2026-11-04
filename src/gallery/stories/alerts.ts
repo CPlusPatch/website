@@ -1,4 +1,4 @@
-import Alert from "../../components/ui/alert.astro";
+import Alert from "@cpluspatch/ui/astro/ui/alert.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 export const alerts: StoryGroup[] = [
@@ -6,7 +6,7 @@ export const alerts: StoryGroup[] = [
         id: "alert",
         title: "Alerts",
         category: "primitives",
-        source: "ui/alert.astro",
+        source: "packages/ui/src/astro/ui/alert.astro",
         min: 24,
         stories: [
             story(

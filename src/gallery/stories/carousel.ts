@@ -1,7 +1,7 @@
-import Carousel from "../../components/blocks/carousel/carousel.astro";
-import CarouselItem from "../../components/blocks/carousel/carousel-item.astro";
-import SideHero from "../../components/sections/side-hero.astro";
-import Button from "../../components/ui/button.astro";
+import Carousel from "@cpluspatch/ui/astro/blocks/carousel/carousel.astro";
+import CarouselItem from "@cpluspatch/ui/astro/blocks/carousel/carousel-item.astro";
+import SideHero from "@cpluspatch/ui/astro/sections/side-hero.astro";
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import greg from "../../images/greg.jpg";
 import testPattern from "../../images/test-pattern.jpg";
 import { type Story, type StoryGroup, story } from "../story.ts";
@@ -81,7 +81,7 @@ export const carousel: StoryGroup[] = [
         id: "carousel",
         title: "Carousel",
         category: "showcase",
-        source: "blocks/carousel/",
+        source: "packages/ui/src/astro/blocks/carousel/",
         description:
             "Swipes and scrolls natively without JS. Autoplay pauses on hover and stops for good on focus or a press.",
         min: "full",

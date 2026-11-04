@@ -1,10 +1,10 @@
+import Attachment from "@cpluspatch/ui/astro/blocks/attachment/attachment.astro";
+import InteractiveMessage from "@cpluspatch/ui/astro/blocks/message/interactive-message.astro";
+import Message from "@cpluspatch/ui/astro/blocks/message/message.astro";
+import MessageBubble from "@cpluspatch/ui/astro/blocks/message/message-bubble.astro";
+import MessageGroup from "@cpluspatch/ui/astro/blocks/message/message-group.astro";
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
-import Attachment from "../../components/blocks/attachment/attachment.astro";
-import InteractiveMessage from "../../components/blocks/message/interactive-message.astro";
-import Message from "../../components/blocks/message/message.astro";
-import MessageBubble from "../../components/blocks/message/message-bubble.astro";
-import MessageGroup from "../../components/blocks/message/message-group.astro";
-import Button from "../../components/ui/button.astro";
 import greg from "../../images/greg.jpg";
 import { type StoryGroup, story, title } from "../story.ts";
 
@@ -135,7 +135,7 @@ export const messages: StoryGroup[] = [
         id: "message",
         title: "Messages",
         category: "chat",
-        source: "blocks/message/message.astro",
+        source: "packages/ui/src/astro/blocks/message/message.astro",
         description:
             "Start for the other side, end for the reader. The avatar sits level with the bubble, not the footer.",
         min: 24,
@@ -229,7 +229,7 @@ export const messages: StoryGroup[] = [
         id: "message-bubble",
         title: "Message bubbles",
         category: "chat",
-        source: "blocks/message/message-bubble.astro",
+        source: "packages/ui/src/astro/blocks/message/message-bubble.astro",
         description: "Ghost drops the frame and the 80% width cap.",
         min: 16,
         stories: VARIANTS.flatMap((variant) =>
@@ -247,7 +247,7 @@ export const messages: StoryGroup[] = [
         id: "message-group",
         title: "Message groups",
         category: "chat",
-        source: "blocks/message/message-group.astro",
+        source: "packages/ui/src/astro/blocks/message/message-group.astro",
         description:
             "The first message names the sender; the last carries the avatar (the first, for ghost messages).",
         min: 24,
@@ -319,7 +319,7 @@ export const messages: StoryGroup[] = [
         id: "interactive-message",
         title: "Interactive messages",
         category: "chat",
-        source: "blocks/message/interactive-message.astro",
+        source: "packages/ui/src/astro/blocks/message/interactive-message.astro",
         description:
             "Pick a reply to walk the dialogue tree. Without JS, only the opening shows. Rodrick's branches run page-wide actions.",
         min: 24,

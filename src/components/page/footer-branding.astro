@@ -1,0 +1,28 @@
+---
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import { Icon } from "astro-icon/components";
+import Badge88x31 from "../blocks/badge-88x31.astro";
+
+/**
+ * This site's own badge for the <Footer>'s `branding` slot. It links to its
+ * own image as a download, so visitors can grab it to link back, beside a
+ * link to the site's alt text.
+ */
+interface Props {
+    image: ImageMetadata;
+    alt?: string;
+}
+
+const { image, alt } = Astro.props;
+---
+
+<Badge88x31 {image} href={image.src} {alt} download class="footer__badge" />
+<Button
+    size="icon"
+    variant="link"
+    download
+    href="/alt.txt"
+    aria-label="Download the alt text"
+>
+    <Icon name="lucide:captions" aria-hidden="true" />
+</Button>

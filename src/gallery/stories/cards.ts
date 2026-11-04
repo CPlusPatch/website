@@ -1,6 +1,6 @@
+import MediaCard from "@cpluspatch/ui/astro/blocks/media-card.astro";
+import Card from "@cpluspatch/ui/astro/ui/card.astro";
 import { TONES } from "@cpluspatch/ui/lib/tone.ts";
-import MediaCard from "../../components/blocks/media-card.astro";
-import Card from "../../components/ui/card.astro";
 import greg from "../../images/greg.jpg";
 import { BODY, type StoryGroup, story, title } from "../story.ts";
 
@@ -23,7 +23,7 @@ export const cards: StoryGroup[] = [
         id: "card",
         title: "Cards",
         category: "primitives",
-        source: "ui/card.astro",
+        source: "packages/ui/src/astro/ui/card.astro",
         min: 16,
         stories: [
             ...TONES.map((tone) =>
@@ -48,7 +48,7 @@ export const cards: StoryGroup[] = [
         id: "media-card",
         title: "Media cards",
         category: "showcase",
-        source: "blocks/media-card.astro",
+        source: "packages/ui/src/astro/blocks/media-card.astro",
         min: 18,
         stories: [
             story(

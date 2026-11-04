@@ -1,0 +1,109 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import {
+    type DropdownAlign,
+    type DropdownCollapse,
+    dropdownClasses,
+    dropdownPanelClasses,
+} from "../../components/dropdown.ts";
+import Icon from "../icon.astro";
+import Button, {
+    type ButtonSize,
+    type ButtonTone,
+    type ButtonVariant,
+} from "./button.astro";
+
+/**
+ * A button that opens a panel of anything in the default slot. Built on the
+ * native popover attribute, so it opens, closes on Esc or an outside click,
+ * and returns focus without JS.
+ *
+ * Anchored under its button where CSS anchor positioning is supported, and
+ * centred on screen elsewhere. A tall panel scrolls within the space it has.
+ * Following an in-page link inside it closes it (a line of script), so a
+ * menu of anchors doesn't sit over the section it jumped to.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Unique on the page: ties the button to its panel (which gets this id). */
+    id: string;
+    /** The button's text. */
+    label: string;
+    /** Shown before the label. */
+    icon?: string;
+    /** Heading inside the panel, with a close button beside it. */
+    title?: string;
+    /** Which edge of the button the panel lines up with. */
+    align?: DropdownAlign;
+    variant?: ButtonVariant;
+    tone?: ButtonTone;
+    /** The button's size: one of the text sizes, as it always has a label. */
+    size?: Extract<ButtonSize, "sm" | "default" | "lg">;
+    /**
+     * Below this container width, the button drops its chevron and shows
+     * its label to screen readers only, leaving the icon.
+     */
+    collapseBelow?: DropdownCollapse;
+}
+
+const {
+    id,
+    label,
+    icon,
+    title,
+    align = "start",
+    variant = "outline",
+    tone = "neutral",
+    size,
+    collapseBelow,
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<div
+    class:list={dropdownClasses({ collapseBelow, class: className })}
+    {...rest}
+>
+    <Button
+        class="dropdown__trigger"
+        {variant}
+        {tone}
+        {size}
+        lift={false}
+        popovertarget={id}
+    >
+        {icon && <Icon name={icon} aria-hidden="true" />}
+        <span class="dropdown__label">{label}</span>
+        <Icon
+            name="lucide:chevron-down"
+            class="dropdown__chevron"
+            aria-hidden="true"
+        />
+    </Button>
+
+    <div class:list={dropdownPanelClasses(align)} {id} popover>
+        {title && (
+            <div class="dropdown__header">
+                <p class="dropdown__title text-label">{title}</p>
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    tone="neutral"
+                    lift={false}
+                    popovertarget={id}
+                    popovertargetaction="hide"
+                    aria-label={`Close ${title}`}
+                >
+                    <Icon name="lucide:x" aria-hidden="true" />
+                </Button>
+            </div>
+        )}
+        <slot />
+    </div>
+</div>
+
+<script>
+import { initDropdowns } from "../../behaviours/dropdown.ts";
+
+initDropdowns();
+</script>

@@ -1,0 +1,28 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { statusClasses, statusLightClasses } from "../../components/status.ts";
+import type { Tone } from "../../lib/tone.ts";
+
+/**
+ * A status light with its label in the default slot, like "Online". The
+ * light takes the text colour, so inside a Badge it follows the badge's
+ * tone; give it a `tone` of its own to colour just the light.
+ *
+ * The label carries the meaning, so the light is never the only cue.
+ */
+interface Props extends HTMLAttributes<"span"> {
+    tone?: Tone;
+    /** A slow ripple, for something live. Off under reduced motion. */
+    pulse?: boolean;
+}
+
+const { tone, pulse = false, class: className, ...rest } = Astro.props;
+---
+
+<span class:list={statusClasses({ class: className })} {...rest}>
+    <span
+        class:list={statusLightClasses({ tone, pulse })}
+        aria-hidden="true"
+    ></span>
+    <slot />
+</span>

@@ -1,0 +1,105 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageSource } from "../../../lib/image.ts";
+import Avatar from "../../ui/avatar.astro";
+import MessageBubble, {
+    type BubbleTone,
+    type BubbleVariant,
+} from "./message-bubble.astro";
+import MessageTyping from "./message-typing.astro";
+
+export type MessageAlign = "start" | "end";
+
+/**
+ * One message in a conversation: who sent it, the bubble, and a footer for
+ * status or actions. `align="end"` is for the reader's own messages, and
+ * defaults to a solid bubble; `start` defaults to a neutral outline.
+ *
+ * The default slot is the message. The `footer` slot takes actions after
+ * any `status`: `size="icon-sm"` buttons, each with an aria-label.
+ * Conversation-level semantics, such as role="log", belong on the
+ * surrounding container.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    align?: MessageAlign;
+    /** Sender name, shown above the bubble and the source of the avatar's initials. */
+    author?: string;
+    /** Show an avatar: `true` for the author's initials, or their picture. Needs `author`. */
+    avatar?: boolean | ImageMetadata | ImageSource;
+    /** When it was sent, as shown ("09:41"). */
+    time?: string;
+    /** The same moment, machine-readable, for the <time> element. */
+    datetime?: string;
+    variant?: BubbleVariant;
+    tone?: BubbleTone;
+    /** Delivery or read status ("Read", "Not delivered"), shown in the footer. */
+    status?: string;
+    /** Show typing dots instead of the slot. */
+    typing?: boolean;
+}
+
+const {
+    align = "start",
+    author,
+    avatar = false,
+    time,
+    datetime,
+    status,
+    variant = align === "end" ? "solid" : "outline",
+    tone = align === "end" ? "primary" : "neutral",
+    typing = false,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const showAvatar = Boolean(avatar && author);
+const avatarSrc = typeof avatar === "object" ? avatar : undefined;
+---
+
+<div
+    class:list={[
+        "message",
+        `message--${align}`,
+        variant === "ghost" && "message--ghost",
+        showAvatar && "message--avatar",
+        className,
+    ]}
+    {...rest}
+>
+    {(author || time) && (
+        <div class="message__header">
+            {author && <span class="message__author">{author}</span>}
+            {time && (
+                <time class="message__time" {datetime}>
+                    {time}
+                </time>
+            )}
+        </div>
+    )}
+
+    {/* The header already names the sender, so the avatar is decoration. */}
+    {showAvatar && (
+        <Avatar
+            class="message__avatar"
+            src={avatarSrc}
+            alt={author ?? ""}
+            size="sm"
+            aria-hidden="true"
+        />
+    )}
+
+    <MessageBubble class="message__bubble" {variant} {tone}>
+        {typing ? (
+            <MessageTyping label={`${author ?? "Someone"} is typing`} />
+        ) : (
+            <slot />
+        )}
+    </MessageBubble>
+
+    {(status || Astro.slots.has("footer")) && (
+        <div class="message__footer">
+            {status && <span>{status}</span>}
+            <slot name="footer" />
+        </div>
+    )}
+</div>

@@ -1,6 +1,6 @@
+import InteractiveMessage from "@cpluspatch/ui/astro/blocks/message/interactive-message.astro";
+import CornerWindow from "@cpluspatch/ui/astro/ui/corner-window.astro";
 import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
-import InteractiveMessage from "../../components/blocks/message/interactive-message.astro";
-import CornerWindow from "../../components/ui/corner-window.astro";
 import greg from "../../images/greg.jpg";
 import { type StoryGroup, story } from "../story.ts";
 
@@ -37,7 +37,7 @@ export const cornerWindows: StoryGroup[] = [
         id: "corner-window",
         title: "Corner windows",
         category: "primitives",
-        source: "ui/corner-window.astro",
+        source: "packages/ui/src/astro/ui/corner-window.astro",
         description:
             "Pinned to the viewport's corner on a page; inline here. A popover on wide screens, a bottom sheet on narrow ones.",
         stories: [

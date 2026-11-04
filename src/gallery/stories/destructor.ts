@@ -6,7 +6,7 @@ export const destructor: StoryGroup[] = [
         id: "destructor",
         title: "Destructor",
         category: "toys",
-        source: "blocks/destructor.astro",
+        source: "src/components/blocks/destructor.astro",
         description:
             "Equip the gravity gun, then click anything on the page to pull it out and throw it. Needs a mouse.",
         stories: [story("default", Destructor, {})],

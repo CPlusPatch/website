@@ -6,7 +6,7 @@ export const terminal: StoryGroup[] = [
         id: "terminal",
         title: "Terminal",
         category: "toys",
-        source: "blocks/terminal/",
+        source: "src/components/blocks/terminal/",
         min: 24,
         stories: [
             story("default", Terminal, {

@@ -1,4 +1,4 @@
-import ScrollCue from "../../components/ui/scroll-cue.astro";
+import ScrollCue from "@cpluspatch/ui/astro/ui/scroll-cue.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 export const scrollCue: StoryGroup[] = [
@@ -6,7 +6,7 @@ export const scrollCue: StoryGroup[] = [
         id: "scroll-cue",
         title: "Scroll cues",
         category: "primitives",
-        source: "ui/scroll-cue.astro",
+        source: "packages/ui/src/astro/ui/scroll-cue.astro",
         description: "The arrow nudges, except under reduced motion.",
         min: 10,
         stories: [

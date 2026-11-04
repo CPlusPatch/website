@@ -1,4 +1,4 @@
-import Figure from "../../components/blocks/figure.astro";
+import Figure from "@cpluspatch/ui/astro/blocks/figure.astro";
 import greg from "../../images/greg.jpg";
 import testPattern from "../../images/test-pattern.jpg";
 import { type StoryGroup, story } from "../story.ts";
@@ -8,7 +8,7 @@ export const figures: StoryGroup[] = [
         id: "figure",
         title: "Figures",
         category: "media",
-        source: "blocks/figure.astro",
+        source: "packages/ui/src/astro/blocks/figure.astro",
         min: 20,
         stories: [
             story(

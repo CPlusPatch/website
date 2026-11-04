@@ -1,0 +1,33 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import {
+    type BadgeSize,
+    type BadgeVariant,
+    badgeClasses,
+} from "../../components/badge.ts";
+import type { Tone } from "../../lib/tone.ts";
+
+export type { BadgeSize, BadgeVariant };
+
+interface Props extends HTMLAttributes<"span"> {
+    variant?: BadgeVariant;
+    tone?: Tone;
+    size?: BadgeSize;
+}
+
+const {
+    variant = "solid",
+    tone = "primary",
+    size = "default",
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<span
+    class:list={badgeClasses({ variant, tone, size, class: className })}
+    data-snap
+    {...rest}
+>
+    <slot />
+</span>

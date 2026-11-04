@@ -1,6 +1,6 @@
-import Attachment from "../../components/blocks/attachment/attachment.astro";
-import AttachmentGroup from "../../components/blocks/attachment/attachment-group.astro";
-import Button from "../../components/ui/button.astro";
+import Attachment from "@cpluspatch/ui/astro/blocks/attachment/attachment.astro";
+import AttachmentGroup from "@cpluspatch/ui/astro/blocks/attachment/attachment-group.astro";
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import greg from "../../images/greg.jpg";
 import testPattern from "../../images/test-pattern.jpg";
 import { SIZES, type StoryGroup, story } from "../story.ts";
@@ -27,7 +27,7 @@ export const attachments: StoryGroup[] = [
         id: "attachment",
         title: "Attachments",
         category: "forms",
-        source: "blocks/attachment/attachment.astro",
+        source: "packages/ui/src/astro/blocks/attachment/attachment.astro",
         description:
             "The description names the state; colour and shimmer only echo it.",
         min: 18,
@@ -138,7 +138,7 @@ export const attachments: StoryGroup[] = [
         id: "attachment-vertical",
         title: "Attachments — vertical",
         category: "forms",
-        source: "blocks/attachment/attachment.astro",
+        source: "packages/ui/src/astro/blocks/attachment/attachment.astro",
         description: "For image previews: the media stacks above the name.",
         min: 10,
         stories: [
@@ -186,7 +186,7 @@ export const attachments: StoryGroup[] = [
         id: "attachment-group",
         title: "Attachment groups",
         category: "forms",
-        source: "blocks/attachment/attachment-group.astro",
+        source: "packages/ui/src/astro/blocks/attachment/attachment-group.astro",
         description: "Scrolls sideways and snaps; the overflowing edges fade.",
         min: "full",
         stories: [

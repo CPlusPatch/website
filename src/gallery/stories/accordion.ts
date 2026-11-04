@@ -1,5 +1,5 @@
-import Accordion from "../../components/blocks/accordion/accordion.astro";
-import AccordionItem from "../../components/blocks/accordion/accordion-item.astro";
+import Accordion from "@cpluspatch/ui/astro/blocks/accordion/accordion.astro";
+import AccordionItem from "@cpluspatch/ui/astro/blocks/accordion/accordion-item.astro";
 import { BODY, type StoryGroup, story } from "../story.ts";
 
 const ITEMS = [
@@ -23,7 +23,7 @@ export const accordion: StoryGroup[] = [
         id: "accordion",
         title: "Accordion",
         category: "content",
-        source: "blocks/accordion/",
+        source: "packages/ui/src/astro/blocks/accordion/",
         min: 24,
         stories: [
             story("default", Accordion, {}, { children: items() }),

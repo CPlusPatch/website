@@ -1,0 +1,40 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { Tone } from "../../../lib/tone.ts";
+
+export type BubbleVariant = "solid" | "tinted" | "outline" | "ghost";
+
+/** `neutral` is for the other side of a conversation, so it doesn't compete. */
+export type BubbleTone = Tone | "neutral";
+
+/**
+ * The surface a message's content sits on. Sized to its content up to 80%
+ * of the row, except `ghost`, which is unframed and spans it, for
+ * feed-style threads like a team chat. Usable on its own; <Message> wraps
+ * one for you.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    variant?: BubbleVariant;
+    tone?: BubbleTone;
+}
+
+const {
+    variant = "outline",
+    tone = "neutral",
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<div
+    class:list={[
+        "message-bubble",
+        `message-bubble--${variant}`,
+        `tone-${tone}`,
+        className,
+    ]}
+    data-snap
+    {...rest}
+>
+    <slot />
+</div>

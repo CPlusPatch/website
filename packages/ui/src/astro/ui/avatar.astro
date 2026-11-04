@@ -1,0 +1,47 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import {
+    type AvatarSize,
+    avatarClasses,
+    initials as initialsOf,
+} from "../../components/avatar.ts";
+import type { ImageSource } from "../../lib/image.ts";
+import Image from "../image.astro";
+
+export type { AvatarSize };
+
+/**
+ * A square profile picture. The initials of `alt` sit underneath the image,
+ * so they show while it loads and stand in for it when `src` is omitted.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    src?: ImageMetadata | ImageSource;
+    /** The person's name. Also the source of the fallback initials. */
+    alt: string;
+    size?: AvatarSize;
+}
+
+const { src, alt, size = "default", class: className, ...rest } = Astro.props;
+
+const initials = initialsOf(alt);
+---
+
+{/* The box carries the name, so it reads the same with or without an image. */}
+<div
+    class:list={avatarClasses({ size, class: className })}
+    role="img"
+    aria-label={alt}
+    {...rest}
+>
+    <span class="avatar__initials" aria-hidden="true">{initials}</span>
+    {src && (
+        <Image
+            class="avatar__image"
+            src={src}
+            alt=""
+            width={128}
+            height={128}
+            loading="lazy"
+        />
+    )}
+</div>

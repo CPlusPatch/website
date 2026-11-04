@@ -1,4 +1,4 @@
-import Avatar from "../../components/ui/avatar.astro";
+import Avatar from "@cpluspatch/ui/astro/ui/avatar.astro";
 import greg from "../../images/greg.jpg";
 import { SIZES, type StoryGroup, story } from "../story.ts";
 
@@ -7,7 +7,7 @@ export const avatars: StoryGroup[] = [
         id: "avatar",
         title: "Avatars",
         category: "primitives",
-        source: "ui/avatar.astro",
+        source: "packages/ui/src/astro/ui/avatar.astro",
         description: "Initials stand in when there is no image.",
         min: 10,
         stories: [

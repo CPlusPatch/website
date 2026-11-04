@@ -1,5 +1,5 @@
+import Progress from "@cpluspatch/ui/astro/ui/progress.astro";
 import { TONES } from "@cpluspatch/ui/lib/tone.ts";
-import Progress from "../../components/ui/progress.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 export const progress: StoryGroup[] = [
@@ -7,7 +7,7 @@ export const progress: StoryGroup[] = [
         id: "progress",
         title: "Progress",
         category: "primitives",
-        source: "ui/progress.astro",
+        source: "packages/ui/src/astro/ui/progress.astro",
         description:
             "Takes the tone it sits in unless given one. Attachments and carousel pips are built on it.",
         stories: [

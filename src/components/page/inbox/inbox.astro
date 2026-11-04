@@ -1,12 +1,12 @@
 ---
+import Message from "@cpluspatch/ui/astro/blocks/message/message.astro";
+import Alert from "@cpluspatch/ui/astro/ui/alert.astro";
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import Input from "@cpluspatch/ui/astro/ui/input.astro";
+import Status from "@cpluspatch/ui/astro/ui/status.astro";
+import Textarea from "@cpluspatch/ui/astro/ui/textarea.astro";
 import { Icon } from "astro-icon/components";
 import { inbox } from "../../../data/home.ts";
-import Message from "../../blocks/message/message.astro";
-import Alert from "../../ui/alert.astro";
-import Button from "../../ui/button.astro";
-import Input from "../../ui/input.astro";
-import Status from "../../ui/status.astro";
-import Textarea from "../../ui/textarea.astro";
 
 /** The message's own text, filled in by the script from the templates below. */
 const placeholder = { time: "00:00", datetime: "1970-01-01T00:00:00Z" };

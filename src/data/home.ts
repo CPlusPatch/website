@@ -3,14 +3,14 @@
  * The sections in components/page/ read it from here.
  */
 
+import type Heatmap from "@cpluspatch/ui/astro/blocks/heatmap/heatmap.astro";
+import type MediaCard from "@cpluspatch/ui/astro/blocks/media-card.astro";
+import type Quote from "@cpluspatch/ui/astro/blocks/quote.astro";
+import type Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
+import type { DisplayEffect } from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
 import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import type { ComponentProps } from "astro/types";
 import componentScreenshot from "../../docs/assets/gallery-dark.webp";
-import type Heatmap from "../components/blocks/heatmap/heatmap.astro";
-import type MediaCard from "../components/blocks/media-card.astro";
-import type Quote from "../components/blocks/quote.astro";
-import type Stat from "../components/blocks/stat.astro";
-import type { DisplayEffect } from "../components/sections/display/display-menu.astro";
 import flaviScreenshot from "../images/assets/flavi-screenshot.png";
 import joinMastodonScreenshot from "../images/assets/join-mastodon.de_en.webp";
 import kitsuScreenshot from "../images/assets/kitsudotlife.png";

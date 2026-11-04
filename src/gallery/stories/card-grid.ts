@@ -1,5 +1,5 @@
-import CardGrid from "../../components/blocks/card-grid.astro";
-import Card from "../../components/ui/card.astro";
+import CardGrid from "@cpluspatch/ui/astro/blocks/card-grid.astro";
+import Card from "@cpluspatch/ui/astro/ui/card.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 const cards = (count: number) =>
@@ -17,7 +17,7 @@ export const cardGrid: StoryGroup[] = [
         id: "card-grid",
         title: "Card grids",
         category: "showcase",
-        source: "blocks/card-grid.astro",
+        source: "packages/ui/src/astro/blocks/card-grid.astro",
         description:
             "One, two, then three columns. A short last row is centred; narrow the preview to see two columns.",
         min: "full",

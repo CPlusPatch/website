@@ -1,0 +1,96 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import {
+    type CornerWindowCorner,
+    cornerWindowClasses,
+} from "../../components/corner-window.ts";
+import Icon from "../icon.astro";
+import Button, { type ButtonTone, type ButtonVariant } from "./button.astro";
+
+/**
+ * A button pinned to a corner of the viewport that opens a window of
+ * anything in the default slot: a chat, a form, a note. Built on the native
+ * popover attribute like Dropdown, so it opens, closes on Esc or an outside
+ * click, and returns focus without JS.
+ *
+ * On a wide screen the window floats over the page above its button. On a
+ * narrow or short one it slides up from the bottom as a sheet (`.sheet` in
+ * utilities.css). Its close button takes focus when it opens.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Unique on the page: ties the button to its window (which gets this id). */
+    id: string;
+    /** Names the button for screen readers, and heads the window unless `title` does. */
+    label: string;
+    /** Heading inside the window, with a close button beside it. */
+    title?: string;
+    /** Shown on the button while the window is closed. */
+    icon?: string;
+    /** Which bottom corner the button sits in. */
+    corner?: CornerWindowCorner;
+    /** In the flow rather than pinned to the viewport, as in the gallery. */
+    inline?: boolean;
+    variant?: ButtonVariant;
+    tone?: ButtonTone;
+}
+
+const {
+    id,
+    label,
+    title = label,
+    icon = "lucide:message-circle",
+    corner = "end",
+    inline = false,
+    variant = "solid",
+    tone = "primary",
+    class: className,
+    ...rest
+} = Astro.props;
+
+const titleId = `${id}-title`;
+---
+
+<div
+    class:list={cornerWindowClasses({ corner, inline, class: className })}
+    {...rest}
+>
+    <Button
+        class="corner-window__trigger"
+        size="icon-lg"
+        {variant}
+        {tone}
+        lift={false}
+        popovertarget={id}
+        aria-label={label}
+    >
+        <Icon name={icon} class="corner-window__open" aria-hidden="true" />
+        <Icon name="lucide:x" class="corner-window__close" aria-hidden="true" />
+    </Button>
+
+    <div
+        class="corner-window__panel sheet"
+        {id}
+        popover
+        role="dialog"
+        aria-labelledby={titleId}
+    >
+        <div class="corner-window__header">
+            <p class="text-label" id={titleId}>{title}</p>
+            <Button
+                size="icon"
+                variant="ghost"
+                tone="neutral"
+                lift={false}
+                popovertarget={id}
+                popovertargetaction="hide"
+                aria-label={`Close ${title}`}
+                autofocus
+            >
+                <Icon name="lucide:x" aria-hidden="true" />
+            </Button>
+        </div>
+        <div class="corner-window__body">
+            <slot />
+        </div>
+    </div>
+</div>

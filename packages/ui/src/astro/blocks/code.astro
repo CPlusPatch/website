@@ -1,0 +1,117 @@
+---
+import { Code as AstroCode } from "astro:components";
+import type { ComponentProps } from "astro/types";
+import Icon from "../icon.astro";
+import { codeTheme } from "../lib/code-theme.ts";
+import Button from "../ui/button.astro";
+
+type AstroCodeProps = ComponentProps<typeof AstroCode>;
+
+/**
+ * Syntax-highlighted code, from Astro's <Code> (Shiki, at build time, so it
+ * ships no highlighter). Coloured from the palette through lib/code-theme.ts,
+ * so it follows light, dark and every theme; recolour a block by setting
+ * Shiki's --code-* variables (--code-token-keyword and so on) on it.
+ *
+ * Highlighting is this adapter's job: a framework-neutral block is the same
+ * markup with already-highlighted HTML (or a plain `<pre class="code__pre">
+ * <code>`) where Shiki's output goes. Put such HTML in the default slot to
+ * skip Shiki here.
+ *
+ * A block has a header with an optional title (a file name, say), the
+ * language, and a copy button that a few lines of script reveal: without JS
+ * there is no button rather than a dead one. `inline` renders a bare <code>
+ * for use within a sentence instead.
+ */
+interface Props {
+    code: string;
+    lang?: AstroCodeProps["lang"];
+    /** Shown in the header, such as a file name. */
+    title?: string;
+    /** Numbers each line. */
+    lineNumbers?: boolean;
+    /** Wraps long lines instead of scrolling them. */
+    wrap?: boolean;
+    /** A bare inline <code>, for use within running text. */
+    inline?: boolean;
+    class?: string;
+}
+
+const {
+    code,
+    lang = "plaintext",
+    title,
+    lineNumbers = false,
+    wrap = false,
+    inline = false,
+    class: className,
+} = Astro.props;
+
+// Trailing newlines would render as an empty last line.
+const source = code.replace(/\n+$/, "");
+
+// Rendered rather than checked with `slots.has`, which is also true for a
+// slot that renders to nothing.
+const highlighted = (await Astro.slots.render("default")).trim();
+---
+
+{inline ? (
+    <AstroCode
+        class:list={["code-inline", className]}
+        code={source}
+        {lang}
+        theme={codeTheme}
+        inline
+    />
+) : (
+    <figure
+        class:list={["code", lineNumbers && "code--numbered", className]}
+        data-snap
+    >
+        <figcaption class="code__header">
+            <span class="code__title text-meta">{title ?? lang}</span>
+            {title && <span class="code__lang text-meta">{lang}</span>}
+            <Button
+                class="code__copy"
+                size="icon"
+                variant="ghost"
+                tone="neutral"
+                lift={false}
+                aria-label="Copy code"
+                hidden
+            >
+                <Icon
+                    name="lucide:copy"
+                    class="code__copy-idle"
+                    aria-hidden="true"
+                />
+                <Icon
+                    name="lucide:check"
+                    class="code__copy-done"
+                    aria-hidden="true"
+                />
+            </Button>
+            <span
+                class="code__status visually-hidden"
+                aria-live="polite"
+            ></span>
+        </figcaption>
+        {highlighted ? (
+            <Fragment set:html={highlighted} />
+        ) : (
+            <AstroCode
+                class="code__pre"
+                code={source}
+                {lang}
+                theme={codeTheme}
+                {wrap}
+            />
+        )}
+    </figure>
+)}
+
+<script>
+import { initCodes } from "../../behaviours/code.ts";
+
+initCodes();
+</script>

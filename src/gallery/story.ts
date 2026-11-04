@@ -57,7 +57,7 @@ export interface StoryGroup {
     id: string;
     title: string;
     category: CategoryId;
-    /** The component's file (or folder, for composites) under src/components/. */
+    /** The component's file (or folder, for composites), as a path from the repo root. */
     source: string;
     description?: string;
     /**

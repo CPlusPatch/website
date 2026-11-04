@@ -1,4 +1,4 @@
-import Quote from "../../components/blocks/quote.astro";
+import Quote from "@cpluspatch/ui/astro/blocks/quote.astro";
 import greg from "../../images/greg.jpg";
 import { BODY, type StoryGroup, story } from "../story.ts";
 
@@ -7,7 +7,7 @@ export const quotes: StoryGroup[] = [
         id: "quote",
         title: "Quotes",
         category: "content",
-        source: "blocks/quote.astro",
+        source: "packages/ui/src/astro/blocks/quote.astro",
         min: 24,
         stories: [
             story(

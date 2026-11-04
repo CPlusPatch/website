@@ -1,4 +1,4 @@
-import Kbd from "../../components/ui/kbd.astro";
+import Kbd from "@cpluspatch/ui/astro/ui/kbd.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 export const kbd: StoryGroup[] = [
@@ -6,7 +6,7 @@ export const kbd: StoryGroup[] = [
         id: "kbd",
         title: "Keys",
         category: "primitives",
-        source: "ui/kbd.astro",
+        source: "packages/ui/src/astro/ui/kbd.astro",
         description:
             "A key, or a combination in `keys`. Apple devices see ⌥ ⇧ ⌃ ⌘ for the modifiers.",
         min: 10,

@@ -1,4 +1,4 @@
-import Stat from "../../components/blocks/stat.astro";
+import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import { type StoryGroup, story } from "../story.ts";
 
 export const stats: StoryGroup[] = [
@@ -6,7 +6,7 @@ export const stats: StoryGroup[] = [
         id: "stat",
         title: "Stats",
         category: "content",
-        source: "blocks/stat.astro",
+        source: "packages/ui/src/astro/blocks/stat.astro",
         description: "Counts up on first scroll into view, with JS.",
         min: 14,
         stories: [

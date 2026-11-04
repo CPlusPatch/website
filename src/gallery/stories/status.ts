@@ -1,6 +1,6 @@
+import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
+import Status from "@cpluspatch/ui/astro/ui/status.astro";
 import { TONES } from "@cpluspatch/ui/lib/tone.ts";
-import Badge from "../../components/ui/badge.astro";
-import Status from "../../components/ui/status.astro";
 import { type StoryGroup, story, title } from "../story.ts";
 
 export const status: StoryGroup[] = [
@@ -8,7 +8,7 @@ export const status: StoryGroup[] = [
         id: "status",
         title: "Status",
         category: "primitives",
-        source: "ui/status.astro",
+        source: "packages/ui/src/astro/ui/status.astro",
         description:
             "A light takes the text colour unless given a tone. Pulse is off under reduced motion.",
         min: 12,

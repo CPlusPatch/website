@@ -1,0 +1,16 @@
+---
+import Badge88x31 from "../blocks/badge-88x31.astro";
+
+/** One of a friend's badges, for the <Footer>'s `friends` slot. */
+interface Props {
+    image: ImageMetadata;
+    href: string;
+    alt?: string;
+}
+
+const { image, href, alt } = Astro.props;
+---
+
+<li>
+    <Badge88x31 {image} {href} {alt} class="footer__friend" />
+</li>

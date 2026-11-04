@@ -1,6 +1,6 @@
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import ButtonGroup from "@cpluspatch/ui/astro/ui/button-group.astro";
 import { TONES } from "@cpluspatch/ui/lib/tone.ts";
-import Button from "../../components/ui/button.astro";
-import ButtonGroup from "../../components/ui/button-group.astro";
 import { SIZES, type StoryGroup, story, title } from "../story.ts";
 
 const VARIANTS = ["solid", "outline", "ghost", "link"] as const;
@@ -10,7 +10,7 @@ export const buttons: StoryGroup[] = [
         id: "button-matrix",
         title: "Buttons — variant × tone",
         category: "primitives",
-        source: "ui/button.astro",
+        source: "packages/ui/src/astro/ui/button.astro",
         description: "Fill style and colour are independent axes.",
         min: 10,
         stories: VARIANTS.flatMap((variant) =>
@@ -28,7 +28,7 @@ export const buttons: StoryGroup[] = [
         id: "button-size",
         title: "Buttons — size and state",
         category: "primitives",
-        source: "ui/button.astro",
+        source: "packages/ui/src/astro/ui/button.astro",
         min: 10,
         stories: [
             ...SIZES.map((size) =>
@@ -60,7 +60,7 @@ export const buttons: StoryGroup[] = [
         id: "button-group",
         title: "Button groups",
         category: "primitives",
-        source: "ui/button-group.astro",
+        source: "packages/ui/src/astro/ui/button-group.astro",
         min: 16,
         stories: [
             story(

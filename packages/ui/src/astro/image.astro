@@ -1,0 +1,34 @@
+---
+import { Image } from "astro:assets";
+import type { HTMLAttributes } from "astro/types";
+import { type ImageSource, imageAttributes } from "../lib/image.ts";
+
+/**
+ * An `<img>`, optimised when it can be. Given an imported image (Astro's
+ * `ImageMetadata`) it is Astro's <Image>, so `widths` and `sizes` make a
+ * srcset of resized files. Given a plain `ImageSource` (a URL, or a URL with
+ * its size), it is a plain `<img>`: `widths` does nothing, as there is no
+ * file to resize. This is the only place the adapter touches `astro:assets`
+ * for pictures.
+ */
+interface Props
+    extends Omit<HTMLAttributes<"img">, "src" | "width" | "height"> {
+    width?: number;
+    height?: number;
+    src: ImageMetadata | ImageSource;
+    alt: string | null;
+    /** Widths to resize to, for an imported image. */
+    widths?: number[];
+}
+
+const { src, alt, widths, ...rest } = Astro.props;
+
+// ImageMetadata is the one with a `format`.
+const imported = typeof src === "object" && "format" in src;
+---
+
+{imported ? (
+    <Image {src} {alt} {widths} {...rest} />
+) : (
+    <img {...imageAttributes(src)} alt={alt} {...rest} />
+)}

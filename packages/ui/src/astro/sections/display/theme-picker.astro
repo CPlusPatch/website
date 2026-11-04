@@ -1,0 +1,37 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { THEMES } from "../../../styles/themes/index.ts";
+
+/**
+ * Every theme as a swatch: a radio named "theme", checked to switch to it.
+ * Each theme's stylesheet keys off the checked radio in [data-theme-select]
+ * via :has(), so it works without JS. Group it in a fieldset with a legend.
+ */
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["theme-picker", className]} data-theme-select {...rest}>
+    {THEMES.map(({ value, label }) => (
+        <label class="theme-picker__swatch text-ui">
+            <input
+                class="visually-hidden"
+                type="radio"
+                name="theme"
+                {value}
+                checked={value === "default"}
+            >
+            <span
+                class="theme-picker__preview"
+                data-theme-preview={value}
+                aria-hidden="true"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+            {label}
+        </label>
+    ))}
+</div>
