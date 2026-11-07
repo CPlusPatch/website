@@ -525,7 +525,6 @@ export const postStories: StoryGroup[] = [
         id: "post",
         title: "In a feed",
         category: "chat",
-        source: "packages/ui/src/astro/blocks/post/post.astro",
         description:
             "A microblog post: replies, boosts, quotes, content warnings, media. Unframed and divided by a rule, for a timeline.",
         min: 26,
@@ -535,7 +534,6 @@ export const postStories: StoryGroup[] = [
         id: "post-boxed",
         title: "Boxed",
         category: "chat",
-        source: "packages/ui/src/astro/blocks/post/post.astro",
         description:
             "A post in its own box, for one embedded in a page rather than a timeline.",
         min: 26,

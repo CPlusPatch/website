@@ -23,7 +23,6 @@ export const accordion: StoryGroup[] = [
         id: "accordion",
         title: "Accordion",
         category: "content",
-        source: "packages/ui/src/astro/blocks/accordion/",
         min: 24,
         stories: [
             story("default", Accordion, {}, { children: items() }),

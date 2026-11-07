@@ -6,7 +6,6 @@ export const kbd: StoryGroup[] = [
         id: "kbd",
         title: "Keys",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/kbd.astro",
         description:
             "A key, or a combination in `keys`. Apple devices see ⌥ ⇧ ⌃ ⌘ for the modifiers.",
         min: 10,

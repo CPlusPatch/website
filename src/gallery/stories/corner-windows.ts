@@ -37,7 +37,6 @@ export const cornerWindows: StoryGroup[] = [
         id: "corner-window",
         title: "Corner windows",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/corner-window.astro",
         description:
             "Pinned to the viewport's corner on a page; inline here. A popover on wide screens, a bottom sheet on narrow ones.",
         stories: [

@@ -11,7 +11,6 @@ export const heatmap: StoryGroup[] = [
         id: "heatmap",
         title: "Heatmap",
         category: "content",
-        source: "packages/ui/src/astro/blocks/heatmap/",
         description:
             "Levels from 0 to 4 on a grid of any size, optionally as a calendar. Can play the Game of Life on its cells.",
         min: "full",

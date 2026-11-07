@@ -15,7 +15,6 @@ export const mediaPlayer: StoryGroup[] = [
         id: "media-player",
         title: "Media player",
         category: "media",
-        source: "packages/ui/src/astro/blocks/media-player.astro",
         description:
             "Falls back to the browser's own player without JS. K, J/L, M, C and F work while focus is inside.",
         min: 24,

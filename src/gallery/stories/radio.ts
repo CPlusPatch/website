@@ -31,7 +31,6 @@ export const radio: StoryGroup[] = [
         id: "radio",
         title: "Radio",
         category: "media",
-        source: "src/components/blocks/radio/",
         description:
             "Without JS, the browser's own player for the first track, and links to each file.",
         min: 24,

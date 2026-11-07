@@ -8,7 +8,6 @@ export const shorts: StoryGroup[] = [
         id: "shorts",
         title: "Shorts",
         category: "media",
-        source: "src/components/blocks/shorts/",
         description:
             "Without JS, a feed of the browser's own players. Up/Down, K and M work while focus is inside.",
         min: 30,

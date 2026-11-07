@@ -135,7 +135,6 @@ export const messages: StoryGroup[] = [
         id: "message",
         title: "Message",
         category: "chat",
-        source: "packages/ui/src/astro/blocks/message/message.astro",
         description:
             "Start for the other side, end for the reader. The avatar sits level with the bubble, not the footer.",
         min: 24,
@@ -229,7 +228,6 @@ export const messages: StoryGroup[] = [
         id: "message-bubble",
         title: "Bubbles",
         category: "chat",
-        source: "packages/ui/src/astro/blocks/message/message-bubble.astro",
         description: "Ghost drops the frame and the 80% width cap.",
         min: 16,
         stories: VARIANTS.flatMap((variant) =>
@@ -247,7 +245,6 @@ export const messages: StoryGroup[] = [
         id: "message-group",
         title: "Groups",
         category: "chat",
-        source: "packages/ui/src/astro/blocks/message/message-group.astro",
         description:
             "The first message names the sender; the last carries the avatar (the first, for ghost messages).",
         min: 24,
@@ -319,7 +316,6 @@ export const messages: StoryGroup[] = [
         id: "interactive-message",
         title: "Interactive",
         category: "chat",
-        source: "packages/ui/src/astro/blocks/message/interactive-message.astro",
         description:
             "Pick a reply to walk the dialogue tree. Without JS, only the opening shows. Rodrick's branches run page-wide actions.",
         min: 24,

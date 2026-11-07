@@ -27,7 +27,6 @@ export const attachments: StoryGroup[] = [
         id: "attachment",
         title: "Horizontal",
         category: "forms",
-        source: "packages/ui/src/astro/blocks/attachment/attachment.astro",
         description:
             "The description names the state; colour and shimmer only echo it.",
         min: 18,
@@ -138,7 +137,6 @@ export const attachments: StoryGroup[] = [
         id: "attachment-vertical",
         title: "Vertical",
         category: "forms",
-        source: "packages/ui/src/astro/blocks/attachment/attachment.astro",
         description: "For image previews: the media stacks above the name.",
         min: 10,
         stories: [
@@ -186,7 +184,6 @@ export const attachments: StoryGroup[] = [
         id: "attachment-group",
         title: "Attachment groups",
         category: "forms",
-        source: "packages/ui/src/astro/blocks/attachment/attachment-group.astro",
         description: "Scrolls sideways and snaps; the overflowing edges fade.",
         min: "full",
         stories: [

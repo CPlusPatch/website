@@ -16,7 +16,6 @@ export const masonry: StoryGroup[] = [
         id: "masonry",
         title: "Masonry",
         category: "content",
-        source: "packages/ui/src/astro/blocks/masonry.astro",
         description:
             "Columns of uneven items. `min` sets the narrowest column, `columns` the most there are.",
         min: "full",

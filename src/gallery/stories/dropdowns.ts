@@ -9,7 +9,6 @@ export const dropdowns: StoryGroup[] = [
         id: "dropdown",
         title: "Dropdowns",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/dropdown.astro",
         description:
             "A native popover: opens, closes on Esc or an outside click, no JS.",
         stories: [

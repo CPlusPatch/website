@@ -8,7 +8,6 @@ export const blueprintFrame: StoryGroup[] = [
         id: "blueprint-frame",
         title: "Blueprint frames",
         category: "showcase",
-        source: "packages/ui/src/astro/blocks/blueprint-frame.astro",
         description:
             "Draws around any content, which brings its own surface. The label is optional.",
         min: 24,

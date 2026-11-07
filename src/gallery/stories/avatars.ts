@@ -7,7 +7,6 @@ export const avatars: StoryGroup[] = [
         id: "avatar",
         title: "Avatars",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/avatar.astro",
         description: "Initials stand in when there is no image.",
         min: 10,
         stories: [

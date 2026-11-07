@@ -8,7 +8,6 @@ export const status: StoryGroup[] = [
         id: "status",
         title: "Status",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/status.astro",
         description:
             "A light takes the text colour unless given a tone. Pulse is off under reduced motion.",
         min: 12,

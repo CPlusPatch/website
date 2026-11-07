@@ -70,7 +70,6 @@ export const sections: StoryGroup[] = [
         id: "section",
         title: "Section",
         category: "sections",
-        source: "packages/ui/src/astro/sections/section.astro",
         description:
             "With an id, the heading names the section for screen readers.",
         min: "full",
@@ -109,7 +108,6 @@ export const sections: StoryGroup[] = [
         id: "side-hero",
         title: "Side hero",
         category: "sections",
-        source: "packages/ui/src/astro/sections/side-hero.astro",
         min: "full",
         stories: (["right", "left"] as const).map((side) =>
             story(
@@ -124,7 +122,6 @@ export const sections: StoryGroup[] = [
         id: "navbar",
         title: "Navbar",
         category: "sections",
-        source: "packages/ui/src/astro/sections/navbar.astro",
         min: "full",
         stories: [
             story("default", Navbar, { title: "CPlusPatch", links: NAV_LINKS }),
@@ -165,7 +162,6 @@ export const sections: StoryGroup[] = [
         id: "footer",
         title: "Footer",
         category: "sections",
-        source: "packages/ui/src/astro/sections/footer.astro",
         min: "full",
         stories: [
             story(
@@ -230,7 +226,6 @@ export const sections: StoryGroup[] = [
         id: "sidebar",
         title: "Sidebar",
         category: "sections",
-        source: "packages/ui/src/astro/sections/sidebar/",
         description:
             "A collapsible menu on its own; open and sticky beside the content in a wide SidebarLayout, as on this page.",
         stories: [

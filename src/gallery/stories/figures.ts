@@ -8,7 +8,6 @@ export const figures: StoryGroup[] = [
         id: "figure",
         title: "Figures",
         category: "media",
-        source: "packages/ui/src/astro/blocks/figure.astro",
         min: 20,
         stories: [
             story(

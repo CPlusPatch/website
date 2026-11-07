@@ -10,7 +10,6 @@ export const buttons: StoryGroup[] = [
         id: "button-matrix",
         title: "Variant × tone",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/button.astro",
         description: "Fill style and colour are independent axes.",
         min: 10,
         ...matrix(
@@ -27,7 +26,6 @@ export const buttons: StoryGroup[] = [
         id: "button-size",
         title: "Size and state",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/button.astro",
         min: 10,
         stories: [
             ...SIZES.map((size) =>
@@ -59,7 +57,6 @@ export const buttons: StoryGroup[] = [
         id: "button-group",
         title: "Groups",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/button-group.astro",
         min: 16,
         stories: [
             story(

@@ -43,7 +43,6 @@ export const code: StoryGroup[] = [
         id: "code",
         title: "Code",
         category: "content",
-        source: "packages/ui/src/astro/blocks/code.astro",
         description:
             "Highlighted at build time by Shiki, in the palette's colours. The copy button needs JS and is absent without it.",
         min: 28,

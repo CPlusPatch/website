@@ -63,8 +63,6 @@ export interface StoryGroup {
     id: string;
     title: string;
     category: CategoryId;
-    /** The component's file (or folder, for composites), as a path from the repo root. */
-    source: string;
     description?: string;
     /**
      * Minimum gallery cell width, in rem, or "full" for one full-width cell

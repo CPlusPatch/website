@@ -23,7 +23,6 @@ export const cards: StoryGroup[] = [
         id: "card",
         title: "Cards",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/card.astro",
         min: 16,
         stories: [
             story("default", Card, {}, { slot: `<h3>Default</h3>${BODY}` }),
@@ -72,7 +71,6 @@ export const cards: StoryGroup[] = [
         id: "media-card",
         title: "Media cards",
         category: "showcase",
-        source: "packages/ui/src/astro/blocks/media-card.astro",
         min: 18,
         stories: [
             story(

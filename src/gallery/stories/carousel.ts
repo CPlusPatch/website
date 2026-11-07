@@ -81,7 +81,6 @@ export const carousel: StoryGroup[] = [
         id: "carousel",
         title: "Carousel",
         category: "showcase",
-        source: "packages/ui/src/astro/blocks/carousel/",
         description:
             "Swipes and scrolls natively without JS. Autoplay pauses on hover and stops for good on focus or a press.",
         min: "full",

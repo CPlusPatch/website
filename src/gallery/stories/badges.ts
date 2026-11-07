@@ -18,7 +18,6 @@ export const badges: StoryGroup[] = [
         id: "badge-matrix",
         title: "Variant × tone",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/badge.astro",
         description: "Fill style and colour are independent axes.",
         min: 10,
         ...matrix(
@@ -32,7 +31,6 @@ export const badges: StoryGroup[] = [
         id: "badge-size",
         title: "Size",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/badge.astro",
         min: 10,
         stories: [
             ...SIZES.map((size) =>
@@ -55,7 +53,6 @@ export const badges88x31: StoryGroup[] = [
         id: "88x31",
         title: "88x31s",
         category: "showcase",
-        source: "src/components/blocks/badge-88x31.astro",
         min: 8,
         stories: [
             ...friends.map((friend) =>

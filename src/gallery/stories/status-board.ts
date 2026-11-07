@@ -40,7 +40,6 @@ export const statusBoard: StoryGroup[] = [
         id: "status-board",
         title: "Status board",
         category: "toys",
-        source: "src/components/blocks/status-board/",
         description:
             "Hosts and the probes run against them, with a timeline of results from a live status feed.",
         min: 30,

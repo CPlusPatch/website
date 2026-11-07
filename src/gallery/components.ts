@@ -15,6 +15,7 @@ import {
     STORY_NAME,
     type StoryGroup,
 } from "./story.ts";
+import StoryPreview from "./story-preview.astro";
 
 export interface GalleryComponent {
     /** Unique, and the page's path segment. */
@@ -167,8 +168,33 @@ export const componentOf = (groupId: string) =>
 export const storyCount = (component: GalleryComponent) =>
     component.groups.reduce((n, group) => n + group.stories.length, 0);
 
+/** Where Astro says a compiled component came from, as an absolute path. */
+const moduleOf = (component: unknown) =>
+    (component as { moduleId?: string }).moduleId;
+
+/** The repo root, from a component whose place in it is known. */
+const ROOT = moduleOf(StoryPreview)?.replace(
+    /src\/gallery\/story-preview\.astro$/,
+    "",
+);
+
+/**
+ * A group's component file, as a path from the repo root: the file its first
+ * story renders, which Astro records on the compiled component.
+ */
+export const sourceOf = (group: StoryGroup) => {
+    if (!ROOT?.endsWith("/")) {
+        throw new Error("Can't find the repo root from story-preview.astro");
+    }
+    const id = moduleOf(group.stories[0].component);
+    if (!id?.startsWith(ROOT)) {
+        throw new Error(`No source in the repo for "${group.id}": ${id}`);
+    }
+    return id.slice(ROOT.length);
+};
+
 /** Where a component's files live: the library, or this site only. */
 export const origin = (component: GalleryComponent) =>
-    component.groups.every((g) => g.source.startsWith("packages/ui/"))
+    component.groups.every((g) => sourceOf(g).startsWith("packages/ui/"))
         ? "packages/ui"
         : "site";

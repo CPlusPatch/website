@@ -6,7 +6,6 @@ export const terminal: StoryGroup[] = [
         id: "terminal",
         title: "Terminal",
         category: "toys",
-        source: "packages/ui/src/astro/blocks/terminal.astro",
         min: 24,
         stories: [
             story("default", Terminal, {

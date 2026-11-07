@@ -6,7 +6,6 @@ export const scrollCue: StoryGroup[] = [
         id: "scroll-cue",
         title: "Scroll cues",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/scroll-cue.astro",
         description: "The arrow nudges, except under reduced motion.",
         min: 10,
         stories: [

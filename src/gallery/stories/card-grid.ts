@@ -17,7 +17,6 @@ export const cardGrid: StoryGroup[] = [
         id: "card-grid",
         title: "Card grids",
         category: "showcase",
-        source: "packages/ui/src/astro/blocks/card-grid.astro",
         description:
             "One, two, then three columns. A short last row is centred; narrow the preview to see two columns.",
         min: "full",

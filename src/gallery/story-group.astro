@@ -1,6 +1,7 @@
 ---
 import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import { Icon } from "astro-icon/components";
+import { sourceOf } from "./components.ts";
 import { type StoryGroup, slug, storyPath } from "./story.ts";
 import StoryCell from "./story-cell.astro";
 import StoryPreview from "./story-preview.astro";
@@ -58,7 +59,7 @@ const at = (row: string, column: string) =>
                 variant="subtle"
             />
             <p class="story-group__meta text-meta">
-                {source && <code>{group.source.split("/").at(-1)}</code>}
+                {source && <code>{sourceOf(group).split("/").at(-1)}</code>}
                 <span>
                     {matrix
                         ? `${matrix.rows.name} (${matrix.rows.values.length}) × ${matrix.columns.name} (${matrix.columns.values.length})`

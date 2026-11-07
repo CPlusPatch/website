@@ -7,6 +7,7 @@ import {
     components,
     type GalleryComponent,
     origin,
+    sourceOf,
     storyCount,
 } from "../../gallery/components.ts";
 import GalleryLayout from "../../gallery/gallery-layout.astro";
@@ -32,7 +33,7 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { component, previous, next } = Astro.props;
 const category = categories.find((c) => c.id === component.category);
 const siblings = category?.components ?? [];
-const sources = [...new Set(component.groups.map((g) => g.source))];
+const sources = [...new Set(component.groups.map(sourceOf))];
 const stories = storyCount(component);
 const several = component.groups.length > 1;
 const plural = (n: number, one: string, many = `${one}s`) =>

@@ -6,7 +6,6 @@ export const contactMethod: StoryGroup[] = [
         id: "contact-method",
         title: "Contact methods",
         category: "content",
-        source: "src/components/blocks/contact-method.astro",
         min: 14,
         stories: [
             story("default", ContactMethod, {

@@ -7,7 +7,6 @@ export const progress: StoryGroup[] = [
         id: "progress",
         title: "Progress",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/progress.astro",
         description:
             "Takes the tone it sits in unless given one. Attachments and carousel pips are built on it.",
         stories: [

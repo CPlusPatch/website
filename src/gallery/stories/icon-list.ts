@@ -6,7 +6,6 @@ export const iconList: StoryGroup[] = [
         id: "icon-list",
         title: "Icon lists",
         category: "content",
-        source: "packages/ui/src/astro/ui/icon-list.astro",
         min: 18,
         stories: [
             story("default", IconList, {

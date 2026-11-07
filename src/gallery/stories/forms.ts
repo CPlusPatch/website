@@ -28,7 +28,6 @@ export const forms: StoryGroup[] = [
         id: "toggle",
         title: "Toggles",
         category: "forms",
-        source: "packages/ui/src/astro/ui/toggle.astro",
         min: 10,
         stories: [
             story("default", Toggle, { label: "Example" }),
@@ -51,7 +50,6 @@ export const forms: StoryGroup[] = [
         id: "select",
         title: "Selects",
         category: "forms",
-        source: "packages/ui/src/astro/ui/select.astro",
         min: 10,
         stories: [
             story("default", Select, {
@@ -74,7 +72,6 @@ export const forms: StoryGroup[] = [
         id: "input",
         title: "Inputs",
         category: "forms",
-        source: "packages/ui/src/astro/ui/input.astro",
         min: 14,
         stories: [
             story("default", Input, {
@@ -119,7 +116,6 @@ export const forms: StoryGroup[] = [
         id: "textarea",
         title: "Textareas",
         category: "forms",
-        source: "packages/ui/src/astro/ui/textarea.astro",
         min: 16,
         stories: [
             story("default", Textarea, {
@@ -163,7 +159,6 @@ export const forms: StoryGroup[] = [
         id: "segmented-control",
         title: "Segmented controls",
         category: "forms",
-        source: "packages/ui/src/astro/ui/segmented-control.astro",
         description:
             "Plain radios: they submit with a form and can drive CSS via :has().",
         stories: [
