@@ -2,32 +2,28 @@ import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
 import { TONES } from "@cpluspatch/ui/lib/tone.ts";
 import Badge88x31 from "../../components/blocks/badge-88x31.astro";
 import { friends } from "../../data/friends.ts";
-import { SIZES, type StoryGroup, story, title } from "../story.ts";
+import { matrix, SIZES, type StoryGroup, story, title } from "../story.ts";
 
 const BADGE_VARIANTS = ["solid", "outline", "ghost"] as const;
 
 export const badges: StoryGroup[] = [
     {
         id: "badge-matrix",
-        title: "Badges — variant × tone",
+        title: "Variant × tone",
         category: "primitives",
         source: "packages/ui/src/astro/ui/badge.astro",
         description: "Fill style and colour are independent axes.",
         min: 10,
-        stories: BADGE_VARIANTS.flatMap((variant) =>
-            TONES.map((tone) =>
-                story(
-                    `${variant}-${tone}`,
-                    Badge,
-                    { variant, tone },
-                    { slot: title(tone) },
-                ),
-            ),
+        ...matrix(
+            Badge,
+            ["variant", BADGE_VARIANTS],
+            ["tone", TONES],
+            (variant, tone) => [{ variant, tone }, { slot: title(tone) }],
         ),
     },
     {
         id: "badge-size",
-        title: "Badges — size",
+        title: "Size",
         category: "primitives",
         source: "packages/ui/src/astro/ui/badge.astro",
         min: 10,

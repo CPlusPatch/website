@@ -1,0 +1,144 @@
+---
+import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
+import Toggle from "@cpluspatch/ui/astro/ui/toggle.astro";
+import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
+
+/**
+ * A component page's preview settings: the width every group defaults to,
+ * what the stories stand on, and outlines on every box in them. Plain
+ * radios and a checkbox that the CSS below reads through :has(), so they
+ * need no JS (and aren't kept across pages).
+ */
+---
+
+<fieldset class="gallery-toolbar">
+    <legend class="visually-hidden">Preview settings</legend>
+    <div class="gallery-toolbar__row">
+        <div class="gallery-toolbar__item">
+            <span class="gallery-toolbar__label text-meta" aria-hidden="true">
+                Width
+            </span>
+            <SegmentedControl
+                name={PREVIEW_WIDTH_NAME}
+                label="Preview width"
+                options={previewWidthOptions()}
+                value="desktop"
+                size="sm"
+                variant="subtle"
+            />
+        </div>
+        <div class="gallery-toolbar__item">
+            <span class="gallery-toolbar__label text-meta" aria-hidden="true">
+                Stage
+            </span>
+            <SegmentedControl
+                name="gallery-stage"
+                label="Stage"
+                options={[
+                    { value: "dots", label: "Dots" },
+                    { value: "plain", label: "Plain" },
+                    { value: "surface", label: "Surface" },
+                ]}
+                value="dots"
+                size="sm"
+                variant="subtle"
+            />
+        </div>
+        <Toggle label="Outline boxes" name="gallery-outline"
+            >Outline boxes</Toggle
+        >
+    </div>
+</fieldset>
+
+<style>
+.gallery-toolbar {
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+}
+
+.gallery-toolbar__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm) var(--space-lg);
+}
+
+.gallery-toolbar__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.gallery-toolbar__label {
+    font-family: var(--font-mono);
+}
+
+/*
+ * Wide enough for one row: it sticks under the bar, so the settings stay
+ * in reach, and jumps stop clear of both (gallery-layout.astro).
+ */
+:global(html:has(.gallery-toolbar)) {
+    --gallery-toolbar-height: 3rem;
+}
+
+@media (width >= 52rem) {
+    .gallery-toolbar {
+        position: sticky;
+        top: var(--header-height);
+        z-index: calc(var(--z-sticky) - 1);
+        box-sizing: border-box;
+        height: var(--gallery-toolbar-height);
+        padding-block: 0;
+    }
+
+    /* A fieldset's contents can't be centred by the fieldset itself. */
+    .gallery-toolbar__row {
+        min-height: calc(
+            var(--gallery-toolbar-height) -
+            2 *
+            var(--border-width)
+        );
+    }
+
+    :global(html:has(.gallery-toolbar)) {
+        --gallery-toolbar-offset: var(--gallery-toolbar-height);
+    }
+}
+
+/* The stages' backdrop: a dot grid (the default), the page, or a surface. */
+:global(.story__stage) {
+    background-color: var(--color-bg);
+    background-image: radial-gradient(
+        color-mix(in oklab, var(--color-text) 16%, transparent) 1px,
+        transparent 1px
+    );
+    background-size: 12px 12px;
+}
+
+:global(
+    html:has(input[name="gallery-stage"][value="plain"]:checked) .story__stage
+) {
+    background-image: none;
+}
+
+:global(
+    html:has(input[name="gallery-stage"][value="surface"]:checked) .story__stage
+) {
+    background-color: var(--color-surface);
+    background-image: none;
+}
+
+/* Every box a story draws, outlined: for checking alignment and spacing. */
+:global(
+    html:has(input[name="gallery-outline"]:checked)
+        :is(.story__preview, .story__preview *)
+) {
+    outline: 1px dashed
+        color-mix(in oklab, var(--color-primary) 55%, transparent);
+    outline-offset: -1px;
+}
+</style>

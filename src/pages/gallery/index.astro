@@ -1,0 +1,279 @@
+---
+import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
+import { Icon } from "astro-icon/components";
+import {
+    categories,
+    components,
+    origin,
+    storyCount,
+} from "../../gallery/components.ts";
+import GalleryLayout from "../../gallery/gallery-layout.astro";
+import { groups } from "../../gallery/stories/index.ts";
+import StoryNode from "../../gallery/story-node.astro";
+
+/**
+ * The gallery's front page: every component, by category, each a card with
+ * a small live preview of its first story that links to its page.
+ */
+const plural = (n: number, one: string, many = `${one}s`) =>
+    `${n} ${n === 1 ? one : many}`;
+const stories = groups.reduce((n, group) => n + group.stories.length, 0);
+
+// The gallery used to be one page, with each group at /gallery/#<group-id>.
+const moved = Object.fromEntries(
+    components.flatMap((component) =>
+        component.groups.map((group) => [
+            group.id,
+            `/gallery/${component.id}/#${group.id}`,
+        ]),
+    ),
+);
+---
+
+<GalleryLayout
+    description="The UI components this site is built from, with their variants and states."
+    sidebar={false}
+>
+    {/* Sends an old link to a group on to the page it is on now. */}
+    <script is:inline define:vars={{ moved }}>
+    const to = moved[decodeURIComponent(location.hash.slice(1))];
+    if (to) location.replace(to);
+    </script>
+
+    <header class="gallery-index__hero">
+        <h1 class="text-headline">Components</h1>
+        <p class="gallery-index__intro">
+            The building blocks of this site, most of them from{" "}
+            <code>packages/ui</code>. Pick one to see all its stories, or change
+            the theme from Display.
+        </p>
+        <p class="text-meta">
+            {`${plural(components.length, "component")} · ${plural(stories, "story", "stories")}`}
+        </p>
+    </header>
+
+    {categories.map((category) => (
+        <section class="gallery-index__category" aria-labelledby={category.id}>
+            <header class="gallery-index__category-header">
+                <h2 class="text-heading" id={category.id}>
+                    <Icon name={category.icon} aria-hidden="true" />
+                    {category.title}
+                </h2>
+                <p class="text-meta">
+                    {plural(category.components.length, "component")}
+                </p>
+            </header>
+            <ul class="gallery-index__grid">
+                {category.components.map((component) => {
+                    const first = component.groups[0].stories[0];
+                    return (
+                        <li class="gallery-card">
+                            {/* Where /gallery/#<group-id> lands without JS. */}
+                            {component.groups.map((group) => (
+                                <span
+                                    class="gallery-card__anchor"
+                                    id={group.id}
+                                />
+                            ))}
+                            <div class="gallery-card__thumb" inert>
+                                <div class="gallery-card__preview">
+                                    <StoryNode story={first} />
+                                </div>
+                            </div>
+                            <div class="gallery-card__body">
+                                <h3 class="gallery-card__title text-subheading">
+                                    <a href={`/gallery/${component.id}/`}>
+                                        {component.title}
+                                    </a>
+                                </h3>
+                                {component.description && (
+                                    <p class="gallery-card__description text-body-sm">
+                                        {component.description}
+                                    </p>
+                                )}
+                                <p class="gallery-card__meta text-meta">
+                                    <span>
+                                        {plural(
+                                            storyCount(component),
+                                            "story",
+                                            "stories",
+                                        )}
+                                    </span>
+                                    {origin(component) === "site" && (
+                                        <Badge
+                                            variant="outline"
+                                            tone="secondary"
+                                            size="sm"
+                                        >
+                                            site only
+                                        </Badge>
+                                    )}
+                                </p>
+                            </div>
+                        </li>
+                    );
+                })}
+            </ul>
+        </section>
+    ))}
+</GalleryLayout>
+
+<style>
+.gallery-index__hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding-block: var(--space-md) 0;
+
+    h1,
+    p {
+        margin: 0;
+    }
+}
+
+.gallery-index__intro {
+    max-width: 60ch;
+    color: var(--color-text-muted);
+}
+
+.gallery-index__category {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* A full-strength heading on a solid rule, clear over the backdrop grid. */
+.gallery-index__category-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--color-border-strong);
+
+    h2 {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin: 0;
+
+        svg {
+            color: var(--color-primary);
+        }
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+.gallery-index__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+    gap: var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* The whole card is the link: the title's ::after stretches over it. */
+.gallery-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+    transition: border-color var(--transition);
+
+    &:hover,
+    &:focus-within {
+        border-color: var(--color-primary);
+    }
+}
+
+.gallery-card__anchor {
+    position: absolute;
+    top: 0;
+}
+
+/* A scaled-down preview, centred and cut to the card: a glimpse, not a working copy. */
+.gallery-card__thumb {
+    --thumb-scale: 0.7;
+
+    position: relative;
+    height: 8.5rem;
+    background-color: var(--color-bg);
+    background-image: radial-gradient(
+        color-mix(in oklab, var(--color-text) 16%, transparent) 1px,
+        transparent 1px
+    );
+    background-size: 12px 12px;
+    overflow: hidden;
+    border-bottom: var(--border-width) solid var(--border-color);
+    contain: paint;
+}
+
+/* Full size, then scaled to fit, so it centres in the whole thumbnail. */
+.gallery-card__preview {
+    container-type: inline-size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(100% / var(--thumb-scale));
+    height: calc(100% / var(--thumb-scale));
+    padding: var(--space-md);
+    box-sizing: border-box;
+    transform: scale(var(--thumb-scale));
+    transform-origin: top left;
+}
+
+.gallery-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md) var(--space-md);
+
+    p {
+        margin: 0;
+    }
+}
+
+.gallery-card__title {
+    margin: 0;
+
+    a {
+        color: inherit;
+        text-decoration: none;
+
+        &:hover {
+            color: var(--color-primary);
+            background-color: transparent;
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+        }
+    }
+}
+
+.gallery-card__description {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--color-text-muted);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.gallery-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: auto;
+}
+</style>

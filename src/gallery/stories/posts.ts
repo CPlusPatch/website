@@ -523,7 +523,7 @@ const featured = (variant: Variant) =>
 export const postStories: StoryGroup[] = [
     {
         id: "post",
-        title: "Posts",
+        title: "In a feed",
         category: "chat",
         source: "packages/ui/src/astro/blocks/post/post.astro",
         description:
@@ -533,7 +533,7 @@ export const postStories: StoryGroup[] = [
     },
     {
         id: "post-boxed",
-        title: "Posts, boxed",
+        title: "Boxed",
         category: "chat",
         source: "packages/ui/src/astro/blocks/post/post.astro",
         description:

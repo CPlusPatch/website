@@ -1,0 +1,259 @@
+---
+import Sidebar from "@cpluspatch/ui/astro/sections/sidebar/sidebar.astro";
+import SidebarLayout from "@cpluspatch/ui/astro/sections/sidebar/sidebar-layout.astro";
+import SidebarNav from "@cpluspatch/ui/astro/sections/sidebar/sidebar-nav.astro";
+import Dropdown from "@cpluspatch/ui/astro/ui/dropdown.astro";
+import Layout from "../layouts/base.astro";
+import DisplaySettings from "./display-settings.astro";
+import GalleryNav from "./gallery-nav.astro";
+import { PREVIEW_CSS } from "./widths.ts";
+
+/**
+ * Every gallery page's frame: a sticky bar (the gallery's name, where you
+ * are, and the Display menu), and on component pages a sidebar of every
+ * component, which gives way to a menu in the bar on narrow screens.
+ */
+interface Props {
+    /** The page's own title, before " · Component gallery". */
+    title?: string;
+    description: string;
+    /** Where the page is, after the gallery itself. The last is the page. */
+    crumbs?: { label: string; href?: string }[];
+    /** Id of the component whose page this is, for the sidebar. */
+    current?: string;
+    /** Off for the index, which is a list of the components itself. */
+    sidebar?: boolean;
+}
+
+const {
+    title,
+    description,
+    crumbs = [],
+    current,
+    sidebar = true,
+} = Astro.props;
+---
+
+<Layout
+    title={title ? `${title} · Component gallery` : "Component gallery"}
+    {description}
+    noindex
+>
+    <style is:inline set:html={PREVIEW_CSS} />
+
+    <div class="gallery" id="top">
+        <header class="gallery__bar">
+            <p class="gallery__title text-title">
+                <a href="/gallery/">Component gallery</a>
+            </p>
+            {crumbs.length > 0 && (
+                <nav class="gallery__crumbs text-meta" aria-label="Breadcrumb">
+                    <ol>
+                        {crumbs.map((crumb, i) => (
+                            <li>
+                                {crumb.href ? (
+                                    <a href={crumb.href}>{crumb.label}</a>
+                                ) : (
+                                    <span
+                                        aria-current={
+                                            i === crumbs.length - 1
+                                                ? "page"
+                                                : undefined
+                                        }
+                                    >
+                                        {crumb.label}
+                                    </span>
+                                )}
+                            </li>
+                        ))}
+                    </ol>
+                </nav>
+            )}
+            <span class="gallery__spacer"></span>
+            {sidebar && (
+                /* The sidebar's links, for when there is no room for it. */
+                <Dropdown
+                    class="gallery__menu"
+                    id="gallery-menu"
+                    label="Components"
+                    icon="lucide:menu"
+                    collapseBelow="30rem"
+                >
+                    <SidebarNav label="Components">
+                        <GalleryNav {current} />
+                    </SidebarNav>
+                </Dropdown>
+            )}
+            <DisplaySettings collapseBelow="30rem" />
+        </header>
+
+        {sidebar ? (
+            <SidebarLayout>
+                <Sidebar
+                    slot="sidebar"
+                    class="gallery__sidebar"
+                    label="Components"
+                >
+                    <GalleryNav {current} />
+                </Sidebar>
+                <main id="main" class="gallery__main">
+                    <slot />
+                </main>
+            </SidebarLayout>
+        ) : (
+            <main id="main" class="gallery__main">
+                <slot />
+            </main>
+        )}
+    </div>
+</Layout>
+
+<script>
+// The page-wide easter eggs the dialogue stories run.
+import "./dialogue-actions.ts";
+</script>
+
+<style>
+:global(html):has(.gallery) {
+    /* The sticky bar, plus the toolbar where a page has one (toolbar.astro). */
+    --gallery-sticky: calc(
+        var(--header-height) +
+        var(--gallery-toolbar-offset, 0px)
+    );
+}
+
+.gallery {
+    width: min(100% - 2 * var(--space-md), 90rem);
+    margin-inline: auto;
+
+    /* Focus and in-page jumps stop clear of what sticks to the top. */
+    :global(html):has(&) {
+        scroll-padding-top: calc(var(--gallery-sticky) + var(--space-md));
+    }
+
+    /* Sticky, so the settings stay in reach; the sidebar sticks just below it. */
+    .gallery__bar {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-sticky);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm) var(--space-md);
+        /* A fixed height, which the offsets above and below rely on. */
+        height: var(--header-height);
+        margin-bottom: var(--space-md);
+        /* Bleed to the viewport edges, so content never shows beside it. */
+        padding-inline: var(--space-md);
+        margin-inline: calc(var(--space-md) * -1);
+        background-color: color-mix(in oklab, var(--color-bg) 85%, transparent);
+        backdrop-filter: blur(8px);
+        border-bottom: var(--border-width) solid var(--border-color);
+    }
+
+    .gallery__title {
+        flex-shrink: 0;
+        margin: 0;
+        white-space: nowrap;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            /* Not the global link hover's highlighter fill. */
+            &:hover {
+                color: inherit;
+                background-color: transparent;
+            }
+        }
+    }
+
+    .gallery__crumbs {
+        min-width: 0;
+        overflow: hidden;
+
+        ol {
+            display: flex;
+            gap: var(--space-xs);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            white-space: nowrap;
+        }
+
+        li {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            &::before {
+                content: "/" / "";
+                margin-inline-end: var(--space-xs);
+            }
+        }
+
+        a {
+            color: inherit;
+        }
+
+        [aria-current] {
+            color: var(--color-text);
+        }
+    }
+
+    .gallery__spacer {
+        flex: 1;
+    }
+
+    .gallery__sidebar {
+        /* Not the toolbar: that sticks over the stories, not beside them. */
+        --sidebar-top: calc(var(--header-height) + var(--space-md));
+    }
+
+    .gallery__main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+        min-width: 0;
+        /*
+         * The page's bottom padding lives here, inside the sidebar's column:
+         * outside it, the column would end short of the page and push the
+         * sticky sidebar up at the bottom.
+         */
+        padding-bottom: var(--space-xl);
+    }
+
+    /*
+     * Narrow: the sidebar gives way to the Components menu in the bar, so
+     * the links stay in reach while scrolling. The two queries meet at the
+     * same width: the layout is the page less its 2 × space-md gutter.
+     */
+    .gallery__menu {
+        display: none;
+    }
+
+    @container (width < 58rem) {
+        .gallery__menu {
+            display: inline-block;
+        }
+    }
+
+    @container sidebar-layout (width < 56rem) {
+        .gallery__sidebar {
+            display: none;
+        }
+    }
+
+    /* Tiny: just the gallery's name; the dropdowns drop their words. */
+    @container (width < 40rem) {
+        .gallery__crumbs {
+            display: none;
+        }
+    }
+
+    @container (width < 30rem) {
+        .gallery__bar {
+            gap: var(--space-sm);
+        }
+    }
+}
+</style>

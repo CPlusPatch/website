@@ -11,6 +11,9 @@
  *
  * Composites nest through `children` (the default slot) and `slots` (named
  * slots), each holding more stories -- see the carousel.
+ *
+ * Groups are sorted into components (components.ts), each of which gets a
+ * page at /gallery/<component>/.
  */
 
 import type { ComponentProps } from "astro/types";
@@ -65,7 +68,14 @@ export interface StoryGroup {
      * per row. Wider components need more. Defaults to 16.
      */
     min?: number | "full";
+    /** Set by matrix(): the stories are every combination of two axes. */
+    matrix?: { rows: Axis; columns: Axis };
     stories: Story[];
+}
+
+export interface Axis {
+    name: string;
+    values: readonly string[];
 }
 
 /**
@@ -77,8 +87,37 @@ export const story = <T extends Component>(
     name: string,
     component: T,
     props: ComponentProps<T>,
-    content: Omit<Story, "name" | "component" | "props"> = {},
+    content: StoryContent = {},
 ): Story => ({ name, component, props, ...content });
+
+type StoryContent = Omit<Story, "name" | "component" | "props">;
+
+/**
+ * Every combination of two props, as stories named `row=x,column=y` (in
+ * row-major order) that the gallery shows as a table. Spread the result into
+ * a group. Each combination still goes through story(), so its props are
+ * type-checked.
+ */
+export const matrix = <T extends Component, R extends string, C extends string>(
+    component: T,
+    [rowName, rows]: [string, readonly R[]],
+    [columnName, columns]: [string, readonly C[]],
+    build: (row: R, column: C) => [ComponentProps<T>, StoryContent?],
+): Pick<StoryGroup, "matrix" | "stories"> => ({
+    matrix: {
+        rows: { name: rowName, values: rows },
+        columns: { name: columnName, values: columns },
+    },
+    stories: rows.flatMap((row) =>
+        columns.map((column) =>
+            story(
+                `${rowName}=${row},${columnName}=${column}`,
+                component,
+                ...build(row, column),
+            ),
+        ),
+    ),
+});
 
 export const SIZES = ["lg", "default", "sm"] as const;
 

@@ -1,73 +1,136 @@
 ---
 import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import type { StoryGroup } from "./story.ts";
+import StoryCell from "./story-cell.astro";
 import StoryNode from "./story-node.astro";
 import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 
 /**
- * One gallery group: a linkable heading with the component's source, a
- * per-group preview width override, and a grid of its stories.
+ * One group of stories, as a section of its component's page: a grid of
+ * stories on their stages, or for a matrix() group, a table of them with
+ * the two axes as its headings.
+ *
+ * A component of several groups gives each a heading, its source, and a
+ * preview width of its own. A component of one is just the stories: the
+ * page's header and toolbar already say the rest.
  */
 interface Props {
     group: StoryGroup;
+    /** Whether the group shares its page with others. */
+    titled: boolean;
+    /** Whether to name the group's file: only when the page has several. */
+    source?: boolean;
 }
 
-const { group } = Astro.props;
+const { group, titled, source = false } = Astro.props;
+const { matrix } = group;
 
 const cell = (min: number | "full" = 16) =>
     min === "full" ? "100%" : `${min}rem`;
 const count = group.stories.length;
+const id = (name: string) => `${group.id}/${name}`;
+const at = (row: string, column: string) =>
+    group.stories.find(
+        (s) =>
+            s.name ===
+            `${matrix?.rows.name}=${row},${matrix?.columns.name}=${column}`,
+    );
 ---
 
 <section
     class="story-group"
     id={group.id}
-    aria-labelledby={`${group.id}-title`}
+    aria-labelledby={titled ? `${group.id}-title` : undefined}
+    aria-label={titled ? undefined : group.title}
 >
-    <header class="story-group__header">
-        <h3 class="story-group__title text-subheading" id={`${group.id}-title`}>
-            <a href={`#${group.id}`}>{group.title}</a>
-        </h3>
-        <SegmentedControl
-            class="story-group__width"
-            name={`${PREVIEW_WIDTH_NAME}-${group.id}`}
-            label={`Preview width for ${group.title}`}
-            options={previewWidthOptions(true)}
-            value="auto"
-            size="sm"
-            variant="subtle"
-        />
-        <p class="story-group__meta text-meta">
-            <code>{group.source}</code>
-            <span>{`${count} ${count === 1 ? "story" : "stories"}`}</span>
-        </p>
-        {group.description && (
-            <p class="story-group__description text-body-sm">
-                {group.description}
-            </p>
-        )}
-    </header>
-    <div class="story-group__grid" style={`--cell: ${cell(group.min)}`}>
-        {group.stories.map((story) => (
-            <figure
-                class="story-group__cell"
-                data-story={`${group.id}/${story.name}`}
+    {titled && (
+        <header class="story-group__header">
+            <h2
+                class="story-group__title text-subheading"
+                id={`${group.id}-title`}
             >
-                <figcaption class="text-meta">{story.name}</figcaption>
-                <div class="story-group__preview">
-                    <StoryNode {story} />
-                </div>
-            </figure>
-        ))}
+                <a href={`#${group.id}`}>{group.title}</a>
+            </h2>
+            <SegmentedControl
+                class="story-group__width"
+                name={`${PREVIEW_WIDTH_NAME}-${group.id}`}
+                label={`Preview width for ${group.title}`}
+                options={previewWidthOptions(true)}
+                value="auto"
+                size="sm"
+                variant="subtle"
+            />
+            <p class="story-group__meta text-meta">
+                {source && <code>{group.source.split("/").at(-1)}</code>}
+                <span>
+                    {matrix
+                        ? `${matrix.rows.name} (${matrix.rows.values.length}) × ${matrix.columns.name} (${matrix.columns.values.length})`
+                        : `${count} ${count === 1 ? "story" : "stories"}`}
+                </span>
+            </p>
+            {group.description && (
+                <p class="story-group__description text-body-sm">
+                    {group.description}
+                </p>
+            )}
+        </header>
+    )}
+    <div class="story-group__body">
+        {matrix ? (
+            <div class="story-group__matrix story__stage">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <span class="visually-hidden">
+                                    {matrix.rows.name}
+                                </span>
+                            </th>
+                            {matrix.columns.values.map((column) => (
+                                <th scope="col">{column}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {matrix.rows.values.map((row) => (
+                            <tr>
+                                <th scope="row">{row}</th>
+                                {matrix.columns.values.map((column) => {
+                                    const story = at(row, column);
+                                    return (
+                                        story && (
+                                            <td
+                                                data-story={id(story.name)}
+                                                title={story.name}
+                                            >
+                                                <div class="story__preview">
+                                                    <StoryNode {story} />
+                                                </div>
+                                            </td>
+                                        )
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        ) : (
+            <div class="story-group__grid" style={`--cell: ${cell(group.min)}`}>
+                {group.stories.map((story) => (
+                    <StoryCell id={id(story.name)} {story} />
+                ))}
+            </div>
+        )}
     </div>
 </section>
 
 <style>
 .story-group {
     container-type: inline-size;
-    background-color: var(--color-surface);
-    border: var(--border-width) solid var(--border-color);
-    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
 
     /* --preview-width and --preview-frame come from PREVIEW_CSS (widths.ts). */
 
@@ -77,7 +140,7 @@ const count = group.stories.length;
         align-items: center;
         column-gap: var(--space-md);
         row-gap: var(--space-xs);
-        padding: var(--space-md);
+        padding-bottom: var(--space-sm);
         border-bottom: var(--border-width) solid var(--border-color);
     }
 
@@ -155,20 +218,13 @@ const count = group.stories.length;
         color: var(--color-text-muted);
     }
 
-    .story-group__grid {
-        display: grid;
-        grid-template-columns: repeat(
-                auto-fill,
-                minmax(min(var(--cell), 100%), 1fr)
-            );
-        gap: var(--space-md);
-        align-items: start;
-        /* The width is the stories' own, not counting this padding. */
+    /* The width is the stories' own; a dotted frame marks a capped one. */
+    .story-group__body {
         box-sizing: content-box;
+        width: calc(100% - 2 * var(--preview-gutter, 0px));
         max-width: var(--preview-width, none);
-        margin: var(--space-md) auto;
-        padding-inline: var(--space-md);
-        /* A dotted frame marks the edges of a constrained preview. */
+        margin-inline: auto;
+        padding-inline: var(--preview-gutter, 0);
         border-inline: var(--border-width) var(--preview-frame, none)
             var(--color-border-strong);
         transition: max-width var(--transition);
@@ -178,27 +234,48 @@ const count = group.stories.length;
         }
     }
 
-    .story-group__cell {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-xs);
-        margin: 0;
+    .story-group__grid {
+        display: grid;
+        grid-template-columns: repeat(
+                auto-fill,
+                minmax(min(var(--cell), 100%), 1fr)
+            );
+        gap: var(--space-md);
+        align-items: start;
     }
 
-    .story-group__preview {
-        container-type: inline-size;
-        display: flex;
-        align-items: flex-start;
-    }
+    /* One stage for the whole table; it scrolls sideways if it must. */
+    .story-group__matrix {
+        overflow-x: auto;
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
 
-    /* A group this narrow is already phone-sized: nothing to switch. */
-    @container (width < 36rem) {
-        .story-group__header {
-            grid-template-columns: minmax(0, 1fr);
+        table {
+            margin-inline: auto;
+            border-collapse: collapse;
         }
 
-        .story-group__width {
-            display: none;
+        th {
+            padding: var(--space-xs) var(--space-sm);
+            font-family: var(--font-mono);
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            color: var(--color-text-muted);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        th[scope="row"] {
+            text-align: end;
+        }
+
+        td {
+            padding: var(--space-sm);
+            vertical-align: middle;
+        }
+
+        .story__preview {
+            justify-content: center;
         }
     }
 }

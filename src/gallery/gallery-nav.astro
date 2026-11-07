@@ -1,19 +1,29 @@
 ---
 import SidebarGroup from "@cpluspatch/ui/astro/sections/sidebar/sidebar-group.astro";
 import SidebarLink from "@cpluspatch/ui/astro/sections/sidebar/sidebar-link.astro";
-import { categories } from "./stories/index.ts";
+import { categories, storyCount } from "./components.ts";
 
 /**
- * The gallery's index: a SidebarGroup per category, a scroll-tracking link
- * per story group. Used in both the wide sidebar and the narrow bar menu.
+ * A link to each component's page, by category, with its story count. Used
+ * in both the wide sidebar and the narrow bar menu.
  */
+interface Props {
+    /** The component whose page this is. */
+    current?: string;
+}
+
+const { current } = Astro.props;
 ---
 
 {categories.map((category) => (
     <SidebarGroup title={category.title} icon={category.icon}>
-        {category.groups.map((group) => (
-            <SidebarLink href={`#${group.id}`} section={group.id}>
-                {group.title}
+        {category.components.map((component) => (
+            <SidebarLink
+                href={`/gallery/${component.id}/`}
+                current={component.id === current}
+                meta={storyCount(component)}
+            >
+                {component.title}
             </SidebarLink>
         ))}
     </SidebarGroup>

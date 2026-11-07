@@ -27,8 +27,8 @@ export const previewWidthOptions = (auto = false): SegmentedOption[] => [
 ];
 
 /**
- * The CSS that sets each .story-group's --preview-width and --preview-frame
- * (consumed in story-group.astro). The page-wide picker sets a default; a
+ * The CSS that sets each .story-group's --preview-width, --preview-frame and
+ * --preview-gutter (consumed in story-group.astro). The page-wide picker sets a default; a
  * group's own picker, unless on Auto, overrides it. The page-wide half sits
  * in :where() so it carries no weight against the override, and "desktop"
  * is spelled out so a group can opt back out of a narrower default.
@@ -39,8 +39,8 @@ export const previewWidthOptions = (auto = false): SegmentedOption[] => [
 export const PREVIEW_CSS = PREVIEW_WIDTHS.map((width) => {
     const own = `.story-group:has(.story-group__width input[value="${width.id}"]:checked)`;
     if (!("width" in width)) {
-        return `${own} { --preview-width: initial; --preview-frame: initial; }`;
+        return `${own} { --preview-width: initial; --preview-frame: initial; --preview-gutter: initial; }`;
     }
     const page = `:where(html:has(input[name="${PREVIEW_WIDTH_NAME}"][value="${width.id}"]:checked)) .story-group`;
-    return `${page}, ${own} { --preview-width: ${width.width}; --preview-frame: dotted; }`;
+    return `${page}, ${own} { --preview-width: ${width.width}; --preview-frame: dotted; --preview-gutter: var(--space-md); }`;
 }).join("\n");

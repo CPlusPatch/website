@@ -133,7 +133,7 @@ const RODRICK: DialogueNode = {
 export const messages: StoryGroup[] = [
     {
         id: "message",
-        title: "Messages",
+        title: "Message",
         category: "chat",
         source: "packages/ui/src/astro/blocks/message/message.astro",
         description:
@@ -227,7 +227,7 @@ export const messages: StoryGroup[] = [
     },
     {
         id: "message-bubble",
-        title: "Message bubbles",
+        title: "Bubbles",
         category: "chat",
         source: "packages/ui/src/astro/blocks/message/message-bubble.astro",
         description: "Ghost drops the frame and the 80% width cap.",
@@ -245,7 +245,7 @@ export const messages: StoryGroup[] = [
     },
     {
         id: "message-group",
-        title: "Message groups",
+        title: "Groups",
         category: "chat",
         source: "packages/ui/src/astro/blocks/message/message-group.astro",
         description:
@@ -317,7 +317,7 @@ export const messages: StoryGroup[] = [
     },
     {
         id: "interactive-message",
-        title: "Interactive messages",
+        title: "Interactive",
         category: "chat",
         source: "packages/ui/src/astro/blocks/message/interactive-message.astro",
         description:

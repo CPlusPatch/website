@@ -1,4 +1,4 @@
-import { CATEGORIES, type StoryGroup } from "../story.ts";
+import type { StoryGroup } from "../story.ts";
 import { accordion } from "./accordion.ts";
 import { alerts } from "./alerts.ts";
 import { attachments } from "./attachments.ts";
@@ -76,9 +76,3 @@ export const groups: StoryGroup[] = [
     ...statusBoard,
     ...sections,
 ];
-
-/** The groups sorted into categories, in gallery order. */
-export const categories = CATEGORIES.map((category) => ({
-    ...category,
-    groups: groups.filter((group) => group.category === category.id),
-}));

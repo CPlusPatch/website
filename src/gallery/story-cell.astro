@@ -1,0 +1,128 @@
+---
+import { Icon } from "astro-icon/components";
+import { storySource } from "./source.ts";
+import type { Story } from "./story.ts";
+import StoryNode from "./story-node.astro";
+
+/**
+ * One story on its stage: a caption bar with its name and a Props panel
+ * (a <details>, so no JS), above the story on a backdrop the page toolbar
+ * picks (toolbar.astro).
+ */
+interface Props {
+    /** `group/story`, the hook tests find the story by. */
+    id: string;
+    story: Story;
+}
+
+const { id, story } = Astro.props;
+---
+
+<figure class="story" data-story={id}>
+    <figcaption class="story__caption">
+        <code class="story__name">{story.name}</code>
+        <details class="story__props">
+            <summary title="Props">
+                <Icon name="lucide:code-xml" aria-hidden="true" />
+                <span class="visually-hidden">Props of {story.name}</span>
+            </summary>
+            <pre class="story__source"><code>{storySource(story)}</code></pre>
+        </details>
+    </figcaption>
+    <div class="story__stage">
+        <div class="story__preview">
+            <StoryNode {story} />
+        </div>
+    </div>
+</figure>
+
+<style>
+.story {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin: 0;
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+    /* The Props panel lays over the stage, above anything the story raises. */
+    isolation: isolate;
+}
+
+.story__caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    min-height: 2rem;
+    padding-inline: var(--space-sm) var(--space-xs);
+    background-color: var(--color-surface);
+    border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.story__name {
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--font-size-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.story__props {
+    summary {
+        display: grid;
+        place-items: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        list-style: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        &:hover {
+            color: var(--color-text);
+        }
+    }
+
+    &[open] summary {
+        color: var(--color-primary);
+    }
+}
+
+.story__source {
+    position: absolute;
+    inset: 2rem 0 auto;
+    z-index: 1;
+    max-height: 20rem;
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+    overflow: auto;
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border-bottom: var(--border-width) solid var(--border-color);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* The backdrop is set by the toolbar; dots until it says otherwise. */
+.story__stage {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-md);
+}
+
+/* Centred: a small story sits in the middle of its stage, not a corner. */
+.story__preview {
+    container-type: inline-size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>

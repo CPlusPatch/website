@@ -25,7 +25,7 @@ const remove = (file: string) => action("remove", "lucide:x", `Remove ${file}`);
 export const attachments: StoryGroup[] = [
     {
         id: "attachment",
-        title: "Attachments",
+        title: "Horizontal",
         category: "forms",
         source: "packages/ui/src/astro/blocks/attachment/attachment.astro",
         description:
@@ -136,7 +136,7 @@ export const attachments: StoryGroup[] = [
     },
     {
         id: "attachment-vertical",
-        title: "Attachments — vertical",
+        title: "Vertical",
         category: "forms",
         source: "packages/ui/src/astro/blocks/attachment/attachment.astro",
         description: "For image previews: the media stacks above the name.",
