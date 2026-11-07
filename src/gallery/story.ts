@@ -2,8 +2,8 @@
  * The component matrix.
  *
  * stories/ is the single list of every component state worth looking at.
- * /gallery renders it; keeping it as plain data means anything else that
- * needs the matrix (visual or a11y tests, say) can import it directly.
+ * /gallery renders it, and lists it at /gallery/manifest.json for anything
+ * else that needs the matrix (visual or a11y tests, say).
  *
  * This is simplistic on purpose to avoid the complexity of a full storybook.
  * It does not attempt to express every possible prop combination, only the

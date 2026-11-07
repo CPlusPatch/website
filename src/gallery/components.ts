@@ -15,6 +15,7 @@ import {
     STORY_NAME,
     type Story,
     type StoryGroup,
+    storyPath,
     TAGS,
     type Tag,
 } from "./story.ts";
@@ -206,4 +207,21 @@ export const origin = (component: GalleryComponent) =>
 export const tagsOf = (group: StoryGroup, story?: Story): Tag[] =>
     TAGS.filter(
         (tag) => group.tags?.includes(tag) || story?.tags?.includes(tag),
+    );
+
+/**
+ * Every story with a page of its own, in gallery order, with where to find
+ * it: what the story pages are built from, and the manifest lists.
+ */
+export const allStories = () =>
+    components.flatMap((component) =>
+        component.groups.flatMap((group) =>
+            group.stories.map((story) => ({
+                component,
+                group,
+                story,
+                path: storyPath(group.id, story.name),
+                tags: tagsOf(group, story),
+            })),
+        ),
     );
