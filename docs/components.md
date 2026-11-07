@@ -59,8 +59,12 @@ export const badges: StoryGroup[] = [
 ];
 ```
 
-Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story for every combination of props, just the states that are worth looking at. When two props really are independent axes, like a button's variant and tone, `matrix()` from `story.ts` makes every combination and the gallery shows them as a table.
+Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story for every combination of props, just the states that are worth looking at. When two props really are independent axes, like a button's variant and tone, `matrix()` from `story.ts` makes every combination and the gallery shows them as a table. Its stories are named `<row>-<column>`, like `solid-primary`.
+
+Story names go in URLs, so they're lowercase words joined by hyphens, and unique within their group. The build fails otherwise.
 
 Each group becomes a component with its own page at `/gallery/<group-id>/`. To put several groups on one page (Buttons has its variant × tone table, its sizes and its button groups), list them together in `src/gallery/components.ts`. The build fails if a group ends up on no page or on two.
 
-Before committing, run `deno run check` and see how it looks in the gallery. The Display menu there switches themes, light/dark mode and effects; the toolbar on each component page sets the preview width, the stage behind the stories and outlines on every box. Each story's code button shows the props it was given.
+Before committing, run `deno run check` and see how it looks in the gallery. The Display menu there switches themes, light/dark mode and effects; the toolbar on each component page sets the preview width, the stage behind the stories and outlines on every box. Each story's code button shows the props it was given. Compare, in the Display menu, puts each section next to itself in light and dark, or in every theme.
+
+Every story also has a page to itself, at `/gallery/story/<group-id>/<story>/`, and every group at `/gallery/story/<group-id>/`. The arrow on a story opens its page. These pages carry nothing but the stories, which makes them handy to load in tests. You can add `?theme=<theme>`, `?scheme=light` or `?scheme=dark`, and `?width=` (`tablet`, `phone`, `tiny` or a width in rem) to them without changing your saved Display choices.
