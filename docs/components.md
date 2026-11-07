@@ -50,7 +50,6 @@ export const badges: StoryGroup[] = [
         id: "badge",
         title: "Badges",
         category: "primitives",
-        source: "packages/ui/src/astro/ui/badge.astro",
         stories: [
             story("default", Badge, {}, { slot: "New" }),
             story("outline", Badge, { variant: "outline" }, { slot: "New" }),
@@ -63,8 +62,12 @@ Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story
 
 Story names go in URLs, so they're lowercase words joined by hyphens, and unique within their group. The build fails otherwise.
 
+The gallery works out a group's source file from the component its first story renders, so put the group's own component first.
+
+Tag a story that keeps moving by itself, past a short CSS entrance (a pulse, autoplay, a count-up), as `animated`, and one that shows data fetched when it loads as `live`, with `tags` in its options. Tags on a group apply to all of its stories. Tests use them: they wait for or freeze animated stories, and they don't compare pictures of live ones. The gallery shows them as badges.
+
 Each group becomes a component with its own page at `/gallery/<group-id>/`. To put several groups on one page (Buttons has its variant × tone table, its sizes and its button groups), list them together in `src/gallery/components.ts`. The build fails if a group ends up on no page or on two.
 
 Before committing, run `deno run check` and see how it looks in the gallery. The Display menu there switches themes, light/dark mode and effects; the toolbar on each component page sets the preview width, the stage behind the stories and outlines on every box. Each story's code button shows the props it was given. Compare, in the Display menu, puts each section next to itself in light and dark, or in every theme.
 
-Every story also has a page to itself, at `/gallery/story/<group-id>/<story>/`, and every group at `/gallery/story/<group-id>/`. The arrow on a story opens its page. These pages carry nothing but the stories, which makes them handy to load in tests. You can add `?theme=<theme>`, `?scheme=light` or `?scheme=dark`, and `?width=` (`tablet`, `phone`, `tiny` or a width in rem) to them without changing your saved Display choices.
+Every story also has a page to itself, at `/gallery/story/<group-id>/<story>/`, and every group at `/gallery/story/<group-id>/`. The arrow on a story opens its page. These pages carry nothing but the stories, which makes them handy to load in tests. You can add `?theme=<theme>`, `?scheme=light` or `?scheme=dark`, and `?width=` (`tablet`, `phone`, `tiny` or a width in rem) to them without changing your saved Display choices. `/gallery/manifest.json` lists every story once, with its page, source file, category, minimum width and tags.
