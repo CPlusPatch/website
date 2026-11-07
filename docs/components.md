@@ -59,6 +59,8 @@ export const badges: StoryGroup[] = [
 ];
 ```
 
-Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story for every combination of props, just the states that are worth looking at.
+Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story for every combination of props, just the states that are worth looking at. When two props really are independent axes, like a button's variant and tone, `matrix()` from `story.ts` makes every combination and the gallery shows them as a table.
 
-Before committing, run `deno run check` and see how it looks in the gallery. The Display menu there lets you switch themes, light/dark mode and the preview width.
+Each group becomes a component with its own page at `/gallery/<group-id>/`. To put several groups on one page (Buttons has its variant × tone table, its sizes and its button groups), list them together in `src/gallery/components.ts`. The build fails if a group ends up on no page or on two.
+
+Before committing, run `deno run check` and see how it looks in the gallery. The Display menu there switches themes, light/dark mode and effects; the toolbar on each component page sets the preview width, the stage behind the stories and outlines on every box. Each story's code button shows the props it was given.

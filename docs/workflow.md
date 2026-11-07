@@ -4,11 +4,11 @@
 edit → check it in the gallery → deno run check → commit → push → live
 ```
 
-Most work happens in the gallery. Start the dev server with `deno run dev` and open http://localhost:4321. Every component has a set of stories there, so you can see a change in all its states at once.
+Most work happens in the gallery. Start the dev server with `deno run dev` and open http://localhost:4321/gallery/. Every component has a page of stories there, so you can see a change in all its states at once.
 
 ## Making a change
 
-Edit the component and keep an eye on its stories in the gallery. The Display menu at the top lets you switch themes, light and dark mode, the preview width and the page effects. It's worth going through those before you call something done, and also trying it with the keyboard, with reduced motion turned on, and with JavaScript disabled if the component has a script.
+Edit the component and keep an eye on its stories in the gallery. The Display menu at the top lets you switch themes, light and dark mode and the page effects, and the toolbar above the stories sets the preview width. It's worth going through those before you call something done, and also trying it with the keyboard, with reduced motion turned on, and with JavaScript disabled if the component has a script.
 
 If you add a state that isn't covered yet, add a story for it. See [Adding a component](components.md).
 
