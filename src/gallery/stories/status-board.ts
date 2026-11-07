@@ -58,7 +58,7 @@ export const statusBoard: StoryGroup[] = [
                 },
                 { slot: "A snapshot" },
             ),
-            story("no results", StatusBoard, snapshot, { slot: "No results" }),
+            story("no-results", StatusBoard, snapshot, { slot: "No results" }),
             // At its own height: /status shows the rows sharing a screen
             story(
                 "fill",

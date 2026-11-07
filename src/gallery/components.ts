@@ -4,11 +4,17 @@
  * (Buttons has its variant × tone table, its sizes and its groups).
  *
  * Checked when the module loads: every group belongs to exactly one
- * component, and a component's groups share its category.
+ * component, a component's groups share its category, and every story name
+ * can be part of a URL (each story has a page, at storyPath()).
  */
 
 import { groups } from "./stories/index.ts";
-import { CATEGORIES, type CategoryId, type StoryGroup } from "./story.ts";
+import {
+    CATEGORIES,
+    type CategoryId,
+    STORY_NAME,
+    type StoryGroup,
+} from "./story.ts";
 
 export interface GalleryComponent {
     /** Unique, and the page's path segment. */
@@ -109,7 +115,20 @@ export const components: GalleryComponent[] = CATEGORIES.flatMap((category) => {
     return list;
 });
 
-// The checks: unique ids, every group placed once, one category each.
+// The checks: unique ids, every group placed once, one category each, and
+// story names that are unique in their group and fit in a URL.
+for (const group of groups) {
+    const names = new Set<string>();
+    for (const { name } of group.stories) {
+        if (!STORY_NAME.test(name) || names.has(name)) {
+            throw new Error(
+                `Story name "${name}" in "${group.id}" is taken or not lowercase-with-hyphens`,
+            );
+        }
+        names.add(name);
+    }
+}
+
 const ids = new Set<string>();
 const placed = new Set<string>();
 for (const component of components) {

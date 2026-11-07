@@ -19,6 +19,8 @@ interface Props {
      * served at many addresses, like the 404.
      */
     canonical?: boolean;
+    /** Off for pages that are only parts of others, like gallery stories. */
+    analytics?: boolean;
 }
 
 const {
@@ -26,6 +28,7 @@ const {
     description,
     noindex = false,
     canonical: hasCanonical = true,
+    analytics = true,
 } = Astro.props;
 
 const pageTitle = title === site.name ? title : `${title} — ${site.name}`;
@@ -73,7 +76,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
          */}
         <Font cssVariable="--font-nunito" />
         <Font cssVariable="--font-fira-code" />
-        {import.meta.env.PROD && <Analytics />}
+        {import.meta.env.PROD && analytics && <Analytics />}
     </head>
     <body>
         <Scanlines />

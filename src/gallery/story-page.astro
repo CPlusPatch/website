@@ -1,0 +1,66 @@
+---
+import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
+import Layout from "../layouts/base.astro";
+import { PREVIEW_WIDTHS } from "./widths.ts";
+
+/**
+ * A gallery page with nothing on it but stories: one story, or one group
+ * of them. For opening from the gallery, and for tests and diffs to load
+ * by URL.
+ *
+ * Query parameters pick the look without touching the saved Display
+ * choices: ?theme=<theme>, ?scheme=light|dark, and ?width=<phone, tablet,
+ * tiny, or a width in rem>. Without them, the saved choices apply.
+ */
+interface Props {
+    title: string;
+    description: string;
+    /** The one story's id, for a page of one. */
+    story?: string;
+}
+
+const { title, description, story } = Astro.props;
+
+const options = {
+    themes: THEMES.map((theme) => theme.value),
+    widths: Object.fromEntries(
+        PREVIEW_WIDTHS.flatMap((w) => ("width" in w ? [[w.id, w.width]] : [])),
+    ),
+};
+---
+
+<Layout {title} {description} noindex analytics={false}>
+    {/* Before the story paints; ignores anything it doesn't know. */}
+    <script is:inline define:vars={{ options }}>
+    const params = new URLSearchParams(location.search);
+    const root = document.documentElement;
+    const theme = params.get("theme");
+    if (options.themes.includes(theme)) root.dataset.theme = theme;
+    const scheme = params.get("scheme");
+    if (scheme === "light" || scheme === "dark") root.dataset.scheme = scheme;
+    const width = params.get("width") ?? "";
+    const rem =
+        options.widths[width] ?? (/^\d+(\.\d+)?rem$/.test(width) && width);
+    if (rem) root.style.setProperty("--story-width", rem);
+    </script>
+
+    <main id="main" class="story-page" data-story={story}>
+        <slot />
+    </main>
+</Layout>
+
+<script>
+// The page-wide easter eggs the dialogue stories run.
+import "./dialogue-actions.ts";
+</script>
+
+<style>
+/* The gallery's padding, and its width when the page asks for one. */
+.story-page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--story-width, none);
+    margin-inline: auto;
+    padding: var(--space-md);
+}
+</style>

@@ -33,7 +33,7 @@ export const terminal: StoryGroup[] = [
             story("interactive", Terminal, {
                 interactive: true,
             }),
-            story("interactive with history", Terminal, {
+            story("interactive-with-history", Terminal, {
                 interactive: true,
                 entries: [
                     {

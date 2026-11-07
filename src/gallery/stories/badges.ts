@@ -2,7 +2,14 @@ import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
 import { TONES } from "@cpluspatch/ui/lib/tone.ts";
 import Badge88x31 from "../../components/blocks/badge-88x31.astro";
 import { friends } from "../../data/friends.ts";
-import { matrix, SIZES, type StoryGroup, story, title } from "../story.ts";
+import {
+    matrix,
+    SIZES,
+    type StoryGroup,
+    slug,
+    story,
+    title,
+} from "../story.ts";
 
 const BADGE_VARIANTS = ["solid", "outline", "ghost"] as const;
 
@@ -52,7 +59,7 @@ export const badges88x31: StoryGroup[] = [
         min: 8,
         stories: [
             ...friends.map((friend) =>
-                story(friend.name.toLowerCase(), Badge88x31, {
+                story(slug(friend.name), Badge88x31, {
                     image: friend.image,
                     href: friend.href,
                     alt: `A small icon representing ${friend.name}'s website`,

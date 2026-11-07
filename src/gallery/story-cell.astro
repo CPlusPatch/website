@@ -1,38 +1,51 @@
 ---
 import { Icon } from "astro-icon/components";
 import { storySource } from "./source.ts";
-import type { Story } from "./story.ts";
-import StoryNode from "./story-node.astro";
+import { type Story, storyPath } from "./story.ts";
+import StoryPreview from "./story-preview.astro";
 
 /**
- * One story on its stage: a caption bar with its name and a Props panel
- * (a <details>, so no JS), above the story on a backdrop the page toolbar
- * picks (toolbar.astro).
+ * One story on its stage: a caption bar with its name, a Props panel (a
+ * <details>, so no JS) and a link to the story's own page, above the story
+ * on a backdrop the page toolbar picks (toolbar.astro).
  */
 interface Props {
-    /** `group/story`, the hook tests find the story by. */
-    id: string;
+    group: string;
     story: Story;
 }
 
-const { id, story } = Astro.props;
+const { group, story } = Astro.props;
+const id = `${group}/${story.name}`;
 ---
 
 <figure class="story" data-story={id}>
     <figcaption class="story__caption">
         <code class="story__name">{story.name}</code>
-        <details class="story__props">
-            <summary title="Props">
-                <Icon name="lucide:code-xml" aria-hidden="true" />
-                <span class="visually-hidden">Props of {story.name}</span>
-            </summary>
-            <pre class="story__source"><code>{storySource(story)}</code></pre>
-        </details>
+        <span class="story__actions">
+            <details class="story__props">
+                <summary class="story__action" title="Props">
+                    <Icon name="lucide:code-xml" aria-hidden="true" />
+                    <span class="visually-hidden">Props of {story.name}</span>
+                </summary>
+                <pre
+                    class="story__source"
+                ><code>{storySource(story)}</code></pre>
+            </details>
+            <a
+                class="story__action"
+                href={storyPath(group, story.name)}
+                title="Open alone"
+            >
+                <Icon
+                    name="lucide:square-arrow-out-up-right"
+                    aria-hidden="true"
+                />
+                <span class="visually-hidden">Open {id} on its own</span>
+            </a>
+        </span>
     </figcaption>
     <div class="story__stage">
-        <div class="story__preview">
-            <StoryNode {story} />
-        </div>
+        <StoryPreview {story} />
     </div>
 </figure>
 
@@ -66,6 +79,24 @@ const { id, story } = Astro.props;
     font-size: var(--font-size-xs);
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.story__actions {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.story__action {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--color-text-muted);
+
+    &:hover {
+        color: var(--color-text);
+        background-color: transparent;
+    }
 }
 
 .story__props {
@@ -116,13 +147,5 @@ const { id, story } = Astro.props;
     flex-direction: column;
     justify-content: center;
     padding: var(--space-md);
-}
-
-/* Centred: a small story sits in the middle of its stage, not a corner. */
-.story__preview {
-    container-type: inline-size;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 </style>

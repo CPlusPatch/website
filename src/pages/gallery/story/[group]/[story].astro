@@ -1,0 +1,29 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { components } from "../../../../gallery/components.ts";
+import StoryPage from "../../../../gallery/story-page.astro";
+import StoryPreview from "../../../../gallery/story-preview.astro";
+
+/** One story on a page of its own (see story-page.astro for its options). */
+export const getStaticPaths = (() =>
+    components.flatMap((component) =>
+        component.groups.flatMap((group) =>
+            group.stories.map((story) => ({
+                params: { group: group.id, story: story.name },
+                props: { group, story },
+            })),
+        ),
+    )) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { group, story } = Astro.props;
+---
+
+<StoryPage
+    title={`${group.title}: ${story.name} · Component gallery`}
+    description={`The "${story.name}" story of ${group.title}, on its own.`}
+    story={`${group.id}/${story.name}`}
+>
+    <StoryPreview {story} />
+</StoryPage>

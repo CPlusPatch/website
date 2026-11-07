@@ -28,7 +28,7 @@ export const heatmap: StoryGroup[] = [
                 },
                 { slot: "<span>1,204 contributions in the last year</span>" },
             ),
-            story("small, secondary", Heatmap, {
+            story("small-secondary", Heatmap, {
                 columns: 20,
                 rows: 7,
                 // The last 20 weeks of each day's row.

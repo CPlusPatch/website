@@ -1,8 +1,9 @@
 ---
 import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
-import type { StoryGroup } from "./story.ts";
+import { Icon } from "astro-icon/components";
+import { type StoryGroup, slug, storyPath } from "./story.ts";
 import StoryCell from "./story-cell.astro";
-import StoryNode from "./story-node.astro";
+import StoryPreview from "./story-preview.astro";
 import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 
 /**
@@ -30,11 +31,7 @@ const cell = (min: number | "full" = 16) =>
 const count = group.stories.length;
 const id = (name: string) => `${group.id}/${name}`;
 const at = (row: string, column: string) =>
-    group.stories.find(
-        (s) =>
-            s.name ===
-            `${matrix?.rows.name}=${row},${matrix?.columns.name}=${column}`,
-    );
+    group.stories.find((s) => s.name === slug(`${row}-${column}`));
 ---
 
 <section
@@ -103,9 +100,24 @@ const at = (row: string, column: string) =>
                                                 data-story={id(story.name)}
                                                 title={story.name}
                                             >
-                                                <div class="story__preview">
-                                                    <StoryNode {story} />
-                                                </div>
+                                                <StoryPreview {story} />
+                                                <a
+                                                    class="story-group__open"
+                                                    href={storyPath(
+                                                        group.id,
+                                                        story.name,
+                                                    )}
+                                                    title="Open alone"
+                                                >
+                                                    <Icon
+                                                        name="lucide:square-arrow-out-up-right"
+                                                        aria-hidden="true"
+                                                    />
+                                                    <span class="visually-hidden">
+                                                        Open {id(story.name)} on
+                                                        its own
+                                                    </span>
+                                                </a>
                                             </td>
                                         )
                                     );
@@ -118,7 +130,7 @@ const at = (row: string, column: string) =>
         ) : (
             <div class="story-group__grid" style={`--cell: ${cell(group.min)}`}>
                 {group.stories.map((story) => (
-                    <StoryCell id={id(story.name)} {story} />
+                    <StoryCell group={group.id} {story} />
                 ))}
             </div>
         )}
@@ -126,6 +138,16 @@ const at = (row: string, column: string) =>
 </section>
 
 <style>
+/* What stories stand on: a dot grid, unless the toolbar picks otherwise. */
+:global(.story__stage) {
+    background-color: var(--color-bg);
+    background-image: radial-gradient(
+        color-mix(in oklab, var(--color-text) 16%, transparent) 1px,
+        transparent 1px
+    );
+    background-size: 12px 12px;
+}
+
 .story-group {
     container-type: inline-size;
     display: flex;
@@ -142,6 +164,40 @@ const at = (row: string, column: string) =>
         row-gap: var(--space-xs);
         padding-bottom: var(--space-sm);
         border-bottom: var(--border-width) solid var(--border-color);
+    }
+
+    /* A cell's link to its story's page: in the corner, shown on hover. */
+    .story-group__open {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: grid;
+        place-items: center;
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--color-text-muted);
+        background-color: var(--color-surface);
+        opacity: 0;
+        transition: opacity var(--transition);
+
+        :is(td:hover, td:focus-within) > &,
+        &:focus-visible {
+            opacity: 1;
+        }
+
+        @media (hover: none) {
+            opacity: 1;
+        }
+
+        &:hover {
+            color: var(--color-text);
+            background-color: var(--color-surface);
+        }
+
+        svg {
+            width: 0.75rem;
+            height: 0.75rem;
+        }
     }
 
     .story-group__title {
@@ -270,12 +326,14 @@ const at = (row: string, column: string) =>
         }
 
         td {
+            position: relative;
             padding: var(--space-sm);
             vertical-align: middle;
         }
 
-        .story__preview {
-            justify-content: center;
+        /* A size container has no width of its own, so a cell would shrink to nothing. */
+        td :global(.story-preview) {
+            container-type: normal;
         }
     }
 }

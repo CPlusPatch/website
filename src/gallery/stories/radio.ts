@@ -46,7 +46,7 @@ export const radio: StoryGroup[] = [
                 tracks: [...tracks, ...tracks],
                 style: "max-block-size: 22rem",
             }),
-            story("single track", Radio, { tracks: tracks.slice(0, 1) }),
+            story("single-track", Radio, { tracks: tracks.slice(0, 1) }),
             story("unframed", Radio, {
                 tracks,
                 name: "CPlusPatch FM",

@@ -23,7 +23,10 @@ import type { ComponentProps } from "astro/types";
 type Component = (args: any) => any;
 
 export interface Story {
-    /** Unique within its group. Used for the `data-story` hook. */
+    /**
+     * Unique within its group, and URL-safe (STORY_NAME): it is the last
+     * part of the story's own page, and of its `data-story` hook.
+     */
     name: string;
     component: Component;
     props: Record<string, unknown>;
@@ -92,8 +95,22 @@ export const story = <T extends Component>(
 
 type StoryContent = Omit<Story, "name" | "component" | "props">;
 
+/** What a story's name may be: lowercase words joined by hyphens. */
+export const STORY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Any text as a story name: "Astrid Yu" becomes "astrid-yu". */
+export const slug = (s: string) =>
+    s
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+/** A story's own page, with nothing else on it. */
+export const storyPath = (groupId: string, name: string) =>
+    `/gallery/story/${groupId}/${name}/`;
+
 /**
- * Every combination of two props, as stories named `row=x,column=y` (in
+ * Every combination of two props, as stories named `<row>-<column>` (in
  * row-major order) that the gallery shows as a table. Spread the result into
  * a group. Each combination still goes through story(), so its props are
  * type-checked.
@@ -110,11 +127,7 @@ export const matrix = <T extends Component, R extends string, C extends string>(
     },
     stories: rows.flatMap((row) =>
         columns.map((column) =>
-            story(
-                `${rowName}=${row},${columnName}=${column}`,
-                component,
-                ...build(row, column),
-            ),
+            story(slug(`${row}-${column}`), component, ...build(row, column)),
         ),
     ),
 });

@@ -109,16 +109,7 @@ import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
     }
 }
 
-/* The stages' backdrop: a dot grid (the default), the page, or a surface. */
-:global(.story__stage) {
-    background-color: var(--color-bg);
-    background-image: radial-gradient(
-        color-mix(in oklab, var(--color-text) 16%, transparent) 1px,
-        transparent 1px
-    );
-    background-size: 12px 12px;
-}
-
+/* The stages' backdrop: the dot grid (story-group.astro), the page, or a surface. */
 :global(
     html:has(input[name="gallery-stage"][value="plain"]:checked) .story__stage
 ) {
@@ -135,7 +126,7 @@ import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 /* Every box a story draws, outlined: for checking alignment and spacing. */
 :global(
     html:has(input[name="gallery-outline"]:checked)
-        :is(.story__preview, .story__preview *)
+        :is(.story-preview, .story-preview *)
 ) {
     outline: 1px dashed
         color-mix(in oklab, var(--color-primary) 55%, transparent);

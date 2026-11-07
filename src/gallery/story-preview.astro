@@ -1,0 +1,26 @@
+---
+import type { Story } from "./story.ts";
+import StoryNode from "./story-node.astro";
+
+/**
+ * A story, centred in a box of its own width: the same box in a gallery
+ * cell, a table cell and the story's own page, so container queries and
+ * layout match everywhere.
+ */
+interface Props {
+    story: Story;
+}
+
+const { story } = Astro.props;
+---
+
+<div class="story-preview"><StoryNode {story} /></div>
+
+<style>
+.story-preview {
+    container-type: inline-size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
