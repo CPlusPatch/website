@@ -1,0 +1,29 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { components } from "../../../../gallery/components.ts";
+import StoryGroup from "../../../../gallery/story-group.astro";
+import StoryPage from "../../../../gallery/story-page.astro";
+
+/**
+ * One group's stories, as on its component's page but alone: what the
+ * component pages frame to compare schemes and themes (compare.ts).
+ */
+export const getStaticPaths = (() =>
+    components.flatMap((component) =>
+        component.groups.map((group) => ({
+            params: { group: group.id },
+            props: { group },
+        })),
+    )) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { group } = Astro.props;
+---
+
+<StoryPage
+    title={`${group.title} · Component gallery`}
+    description={`The stories of ${group.title}, on their own.`}
+>
+    <StoryGroup {group} titled={false} />
+</StoryPage>

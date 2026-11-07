@@ -290,6 +290,38 @@ const at = (row: string, column: string) =>
         }
     }
 
+    /* compare.ts's frames of the section's own page, one per scheme or theme. */
+    :global(.story-group__compare) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+        gap: var(--space-md);
+        align-items: start;
+
+        &:global(.story-group__compare--stacked) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        :global(figure) {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            min-width: 0;
+            margin: 0;
+        }
+
+        :global(figcaption) {
+            font-family: var(--font-mono);
+        }
+
+        :global(iframe) {
+            display: block;
+            width: 100%;
+            height: 12rem;
+            border: var(--border-width) solid var(--border-color);
+            border-radius: var(--radius);
+        }
+    }
+
     .story-group__grid {
         display: grid;
         grid-template-columns: repeat(
