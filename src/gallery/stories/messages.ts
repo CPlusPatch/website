@@ -182,7 +182,12 @@ export const messages: StoryGroup[] = [
                     },
                 },
             ),
-            story("typing", Message, { ...GREG, typing: true }),
+            story(
+                "typing",
+                Message,
+                { ...GREG, typing: true },
+                { tags: ["animated"] },
+            ),
             story(
                 "error",
                 Message,

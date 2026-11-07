@@ -38,7 +38,22 @@ export interface Story {
     children?: Story[];
     /** Stories rendered in named slots. */
     slots?: Record<string, Story[]>;
+    /** What sets this story apart for tests (TAGS), on top of its group's. */
+    tags?: Tag[];
 }
+
+/**
+ * What tests need to know about a story before they look at it:
+ *
+ * - `animated`: it keeps moving on its own, past a short CSS entrance,
+ *   with nobody touching it, so freeze it (reduced motion) or wait before
+ *   comparing pictures of it.
+ * - `live`: what it shows comes from elsewhere at runtime and changes
+ *   between loads, so don't compare it at all.
+ */
+export const TAGS = ["animated", "live"] as const;
+
+export type Tag = (typeof TAGS)[number];
 
 /** Sidebar and page sections, in gallery order. */
 export const CATEGORIES = [
@@ -71,6 +86,8 @@ export interface StoryGroup {
     min?: number | "full";
     /** Set by matrix(): the stories are every combination of two axes. */
     matrix?: { rows: Axis; columns: Axis };
+    /** Tags (TAGS) every one of its stories has. */
+    tags?: Tag[];
     stories: Story[];
 }
 

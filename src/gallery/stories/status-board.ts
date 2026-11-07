@@ -46,6 +46,7 @@ export const statusBoard: StoryGroup[] = [
         stories: [
             story("live", StatusBoard, status, {
                 slot: "Live from Prometheus",
+                tags: ["live"],
             }),
             story(
                 "outage",
@@ -63,7 +64,7 @@ export const statusBoard: StoryGroup[] = [
                 "fill",
                 StatusBoard,
                 { ...status, fill: true },
-                { slot: "Live from Prometheus" },
+                { slot: "Live from Prometheus", tags: ["live"] },
             ),
         ],
     },

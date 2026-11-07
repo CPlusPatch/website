@@ -3,6 +3,7 @@ import { Icon } from "astro-icon/components";
 import { storySource } from "./source.ts";
 import { type Story, storyPath } from "./story.ts";
 import StoryPreview from "./story-preview.astro";
+import StoryTags from "./story-tags.astro";
 
 /**
  * One story on its stage: a caption bar with its name, a Props panel (a
@@ -20,7 +21,10 @@ const id = `${group}/${story.name}`;
 
 <figure class="story" data-story={id}>
     <figcaption class="story__caption">
-        <code class="story__name">{story.name}</code>
+        <span class="story__title">
+            <code class="story__name">{story.name}</code>
+            <StoryTags tags={story.tags ?? []} />
+        </span>
         <span class="story__actions">
             <details class="story__props">
                 <summary class="story__action" title="Props">
@@ -71,6 +75,14 @@ const id = `${group}/${story.name}`;
     padding-inline: var(--space-sm) var(--space-xs);
     background-color: var(--color-surface);
     border-bottom: var(--border-width) solid var(--border-color);
+}
+
+/* Only the story's own tags: its group's are in the page or section header. */
+.story__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-width: 0;
 }
 
 .story__name {

@@ -1,10 +1,11 @@
 ---
 import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import { Icon } from "astro-icon/components";
-import { sourceOf } from "./components.ts";
+import { sourceOf, tagsOf } from "./components.ts";
 import { type StoryGroup, slug, storyPath } from "./story.ts";
 import StoryCell from "./story-cell.astro";
 import StoryPreview from "./story-preview.astro";
+import StoryTags from "./story-tags.astro";
 import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 
 /**
@@ -65,6 +66,7 @@ const at = (row: string, column: string) =>
                         ? `${matrix.rows.name} (${matrix.rows.values.length}) × ${matrix.columns.name} (${matrix.columns.values.length})`
                         : `${count} ${count === 1 ? "story" : "stories"}`}
                 </span>
+                <StoryTags tags={tagsOf(group)} />
             </p>
             {group.description && (
                 <p class="story-group__description text-body-sm">

@@ -9,9 +9,11 @@ import {
     origin,
     sourceOf,
     storyCount,
+    tagsOf,
 } from "../../gallery/components.ts";
 import GalleryLayout from "../../gallery/gallery-layout.astro";
 import StoryGroup from "../../gallery/story-group.astro";
+import StoryTags from "../../gallery/story-tags.astro";
 import Toolbar from "../../gallery/toolbar.astro";
 
 /**
@@ -35,6 +37,8 @@ const category = categories.find((c) => c.id === component.category);
 const siblings = category?.components ?? [];
 const sources = [...new Set(component.groups.map(sourceOf))];
 const stories = storyCount(component);
+// A component of several groups shows each group's tags with the group.
+const tags = component.groups.length > 1 ? [] : tagsOf(component.groups[0]);
 const several = component.groups.length > 1;
 const plural = (n: number, one: string, many = `${one}s`) =>
     `${n} ${n === 1 ? one : many}`;
@@ -72,6 +76,7 @@ const plural = (n: number, one: string, many = `${one}s`) =>
                     site only
                 </Badge>
             )}
+            <StoryTags {tags} />
         </p>
         {several && (
             <nav class="component__sections" aria-label="Sections">

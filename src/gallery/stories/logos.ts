@@ -5,6 +5,7 @@ import { type StoryGroup, story } from "../story.ts";
 export const logos: StoryGroup[] = [
     {
         id: "logos",
+        tags: ["animated"],
         title: "Logos",
         category: "showcase",
         min: "full",

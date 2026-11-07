@@ -4,6 +4,7 @@ import { type StoryGroup, story } from "../story.ts";
 export const scrollCue: StoryGroup[] = [
     {
         id: "scroll-cue",
+        tags: ["animated"],
         title: "Scroll cues",
         category: "primitives",
         description: "The arrow nudges, except under reduced motion.",

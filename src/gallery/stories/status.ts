@@ -20,13 +20,14 @@ export const status: StoryGroup[] = [
                 "pulse",
                 Status,
                 { tone: "success", pulse: true },
-                { slot: "Live" },
+                { slot: "Live", tags: ["animated"] },
             ),
             story(
                 "in-badge",
                 Badge,
                 { variant: "outline", tone: "success" },
                 {
+                    tags: ["animated"],
                     children: [
                         story(
                             "status",

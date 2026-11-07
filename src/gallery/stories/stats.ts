@@ -4,6 +4,7 @@ import { type StoryGroup, story } from "../story.ts";
 export const stats: StoryGroup[] = [
     {
         id: "stat",
+        tags: ["animated"],
         title: "Stats",
         category: "content",
         description: "Counts up on first scroll into view, with JS.",

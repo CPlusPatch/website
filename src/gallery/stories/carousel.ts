@@ -99,7 +99,7 @@ export const carousel: StoryGroup[] = [
                     tone: "secondary",
                     autoplay: 4,
                 },
-                { children: slides() },
+                { children: slides(), tags: ["animated"] },
             ),
             story(
                 "many",

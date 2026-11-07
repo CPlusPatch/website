@@ -1,0 +1,22 @@
+---
+import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
+import type { Tag } from "./story.ts";
+
+/** A story's or group's tags (TAGS in story.ts), as small badges. */
+interface Props {
+    tags: Tag[];
+}
+
+const { tags } = Astro.props;
+
+const HINTS: Record<Tag, string> = {
+    animated: "Moves on its own",
+    live: "Shows data fetched when it loads",
+};
+---
+
+{tags.map((tag) => (
+    <Badge variant="outline" tone="secondary" size="sm" title={HINTS[tag]}>
+        {tag}
+    </Badge>
+))}

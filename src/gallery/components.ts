@@ -13,7 +13,10 @@ import {
     CATEGORIES,
     type CategoryId,
     STORY_NAME,
+    type Story,
     type StoryGroup,
+    TAGS,
+    type Tag,
 } from "./story.ts";
 import StoryPreview from "./story-preview.astro";
 
@@ -198,3 +201,9 @@ export const origin = (component: GalleryComponent) =>
     component.groups.every((g) => sourceOf(g).startsWith("packages/ui/"))
         ? "packages/ui"
         : "site";
+
+/** A story's tags and its group's, in TAGS order. */
+export const tagsOf = (group: StoryGroup, story?: Story): Tag[] =>
+    TAGS.filter(
+        (tag) => group.tags?.includes(tag) || story?.tags?.includes(tag),
+    );

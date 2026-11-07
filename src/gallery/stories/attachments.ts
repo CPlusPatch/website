@@ -60,6 +60,7 @@ export const attachments: StoryGroup[] = [
                 },
                 {
                     slot: "Uploading · 64%",
+                    tags: ["animated"],
                     slots: { actions: [remove("cool-report.xlsx")] },
                 },
             ),
@@ -176,7 +177,7 @@ export const attachments: StoryGroup[] = [
                     state: "uploading",
                     progress: 30,
                 },
-                { slot: "Uploading · 30%" },
+                { slot: "Uploading · 30%", tags: ["animated"] },
             ),
         ],
     },
@@ -192,6 +193,8 @@ export const attachments: StoryGroup[] = [
                 AttachmentGroup,
                 { label: "Attachments" },
                 {
+                    // One of them is uploading
+                    tags: ["animated"],
                     children: [
                         story(
                             "pdf",
