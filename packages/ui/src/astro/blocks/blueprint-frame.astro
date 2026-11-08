@@ -2,29 +2,14 @@
 import type { HTMLAttributes } from "astro/types";
 
 /**
- * Sets whatever is in the default slot as a drawing on the page's blueprint
- * grid: an optional figure label above it, registration marks at its
- * corners, and a dashed sheet offset behind it. The content brings its own
- * surface; the frame only draws around it.
+ * Sets whatever is in the default slot on a dashed sheet, offset behind it.
+ * The content brings its own surface; the frame only draws behind it.
  */
-interface Props extends HTMLAttributes<"figure"> {
-    /** Shown at the start of the label, like "fig. 01". */
-    label?: string;
-    /** Shown at the end of the label. */
-    meta?: string;
-}
+type Props = HTMLAttributes<"div">;
 
-const { label, meta, class: className, ...rest } = Astro.props;
+const { class: className, ...rest } = Astro.props;
 ---
 
-<figure class:list={["blueprint-frame", className]} {...rest}>
-    {(label || meta) && (
-        <figcaption class="blueprint-frame__label text-meta">
-            <span>{label}</span>
-            <span>{meta}</span>
-        </figcaption>
-    )}
-    <div class="blueprint-frame__drawing">
-        <slot />
-    </div>
-</figure>
+<div class:list={["blueprint-frame", className]} {...rest}>
+    <slot />
+</div>

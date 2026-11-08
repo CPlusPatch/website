@@ -9,9 +9,6 @@ import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
 <section class="section hero wash" aria-labelledby="hero-title">
     <div class="container hero__inner">
         <div class="hero__intro">
-            <p class="hero__eyebrow text-meta">
-                <span class="accent">//</span>{" "}jesse@website:~$
-            </p>
             <h1 id="hero-title">
                 Hi, I'm <span class="accent">CPlusPatch</span>.
                 <span class="hero__headline">I like computers.</span>
@@ -23,7 +20,7 @@ import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
             <IconList items={details} />
         </div>
 
-        <BlueprintFrame label="fig. 01" meta="jessew@website">
+        <BlueprintFrame>
             <Terminal
                 interactive
                 entries={[
@@ -69,10 +66,6 @@ import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-    }
-
-    .hero__eyebrow {
-        margin-block: var(--space-lg) var(--space-sm);
     }
 
     /* Its own line, so the break falls between the sentences. */

@@ -9,13 +9,13 @@ export const blueprintFrame: StoryGroup[] = [
         title: "Blueprint frames",
         category: "showcase",
         description:
-            "Draws around any content, which brings its own surface. The label is optional.",
+            "A dashed sheet offset behind any content, which brings its own surface.",
         min: 24,
         stories: [
             story(
                 "terminal",
                 BlueprintFrame,
-                { label: "fig. 01", meta: "jessew@website" },
+                {},
                 {
                     children: [
                         story("terminal", Terminal, {
@@ -27,7 +27,7 @@ export const blueprintFrame: StoryGroup[] = [
             story(
                 "card",
                 BlueprintFrame,
-                { label: "fig. 02" },
+                {},
                 {
                     children: [
                         story(
@@ -35,21 +35,6 @@ export const blueprintFrame: StoryGroup[] = [
                             Card,
                             {},
                             { slot: `<h3>Any content</h3>${BODY}` },
-                        ),
-                    ],
-                },
-            ),
-            story(
-                "no-label",
-                BlueprintFrame,
-                {},
-                {
-                    children: [
-                        story(
-                            "card",
-                            Card,
-                            { tone: "secondary" },
-                            { slot: `<h3>No label</h3>${BODY}` },
                         ),
                     ],
                 },
