@@ -66,6 +66,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
  */}
 <Font cssVariable="--font-inter" preload={[{ subset: "latin" }]} />
 <Font cssVariable="--font-jetbrains-mono" />
+{/* Page and section titles, the first of them above the fold. */}
+<Font cssVariable="--font-big-shoulders" preload={[{ subset: "latin" }]} />
 {/*
  * Ocean theme fonts. Only @font-face rules, with no preload: browsers
  * download a face the first time text uses it, so these cost nothing

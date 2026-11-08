@@ -53,6 +53,17 @@ export default defineConfig({
             subsets: ["latin", "latin-ext"],
             fallbacks: ["monospace", "ui-monospace"],
         },
+        // Display face for page and section titles (--font-display)
+        {
+            provider: fontProviders.fontsource(),
+            name: "Big Shoulders Display",
+            cssVariable: "--font-big-shoulders",
+            styles: ["normal"],
+            weights: ["700 900"],
+            display: "swap",
+            subsets: ["latin"],
+            fallbacks: ["sans-serif"],
+        },
     ],
     vite: {
         css: {

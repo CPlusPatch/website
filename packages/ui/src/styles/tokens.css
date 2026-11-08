@@ -14,6 +14,9 @@
         /* Typography */
         --font-base: var(--font-inter, system-ui, sans-serif);
         --font-mono: var(--font-jetbrains-mono, ui-monospace, monospace);
+        /* Condensed, for page and section titles only: set big, it gives the
+        pages their voice, where body text stays plain. */
+        --font-display: var(--font-big-shoulders, var(--font-base));
         /*
          * The type scale. Body text is 16px, the floor for comfortable reading
          * on screen (Butterick puts the web range at 15-25px), and interface
@@ -29,6 +32,9 @@
         --font-size-2xl: 1.5rem;
         --font-size-3xl: clamp(1.5rem, 1rem + 1.6vw, 2rem);
         --font-size-4xl: clamp(2.25rem, 1.25rem + 3.6vw, 3.25rem);
+        /* Titles in the condensed display face, which sets small for its size. */
+        --font-size-5xl: clamp(2.5rem, 1.25rem + 4.5vw, 4.25rem);
+        --font-size-6xl: clamp(3rem, 1.5rem + 5vw, 5rem);
         /* Inline code, relative to the text around it. */
         --font-size-code: 0.9em;
         /* Blocks of code and terminal output: dense, so a wide line still fits a phone. */
@@ -40,6 +46,7 @@
          * the gaps between big lines read larger than they measure.
          */
         --leading-display: 1.05;
+        --leading-poster: 0.95;
         --leading-tight: 1.15;
         --leading-snug: 1.3;
         /* Small multi-line text: a touch tighter than body copy. */

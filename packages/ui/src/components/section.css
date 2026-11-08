@@ -5,6 +5,14 @@
         width: 100%;
     }
 
+    /* In the display face, big: the titles carry the page's voice */
+    .page-section__title {
+        max-width: 24ch;
+        margin-bottom: var(--space-lg);
+        font: var(--type-section);
+        letter-spacing: normal;
+    }
+
     .page-section--center .page-section__inner {
         display: flex;
         flex-direction: column;

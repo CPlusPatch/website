@@ -84,6 +84,12 @@
         /* Big numbers and page-opening lines. */
         --type-display:
             800 var(--font-size-4xl) / var(--leading-display) var(--font-base);
+        /* Page openers, in the display face: the hero's greeting, a page's name. */
+        --type-poster:
+            800 var(--font-size-6xl) / var(--leading-poster) var(--font-display);
+        /* Section titles on a page, in the display face. */
+        --type-section:
+            800 var(--font-size-5xl) / var(--leading-poster) var(--font-display);
         /* Section and hero headings in running content. */
         --type-headline:
             700 var(--font-size-3xl) / var(--leading-tight) var(--font-base);
@@ -148,11 +154,17 @@
 
     h3,
     h4,
-    .text-subheading {
+    .text-subheading,
+    .text-poster {
         letter-spacing: normal;
     }
 
     /* The roles as classes, for markup. */
+    .text-poster {
+        margin-bottom: var(--space-lg);
+        font: var(--type-poster);
+    }
+
     .text-display {
         font: var(--type-display);
     }

@@ -37,7 +37,11 @@ const headingId = title && id ? `${id}-title` : undefined;
     {...rest}
 >
     <div class="container page-section__inner">
-        {title && <h2 id={headingId}>{title}</h2>}
+        {title && (
+            <h2 id={headingId} class="page-section__title">
+                {title}
+            </h2>
+        )}
         <slot />
     </div>
 </section>
