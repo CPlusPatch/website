@@ -37,7 +37,7 @@ This builds the site and runs the browser tests in `tests/gallery/` with Playwri
 - holds still with reduced motion, and settles after its entrance unless it's tagged `animated` (`motion`)
 - shows where focus is on everything Tab reaches (`focus`)
 
-`behaviours.spec.ts` also drives a few components the way a reader would: the dropdown, the carousel, the terminal, a dialogue, copying code.
+`behaviours.spec.ts` also drives a few components the way a reader would: the dropdown, the carousel, the terminal, a dialogue, copying code, and the filter on the gallery's front page.
 
 The first time, install the browsers with `npx playwright install chromium`. Locally only Chromium runs, in about a minute; CI runs Firefox and WebKit too, for the no-JS, accessibility and console checks, and keeps the HTML report when something fails.
 
