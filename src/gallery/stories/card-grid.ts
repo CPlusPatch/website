@@ -18,7 +18,7 @@ export const cardGrid: StoryGroup[] = [
         title: "Card grids",
         category: "showcase",
         description:
-            "One, two, then three columns. A short last row is centred; narrow the preview to see two columns.",
+            "One, two, then three columns. A short last row is centered; narrow the preview to see two columns.",
         min: "full",
         stories: [
             story("full-rows", CardGrid, {}, { children: cards(6) }),

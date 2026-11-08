@@ -44,7 +44,7 @@ export const code: StoryGroup[] = [
         title: "Code",
         category: "content",
         description:
-            "Highlighted at build time by Shiki, in the palette's colours. The copy button needs JS and is absent without it.",
+            "Highlighted at build time by Shiki, in the palette's colors. The copy button needs JS and is absent without it.",
         min: 28,
         stories: [
             story("typescript", Code, {

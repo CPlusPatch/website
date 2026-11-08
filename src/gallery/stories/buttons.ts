@@ -10,7 +10,7 @@ export const buttons: StoryGroup[] = [
         id: "button-matrix",
         title: "Variant × tone",
         category: "primitives",
-        description: "Fill style and colour are independent axes.",
+        description: "Fill style and color are independent axes.",
         min: 10,
         ...matrix(
             Button,
@@ -34,13 +34,13 @@ export const buttons: StoryGroup[] = [
             story(
                 "icon",
                 Button,
-                { size: "icon", "aria-label": "Favourite" },
+                { size: "icon", "aria-label": "Favorite" },
                 { icon: "lucide:star" },
             ),
             story(
                 "icon-lg",
                 Button,
-                { size: "icon-lg", "aria-label": "Favourite" },
+                { size: "icon-lg", "aria-label": "Favorite" },
                 { icon: "lucide:star" },
             ),
             story("disabled", Button, { disabled: true }, { slot: "Disabled" }),
@@ -63,7 +63,7 @@ export const buttons: StoryGroup[] = [
                 ButtonGroup,
                 { label: "Alignment" },
                 {
-                    children: ["Left", "Centre", "Right"].map((label) =>
+                    children: ["Left", "Center", "Right"].map((label) =>
                         story(
                             label.toLowerCase(),
                             Button,

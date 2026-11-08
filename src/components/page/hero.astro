@@ -1,7 +1,7 @@
 ---
 import BlueprintFrame from "@cpluspatch/ui/astro/blocks/blueprint-frame.astro";
 import IconList from "@cpluspatch/ui/astro/ui/icon-list.astro";
-import { details } from "../../data/home.ts";
+import { details, intro } from "../../data/home.ts";
 import Terminal from "../blocks/terminal/terminal.astro";
 import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
 ---
@@ -10,12 +10,15 @@ import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
     <div class="container hero__inner">
         <div class="hero__intro">
             <h1 id="hero-title" class="text-poster">
-                Hi, I'm <span class="accent">CPlusPatch</span>.
-                <span class="hero__headline">I like computers.</span>
+                Hi,{" "}
+                <span class="hero__line">
+                    I'm <span class="accent">CPlusPatch</span>.
+                </span>{" "}
+                <span class="hero__line">{intro.headline}</span>
             </h1>
             <p class="lead">
-                I study engineering, run too many servers, and care a lot about
-                making good software. Poke at the terminal or scroll down.
+                {intro.lead}{" "}
+                The terminal takes commands: try <code>help</code>.
             </p>
             <IconList items={details} />
         </div>
@@ -57,7 +60,8 @@ import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
         align-items: center;
 
         @container (min-width: 60rem) {
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            /* Even, so each line fits */
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: var(--space-lg);
         }
     }
@@ -66,10 +70,24 @@ import { neofetch, whoami } from "../blocks/terminal/terminal.ts";
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        container: hero-intro / inline-size;
+
+        /*
+         * On the smallest phones, a little smaller, so each line
+         * still fits.
+         */
+        @container hero-intro (max-width: 20rem) {
+            .text-poster {
+                font-size: min(
+                    calc(var(--font-size-6xl) * var(--display-scale)),
+                    14cqi
+                );
+            }
+        }
     }
 
-    /* Its own line, so the break falls between the sentences. */
-    .hero__headline {
+    /* A line each, so the breaks fall between the greeting and sentences. */
+    .hero__line {
         display: block;
     }
 }

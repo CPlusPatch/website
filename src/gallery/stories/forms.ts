@@ -19,7 +19,7 @@ const VIEW_OPTIONS = [
 
 const ALIGN_OPTIONS = [
     { value: "left", label: "Align left", icon: "lucide:align-left" },
-    { value: "center", label: "Align centre", icon: "lucide:align-center" },
+    { value: "center", label: "Align center", icon: "lucide:align-center" },
     { value: "right", label: "Align right", icon: "lucide:align-right" },
 ];
 

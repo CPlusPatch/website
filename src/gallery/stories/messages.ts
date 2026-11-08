@@ -279,7 +279,7 @@ export const messages: StoryGroup[] = [
                 {
                     children: [
                         "Who took the last juice box from the fridge?",
-                        "It was labelled.",
+                        "It was labeled.",
                         "In marker.",
                     ].map((text, i) =>
                         story(

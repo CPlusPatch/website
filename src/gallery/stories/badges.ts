@@ -18,7 +18,7 @@ export const badges: StoryGroup[] = [
         id: "badge-matrix",
         title: "Variant × tone",
         category: "primitives",
-        description: "Fill style and colour are independent axes.",
+        description: "Fill style and color are independent axes.",
         min: 10,
         ...matrix(
             Badge,

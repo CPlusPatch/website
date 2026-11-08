@@ -95,11 +95,11 @@ export const sections: StoryGroup[] = [
                 Section,
                 {
                     id: "demo-section-center",
-                    title: "Centred",
+                    title: "Centered",
                     align: "center",
                 },
                 {
-                    slot: `<p class="lead">Lead copy, centred under its heading.</p>`,
+                    slot: `<p class="lead">Lead copy, centered under its heading.</p>`,
                 },
             ),
         ],

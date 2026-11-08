@@ -3,7 +3,7 @@
  * from data/home.ts, which it shares with the front page.
  */
 
-/** A project's viewer window id, from its title: "Versia Server" is `p-versia-server`. */
+/** A project's viewer window id, from its title: "Versia Protocol" is `p-versia-protocol`. */
 export const projectId = (title: string): string =>
     `p-${title
         .toLowerCase()

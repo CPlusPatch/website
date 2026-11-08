@@ -1,15 +1,12 @@
 ---
 import Section from "@cpluspatch/ui/astro/sections/section.astro";
-import { socials } from "../../data/home.ts";
+import { contactNote, socials } from "../../data/home.ts";
 import ContactMethod from "../blocks/contact-method.astro";
 ---
 
 <Section id="methods" aria-label="Ways to contact me">
     <h1 class="text-poster">Contact</h1>
-    <p class="methods__blurb">
-        I get a lot of spam and scams, so make sure your message request isn't
-        just "Hello".
-    </p>
+    <p class="methods__blurb">{contactNote}</p>
     <div class="methods__grid">
         {socials.map((social) => <ContactMethod {...social} />)}
     </div>

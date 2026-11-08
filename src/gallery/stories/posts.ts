@@ -55,7 +55,7 @@ const actions = (
                 }),
                 story("favourite", PostAction, {
                     icon: "lucide:heart",
-                    label: "Favourite",
+                    label: "Favorite",
                     count: n.favourites,
                     pressed: on.favourited ?? false,
                     filled: true,
@@ -103,7 +103,7 @@ const quoted = story(
 
 const picture = story("picture", Image, {
     src: testPattern,
-    alt: "A colour test pattern",
+    alt: "A color test pattern",
     width: 800,
     height: 450,
 });
@@ -193,7 +193,7 @@ const posts = (variant: Variant): Story[] => [
         Post,
         { ...GREG, variant, time: "5h" },
         {
-            slot: text("Pressed states: boosted, favourited and bookmarked."),
+            slot: text("Pressed states: boosted, favorited and bookmarked."),
             slots: {
                 actions: [
                     actions(
@@ -463,7 +463,7 @@ const thread = (variant: Variant): Story[] => [
                                     items: [
                                         { label: "boosts", count: 1204 },
                                         { label: "quotes", count: 3 },
-                                        { label: "favourites", count: 38900 },
+                                        { label: "favorites", count: 38900 },
                                     ],
                                 }),
                             ],
@@ -505,7 +505,7 @@ const featured = (variant: Variant) =>
                         items: [
                             { label: "boosts", count: 12 },
                             { label: "quotes", count: 0 },
-                            { label: "favourites", count: 1048 },
+                            { label: "favorites", count: 1048 },
                         ],
                     }),
                 ],

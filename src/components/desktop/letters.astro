@@ -6,7 +6,7 @@
 
 import Masonry from "@cpluspatch/ui/astro/blocks/masonry.astro";
 import Quote from "@cpluspatch/ui/astro/blocks/quote.astro";
-import { reviews, socials } from "../../data/home.ts";
+import { contactNote, inboxNote, reviews, socials } from "../../data/home.ts";
 import ContactMethod from "../blocks/contact-method.astro";
 import Inbox from "../page/inbox/inbox.astro";
 import App from "./app.astro";
@@ -16,7 +16,7 @@ const [featured, ...rest] = reviews;
 ---
 
 <App id="letters" title="Letters" path="~/mail" icon="lucide:mail">
-    <h3 class="letters__heading text-subheading">What people say</h3>
+    <h3 class="letters__heading text-subheading">Nice things people said</h3>
     <div class="letters__reviews">
         {featured && (
             <Quote author={featured.author} featured>
@@ -33,13 +33,11 @@ const [featured, ...rest] = reviews;
     </div>
 
     <h3 class="letters__heading text-subheading">Write to me</h3>
-    <p class="letters__blurb">
-        I get a lot of spam and scams, so make sure your message isn't just
-        "Hello". Or leave an anonymous note below: it shows up on my phone.
-    </p>
+    <p class="letters__blurb">{contactNote}</p>
     <div class="letters__methods">
         {socials.map((social) => <ContactMethod {...social} />)}
     </div>
+    <p class="letters__blurb">{inboxNote}</p>
     <Inbox />
 </App>
 

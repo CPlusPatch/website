@@ -9,9 +9,8 @@ import { commits, figures } from "../../data/home.ts";
 <Section id="stats" aria-labelledby="stats-title" alt>
     <h2 id="stats-title" class="page-section__title stats__title">
         {/* Spaced explicitly: the build drops whitespace beside components */}
-        <Stat inline {...figures.years} />{" "}years writing software, over{" "}
-        <Stat inline {...figures.lines} />{" "}lines of code, pushed in{" "}
-        <Stat inline {...figures.commits} />{" "}commits.
+        I've been writing software for <Stat inline {...figures.years} />{" "}
+        years: <Stat inline {...figures.commits} />{" "}commits so far.
     </h2>
 
     <div class="commits panel">

@@ -9,7 +9,7 @@ export const status: StoryGroup[] = [
         title: "Status",
         category: "primitives",
         description:
-            "A light takes the text colour unless given a tone. Pulse is off under reduced motion.",
+            "A light takes the text color unless given a tone. Pulse is off under reduced motion.",
         min: 12,
         stories: [
             story("default", Status, {}, { slot: "Offline" }),

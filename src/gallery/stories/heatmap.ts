@@ -25,7 +25,7 @@ export const heatmap: StoryGroup[] = [
                     until,
                     label: "Commits over the last year",
                 },
-                { slot: "<span>1,204 contributions in the last year</span>" },
+                { slot: "<span>2,236 contributions in the last year</span>" },
             ),
             story("small-secondary", Heatmap, {
                 columns: 20,

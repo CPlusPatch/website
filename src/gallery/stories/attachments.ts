@@ -27,7 +27,7 @@ export const attachments: StoryGroup[] = [
         title: "Horizontal",
         category: "forms",
         description:
-            "The description names the state; colour and shimmer only echo it.",
+            "The description names the state; color and shimmer only echo it.",
         min: 18,
         stories: [
             story(

@@ -11,8 +11,8 @@ import type { DisplayEffect } from "@cpluspatch/ui/astro/sections/display/displa
 import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import type { ComponentProps } from "astro/types";
 import flaviScreenshot from "../images/assets/flavi-screenshot.png";
-import galleryDark from "../images/assets/gallery-dark.webp";
-import galleryLight from "../images/assets/gallery-light.webp";
+import homeDark from "../images/assets/home-dark.webp";
+import homeLight from "../images/assets/home-light.webp";
 import joinMastodonScreenshot from "../images/assets/join-mastodon.de_en.webp";
 import kitsuScreenshot from "../images/assets/kitsu.webp";
 import versiaApiScreenshot from "../images/assets/lysand-apis.png";
@@ -20,7 +20,8 @@ import versiaDark from "../images/assets/versia-dark.webp";
 import versiaFeDark from "../images/assets/versia-fe-dark.webp";
 import versiaFeLight from "../images/assets/versia-fe-light.webp";
 import versiaLight from "../images/assets/versia-light.webp";
-import versiaServerScreenshot from "../images/assets/versia-readme.png";
+import versoDark from "../images/assets/verso-dark.webp";
+import versoLight from "../images/assets/verso-light.webp";
 import autumn from "../images/avatars/autumn.webp";
 import calciume from "../images/avatars/calciume.webp";
 import erik from "../images/avatars/erik.jpg";
@@ -31,6 +32,20 @@ import zemi from "../images/avatars/zemi.webp";
 import verity from "./verity.json" with { type: "json" };
 
 export const contact = "mailto:contact@cpluspatch.com";
+
+/** Who I am, in the front page's hero and the desktop's readme. */
+export const intro = {
+    headline: "I write software.",
+    lead: "I study engineering in France. Most of my time goes into Versia, a federation protocol, and the rest into my personal homelab.",
+};
+
+/** Over the ways to reach me, on the contact page and the desktop. */
+export const contactNote =
+    'Say what you want in your first message: I ignore a bare "Hello", since most of them are scams.';
+
+/** Over the anonymous inbox. */
+export const inboxNote =
+    "Anything you send here goes to my phone, without your name. It also appears in the feed below for anyone who has this page open.";
 
 /**
  * The anonymous inbox on the contact page: messages are PUT to the ntfy
@@ -67,17 +82,15 @@ export const details = [
 /** Figures set in the sentences of the stats and homelab sections. */
 export const figures = {
     years: { value: 8, suffix: "+" },
-    lines: { value: 1, suffix: "M" },
     commits: { value: 6, suffix: "k" },
     uptime: { value: 99.9, suffix: "%" },
 } satisfies Record<string, ComponentProps<typeof Stat>>;
 
 /** The same figures as cards, with labels, for the desktop's readme. */
 export const stats: ComponentProps<typeof Stat>[] = [
-    { ...figures.years, label: "Years in software development" },
-    { ...figures.lines, suffix: "M+", label: "Lines of code written" },
-    { ...figures.commits, label: "Commits pushed" },
-    { ...figures.uptime, label: "Uptime of my homelab" },
+    { ...figures.years, label: "Years writing software" },
+    { ...figures.commits, label: "Commits" },
+    { ...figures.uptime, label: "Homelab uptime" },
 ];
 
 /**
@@ -93,8 +106,8 @@ const activity = Array.from({ length: 52 * 7 }, (_, i) => {
 
 /** The commit graph under the stats, which comes alive once scrolled to. */
 export const commits = {
-    /** Placeholder, like the levels. */
-    title: "1,204 contributions in the last year",
+    /** The real count; the levels under it are still made up. */
+    title: "2,236 contributions in the last year",
     heatmap: {
         columns: 52,
         rows: 7,
@@ -121,7 +134,7 @@ export const reviews: {
     },
     {
         author: { name: "Calciume", title: "CS Student", avatar: calciume },
-        body: "I got to be witness to CPlusPatch's development of Fedibase, It really showed me how much he can accomplish when he sticks to a project. He was dedicated enough to make a fully featured Fediverse client that I'd argue is on par with other Fediverse clients, and he did it all on his own.",
+        body: "I got to be witness to CPlusPatch's development of Fedibase. It really showed me how much he can accomplish when he sticks to a project. He was dedicated enough to make a fully featured Fediverse client that I'd argue is on par with other Fediverse clients, and he did it all on his own.",
     },
     {
         author: {
@@ -177,7 +190,7 @@ export const versia = {
         dark: versiaDark,
         alt: "The Versia site, headed Federation you can read, with a signed message beside notes on it",
     },
-    body: "A decentralized federation protocol that focuses on good experience and ease of implementation, and everything around it: the spec, a reference server, a frontend and TypeScript APIs.",
+    body: "A federation protocol for social apps: plain JSON over signed HTTP requests, with a small core and namespaced extensions. It's heavily inspired by ActivityPub, without JSON-LD or activity wrappers. I wrote the spec, the reference server, a web client and the TypeScript libraries.",
     links: [
         { href: "https://versia.pub", icon: "lucide:globe", label: "Website" },
         {
@@ -199,17 +212,19 @@ export const versia = {
  */
 export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     body: string;
+    /** Part of Versia, so on the home page under it, not in the list. */
+    versia?: boolean;
     header?: NonNullable<ComponentProps<typeof MediaCard>["header"]> & {
         light?: ImageMetadata;
     };
 })[] = [
     {
         title: "Website",
-        body: "This site, and the component library it's built from. Plain HTML and CSS, with JavaScript only where it's needed.",
+        body: "This site, and the component library it's built from. Every page works without JavaScript; scripts only add to it.",
         header: {
-            src: galleryDark,
-            light: galleryLight,
-            alt: "The component gallery, with a card for each component",
+            src: homeDark,
+            light: homeLight,
+            alt: "The front page of this site, with a terminal beside the introduction",
         },
         links: [
             {
@@ -222,7 +237,8 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     },
     {
         title: "Versia Protocol",
-        body: "Fully documented protocol specification for Versia, a decentralized federation protocol that focuses on good experience and ease of implementation.",
+        versia: true,
+        body: "The specification, written for people implementing a Versia server or library.",
         header: {
             src: versiaDark,
             alt: "The Versia site, headed Federation you can read, with a signed message beside notes on it",
@@ -241,22 +257,19 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
         ],
     },
     {
-        title: "Versia Server",
-        body: "Reference implementation of the Versia protocol. High-quality, efficient and configurable server software.",
+        title: "Verso",
+        versia: true,
+        body: "The reference implementation of Versia, in TypeScript on Deno. It also implements Mastodon's client API, so Mastodon apps can use it. It's in early development.",
         header: {
-            src: versiaServerScreenshot,
-            alt: "The Versia Server README",
+            src: versoDark,
+            light: versoLight,
+            alt: "The Verso README on GitHub",
         },
         links: [
             {
-                href: "https://github.com/versia-pub/server",
+                href: "https://github.com/versia-pub/verso",
                 icon: "lucide:github",
                 label: "Source",
-            },
-            {
-                href: "https://vs.cpluspatch.com",
-                icon: "lucide:server",
-                label: "Demo",
             },
             {
                 href: "https://opencollective.com/lysand",
@@ -267,7 +280,8 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     },
     {
         title: "Versia-FE",
-        body: "Frontend for Versia Server, made with Vue 3 and Tailwind CSS. It's a modern, responsive and fast web application.",
+        versia: true,
+        body: "The web client for Versia Server, in Vue 3 and Tailwind. It's what the demo instance runs.",
         header: {
             src: versiaFeDark,
             light: versiaFeLight,
@@ -293,7 +307,8 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     },
     {
         title: "Versia APIs",
-        body: "APIs for TypeScript Versia implementations, including federation and clients. Well-documented, small and efficient.",
+        versia: true,
+        body: "TypeScript libraries for building Versia servers and clients, on npm and JSR.",
         header: {
             src: versiaApiScreenshot,
             alt: "The Versia APIs README",
@@ -323,7 +338,7 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     },
     {
         title: "Join Mastodon",
-        body: "A landing page for mastodon.de, a social media with no ads, no tracking, and no algorithms. Made with Nuxt.js and Tailwind CSS.",
+        body: "The landing page for mastodon.de, a Mastodon server with no ads and no tracking. Built with Nuxt and Tailwind.",
         header: {
             src: joinMastodonScreenshot,
             alt: "The website for joinmastodon.de, with big hero text section a screenshot of the Mastodon app",
@@ -343,7 +358,7 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     },
     {
         title: "Flavi",
-        body: "Flavi is an open-source client for the Matrix ecosystem with the goal of having a clean, familiar interface for users of Discord and the like.",
+        body: "A Matrix client laid out like Discord, so people coming from it would feel at home. It's no longer maintained.",
         header: {
             src: flaviScreenshot,
             alt: "The Flavi app, with a Discord-like interface and a dark theme",
@@ -358,7 +373,7 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     },
     {
         title: "Kitsu.life",
-        body: "Website for the Kitsu service suite, showcasing features and the community for Kitsu.",
+        body: "The website for Kitsu's services, including its social network.",
         header: {
             src: kitsuScreenshot,
             alt: "Kitsu.life, headed Kitsu provides you with a family, beside a laptop showing its social app",

@@ -4,18 +4,15 @@
 import Heatmap from "@cpluspatch/ui/astro/blocks/heatmap/heatmap.astro";
 import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import IconList from "@cpluspatch/ui/astro/ui/icon-list.astro";
-import { commits, details, stats } from "../../data/home.ts";
+import { commits, details, intro, stats } from "../../data/home.ts";
 import App from "./app.astro";
 ---
 
 <App id="readme" title="README" path="~/README.md" icon="lucide:file-text">
     <h1 class="readme__title">
-        Hi, I'm <span class="accent">CPlusPatch</span>. I like computers.
+        Hi, I'm <span class="accent">CPlusPatch</span>. {intro.headline}
     </h1>
-    <p class="lead">
-        I study engineering, run too many servers, and care a lot about making
-        good software. Poke at the terminal, or open a project.
-    </p>
+    <p class="lead">{intro.lead}</p>
     <IconList items={details} />
 
     <div class="readme__stats">{stats.map((stat) => <Stat {...stat} />)}</div>

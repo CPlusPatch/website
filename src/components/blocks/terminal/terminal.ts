@@ -116,7 +116,7 @@ const commands: {
         ? [
               {
                   names: ["movie"],
-                  description: "Play a movie, in colour (Ctrl+C to stop)",
+                  description: "Play a movie, in color (Ctrl+C to stop)",
                   run: () => playVideo(movie, "the movie"),
               },
           ]

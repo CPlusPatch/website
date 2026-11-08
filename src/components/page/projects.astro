@@ -8,7 +8,7 @@ import FlaviArt from "./flavi-art.astro";
 
 // Versia is most of the work, so it leads as one piece with its parts under
 // it, and the rest follow as a list rather than as equal cards
-const parts = projects.filter(({ title }) => title.startsWith("Versia"));
+const parts = projects.filter(({ versia }) => versia);
 const others = projects.filter((project) => !parts.includes(project));
 
 // Versia's own links (site, donations) aren't repeated on each part
@@ -268,7 +268,7 @@ const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
             display: flex;
             flex-direction: column;
             gap: var(--space-xs);
-            padding-top: var(--space-sm);
+            padding-top: var(--space-md);
             border-top: var(--border-width) solid var(--border-color);
 
             .part__title {
@@ -279,6 +279,11 @@ const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
             .part__body {
                 margin: 0;
                 color: var(--color-text-muted);
+            }
+
+            /* Apart from the text, even under the longest */
+            .links {
+                padding-top: var(--space-sm);
             }
         }
     }

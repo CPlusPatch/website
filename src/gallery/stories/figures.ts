@@ -13,12 +13,12 @@ export const figures: StoryGroup[] = [
             story(
                 "default",
                 Figure,
-                { src: testPattern, alt: "A test pattern of colour bars" },
-                { slot: "A test pattern, as broadcast between programmes." },
+                { src: testPattern, alt: "A test pattern of color bars" },
+                { slot: "A test pattern, as broadcast between programs." },
             ),
             story("no-caption", Figure, {
                 src: testPattern,
-                alt: "A test pattern of colour bars",
+                alt: "A test pattern of color bars",
             }),
             story(
                 "portrait",
@@ -33,7 +33,7 @@ export const figures: StoryGroup[] = [
                 Figure,
                 {
                     src: testPattern,
-                    alt: "A test pattern of colour bars",
+                    alt: "A test pattern of color bars",
                     ratio: "21 / 9",
                 },
                 {
