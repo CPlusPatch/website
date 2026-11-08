@@ -64,7 +64,7 @@ Story names go in URLs, so they're lowercase words joined by hyphens, and unique
 
 The gallery works out a group's source file from the component its first story renders, so put the group's own component first.
 
-Tag a story that keeps moving by itself, past a short CSS entrance (a pulse, autoplay, a count-up), as `animated`, and one that shows data fetched when it loads as `live`, with `tags` in its options. Tags on a group apply to all of its stories. Tests use them: they wait for or freeze animated stories, and they don't compare pictures of live ones. The gallery shows them as badges.
+Tag a story that keeps moving by itself, past a short CSS entrance (a pulse, autoplay, a count-up), as `animated`, and one that shows data fetched when it loads as `live`, with `tags` in its options. Tags on a group apply to all of its stories. Tests use them: an animated story is the only kind allowed to keep moving with motion on, and a live one is never compared as a picture. The gallery shows them as badges.
 
 Each group becomes a component with its own page at `/gallery/<group-id>/`. To put several groups on one page (Buttons has its variant × tone table, its sizes and its button groups), list them together in `src/gallery/components.ts`. The build fails if a group ends up on no page or on two.
 

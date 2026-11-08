@@ -30,4 +30,4 @@ Everything should work with a keyboard and a screen reader, respect reduced moti
 
 ## Testing
 
-Logic that can be tested on its own, like colour maths, has unit tests. Components are tested by looking at them: the gallery's stories cover the states that matter, and they double as documentation. The generated themes' contrast is checked automatically, and CI runs all of it on every push.
+Logic that can be tested on its own, like colour maths, has unit tests. Components are still tested by looking at them: the gallery's stories cover the states that matter, and they double as documentation. The gallery is also checked in a browser: every story is run with JavaScript off, through axe, at narrow widths, with reduced motion and with the keyboard, and checked for errors. Those tests check that something is true of a story rather than compare it with a saved picture, so there's nothing to update when a component changes on purpose. The generated themes' contrast is checked automatically, and CI runs all of it on every push.

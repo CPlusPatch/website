@@ -22,6 +22,29 @@ This runs Biome (formatting and lint), `astro check` (types), the theme contrast
 
 Tests live next to the code they test, as `*.test.ts` files, and run with `deno run test`. So far that's the logic in `packages/`.
 
+## Testing the gallery
+
+```sh
+deno run test:gallery
+```
+
+This builds the site and runs the browser tests in `tests/gallery/` with Playwright, against `astro preview` on port 4322. They go through every story in the gallery and check that it:
+
+- renders, keeps its script-only controls hidden, and opens its `<details>` with JavaScript off (`no-js`)
+- passes axe in light and dark and in two other themes (`a11y`)
+- logs no errors and makes no failing requests (`console`)
+- doesn't make the page scroll sideways at the tablet, phone and tiny widths (`layout`)
+- holds still with reduced motion, and settles after its entrance unless it's tagged `animated` (`motion`)
+- shows where focus is on everything Tab reaches (`focus`)
+
+`behaviours.spec.ts` also drives a few components the way a reader would: the dropdown, the carousel, the terminal, a dialogue, copying code.
+
+The first time, install the browsers with `npx playwright install chromium`. Locally only Chromium runs, in about a minute; CI runs Firefox and WebKit too, for the no-JS, accessibility and console checks, and keeps the HTML report when something fails.
+
+After the build, `npx playwright test` runs the tests again without rebuilding. To run some of them, pass a spec or a story: `npx playwright test a11y`, or `-g "carousel/autoplay"`. The accessibility, console and motion checks load a whole group at a time, so they are named by group (`-g "carousel "`) and say which story a problem is in.
+
+Some axe rules are turned off in `a11y.spec.ts`, each with a comment saying why. Turn one off only when the gallery breaks it, not the component.
+
 ## Committing
 
 Keep commits small, one change each. Messages follow this format:
