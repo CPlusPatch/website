@@ -12,7 +12,7 @@ const [featured, ...rest] = reviews;
 <Section id="reviews" title="What people say" alt>
     <div class="reviews">
         {featured && (
-            <Quote author={featured.author}>
+            <Quote author={featured.author} featured>
                 <p>{featured.body}</p>
             </Quote>
         )}

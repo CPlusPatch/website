@@ -42,6 +42,15 @@ export const quotes: StoryGroup[] = [
                 },
                 { slot: `${BODY}${BODY}` },
             ),
+            story(
+                "featured",
+                Quote,
+                {
+                    author: { name: "Greg Heffley", avatar: greg },
+                    featured: true,
+                },
+                { slot: `${BODY}` },
+            ),
         ],
     },
 ];

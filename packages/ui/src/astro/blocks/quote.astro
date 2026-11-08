@@ -19,12 +19,27 @@ interface Props extends HTMLAttributes<"figure"> {
     };
     /** URL of the quote's source, for the blockquote's `cite` attribute. */
     cite?: string;
+    /**
+     * Lead a wall of quotes: larger type, and the byline beside the quote
+     * rather than under it once there is room.
+     */
+    featured?: boolean;
 }
 
-const { author, cite, class: className, ...rest } = Astro.props;
+const {
+    author,
+    cite,
+    featured = false,
+    class: className,
+    ...rest
+} = Astro.props;
 ---
 
-<figure class:list={["quote", "panel", className]} data-snap {...rest}>
+<figure
+    class:list={["quote", "panel", featured && "quote--featured", className]}
+    data-snap
+    {...rest}
+>
     <blockquote class="quote__body" cite={cite}>
         <slot />
     </blockquote>

@@ -7,10 +7,14 @@
         gap: var(--space-md);
         width: 100%;
         margin: 0;
-        padding: var(--space-md);
+        padding: var(--space-md-lg);
 
-        /* The quote itself, a step up from the byline under it. */
+        /*
+         * The quote itself, a step up from the byline under it, and kept to a
+         * readable line however wide the quote is laid out.
+         */
         .quote__body {
+            max-inline-size: var(--measure);
             margin: 0;
             font: var(--type-lead);
         }
@@ -31,6 +35,33 @@
                 .quote__title {
                     color: var(--color-text-muted);
                 }
+            }
+        }
+    }
+
+    /*
+     * In a wide container the featured quote is set a step larger and its
+     * byline moves into a column beside it, so a full-width panel is filled
+     * by the quote and its source instead of by one over-long line. Narrow,
+     * it is an ordinary quote: larger type there would leave too few words
+     * to a line.
+     */
+    @container (min-width: 50rem) {
+        .quote--featured {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 14rem;
+            gap: var(--space-lg);
+
+            .quote__body {
+                font-size: var(--font-size-xl);
+            }
+
+            .quote__author {
+                align-self: start;
+                padding-top: 0;
+                padding-left: var(--space-lg);
+                border-top: 0;
+                border-left: var(--border-width) solid var(--border-color);
             }
         }
     }

@@ -19,7 +19,7 @@ const [featured, ...rest] = reviews;
     <h3 class="letters__heading text-subheading">What people say</h3>
     <div class="letters__reviews">
         {featured && (
-            <Quote author={featured.author}>
+            <Quote author={featured.author} featured>
                 <p>{featured.body}</p>
             </Quote>
         )}
