@@ -25,6 +25,7 @@ const { entries = [], prompt = "$ ", interactive = false } = Astro.props;
     class="terminal panel"
     role="log"
     aria-label="Terminal"
+    tabindex={interactive ? undefined : 0}
     data-terminal={interactive ? "" : undefined}
     style={`--prompt: ${JSON.stringify(prompt)}`}
 >
