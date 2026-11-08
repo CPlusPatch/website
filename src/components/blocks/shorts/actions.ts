@@ -8,9 +8,9 @@ const compact = new Intl.NumberFormat("en", { notation: "compact" });
 /** The like count under the button, as YouTube shortens it: 48K. */
 export const formatLikes = (likes: number) => compact.format(likes);
 
-/** The like button's accessible name, with the count in full. */
+/** The like button's accessible name, with the count as the button shows it. */
 export const likesLabel = (likes: number) =>
-    `Like, ${likes.toLocaleString("en")} likes`;
+    `Like, ${formatLikes(likes)} likes`;
 
 const pressed = (button: Element) =>
     button.getAttribute("aria-pressed") === "true";
