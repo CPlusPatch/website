@@ -39,3 +39,6 @@ src/data/radio/
 # Playwright
 /test-results/
 /playwright-report/
+
+# gallery:diff reports
+/.gallery-diff/

@@ -7,7 +7,7 @@
     "version": "0.1.0-alpha.1",
     "license": "AGPL-3.0-only",
     "engines": {
-        "node": ">=22.12.0"
+        "node": ">=22.18.0"
     },
     "scripts": {
         "dev": "astro dev",
@@ -26,7 +26,8 @@
         "shorts": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/reel/src/cli.ts --out src/data/shorts",
         "test": "deno test --allow-read=packages packages",
         "check": "biome check . && astro check && deno run theme:check && deno run test",
-        "test:gallery": "astro build && playwright test"
+        "test:gallery": "astro build && playwright test",
+        "gallery:diff": "node tests/gallery/diff.ts"
     },
     "dependencies": {
         "@cpluspatch/destructor": "workspace:*",
