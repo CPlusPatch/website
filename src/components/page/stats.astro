@@ -24,7 +24,8 @@ import { commits, figures } from "../../data/home.ts";
 
 <style>
 .stats__title {
-    max-width: 22ch;
+    /* A little under other titles, so each clause gets its own line */
+    max-width: calc(var(--title-measure) - 2ch);
 
     .stat {
         font-variant-numeric: tabular-nums;

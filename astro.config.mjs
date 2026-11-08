@@ -31,7 +31,7 @@ export default defineConfig({
             subsets: ["latin", "latin-ext"],
             fallbacks: ["monospace", "ui-monospace"],
         },
-        // Ocean theme only (packages/ui/src/styles/themes/ocean.css). Not preloaded, so
+        // Soft style only (packages/ui/src/styles/styles/soft.css). Not preloaded, so
         // the files are only fetched once text is drawn with them.
         {
             provider: fontProviders.fontsource(),
@@ -52,6 +52,17 @@ export default defineConfig({
             display: "swap",
             subsets: ["latin", "latin-ext"],
             fallbacks: ["monospace", "ui-monospace"],
+        },
+        // Print style only (packages/ui/src/styles/styles/print.css), not preloaded
+        {
+            provider: fontProviders.fontsource(),
+            name: "Source Serif 4",
+            cssVariable: "--font-source-serif",
+            styles: ["normal", "italic"],
+            weights: ["200 900"],
+            display: "swap",
+            subsets: ["latin", "latin-ext"],
+            fallbacks: ["serif"],
         },
         // Display face for page and section titles (--font-display)
         {

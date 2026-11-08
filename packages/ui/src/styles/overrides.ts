@@ -1,10 +1,12 @@
 /**
- * Overrides for the theme's colour scheme, spacing, radius and font size,
- * picked in the Display menu. Each control is a radio group read through
- * :has(), like the theme picker; the first option is the default and sets
- * nothing, so the theme's own values apply. The options and the CSS are
+ * The style, and overrides for the colour scheme, spacing, radius and font
+ * size, picked in the Display menu. Each control is a radio group read
+ * through :has(), like the theme picker; the first option is the default and
+ * sets nothing, so the style's own values apply. The options and the CSS are
  * built from one list.
  */
+
+import { STYLES } from "./styles/index.ts";
 
 interface Override {
     /** Radio group name, and the choice's name when saved. */
@@ -63,11 +65,22 @@ export const OVERRIDES: Override[] = [
             },
         ],
     },
+    /*
+     * The style's CSS is its own stylesheet (styles/styles/), as it holds
+     * fonts and media queries, so its options declare nothing here: this
+     * gives it the menu's control, the saved choice and data-style.
+     */
+    {
+        name: "style",
+        label: "Style",
+        key: "Y",
+        options: STYLES,
+    },
     {
         name: "override-spacing",
         label: "Spacing",
         options: [
-            { value: "default", label: "Theme" },
+            { value: "default", label: "Default" },
             {
                 value: "compact",
                 label: "Compact",
@@ -84,7 +97,7 @@ export const OVERRIDES: Override[] = [
         name: "override-radius",
         label: "Radius",
         options: [
-            { value: "default", label: "Theme" },
+            { value: "default", label: "Default" },
             {
                 value: "square",
                 label: "Square",
@@ -92,7 +105,7 @@ export const OVERRIDES: Override[] = [
             },
             {
                 value: "soft",
-                label: "Soft",
+                label: "Slight",
                 declarations: { "--radius": "0.25rem" },
             },
             {
@@ -106,7 +119,7 @@ export const OVERRIDES: Override[] = [
         name: "override-font-size",
         label: "Font size",
         options: [
-            { value: "default", label: "Theme" },
+            { value: "default", label: "Default" },
             { value: "small", label: "Small", declarations: scale(0.875).font },
             { value: "large", label: "Large", declarations: scale(1.125).font },
         ],

@@ -86,10 +86,14 @@
             800 var(--font-size-4xl) / var(--leading-display) var(--font-base);
         /* Page openers, in the display face: the hero's greeting, a page's name. */
         --type-poster:
-            800 var(--font-size-6xl) / var(--leading-poster) var(--font-display);
+            var(--weight-display)
+            calc(var(--font-size-6xl) * var(--display-scale)) /
+            var(--leading-poster) var(--font-display);
         /* Section titles on a page, in the display face. */
         --type-section:
-            800 var(--font-size-5xl) / var(--leading-poster) var(--font-display);
+            var(--weight-display)
+            calc(var(--font-size-5xl) * var(--display-scale)) /
+            var(--leading-poster) var(--font-display);
         /* Section and hero headings in running content. */
         --type-headline:
             700 var(--font-size-3xl) / var(--leading-tight) var(--font-base);

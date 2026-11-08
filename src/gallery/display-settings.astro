@@ -8,7 +8,7 @@ import type { ComponentProps } from "astro/types";
 
 /**
  * The site's Display menu, with every page effect, and on a component
- * page, a way to see its sections in other schemes and themes (compare.ts).
+ * page, a way to see its sections in other schemes, themes and styles (compare.ts).
  * The gallery's other settings (preview width, stage) are in each
  * component page's toolbar.
  */
@@ -34,6 +34,7 @@ const EFFECTS: DisplayEffect[] = [
                 { value: "page", label: "Off" },
                 { value: "schemes", label: "Light + dark" },
                 { value: "themes", label: "Themes" },
+                { value: "styles", label: "Styles" },
             ]}
             value="page"
             size="sm"

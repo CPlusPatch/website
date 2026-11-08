@@ -1,0 +1,32 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+/*
+ * Soft: rounded corners, a little bounce, and rounded type to match.
+ *
+ * Nunito and Fira Code are registered in astro.config.mjs and rendered by the
+ * layout without preload, so the files only download while this style is on.
+ */
+
+@layer ui.themes {
+    :root:is(
+        [data-style="soft"],
+        :has(input[name="style"][value="soft"]:checked)
+    ) {
+        --radius: 0.625rem;
+        /* Overshoots slightly, so moves and presses land with a little bounce. */
+        --transition: 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+        --font-base: var(--font-nunito, system-ui, sans-serif);
+        --font-mono: var(--font-fira-code, ui-monospace, monospace);
+        /* Titles in the body face, heavy: Nunito is wide, so set smaller. */
+        --font-display: var(--font-base);
+        --display-scale: 0.72;
+        --leading-poster: 1.05;
+        --tracking-display: -0.02em;
+
+        /* This selector outranks tokens.css's :root, so repeat its motion opt-out. */
+        @media (prefers-reduced-motion: reduce) {
+            --transition: 0s;
+        }
+    }
+}

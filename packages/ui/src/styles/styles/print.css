@@ -1,0 +1,36 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+/*
+ * Print: a page set in a serif, with square corners, hairline rules and
+ * slow fades rather than moves.
+ *
+ * Source Serif 4 is registered in astro.config.mjs and rendered by the
+ * layout without preload, so it only downloads while this style is on.
+ */
+
+@layer ui.themes {
+    :root:is(
+        [data-style="print"],
+        :has(input[name="style"][value="print"]:checked)
+    ) {
+        --radius: 0;
+        --border-width: 1px;
+        --transition: 200ms ease;
+
+        --font-base: var(--font-source-serif, Georgia, serif);
+        /* Titles in the same serif, bold: its optical sizes thin it out big. */
+        --font-display: var(--font-base);
+        --weight-display: 700;
+        --display-scale: 0.85;
+        --leading-poster: 1.05;
+        --tracking-display: -0.01em;
+        /* A serif's lower x-height reads well with a little more lead, in body
+        text and in leads alike. */
+        --leading-body: 1.55;
+        --leading-normal: 1.5;
+
+        @media (prefers-reduced-motion: reduce) {
+            --transition: 0s;
+        }
+    }
+}

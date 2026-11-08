@@ -236,8 +236,9 @@ const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
             .versia__title {
                 margin: 0;
                 font:
-                    800 var(--font-size-4xl) / var(--leading-poster)
-                    var(--font-display);
+                    var(--weight-display)
+                    calc(var(--font-size-4xl) * var(--display-scale)) /
+                    var(--leading-poster) var(--font-display);
             }
 
             .lead {

@@ -1,4 +1,5 @@
 ---
+import { STYLES } from "@cpluspatch/ui/styles/styles/index.ts";
 import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 import Layout from "../layouts/base.astro";
 import { PREVIEW_WIDTHS } from "./widths.ts";
@@ -9,7 +10,7 @@ import { PREVIEW_WIDTHS } from "./widths.ts";
  * by URL.
  *
  * Query parameters pick the look without touching the saved Display
- * choices: ?theme=<theme>, ?scheme=light|dark, and ?width=<phone, tablet,
+ * choices: ?theme=<theme>, ?style=<style>, ?scheme=light|dark, and ?width=<phone, tablet,
  * tiny, or a width in rem>. Without them, the saved choices apply.
  */
 interface Props {
@@ -23,6 +24,7 @@ const { title, description, story } = Astro.props;
 
 const options = {
     themes: THEMES.map((theme) => theme.value),
+    styles: STYLES.map((style) => style.value),
     widths: Object.fromEntries(
         PREVIEW_WIDTHS.flatMap((w) => ("width" in w ? [[w.id, w.width]] : [])),
     ),
@@ -36,6 +38,8 @@ const options = {
     const root = document.documentElement;
     const theme = params.get("theme");
     if (options.themes.includes(theme)) root.dataset.theme = theme;
+    const style = params.get("style");
+    if (options.styles.includes(style)) root.dataset.style = style;
     const scheme = params.get("scheme");
     if (scheme === "light" || scheme === "dark") root.dataset.scheme = scheme;
     const width = params.get("width") ?? "";

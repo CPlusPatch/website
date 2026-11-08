@@ -1,0 +1,30 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+/*
+ * Mono: everything in the monospace face, with heavier borders, barely
+ * rounded corners, and changes that happen at once rather than animate.
+ *
+ * JetBrains Mono is the default --font-mono, so this style costs no
+ * download.
+ */
+
+@layer ui.themes {
+    :root:is(
+        [data-style="mono"],
+        :has(input[name="style"][value="mono"]:checked)
+    ) {
+        --radius: 0.125rem;
+        --border-width: 2px;
+        --transition: 0s;
+
+        --font-base: var(--font-mono);
+        /* Mono is wide, so titles set smaller, and at the face's 700. */
+        --font-display: var(--font-mono);
+        --weight-display: 700;
+        --display-scale: 0.56;
+        --leading-poster: 1.05;
+        --tracking-display: -0.03em;
+        /* Section titles are measured in ch, which Mono's are wider in. */
+        --title-measure: 30ch;
+    }
+}

@@ -17,6 +17,12 @@
         /* Condensed, for page and section titles only: set big, it gives the
         pages their voice, where body text stays plain. */
         --font-display: var(--font-big-shoulders, var(--font-base));
+        /* The display face's weight, and its sizes' scale: a wider face than
+        the condensed default sets smaller (see styles/). */
+        --weight-display: 800;
+        --display-scale: 1;
+        /* A section title's longest line, in its own face's ch. */
+        --title-measure: 24ch;
         /*
          * The type scale. Body text is 16px, the floor for comfortable reading
          * on screen (Butterick puts the web range at 15-25px), and interface

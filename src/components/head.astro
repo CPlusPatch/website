@@ -69,10 +69,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 {/* Page and section titles, the first of them above the fold. */}
 <Font cssVariable="--font-big-shoulders" preload={[{ subset: "latin" }]} />
 {/*
- * Ocean theme fonts. Only @font-face rules, with no preload: browsers
- * download a face the first time text uses it, so these cost nothing
- * until the theme is on.
+ * The Soft and Print styles' fonts. Only @font-face rules, with no preload:
+ * browsers download a face the first time text uses it, so these cost
+ * nothing until the style is on.
  */}
 <Font cssVariable="--font-nunito" />
 <Font cssVariable="--font-fira-code" />
+<Font cssVariable="--font-source-serif" />
 {import.meta.env.PROD && analytics && <Analytics />}

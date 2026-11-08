@@ -59,6 +59,28 @@ test("the Display menu changes the scheme and theme", async ({ page }) => {
     expect(await background()).not.toBe(dark);
 });
 
+test("the Display menu changes the style", async ({ page }) => {
+    await page.goto("/gallery/");
+    const look = () =>
+        page.evaluate(() =>
+            [
+                getComputedStyle(document.body).fontFamily,
+                getComputedStyle(document.documentElement).getPropertyValue(
+                    "--radius",
+                ),
+            ].join(),
+        );
+    const poster = await look();
+
+    await page.getByRole("button", { name: "Display" }).click();
+    for (const style of ["soft", "print", "mono"]) {
+        await page
+            .locator(`label:has(input[name="style"][value="${style}"])`)
+            .click();
+        expect(await look()).not.toBe(poster);
+    }
+});
+
 test("the index shows every component, and no filter", async ({ page }) => {
     await page.goto("/gallery/");
     await expect(page.locator(".gallery-filter")).toBeHidden();

@@ -1,0 +1,11 @@
+/*
+ * Every style: shape, motion and type, picked apart from the theme's colours.
+ * Each one switches on by itself (data-style on <html>, or the Display menu's
+ * Style option), so importing the lot is safe. Poster, the default, is
+ * tokens.css itself. Fonts a style names only download while it's on.
+ */
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@import "./styles/soft.css";
+@import "./styles/print.css";
+@import "./styles/mono.css";

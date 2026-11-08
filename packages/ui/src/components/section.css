@@ -7,7 +7,7 @@
 
     /* In the display face, big: the titles carry the page's voice */
     .page-section__title {
-        max-width: 24ch;
+        max-width: var(--title-measure);
         margin-bottom: var(--space-lg);
         font: var(--type-section);
         letter-spacing: normal;

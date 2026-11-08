@@ -1,6 +1,6 @@
 /*
  * The Display menu's Compare row: each section of a component page, in light
- * and dark side by side, or in every theme. The copies are frames of the
+ * and dark side by side, or in every theme or style. The copies are frames of the
  * section's own page (/gallery/story/<group>/), not the stories rendered
  * twice, since many stories carry ids and named radios that would clash.
  *
@@ -9,9 +9,10 @@
  * as it does on pages without sections.
  */
 
+import { STYLES } from "@cpluspatch/ui/styles/styles/index.ts";
 import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 
-type Mode = "page" | "schemes" | "themes";
+type Mode = "page" | "schemes" | "themes" | "styles";
 
 interface Copy {
     label: string;
@@ -31,7 +32,12 @@ const copies = (mode: Mode): Copy[] =>
               { label: "Light", params: { scheme: "light" } },
               { label: "Dark", params: { scheme: "dark" } },
           ]
-        : THEMES.map((t) => ({ label: t.label, params: { theme: t.value } }));
+        : mode === "styles"
+          ? STYLES.map((s) => ({ label: s.label, params: { style: s.value } }))
+          : THEMES.map((t) => ({
+                label: t.label,
+                params: { theme: t.value },
+            }));
 
 /** Keeps a frame as tall as its page's main, and its links out of it. */
 const fit = (frame: HTMLIFrameElement) => {

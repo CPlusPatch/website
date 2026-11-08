@@ -55,7 +55,7 @@ In other frameworks, inline the same string however you normally would.
 
 ### Fonts
 
-The library doesn't load any fonts. It uses `--font-inter` and `--font-jetbrains-mono` if you define them (the Ocean theme uses `--font-nunito` and `--font-fira-code`), and falls back to system fonts if not. You can also set `--font-base` and `--font-mono` directly.
+The library doesn't load any fonts. It uses `--font-inter` and `--font-jetbrains-mono` if you define them (the Soft style uses `--font-nunito` and `--font-fira-code`, and Print `--font-source-serif`), and falls back to system fonts if not. You can also set `--font-base` and `--font-mono` directly.
 
 ## Behaviours
 
