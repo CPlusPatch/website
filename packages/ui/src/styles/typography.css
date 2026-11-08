@@ -29,6 +29,7 @@
 
     p {
         text-wrap: pretty;
+        hanging-punctuation: first;
 
         & + p {
             margin-top: var(--space-md);
@@ -213,6 +214,7 @@
 
     /* Lead copy as it usually appears: muted, with room around it. */
     .lead {
+        max-inline-size: var(--measure);
         font: var(--type-lead);
         color: var(--color-text-muted);
         margin-block: var(--space-md) var(--space-lg);
