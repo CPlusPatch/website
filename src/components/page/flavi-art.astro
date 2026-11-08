@@ -1,0 +1,94 @@
+---
+/**
+ * Flavi, drawn: it's gone, so there's nothing left to screenshot. A sketch
+ * of its layout (server rail, channels, messages, composer) in the theme's
+ * colours, at the 16:10 of the screenshots beside it.
+ */
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"svg">;
+
+const { class: className, ...rest } = Astro.props;
+
+// Message rows: avatar height, then the widths of its lines
+const messages = [
+    [16, [62, 40]],
+    [38, [78]],
+    [54, [52, 70, 30]],
+] as const;
+---
+
+<svg
+    class:list={["flavi", className]}
+    viewBox="0 0 160 100"
+    aria-hidden="true"
+    focusable="false"
+    {...rest}
+>
+    <rect class="flavi__window" width="160" height="100" />
+    <rect class="flavi__rail" width="18" height="100" />
+    <circle class="flavi__accent" cx="9" cy="10" r="5" />
+    {[26, 40, 54].map((cy) => <circle class="flavi__ink" cx="9" {cy} r="5" />)}
+    <rect class="flavi__channels" x="18" width="38" height="100" />
+    <rect class="flavi__ink" x="24" y="9" width="22" height="3" rx="1.5" />
+    {[22, 30, 38, 46].map((y, i) => (
+        <rect
+            class={i === 1 ? "flavi__accent" : "flavi__faint"}
+            x="24"
+            {y}
+            width={[20, 26, 16, 22][i]}
+            height="3"
+            rx="1.5"
+        />
+    ))}
+    {messages.map(([y, lines]) => (
+        <g>
+            <circle class="flavi__ink" cx="67" cy={y + 3} r="4" />
+            {lines.map((width, i) => (
+                <rect
+                    class={i === 0 ? "flavi__ink" : "flavi__faint"}
+                    x="75"
+                    y={y + i * 6}
+                    {width}
+                    height="3"
+                    rx="1.5"
+                />
+            ))}
+        </g>
+    ))}
+    <rect class="flavi__composer" x="62" y="84" width="92" height="9" rx="2" />
+</svg>
+
+<style>
+.flavi {
+    .flavi__window {
+        fill: var(--color-surface-raised);
+    }
+
+    .flavi__rail {
+        fill: var(--color-bg-alt);
+    }
+
+    .flavi__channels {
+        fill: var(--color-bg);
+    }
+
+    .flavi__ink {
+        fill: var(--color-border-strong);
+    }
+
+    .flavi__faint {
+        fill: var(--color-border);
+    }
+
+    .flavi__accent {
+        fill: var(--color-primary);
+    }
+
+    .flavi__composer {
+        fill: none;
+        stroke: var(--color-border-strong);
+        stroke-width: 1;
+    }
+}
+</style>

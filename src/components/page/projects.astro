@@ -1,16 +1,333 @@
 ---
-import CardGrid from "@cpluspatch/ui/astro/blocks/card-grid.astro";
-import MediaCard from "@cpluspatch/ui/astro/blocks/media-card.astro";
+import Icon from "@cpluspatch/ui/astro/icon.astro";
+import Image from "@cpluspatch/ui/astro/image.astro";
 import Section from "@cpluspatch/ui/astro/sections/section.astro";
-import { projects } from "../../data/home.ts";
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import { projects, versia } from "../../data/home.ts";
+import FlaviArt from "./flavi-art.astro";
+
+// Versia is most of the work, so it leads as one piece with its parts under
+// it, and the rest follow as a list rather than as equal cards
+const parts = projects.filter(({ title }) => title.startsWith("Versia"));
+const others = projects.filter((project) => !parts.includes(project));
+
+// Versia's own links (site, donations) aren't repeated on each part
+const shared = new Set(versia.links.map(({ href }) => href));
+const own = (links: (typeof projects)[number]["links"] = []) =>
+    links.filter(({ href }) => !shared.has(href));
+
+// Drawn rather than captured: Flavi is gone
+const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
 ---
 
 <Section id="projects" title="Things I've made" alt>
-    <CardGrid>
-        {projects.map(({ body, ...project }) => (
-            <MediaCard {...project}>
-                <p>{body}</p>
-            </MediaCard>
-        ))}
-    </CardGrid>
+    <div class="projects">
+        <article class="versia" aria-labelledby="versia-title">
+            {/* One per scheme; only the reader's is shown */}
+            {(["light", "dark"] as const).map((scheme) => (
+                <Image
+                    class={`shot shot--${scheme} versia__shot`}
+                    src={versia.shots[scheme]}
+                    alt={versia.shots.alt}
+                    widths={[640, 1280]}
+                    sizes="(min-width: 64rem) 36rem, 100vw"
+                />
+            ))}
+            <div class="versia__intro">
+                <h3 id="versia-title" class="versia__title">{versia.title}</h3>
+                <p class="lead">{versia.body}</p>
+                <ul class="links">
+                    {versia.links.map((link) => (
+                        <li>
+                            <Button
+                                href={link.href}
+                                size="sm"
+                                variant="outline"
+                            >
+                                <Icon name={link.icon} aria-hidden="true" />
+                                {link.label}
+                            </Button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            <ul class="versia__parts">
+                {parts.map(({ title, body, links }) => (
+                    <li class="part">
+                        <h4 class="part__title">{title}</h4>
+                        <p class="part__body">{body}</p>
+                        <ul class="links links--quiet">
+                            {own(links).map((link) => (
+                                <li>
+                                    <Button
+                                        href={link.href}
+                                        size="sm"
+                                        variant="ghost"
+                                        tone="neutral"
+                                    >
+                                        <Icon
+                                            name={link.icon}
+                                            aria-hidden="true"
+                                        />
+                                        {link.label}
+                                        <span class="visually-hidden">
+                                            , {title}
+                                        </span>
+                                    </Button>
+                                </li>
+                            ))}
+                        </ul>
+                    </li>
+                ))}
+            </ul>
+        </article>
+
+        <ul class="others">
+            {others.map(({ title, body, header, links = [] }) => (
+                <li class="other">
+                    {art[title] ? (
+                        <FlaviArt class="shot other__shot" />
+                    ) : header?.light ? (
+                        [header.light, header.src].map((src, i) => (
+                            <Image
+                                class={`shot ${i ? "shot--dark" : "shot--light"} other__shot`}
+                                {src}
+                                alt=""
+                                widths={[320, 640]}
+                                sizes="12rem"
+                            />
+                        ))
+                    ) : (
+                        header && (
+                            <Image
+                                class="shot other__shot"
+                                src={header.src}
+                                alt=""
+                                widths={[320, 640]}
+                                sizes="12rem"
+                            />
+                        )
+                    )}
+                    <div class="other__text">
+                        <h3 class="other__title">{title}</h3>
+                        <p class="other__body">{body}</p>
+                    </div>
+                    <ul class="links links--quiet other__links">
+                        {links.map((link) => (
+                            <li>
+                                <Button
+                                    href={link.href}
+                                    size="sm"
+                                    variant="ghost"
+                                    tone="neutral"
+                                >
+                                    <Icon name={link.icon} aria-hidden="true" />
+                                    {link.label}
+                                    <span class="visually-hidden">
+                                        , {title}
+                                    </span>
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                </li>
+            ))}
+        </ul>
+    </div>
 </Section>
+
+<style>
+.projects {
+    container-type: inline-size;
+
+    /* Captures and drawings alike: framed at the same 16:10 */
+    .shot {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 10;
+        object-fit: cover;
+        object-position: top;
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
+
+        /*
+         * A capture in each scheme shows the reader's: the system's, unless
+         * the Display menu's Mode picks one (as data-scheme, or its radio).
+         */
+        &.shot--dark {
+            display: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            &.shot--light {
+                display: none;
+            }
+
+            &.shot--dark {
+                display: block;
+            }
+        }
+
+        :root:is(
+                [data-scheme="light"],
+                :has(input[name="scheme"][value="light"]:checked)
+            )
+            & {
+            &.shot--light {
+                display: block;
+            }
+
+            &.shot--dark {
+                display: none;
+            }
+        }
+
+        :root:is(
+                [data-scheme="dark"],
+                :has(input[name="scheme"][value="dark"]:checked)
+            )
+            & {
+            &.shot--light {
+                display: none;
+            }
+
+            &.shot--dark {
+                display: block;
+            }
+        }
+    }
+
+    .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        /* Ghost buttons have no edge: line the first label up with the text */
+        &.links--quiet {
+            margin-top: auto;
+
+            li:first-child {
+                margin-inline-start: calc(-1 * (var(--space-sm) + 1px));
+            }
+        }
+    }
+
+    /* Screenshot and intro side by side once there's room, the parts under */
+    .versia {
+        display: grid;
+        gap: var(--space-lg);
+        align-items: start;
+
+        @container (min-width: 56rem) {
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+        }
+
+        .versia__intro {
+            display: flex;
+            align-self: center;
+            flex-direction: column;
+            gap: var(--space-md);
+
+            /* A step under the section title, in its face */
+            .versia__title {
+                margin: 0;
+                font:
+                    800 var(--font-size-4xl) / var(--leading-poster)
+                    var(--font-display);
+            }
+
+            .lead {
+                margin: 0;
+            }
+        }
+
+        .versia__parts {
+            display: grid;
+            grid-column: 1 / -1;
+            gap: var(--space-md) var(--space-lg);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+
+            @container (min-width: 36rem) {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            @container (min-width: 60rem) {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        /* Ruled like the stack and the reviews: a line above, no box */
+        .part {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            padding-top: var(--space-sm);
+            border-top: var(--border-width) solid var(--border-color);
+
+            .part__title {
+                margin: 0;
+                font: var(--type-body-strong);
+            }
+
+            .part__body {
+                margin: 0;
+                color: var(--color-text-muted);
+            }
+        }
+    }
+
+    .others {
+        display: grid;
+        margin: var(--space-xl) 0 0;
+        padding: 0;
+        list-style: none;
+        border-bottom: var(--border-width) solid var(--border-color);
+
+        /* Thumbnail, text and links in a row; links under the text when narrow */
+        .other {
+            display: grid;
+            grid-template-columns: 6rem minmax(0, 1fr);
+            gap: var(--space-xs) var(--space-md);
+            align-items: start;
+            padding-block: var(--space-md);
+            border-top: var(--border-width) solid var(--border-color);
+
+            @container (min-width: 48rem) {
+                grid-template-columns: 10rem minmax(0, 1fr) 14rem;
+                align-items: center;
+            }
+
+            .other__text {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-xs);
+
+                .other__title {
+                    margin: 0;
+                    font: var(--type-body-strong);
+                }
+
+                .other__body {
+                    margin: 0;
+                    color: var(--color-text-muted);
+                }
+            }
+
+            .other__links {
+                grid-column: 2;
+                margin-top: 0;
+
+                @container (min-width: 48rem) {
+                    grid-column: auto;
+                }
+            }
+        }
+    }
+}
+</style>
