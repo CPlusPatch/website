@@ -13,25 +13,27 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <div class:list={["theme-picker", className]} data-theme-select {...rest}>
-    {THEMES.map(({ value, label }) => (
-        <label class="theme-picker__swatch text-ui">
-            <input
-                class="visually-hidden"
-                type="radio"
-                name="theme"
-                {value}
-                checked={value === "default"}
-            >
-            <span
-                class="theme-picker__preview"
-                data-theme-preview={value}
-                aria-hidden="true"
-            >
-                <span></span>
-                <span></span>
-                <span></span>
-            </span>
-            {label}
-        </label>
-    ))}
+    <div class="theme-picker__grid">
+        {THEMES.map(({ value, label }) => (
+            <label class="theme-picker__swatch text-ui">
+                <input
+                    class="visually-hidden"
+                    type="radio"
+                    name="theme"
+                    {value}
+                    checked={value === "default"}
+                >
+                <span
+                    class="theme-picker__preview"
+                    data-theme-preview={value}
+                    aria-hidden="true"
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+                <span class="theme-picker__name">{label}</span>
+            </label>
+        ))}
+    </div>
 </div>

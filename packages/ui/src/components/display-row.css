@@ -2,20 +2,48 @@
 
 @layer ui.components {
     .display-row {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-
         /*
-         * The label, or the control without one, pushes the rest to the end.
-         * The control is a component, so it is matched by position.
+         * The label with the key at the end of its line, then the control
+         * under it, the row's width. Beside the label, the widest controls
+         * don't fit the menu in any style, so every row stacks alike. Without
+         * a label (a switch names itself), the control takes its place.
          */
-        > :first-child {
-            margin-inline-end: auto;
+        display: grid;
+        grid-template:
+            "label key" auto
+            "control control" auto / minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--space-xs) var(--space-sm);
+
+        &:not(:has(> .display-row__label)) {
+            grid-template: "control key" auto / minmax(0, 1fr) auto;
+        }
+
+        > * {
+            grid-area: control;
+            justify-self: start;
         }
 
         .display-row__label {
+            grid-area: label;
             color: var(--color-text-muted);
+        }
+
+        > .display-key {
+            grid-area: key;
+        }
+
+        /*
+         * A segmented control fills the row, its options sharing the width,
+         * so the longest still fit a small phone in a wide face.
+         */
+        > .segmented {
+            justify-self: stretch;
+
+            .segmented__option {
+                flex: 1 1 auto;
+                padding-inline: var(--space-xs);
+            }
         }
 
         /* Out of sight, though its control is still in the page. */

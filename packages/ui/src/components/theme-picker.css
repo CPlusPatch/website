@@ -2,9 +2,21 @@
 
 @layer ui.components {
     .theme-picker {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-xs);
+        container-type: inline-size;
+
+        .theme-picker__grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--space-xs);
+
+            /*
+             * One column where two of the longest names, in the widest
+             * style's face (Mono), don't fit side by side, as on a phone.
+             */
+            @container (max-width: 19.5rem) {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
 
         .theme-picker__swatch {
             display: flex;
@@ -14,7 +26,6 @@
             padding: var(--space-xs) var(--space-sm) var(--space-xs)
                 var(--space-xs);
             color: var(--color-text-muted);
-            white-space: nowrap;
             border: var(--border-width) solid transparent;
             border-radius: var(--radius);
             cursor: pointer;
@@ -37,6 +48,15 @@
                 outline: 2px solid var(--color-primary);
                 outline-offset: 2px;
             }
+        }
+
+        /*
+         * On one line, unless it doesn't fit (Mono's face at a large font size
+         * on a phone): then over two, rather than cut short.
+         */
+        .theme-picker__name {
+            min-width: 0;
+            overflow-wrap: break-word;
         }
 
         /*

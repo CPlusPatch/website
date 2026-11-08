@@ -2,6 +2,11 @@
 
 @layer ui.components {
     .display-menu {
+        /* Room for two columns of themes, even in Mono's wide face. */
+        .dropdown__panel {
+            width: min(23rem, 100vw - 2 * var(--space-md));
+        }
+
         .display-menu__group {
             display: grid;
             gap: var(--space-sm);
