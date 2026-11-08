@@ -226,6 +226,11 @@ for (const root of document.querySelectorAll<HTMLElement>(
         flex-direction: column-reverse;
         padding-inline: var(--space-md);
 
+        /* Closer on a small phone, where three labels don't fit apart */
+        @container (max-width: 20rem) {
+            padding-inline: var(--space-sm);
+        }
+
         &:first-child {
             padding-inline-start: 0;
         }
