@@ -11,8 +11,9 @@ import {
 } from "./feed.ts";
 
 /**
- * A row of a <StatusBoard>: a probe's name and target, a timeline of its
- * latest results, oldest first, and its latest response time and state.
+ * A cell of a <StatusBoard>: a probe's name and target, its latest
+ * response time while up or its state otherwise, and a timeline of its
+ * latest results, oldest first.
  * The board draws the beats, and its script keeps the row up to date.
  */
 interface Props extends Probe {
@@ -54,27 +55,30 @@ const { latency, label, tone } = stateOf(feed, name);
 
 <style>
 /*
- * The name, the timeline and the state side by side, or the timeline under
- * the other two where that would squeeze it. Sized from the board's width.
+ * The name and target, the state beside them, and the timeline across the
+ * bottom. A cell sizes from its own width.
  */
 .status-probe {
     display: grid;
-    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
-    grid-template-areas: "name beats state";
-    align-items: center;
-    gap: var(--space-xs) var(--space-md);
-    padding: var(--space-sm) var(--space-md);
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "name state"
+        "beats beats";
+    align-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    border: var(--border-width) solid var(--border-color);
+    container-type: inline-size;
 
-    & + .status-probe {
-        border-top: var(--border-width) solid
-            color-mix(in oklab, var(--border-color) 50%, transparent);
+    /* Down: the border says so as well as the words. */
+    &:has(.status__light.tone-destructive) {
+        border-color: var(--color-destructive);
     }
 
-    @container (max-width: 34rem) {
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas:
-            "name state"
-            "beats beats";
+    /* The latency on the name's baseline. */
+    .status-probe__name,
+    .status-probe__state {
+        align-self: first baseline;
     }
 
     .status-probe__name {
@@ -103,8 +107,8 @@ const { latency, label, tone } = stateOf(feed, name);
             min-width: 0;
         }
 
-        /* A narrow board keeps the latest 20. */
-        @container (max-width: 24rem) {
+        /* A narrow cell keeps the latest 20. */
+        @container (max-width: 11rem) {
             .status-board__beat:nth-child(-n + 10) {
                 display: none;
             }
@@ -120,24 +124,21 @@ const { latency, label, tone } = stateOf(feed, name);
         }
     }
 
+    /* Its response time while up, and its state otherwise. */
     .status-probe__state {
         grid-area: state;
         display: flex;
         align-items: center;
-        justify-content: end;
-        gap: var(--space-md);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
 
-        /* Fixed widths, so every row's timeline lines up whatever its state. */
-        .status-probe__latency {
-            width: 7ch;
-            color: var(--color-text-muted);
-            font-variant-numeric: tabular-nums;
-            text-align: end;
+        .status:has(.tone-success),
+        &:not(:has(.tone-success)) .status-probe__latency {
+            display: none;
         }
 
-        /* As wide as "Unknown", the longest label. */
         .status {
-            width: 9.5ch;
+            color: var(--color-text);
         }
     }
 }

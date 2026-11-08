@@ -3,6 +3,7 @@ import {
     beatState,
     beatsOf,
     describe,
+    hostState,
     isStale,
     type State,
     type StatusFeed,
@@ -78,6 +79,11 @@ export const bindStatusBoard = (root: HTMLElement) => {
         const newer = shown !== undefined && feed.generatedAt > shown;
         shown = feed.generatedAt;
         for (const row of rows) showRow(row, feed, newer);
+        for (const host of root.querySelectorAll<HTMLElement>("[data-host]")) {
+            const state = hostState(feed, host.dataset.host ?? "");
+            if (state) host.dataset.state = state;
+            else delete host.dataset.state;
+        }
 
         const { tiles, headline, tone } = summarise(feed, names);
         for (const [key, tile] of Object.entries(tiles)) {

@@ -96,6 +96,10 @@ export const stateOf = (
     };
 };
 
+/** Whether a host is down, by the feed, or nothing if it isn't known. */
+export const hostState = (feed: StatusFeed | undefined, name: string) =>
+    feed?.hosts[name] === false ? "down" : undefined;
+
 const plural = (count: number, word: string) =>
     `${count} ${word}${count === 1 ? "" : "s"}`;
 
