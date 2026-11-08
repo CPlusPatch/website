@@ -61,5 +61,12 @@ export default defineConfig({
                 targets: browserslistToTargets(browserslist(">= 2%")),
             },
         },
+        server: {
+            watch: {
+                // gallery:diff checks out and builds a whole second copy of
+                // the site in there; none of it is this one's source.
+                ignored: ["**/.gallery-diff/**"],
+            },
+        },
     },
 });
