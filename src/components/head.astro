@@ -1,0 +1,76 @@
+---
+/**
+ * What goes in every site page's <head>: the saved theme before first paint,
+ * the title and social tags, the fonts, and analytics. The layouts put it
+ * inside their own <head>, so each can add tags of its own after it.
+ */
+
+import { Font } from "astro:assets";
+import { themeInitScript } from "@cpluspatch/ui/lib/theme-init.ts";
+import { OVERRIDES_CSS } from "@cpluspatch/ui/styles/overrides.ts";
+import { site } from "../site.ts";
+import Analytics from "./analytics.astro";
+
+export interface Props {
+    title: string;
+    description?: string;
+    /** Keep the page out of search results (used by the component gallery). */
+    noindex?: boolean;
+    /**
+     * Whether the page has a canonical URL of its own. Turn off for pages
+     * served at many addresses, like the 404.
+     */
+    canonical?: boolean;
+    /** Off for pages that are only parts of others, like gallery stories. */
+    analytics?: boolean;
+}
+
+const {
+    title,
+    description,
+    noindex = false,
+    canonical: hasCanonical = true,
+    analytics = true,
+} = Astro.props;
+
+const pageTitle = title === site.name ? title : `${title} — ${site.name}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+---
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" href="/favicon.ico">
+<meta name="generator" content={Astro.generator}>
+
+{/* The saved theme and overrides, before first paint */}
+<script is:inline set:html={themeInitScript} />
+<style is:inline set:html={OVERRIDES_CSS} />
+
+<title>{pageTitle}</title>
+{description && <meta name="description" content={description} />}
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+{hasCanonical && <link rel="canonical" href={canonical.href} />}
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content={site.name}>
+<meta property="og:title" content={pageTitle}>
+{description && <meta property="og:description" content={description} />}
+{hasCanonical && <meta property="og:url" content={canonical.href} />}
+{/* No og:image yet, so the small card; use summary_large_image once one exists. */}
+<meta name="twitter:card" content="summary">
+
+{/*
+ * Body text font, so fetch it with the HTML instead of after the CSS.
+ * Latin only: the latin-ext file is larger and rarely needed.
+ */}
+<Font cssVariable="--font-inter" preload={[{ subset: "latin" }]} />
+<Font cssVariable="--font-jetbrains-mono" />
+{/*
+ * Ocean theme fonts. Only @font-face rules, with no preload: browsers
+ * download a face the first time text uses it, so these cost nothing
+ * until the theme is on.
+ */}
+<Font cssVariable="--font-nunito" />
+<Font cssVariable="--font-fira-code" />
+{import.meta.env.PROD && analytics && <Analytics />}
