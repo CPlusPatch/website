@@ -72,7 +72,7 @@ export const attachments: StoryGroup[] = [
                     icon: "lucide:file-text",
                     state: "processing",
                 },
-                { slot: "Processing document" },
+                { slot: "Processing document", tags: ["animated"] },
             ),
             story(
                 "error",
