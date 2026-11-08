@@ -60,8 +60,6 @@ export default definePalette<Tone>({
     },
 
     overlays: {
-        grid: { light: "rgb(0 0 0 / 0.04)", dark: "rgb(255 255 255 / 0.03)" },
-        // Scanlines are their own token: reusing the grid colour made them invisible.
         scanline: {
             light: "rgb(0 0 0 / 0.04)",
             dark: "rgb(255 255 255 / 0.035)",

@@ -52,7 +52,6 @@
         /* Layout */
         --container-width: 70rem;
         --header-height: 3.5rem;
-        --grid-size: 2rem;
 
         /* Stacking order of the page-level overlays */
         --z-backdrop: -1; /* Behind content, above body's background */

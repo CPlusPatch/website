@@ -44,7 +44,6 @@
          */
         --color-border: light-dark(#a3a8a4, #474c48);
         --color-border-strong: light-dark(#898f8b, #5b605c);
-        --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
         /* biome-ignore format: generated, and the palette tool reads one declaration per line */
         --color-scanline: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.035));
 

@@ -31,7 +31,6 @@
         --color-text-muted: light-dark(#6c664b, #7f90c4);
         --color-border: light-dark(#aaaab9, #5a5e71);
         --color-border-strong: light-dark(#90909e, #6272a4);
-        --color-grid: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.03));
         --color-scanline: light-dark(
             rgb(0 0 0 / 0.04),
             rgb(255 255 255 / 0.035)
