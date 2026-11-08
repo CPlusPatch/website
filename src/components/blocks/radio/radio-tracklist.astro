@@ -167,6 +167,8 @@ const { tracks, class: className, ...rest } = Astro.props;
 /* The current track's number gives way to bars while it plays. */
 .radio-tracklist__bars {
     display: none;
+    /* Centred in the number's line, where the digit it replaces sits. */
+    align-self: center;
     align-items: end;
     gap: 2px;
     height: 0.75em;
