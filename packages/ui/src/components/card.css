@@ -2,7 +2,7 @@
 
 @layer ui.components {
     /*
-     * Surface, border and hover lift come from .panel / .lift in utilities.css,
+     * Surface and border come from .panel in utilities.css,
      * tone colours from .tone-*. A card's top edge is an ordinary border in
      * every tone; the coloured top rule is opt-in (.card--rule). This file
      * owns content layout and type.
@@ -17,10 +17,6 @@
 
         &:not(.card--rule) {
             border-top: var(--border-width) solid var(--border-color);
-
-            &.lift:hover {
-                border-color: var(--shadow-color);
-            }
         }
 
         /* Slotted, so the roles come by token. Spacing is the card's gap, not margins. */

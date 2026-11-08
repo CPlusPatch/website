@@ -17,17 +17,10 @@ import { toggleClasses } from "./toggle.ts";
 Deno.test("button defaults, in the order the stylesheet expects", () => {
     assertEquals(buttonClasses(), [
         "button",
-        "lift",
         "button--solid",
         "tone-primary",
         "button--size-default",
     ]);
-});
-
-Deno.test("button lifts unless asked not to, and never as a link", () => {
-    assertEquals(buttonClasses({ lift: false }).includes("lift"), false);
-    assertEquals(buttonClasses({ variant: "link" }).includes("lift"), false);
-    assertEquals(buttonClasses({ variant: "ghost" }).includes("lift"), true);
 });
 
 Deno.test("button takes variant, tone, size and a trailing class", () => {
@@ -36,7 +29,6 @@ Deno.test("button takes variant, tone, size and a trailing class", () => {
             variant: "outline",
             tone: "neutral",
             size: "icon-sm",
-            lift: false,
             class: "mine",
         }),
         [
@@ -65,7 +57,7 @@ Deno.test("badge, card, progress and toggle classes", () => {
         "badge--size-lg",
         "x",
     ]);
-    assertEquals(cardClasses({ tone: "secondary", lift: false }), [
+    assertEquals(cardClasses({ tone: "secondary" }), [
         "card",
         "panel",
         "tone-secondary",
@@ -73,7 +65,6 @@ Deno.test("badge, card, progress and toggle classes", () => {
     assertEquals(cardClasses({ rule: true }), [
         "card",
         "panel",
-        "lift",
         "card--rule",
         "tone-primary",
     ]);
@@ -90,14 +81,12 @@ Deno.test("an alert's default variant takes the primary tone", () => {
     assertEquals(alertClasses(), [
         "alert",
         "panel",
-        "lift",
         "alert--default",
         "tone-primary",
     ]);
     assertEquals(alertClasses({ variant: "warning", icon: "lucide:x" }), [
         "alert",
         "panel",
-        "lift",
         "alert--icon",
         "alert--warning",
         "tone-warning",

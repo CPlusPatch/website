@@ -35,14 +35,6 @@ export const cards: StoryGroup[] = [
                 ),
             ),
             story(
-                "no-lift",
-                Card,
-                { lift: false },
-                {
-                    slot: "<h3>No lift</h3><p>Hover does nothing on this one.</p>",
-                },
-            ),
-            story(
                 "with-link",
                 Card,
                 {},
@@ -106,7 +98,7 @@ export const cards: StoryGroup[] = [
                     tone: "secondary",
                     links: MEDIA_LINKS,
                 },
-                { slot: "<p>Tone and lift pass straight through to Card.</p>" },
+                { slot: "<p>Tone passes straight through to Card.</p>" },
             ),
         ],
     },

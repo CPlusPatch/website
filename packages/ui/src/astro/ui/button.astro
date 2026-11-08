@@ -23,11 +23,6 @@ type Props = Omit<HTMLAttributes<"button">, "type"> &
         variant?: ButtonVariant;
         tone?: ButtonTone;
         size?: ButtonSize;
-        /**
-         * Opt in to the hover lift (see `.lift` in utilities.css). Ignored
-         * for the `link` variant. Turn off for buttons inside a ButtonGroup.
-         */
-        lift?: boolean;
     };
 
 const {
@@ -36,14 +31,13 @@ const {
     variant = "solid",
     tone = "primary",
     size = "default",
-    lift = true,
     class: className,
     ...rest
 } = Astro.props;
 
 const isAnchor = linkRequested(as, rest.href);
 
-const classes = buttonClasses({ variant, tone, size, lift, class: className });
+const classes = buttonClasses({ variant, tone, size, class: className });
 ---
 
 {isAnchor ? (

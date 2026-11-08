@@ -96,18 +96,15 @@
         --z-skip-link: 200;
 
         /*
-         * Border and shadow are exposed as parts, not pre-composed shorthands.
-         * A var() inside a custom property resolves on the element that declares
-         * it, so a `--shadow: ... var(--shadow-color)` here would bake in :root's
-         * colour and ignore every component-level `--shadow-color` override.
-         * Compose them at the point of use; --border-color and --shadow-color are
-         * the overridable hooks.
+         * The border is exposed as parts, not a pre-composed shorthand. A var()
+         * inside a custom property resolves on the element that declares it,
+         * so a `--border: ... var(--border-color)` here would bake in :root's
+         * colour and ignore every component-level override. Compose it at the
+         * point of use; --border-color is the overridable hook.
          */
         --radius: 0;
         --border-width: 1px;
         --border-color: var(--color-border);
-        --shadow-offset: 4px;
-        --shadow-color: var(--color-primary-accent);
         --transition: 120ms ease-out;
     }
 

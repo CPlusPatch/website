@@ -5,18 +5,12 @@ import type { Tone } from "../../lib/tone.ts";
 
 interface Props extends HTMLAttributes<"div"> {
     tone?: Tone;
-    /**
-     * Opt in to the hover lift (see `.lift` in utilities.css). The effect
-     * itself only shows while it is enabled site-wide.
-     */
-    lift?: boolean;
     /** Draw the tone's accent as a rule along the top edge. */
     rule?: boolean;
 }
 
 const {
     tone = "primary",
-    lift = true,
     rule = false,
     class: className,
     ...rest
@@ -24,7 +18,7 @@ const {
 ---
 
 <div
-    class:list={cardClasses({ tone, lift, rule, class: className })}
+    class:list={cardClasses({ tone, rule, class: className })}
     data-snap
     {...rest}
 >

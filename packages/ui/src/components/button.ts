@@ -22,8 +22,6 @@ export interface ButtonOptions {
     variant?: ButtonVariant;
     tone?: ButtonTone;
     size?: ButtonSize;
-    /** Rises on hover. Never on a link, which has its underline instead. */
-    lift?: boolean;
     class?: ClassValue;
 }
 
@@ -32,12 +30,10 @@ export const buttonClasses = ({
     variant = "solid",
     tone = "primary",
     size = "default",
-    lift = true,
     class: className,
 }: ButtonOptions = {}): string[] =>
     cx(
         "button",
-        lift && variant !== "link" && "lift",
         `button--${variant}`,
         `tone-${tone}`,
         `button--size-${size}`,

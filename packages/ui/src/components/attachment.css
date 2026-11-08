@@ -5,7 +5,6 @@
         --attachment-media: 2.5rem;
         --attachment-pad: var(--space-sm);
         --attachment-title-size: var(--font-size-sm);
-        --shadow-color: var(--tone-accent);
 
         position: relative;
         display: grid;
@@ -90,9 +89,9 @@
             }
         }
 
-        /* Only linked cards lift, so this is the link's hover too. */
-        &.lift:hover {
-            border-color: var(--shadow-color);
+        /* The link covers the card, so the card shows its hover. */
+        &.attachment--linked:hover {
+            border-color: var(--tone-accent);
         }
 
         .attachment__actions {

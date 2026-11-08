@@ -80,7 +80,6 @@ const json = JSON.stringify(tree).replaceAll("<", "\\u003c");
             variant="ghost"
             tone="neutral"
             size="sm"
-            lift={false}
             data-dialogue-restart
             hidden
         >
@@ -113,7 +112,7 @@ const json = JSON.stringify(tree).replaceAll("<", "\\u003c");
         </Message>
     </template>
     <template data-dialogue-template="option">
-        <Button variant="outline" size="sm" lift={false}>
+        <Button variant="outline" size="sm">
             <span data-dialogue-text></span>
         </Button>
     </template>

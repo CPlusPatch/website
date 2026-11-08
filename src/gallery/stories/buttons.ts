@@ -50,7 +50,6 @@ export const buttons: StoryGroup[] = [
                 { as: "a", href: "#main" },
                 { slot: "Anchor" },
             ),
-            story("no-lift", Button, { lift: false }, { slot: "No lift" }),
         ],
     },
     {
@@ -68,7 +67,7 @@ export const buttons: StoryGroup[] = [
                         story(
                             label.toLowerCase(),
                             Button,
-                            { variant: "outline", lift: false },
+                            { variant: "outline" },
                             { slot: label },
                         ),
                     ),
@@ -87,7 +86,6 @@ export const buttons: StoryGroup[] = [
                                 size: "icon",
                                 variant: "outline",
                                 tone: "neutral",
-                                lift: false,
                                 "aria-label": icon,
                             },
                             { icon: `lucide:${icon}` },
@@ -101,19 +99,14 @@ export const buttons: StoryGroup[] = [
                 { label: "Actions" },
                 {
                     children: [
-                        story("one", Button, { lift: false }, { slot: "One" }),
+                        story("one", Button, {}, { slot: "One" }),
                         story(
                             "two",
                             Button,
-                            { lift: false, disabled: true },
+                            { disabled: true },
                             { slot: "Two" },
                         ),
-                        story(
-                            "three",
-                            Button,
-                            { lift: false },
-                            { slot: "Three" },
-                        ),
+                        story("three", Button, {}, { slot: "Three" }),
                     ],
                 },
             ),

@@ -14,7 +14,6 @@ const action = (name: string, icon: string, label: string) =>
             size: "icon-sm",
             variant: "ghost",
             tone: "neutral",
-            lift: false,
             "aria-label": label,
         },
         { icon },

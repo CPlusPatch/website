@@ -9,7 +9,7 @@
         inline-size: 100%;
         min-inline-size: 0;
         overflow-x: auto;
-        /* Room for the lift and focus ring, which overflow would clip. */
+        /* Room for the focus ring, which overflow would clip. */
         padding: var(--space-xs);
         /* Snapped and focused cards stop clear of the faded edges. */
         scroll-padding-inline: var(--attachment-group-fade);

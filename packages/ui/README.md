@@ -80,7 +80,7 @@ Class names are BEM (`.button--outline`, `.dropdown__panel`), and the styling li
 import { buttonClasses } from "@cpluspatch/ui";
 
 buttonClasses({ variant: "outline", tone: "secondary" });
-// ["button", "lift", "button--outline", "tone-secondary", "button--size-default"]
+// ["button", "button--outline", "tone-secondary", "button--size-default"]
 ```
 
 For the rest of the markup, read the Astro component. They're short, and the comment at the top lists the props and slots.

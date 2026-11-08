@@ -5,7 +5,7 @@
  *
  * These live in global CSS rather than in one component's stylesheet so that
  * card, alert and anything else added later share one implementation of the
- * hover lift instead of each re-deriving it.
+ * surface instead of each re-deriving it.
  *
  * Almost all of it is in ui.base, below ui.components: components build on
  * these classes and override them freely. Only .visually-hidden, which must
@@ -13,52 +13,6 @@
  */
 
 @layer ui.base {
-    /*
-     * The offset-block hover lift. Off by default: without the effect enabled
-     * (html[data-lift-shadow], or the gallery's lift toggle) .lift only sets up
-     * the transition.
-     *
-     * Driven entirely by --shadow-color, so one custom property recolours the
-     * whole effect. .panel sets it from the element's tone.
-     *
-     * Deliberately does not touch border-color -- consumers own their border, and
-     * .panel below pairs the two.
-     */
-    .lift {
-        transition:
-            border-color var(--transition),
-            translate var(--transition);
-    }
-
-    html[data-lift-shadow] .lift,
-    html:has([data-lift-shadow-toggle] > input:checked) .lift {
-        transition:
-            border-color var(--transition),
-            box-shadow var(--transition),
-            translate var(--transition);
-
-        &:hover {
-            box-shadow: var(--shadow-offset) var(--shadow-offset) 0
-                var(--shadow-color);
-            translate: calc(var(--shadow-offset) * -1)
-                calc(var(--shadow-offset) * -1);
-        }
-    }
-
-    /* Pressing a lifted element sinks it back onto its shadow. */
-    html[data-lift-shadow] .lift:active,
-    html:has([data-lift-shadow-toggle] > input:checked) .lift:active {
-        box-shadow: none;
-        translate: 0 0;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        html[data-lift-shadow] .lift:hover,
-        html:has([data-lift-shadow-toggle] > input:checked) .lift:hover {
-            translate: none;
-        }
-    }
-
     /*
      * Tones. One set of hooks for every toneable component: --tone is the text and
      * fill colour, --tone-hover its hover step, --tone-accent the decorative one.
@@ -109,8 +63,6 @@
      * --panel-accent; brand and neutral tones leave the frame plain.
      */
     .panel {
-        --shadow-color: var(--tone-accent, var(--color-primary-accent));
-
         background-color: var(--color-surface-raised);
         border: var(--border-width) solid var(--border-color);
         border-radius: var(--radius);
@@ -119,10 +71,6 @@
             --panel-accent: var(--tone-accent);
 
             border-top: 2px solid var(--panel-accent);
-        }
-
-        &.lift:hover {
-            border-color: var(--shadow-color);
         }
     }
 

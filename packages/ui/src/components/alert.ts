@@ -18,7 +18,6 @@ export const alertClasses = ({
     cx(
         "alert",
         "panel",
-        "lift",
         icon && "alert--icon",
         `alert--${variant}`,
         `tone-${variant === "default" ? "primary" : variant}`,

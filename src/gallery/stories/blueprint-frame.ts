@@ -33,7 +33,7 @@ export const blueprintFrame: StoryGroup[] = [
                         story(
                             "card",
                             Card,
-                            { lift: false },
+                            {},
                             { slot: `<h3>Any content</h3>${BODY}` },
                         ),
                     ],
@@ -48,7 +48,7 @@ export const blueprintFrame: StoryGroup[] = [
                         story(
                             "card",
                             Card,
-                            { lift: false, tone: "secondary" },
+                            { tone: "secondary" },
                             { slot: `<h3>No label</h3>${BODY}` },
                         ),
                     ],
