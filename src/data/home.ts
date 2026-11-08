@@ -10,13 +10,16 @@ import type Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import type { DisplayEffect } from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
 import type { DialogueNode } from "@cpluspatch/ui/behaviours/interactive-message.ts";
 import type { ComponentProps } from "astro/types";
-import componentScreenshot from "../../docs/assets/gallery-dark.webp";
 import flaviScreenshot from "../images/assets/flavi-screenshot.png";
+import galleryDark from "../images/assets/gallery-dark.webp";
+import galleryLight from "../images/assets/gallery-light.webp";
 import joinMastodonScreenshot from "../images/assets/join-mastodon.de_en.webp";
-import kitsuScreenshot from "../images/assets/kitsudotlife.png";
+import kitsuScreenshot from "../images/assets/kitsu.webp";
 import versiaApiScreenshot from "../images/assets/lysand-apis.png";
-import versiaFeScreenshot from "../images/assets/versia-fe.png";
-import versiaScreenshot from "../images/assets/versia-pub-frontpage.png";
+import versiaDark from "../images/assets/versia-dark.webp";
+import versiaFeDark from "../images/assets/versia-fe-dark.webp";
+import versiaFeLight from "../images/assets/versia-fe-light.webp";
+import versiaLight from "../images/assets/versia-light.webp";
 import versiaServerScreenshot from "../images/assets/versia-readme.png";
 import autumn from "../images/avatars/autumn.webp";
 import calciume from "../images/avatars/calciume.webp";
@@ -162,15 +165,51 @@ export const reviews: {
     },
 ];
 
-export const projects: (ComponentProps<typeof MediaCard> & {
+/**
+ * Versia, featured above the other projects on the home page. Its parts are
+ * the projects whose titles start with "Versia".
+ */
+export const versia = {
+    title: "Versia",
+    /** The site in each scheme, shown to match the reader's. */
+    shots: {
+        light: versiaLight,
+        dark: versiaDark,
+        alt: "The Versia site, headed Federation you can read, with a signed message beside notes on it",
+    },
+    body: "A decentralized federation protocol that focuses on good experience and ease of implementation, and everything around it: the spec, a reference server, a frontend and TypeScript APIs.",
+    links: [
+        { href: "https://versia.pub", icon: "lucide:globe", label: "Website" },
+        {
+            href: "https://github.com/versia-pub",
+            icon: "lucide:github",
+            label: "Source",
+        },
+        {
+            href: "https://opencollective.com/lysand",
+            icon: "lucide:euro",
+            label: "Donate",
+        },
+    ],
+};
+
+/**
+ * A header is in the dark scheme; `light` is the same capture in the light
+ * one, which the home page shows to readers in that scheme.
+ */
+export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     body: string;
+    header?: NonNullable<ComponentProps<typeof MediaCard>["header"]> & {
+        light?: ImageMetadata;
+    };
 })[] = [
     {
         title: "Website",
         body: "This site, and the component library it's built from. Plain HTML and CSS, with JavaScript only where it's needed.",
         header: {
-            src: componentScreenshot,
-            alt: "The component library",
+            src: galleryDark,
+            light: galleryLight,
+            alt: "The component gallery, with a card for each component",
         },
         links: [
             {
@@ -185,8 +224,8 @@ export const projects: (ComponentProps<typeof MediaCard> & {
         title: "Versia Protocol",
         body: "Fully documented protocol specification for Versia, a decentralized federation protocol that focuses on good experience and ease of implementation.",
         header: {
-            src: versiaScreenshot,
-            alt: "The Versia front page with multiple sections and a navigation bar",
+            src: versiaDark,
+            alt: "The Versia site, headed Federation you can read, with a signed message beside notes on it",
         },
         links: [
             {
@@ -230,8 +269,9 @@ export const projects: (ComponentProps<typeof MediaCard> & {
         title: "Versia-FE",
         body: "Frontend for Versia Server, made with Vue 3 and Tailwind CSS. It's a modern, responsive and fast web application.",
         header: {
-            src: versiaFeScreenshot,
-            alt: "Outdated Versia-FE screenshot, looking like a dashboard with a sidebar and a main content area",
+            src: versiaFeDark,
+            light: versiaFeLight,
+            alt: "Versia-FE, a timeline of posts beside a navigation sidebar",
         },
         links: [
             {
@@ -321,7 +361,7 @@ export const projects: (ComponentProps<typeof MediaCard> & {
         body: "Website for the Kitsu service suite, showcasing features and the community for Kitsu.",
         header: {
             src: kitsuScreenshot,
-            alt: "The Kitsu.life website",
+            alt: "Kitsu.life, headed Kitsu provides you with a family, beside a laptop showing its social app",
         },
         links: [
             {
