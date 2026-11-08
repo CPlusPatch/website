@@ -9,31 +9,48 @@ const names = status.hosts.flatMap(({ probes }) =>
     probes.map(({ name }) => name),
 );
 
-// Those with a response time: not the metrics, nor Nextcloud, which is failing
-const probed = new Set(
-    names.filter(
-        (name) => !["Nextcloud", "PostgreSQL", "Redis"].includes(name),
-    ),
-);
+// Those with a response time: not the metrics
+const metrics = new Set(["PostgreSQL", "Redis"]);
 
-/** A feed with every probe up, but Nextcloud failing for its last 4. */
-const outage: StatusFeed = {
+/**
+ * A feed from a fixed time, with every probe up but those `failing`, which
+ * fail their last `failures` beats.
+ */
+const feedWith = ({
+    failing = [] as string[],
+    failures = 4,
+    hosts = { faithplate: true, freeman: true, eli: true },
+    alerts = 0,
+}): StatusFeed => ({
     generatedAt: Date.UTC(2026, 9, 10) / 1000,
-    hosts: { faithplate: true, freeman: true, eli: true },
-    alerts: 1,
+    hosts,
+    alerts,
     probes: Object.fromEntries(
         names.map((name, i) => [
             name,
             {
                 beats: Array.from(
                     { length: 30 },
-                    (_, beat) => name !== "Nextcloud" || beat < 26,
+                    (_, beat) =>
+                        !failing.includes(name) || beat < 30 - failures,
                 ),
-                latency: probed.has(name) ? 20 + ((i * 13) % 40) : undefined,
+                latency:
+                    metrics.has(name) || failing.includes(name)
+                        ? undefined
+                        : 20 + ((i * 13) % 40),
             },
         ]),
     ),
-};
+});
+
+const healthy = feedWith({});
+const outage = feedWith({ failing: ["Nextcloud"], alerts: 1 });
+const hostDown = feedWith({
+    failing: ["Minecraft"],
+    failures: 12,
+    hosts: { faithplate: true, freeman: true, eli: false },
+    alerts: 2,
+});
 
 export const statusBoard: StoryGroup[] = [
     {
@@ -49,6 +66,12 @@ export const statusBoard: StoryGroup[] = [
                 tags: ["animated", "live"],
             }),
             story(
+                "healthy",
+                StatusBoard,
+                { ...snapshot, label: "Status, all up", feed: healthy },
+                { slot: "A snapshot" },
+            ),
+            story(
                 "outage",
                 StatusBoard,
                 {
@@ -58,7 +81,26 @@ export const statusBoard: StoryGroup[] = [
                 },
                 { slot: "A snapshot" },
             ),
-            story("no-results", StatusBoard, snapshot, { slot: "No results" }),
+            story(
+                "host-down",
+                StatusBoard,
+                {
+                    ...snapshot,
+                    label: "Status with a host down",
+                    feed: hostDown,
+                },
+                { slot: "A snapshot" },
+            ),
+            story("no-results", StatusBoard, snapshot, {
+                slot: "No results",
+            }),
+            // A feed that can't be read, with JS
+            story(
+                "unavailable",
+                StatusBoard,
+                { ...status, src: "data:application/json,{" },
+                { slot: "Live from Prometheus", tags: ["animated", "live"] },
+            ),
             // At its own height: /status shows the rows sharing a screen
             story(
                 "fill",
