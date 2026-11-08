@@ -1,9 +1,78 @@
 ---
 import Section from "@cpluspatch/ui/astro/sections/section.astro";
-import { technologies } from "../../data/technologies.ts";
-import Logos from "../blocks/logos.astro";
+import { stack } from "../../data/technologies.ts";
 ---
 
-<Section id="stack" title="What I work with">
-    <Logos items={technologies} rows={5} />
+<Section id="stack" title="What I reach for">
+    <dl class="stack">
+        {stack.map(({ label, items }) => (
+            <div class="stack__group">
+                <dt class="stack__label text-label">{label}</dt>
+                <dd>
+                    <ul class="stack__items">
+                        {items.map((item) => (
+                            <li>{item}</li>
+                        ))}
+                    </ul>
+                </dd>
+            </div>
+        ))}
+    </dl>
 </Section>
+
+<style>
+/* A plain list by how often each is used, rather than a wall of logos: the
+grouping says more than the brands do */
+.stack {
+    display: grid;
+    width: 100%;
+    container-type: inline-size;
+}
+
+.stack__group {
+    display: grid;
+    gap: var(--space-xs) var(--space-lg);
+    padding-block: var(--space-md);
+    border-top: var(--border-width) solid var(--color-border);
+
+    &:last-child {
+        border-bottom: var(--border-width) solid var(--color-border);
+    }
+
+    @container (min-width: 40rem) {
+        grid-template-columns: 8rem 1fr;
+        align-items: baseline;
+    }
+}
+
+.stack__label {
+    color: var(--color-text-muted);
+}
+
+.stack__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) 0;
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-size-xl);
+    line-height: var(--leading-snug);
+
+    /* Separated by a slash, kept with the item before it so no line starts
+    with one */
+    li:not(:last-child)::after {
+        content: "/";
+        margin-inline: 0.5em;
+        color: var(--color-border-strong);
+    }
+}
+
+/* The most used, set heavier */
+.stack__group:first-child .stack__items {
+    font-weight: 600;
+}
+
+.stack__group:last-child .stack__items {
+    color: var(--color-text-muted);
+}
+</style>

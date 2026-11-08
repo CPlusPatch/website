@@ -2,14 +2,17 @@
 import Heatmap from "@cpluspatch/ui/astro/blocks/heatmap/heatmap.astro";
 import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import Section from "@cpluspatch/ui/astro/sections/section.astro";
-import { commits, stats } from "../../data/home.ts";
+import { commits, figures } from "../../data/home.ts";
 ---
 
-<Section id="stats" title="By the numbers" alt>
-    <p class="lead">
-        Rough figures from the last few years, and a year of commits.
-    </p>
-    <div class="stats">{stats.map((stat) => <Stat {...stat} />)}</div>
+{/* The figures are the title: a sentence, read in order, not cards compared */}
+<Section id="stats" aria-labelledby="stats-title" alt>
+    <h2 id="stats-title" class="page-section__title stats__title">
+        {/* Spaced explicitly: the build drops whitespace beside components */}
+        <Stat inline {...figures.years} />{" "}years writing software, over{" "}
+        <Stat inline {...figures.lines} />{" "}lines of code, pushed in{" "}
+        <Stat inline {...figures.commits} />{" "}commits.
+    </h2>
 
     <div class="commits panel">
         <h3 class="commits__title">{commits.title}</h3>
@@ -20,17 +23,12 @@ import { commits, stats } from "../../data/home.ts";
 </Section>
 
 <style>
-/* Fixed steps rather than auto-fit, so a row never ends on an orphan. */
-.stats {
-    display: grid;
-    gap: var(--space-md);
+.stats__title {
+    max-width: 22ch;
 
-    @container (min-width: 30rem) {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    @container (min-width: 52rem) {
-        grid-template-columns: repeat(4, 1fr);
+    .stat {
+        font-variant-numeric: tabular-nums;
+        color: var(--tone);
     }
 }
 

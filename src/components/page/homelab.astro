@@ -1,7 +1,9 @@
 ---
+import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import Section from "@cpluspatch/ui/astro/sections/section.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import { Icon } from "astro-icon/components";
+import { figures } from "../../data/home.ts";
 import { status } from "../../data/status.ts";
 import StatusBoard from "../blocks/status-board/status-board.astro";
 ---
@@ -10,10 +12,18 @@ import StatusBoard from "../blocks/status-board/status-board.astro";
     id="homelab"
     class="wash"
     title="My homelab"
-    align="center"
     style="--wash-at: 50% 60%"
 >
-    <p class="lead">What I self-host, and whether it's up right now.</p>
+    <p class="lead">
+        What I self-host, and whether it's up right now. Lately, it has been{" "}
+        <Stat
+            inline
+            {...figures.uptime}
+            tone="success"
+            class="homelab__uptime"
+        />
+        {" "}of the time.
+    </p>
     <StatusBoard {...status} style="max-width: 48rem">
         Live from Prometheus
     </StatusBoard>
@@ -24,6 +34,10 @@ import StatusBoard from "../blocks/status-board/status-board.astro";
 </Section>
 
 <style>
+.homelab__uptime {
+    font-weight: 600;
+}
+
 .homelab__more {
     margin-top: var(--space-md);
 }

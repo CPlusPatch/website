@@ -135,3 +135,51 @@ export const technologies: {
         logo: "logos:godot-icon",
     },
 ].toSorted((a, b) => a.name.localeCompare(b.name));
+
+export const stack: { label: string; items: string[] }[] = [
+    {
+        label: "Every day",
+        items: [
+            "TypeScript",
+            "Vue",
+            "Nuxt",
+            "Vite",
+            "HTML",
+            "CSS",
+            "Git",
+            "Docker",
+            "Python",
+            "Nix",
+            "Deno",
+            "Linux",
+        ],
+    },
+    {
+        label: "Often",
+        items: [
+            "React",
+            "Next.js",
+            "Node.js",
+            "Bun",
+            "Tailwind CSS",
+            "Rust",
+            "Supabase",
+            "Firebase",
+            "pnpm",
+            "Ubuntu",
+        ],
+    },
+    {
+        label: "Now and then",
+        items: [
+            "PHP",
+            "Laravel",
+            "jQuery",
+            "Godot",
+            "Unreal Engine",
+            "Arduino",
+            "Raspberry Pi",
+            "Discord.js",
+        ],
+    },
+];

@@ -9,7 +9,7 @@ import { reviews } from "../../data/home.ts";
 const [featured, ...rest] = reviews;
 ---
 
-<Section id="reviews" title="What people say" alt>
+<Section id="reviews" title="Nice things people said" alt>
     <div class="reviews">
         {featured && (
             <Quote author={featured.author} featured>
@@ -31,6 +31,34 @@ const [featured, ...rest] = reviews;
 .reviews {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-lg);
+
+    /*
+     * Quotes on the page rather than in boxes: a rule above each one, like
+     * the stack's groups, instead of a panel around it.
+     */
+    :global(.quote) {
+        padding: var(--space-md) 0 0;
+        background: none;
+        border: 0;
+        border-top: var(--border-width) solid var(--border-color);
+        border-radius: 0;
+    }
+
+    :global(.quote__author) {
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    /* The one pulled out, a size up and set off by a heavier rule */
+    :global(.quote--featured) {
+        padding-block: var(--space-lg);
+        border-top-width: 2px;
+        border-top-color: var(--color-primary);
+    }
+
+    :global(.quote--featured .quote__body) {
+        max-inline-size: 62ch;
+    }
 }
 </style>

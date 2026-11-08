@@ -61,11 +61,20 @@ export const details = [
     { icon: "lucide:cpu", label: "Arch and NixOS" },
 ];
 
+/** Figures set in the sentences of the stats and homelab sections. */
+export const figures = {
+    years: { value: 8, suffix: "+" },
+    lines: { value: 1, suffix: "M" },
+    commits: { value: 6, suffix: "k" },
+    uptime: { value: 99.9, suffix: "%" },
+} satisfies Record<string, ComponentProps<typeof Stat>>;
+
+/** The same figures as cards, with labels, for the desktop's readme. */
 export const stats: ComponentProps<typeof Stat>[] = [
-    { value: 8, suffix: "+", label: "Years in software development" },
-    { value: 1, suffix: "M+", label: "Lines of code written" },
-    { value: 4.1, suffix: "k", label: "Commits pushed" },
-    { value: 99.9, suffix: "%", label: "Uptime of my homelab" },
+    { ...figures.years, label: "Years in software development" },
+    { ...figures.lines, suffix: "M+", label: "Lines of code written" },
+    { ...figures.commits, label: "Commits pushed" },
+    { ...figures.uptime, label: "Uptime of my homelab" },
 ];
 
 /**
