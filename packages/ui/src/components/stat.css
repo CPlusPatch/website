@@ -38,5 +38,27 @@
             border-top: var(--border-width) dashed var(--color-border-strong);
             color: var(--color-text-muted);
         }
+
+        /* Set in a sentence, at the sentence's size: only its colour and figures
+        set it apart */
+        &.stat--inline {
+            display: inline;
+            width: auto;
+            padding: 0;
+
+            .stat__value {
+                font-size: inherit;
+                letter-spacing: inherit;
+            }
+
+            .stat__display {
+                display: inline-flex;
+
+                .stat__affix {
+                    font-size: inherit;
+                    font-weight: inherit;
+                }
+            }
+        }
     }
 }

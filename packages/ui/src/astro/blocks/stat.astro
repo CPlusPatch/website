@@ -5,10 +5,15 @@ import type { Tone } from "../../lib/tone.ts";
 /**
  * A big number with a label under it. With JS it counts up from zero the
  * first time it scrolls into view; without, it just shows the number.
+ *
+ * With `inline`, it is just the number, as a span set in the surrounding
+ * text: the sentence around it is its label.
  */
 interface Props extends HTMLAttributes<"div"> {
     value: number;
-    label: string;
+    /** Required unless `inline`. */
+    label?: string;
+    inline?: boolean;
     /** Shown before the number, like a currency sign. */
     prefix?: string;
     /** Shown after the number, like a unit or `%`. */
@@ -25,6 +30,7 @@ const {
     suffix,
     decimals = String(value).split(".")[1]?.length ?? 0,
     tone = "primary",
+    inline = false,
     class: className,
     ...rest
 } = Astro.props;
@@ -35,10 +41,22 @@ const formatted = new Intl.NumberFormat(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
 }).format(value);
+// Inline, the root and the value are spans set in a sentence, without the
+// panel or the label
+const Root = inline ? "span" : "div";
+const Value = inline ? "span" : "p";
 ---
 
-<div class:list={["stat", "panel", `tone-${tone}`, className]} {...rest}>
-    <p class="stat__value text-display">
+<Root
+    class:list={[
+        "stat",
+        inline ? "stat--inline" : "panel",
+        `tone-${tone}`,
+        className,
+    ]}
+    {...rest}
+>
+    <Value class:list={["stat__value", !inline && "text-display"]}>
         {/* The count is hidden from screen readers, which would otherwise read
             whatever number it was at; they get the final one below. */}
         <span class="stat__display" aria-hidden="true">
@@ -53,9 +71,9 @@ const formatted = new Intl.NumberFormat(locale, {
             {suffix && <span class="stat__affix">{suffix}</span>}
         </span>
         <span class="visually-hidden">{prefix}{formatted}{suffix}</span>
-    </p>
-    <p class="stat__label text-ui">{label}</p>
-</div>
+    </Value>
+    {!inline && <p class="stat__label text-ui">{label}</p>}
+</Root>
 
 <script>
 import { initStats } from "../../behaviours/stat.ts";

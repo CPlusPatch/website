@@ -1,6 +1,6 @@
 /**
  * <Stat>: counts its number up from zero the first time it scrolls fully
- * into view, unless the reader prefers reduced motion.
+ * into view, unless it sits inline or the reader prefers reduced motion.
  *
  * Root: `.stat`. Its `.stat__count` holds the text to animate and carries
  * `data-value` (the number), `data-decimals` and `data-locale` (for
@@ -21,7 +21,9 @@ const formatter = (el: HTMLElement) =>
     });
 
 const stat = behaviour(".stat", (root) => {
-    if (reducedMotion()) return;
+    // Inline, the number is a word in a sentence, which shouldn't change
+    // under the reader (or read "0k" until it scrolls fully into view)
+    if (reducedMotion() || root.classList.contains("stat--inline")) return;
     const el = root.querySelector<HTMLElement>(".stat__count");
     if (!el) return;
 

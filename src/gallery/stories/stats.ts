@@ -31,6 +31,8 @@ export const stats: StoryGroup[] = [
                 label: "Average rating, from a long list of reviewers that wraps",
                 tone: "warning",
             }),
+            // The sentence around it is its label, on the page
+            story("inline", Stat, { value: 4.1, suffix: "k", inline: true }),
         ],
     },
 ];
