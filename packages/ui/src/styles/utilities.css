@@ -103,18 +103,23 @@
     }
 
     /*
-     * A bordered surface with a coloured top rule. Card and alert are both this
-     * plus their own content layout. --panel-accent recolours the rule,
-     * --border-color the rest of the frame.
+     * A bordered surface. Card and alert are both this plus their own content
+     * layout. --border-color recolours the frame. The tones that say something
+     * (destructive, warning, success) add a coloured top rule, in
+     * --panel-accent; brand and neutral tones leave the frame plain.
      */
     .panel {
-        --panel-accent: var(--tone-accent, var(--color-primary-accent));
-        --shadow-color: var(--panel-accent);
+        --shadow-color: var(--tone-accent, var(--color-primary-accent));
 
         background-color: var(--color-surface-raised);
         border: var(--border-width) solid var(--border-color);
-        border-top: 2px solid var(--panel-accent);
         border-radius: var(--radius);
+
+        &:is(.tone-destructive, .tone-warning, .tone-success) {
+            --panel-accent: var(--tone-accent);
+
+            border-top: 2px solid var(--panel-accent);
+        }
 
         &.lift:hover {
             border-color: var(--shadow-color);

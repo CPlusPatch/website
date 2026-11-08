@@ -36,7 +36,7 @@ interface Props extends HTMLAttributes<"section"> {
     /** Names the feed for screen readers. */
     label: string;
     videos: Omit<ComponentProps<typeof Short>, "class">[];
-    /** Colours the seek bar, the pressed actions and the panel's top rule. */
+    /** Colours the seek bar and the pressed actions, and the panel's top rule in a warning, destructive or success tone. */
     tone?: Tone;
     /**
      * Start without sound, which browsers allow to autoplay anywhere. With

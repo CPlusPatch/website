@@ -35,7 +35,7 @@ import CarouselPips from "./carousel-pips.astro";
 interface Props extends HTMLAttributes<"section"> {
     /** Names the region for screen readers. */
     label: string;
-    /** Colours the panel's top rule and the current pip. */
+    /** Colours the current pip, and the panel's top rule in a warning, destructive or success tone. */
     tone?: Tone;
     /**
      * Advance on a timer: seconds per slide, or `true` for 6. Off by

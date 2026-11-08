@@ -3,8 +3,8 @@
 @layer ui.components {
     /*
      * Surface, border and hover lift come from .panel / .lift in utilities.css,
-     * tone colours from .tone-*. The panel's coloured top rule is opt-in here
-     * (.card--rule); without it the top edge is an ordinary border. This file
+     * tone colours from .tone-*. A card's top edge is an ordinary border in
+     * every tone; the coloured top rule is opt-in (.card--rule). This file
      * owns content layout and type.
      */
     .card {
@@ -36,6 +36,8 @@
 
         /* The rule is 2px against the border's 1px; give the difference back so content lines up. */
         &.card--rule {
+            border-top: 2px solid
+                var(--tone-accent, var(--color-primary-accent));
             padding-top: calc(var(--space-md-lg) - (2px - var(--border-width)));
         }
 
