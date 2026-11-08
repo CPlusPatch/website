@@ -35,3 +35,7 @@ src/data/shorts/
 
 # music for <Radio>, made by `deno run radio`; never ours to publish
 src/data/radio/
+
+# Playwright
+/test-results/
+/playwright-report/
