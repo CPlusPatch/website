@@ -48,6 +48,16 @@
         --leading-body: 1.5;
         --line-height: var(--leading-body);
 
+        /*
+         * Tracking for headings. Inter's optical size axis (font-optical-sizing:
+         * auto on body) already tightens the big sizes, so these only nudge it.
+         */
+        --tracking-display: -0.015em;
+        --tracking-tight: -0.01em;
+        --tracking-snug: -0.005em;
+        /* All caps and small labels need opening up (5-12% for caps). */
+        --tracking-caps: 0.08em;
+
         /* Spacing scale */
         --space-xs: 0.25rem;
         --space-sm: 0.5rem;

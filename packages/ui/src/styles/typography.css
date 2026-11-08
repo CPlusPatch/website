@@ -127,15 +127,28 @@
 
     /*
      * Heading tracking, in one place for every heading role, whether it comes
-     * from the tag or a class (a `font` value can't carry it).
+     * from the tag or a class (a `font` value can't carry it). Tighter the
+     * bigger the type; subheadings are near body size and keep the default.
      */
-    :is(h1, h2, h3, h4),
-    .text-display,
+    h1,
+    .text-display {
+        letter-spacing: var(--tracking-display);
+    }
+
+    h2,
     .text-headline,
-    .text-title,
-    .text-heading,
+    .text-title {
+        letter-spacing: var(--tracking-tight);
+    }
+
+    .text-heading {
+        letter-spacing: var(--tracking-snug);
+    }
+
+    h3,
+    h4,
     .text-subheading {
-        letter-spacing: -0.02em;
+        letter-spacing: normal;
     }
 
     /* The roles as classes, for markup. */
