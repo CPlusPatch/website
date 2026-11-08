@@ -1,0 +1,137 @@
+---
+/**
+ * JesseOS: the site as a desktop, an experiment beside the front page.
+ *
+ * For now, every app is a plain section of one long page, which is also how
+ * the page reads without JS. The window manager will turn the same sections
+ * into windows (see src/components/desktop/app.astro).
+ */
+
+import InteractiveMessage from "@cpluspatch/ui/astro/blocks/message/interactive-message.astro";
+import DisplayMenu from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import { Icon } from "astro-icon/components";
+import Destructor from "../components/blocks/destructor.astro";
+import Radio from "../components/blocks/radio/radio.astro";
+import StatusBoard from "../components/blocks/status-board/status-board.astro";
+import Terminal from "../components/blocks/terminal/terminal.astro";
+import { neofetch, whoami } from "../components/blocks/terminal/terminal.ts";
+import App from "../components/desktop/app.astro";
+import Letters from "../components/desktop/letters.astro";
+import Projects from "../components/desktop/projects.astro";
+import Readme from "../components/desktop/readme.astro";
+import { chat, effects } from "../data/home.ts";
+import { radioTracks } from "../data/radio.ts";
+import { status } from "../data/status.ts";
+import verity from "../images/avatars/verity.png";
+import Layout from "../layouts/desktop.astro";
+---
+
+<Layout
+    title="Desktop"
+    description="CPlusPatch's site as a desktop: projects, a terminal, the homelab's status and more, in windows."
+    noindex
+>
+    <header class="desk-bar">
+        <p class="desk-bar__brand">JesseOS</p>
+        <a class="desk-bar__home" href="/">Back to the site</a>
+        <DisplayMenu id="display" {effects} size="sm" />
+    </header>
+
+    <main id="main" class="desk">
+        <Readme />
+
+        <App
+            id="terminal"
+            title="Terminal"
+            path="guest@cpluspatch.com"
+            icon="lucide:terminal"
+        >
+            <Terminal
+                interactive
+                entries={[
+                    { command: "whoami", output: whoami() },
+                    { command: "neofetch", output: neofetch() },
+                ]}
+            />
+        </App>
+
+        <Projects />
+
+        <App id="monitor" title="Monitor" path="homelab" icon="lucide:activity">
+            <p class="lead">What I self-host, and whether it's up right now.</p>
+            <StatusBoard {...status}>Live from Prometheus</StatusBoard>
+            <Button href="/status/" variant="outline" class="desk__more">
+                <Icon name="lucide:activity" aria-hidden="true" />
+                Full status page
+            </Button>
+        </App>
+
+        <Letters />
+
+        <App id="radio" title="Radio" path="~/music" icon="lucide:music">
+            <Radio
+                tracks={radioTracks}
+                name="CPlusPatch FM"
+                style="max-block-size: 36rem"
+            />
+        </App>
+
+        <App id="chat" title="Chat" path="Verity" icon="lucide:message-circle">
+            <InteractiveMessage tree={chat} author="Verity" avatar={verity} />
+        </App>
+
+        <App id="toys" title="Toys" path="~/toys" icon="lucide:joystick">
+            <div class="desk__toy">
+                <p>Pick up the gravity gun, then click anything on the page.</p>
+                <Destructor />
+            </div>
+        </App>
+    </main>
+</Layout>
+
+<script>
+// The page-wide easter eggs Verity's chat runs.
+import "../components/page/dialogue-actions.ts";
+</script>
+
+<style>
+.desk-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    width: min(100% - 2 * var(--space-md), 46rem);
+    margin-inline: auto;
+    padding-block: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+
+    .desk-bar__brand {
+        margin-right: auto;
+        font: var(--type-subheading);
+        font-style: italic;
+    }
+
+    .desk-bar__home {
+        font: var(--type-ui);
+    }
+}
+
+/* One column of apps, like a long README, until the window manager runs. */
+.desk {
+    flex: 1;
+    width: min(100% - 2 * var(--space-md), 46rem);
+    margin-inline: auto;
+    padding-bottom: var(--space-xl);
+
+    .desk__toy {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        gap: var(--space-md);
+    }
+
+    .desk__more {
+        margin-top: var(--space-md);
+    }
+}
+</style>
