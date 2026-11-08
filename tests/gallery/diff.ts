@@ -252,7 +252,8 @@ async function compareShots(before: Story[], after: Story[]) {
             fullPage: true,
             animations: "disabled",
             caret: "hide",
-            mask: [page.locator("video, canvas")],
+            // GIFs play on whatever the motion setting.
+            mask: [page.locator('video, canvas, img[src$=".gif"]')],
         });
     };
 

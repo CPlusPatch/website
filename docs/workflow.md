@@ -55,7 +55,7 @@ deno run gallery:diff --ref main   # against another commit or branch
 This builds the gallery twice, at the ref (in a git worktree under `.gallery-diff/`, removed afterwards) and from the working tree, and compares every story:
 
 - its HTML, without build hashes, script bodies or Astro's scoping attributes
-- each group's page as a picture, in light and dark, at desktop and phone widths, with reduced motion and with videos masked
+- each group's page as a picture, in light and dark, at desktop and phone widths, with reduced motion, and with videos and GIFs masked
 
 It prints which stories changed and writes a report to `.gallery-diff/index.html`, with the HTML diffs and the before, after and difference pictures. Stories tagged `live` are left out of both. Nothing is kept between runs, so there is no baseline to update: a run only ever compares two builds made on the same machine. It takes about 20 seconds.
 
