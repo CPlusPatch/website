@@ -2,65 +2,116 @@
 import Icon from "../icon.astro";
 
 /**
- * A site's closing strip: tagline, social links, copyright, and two slots
+ * A site's closing section: tagline, social links, copyright, and two slots
  * for whatever else it wants to show off.
  *
  * Slots (each is left out of the markup when empty):
- *   branding -- beside the socials: the site's own badge, say. Anything.
- *   friends  -- `<li>`s, laid out in a grid of small badges.
+ *   branding -- after the friends: the site's own badge, say. Anything.
+ *   friends  -- `<li>`s, laid out as a wall of small badges.
  */
 interface Props {
     copyright: {
         license: string;
         holder: string;
     };
-    /** Line breaks (`\n`) are kept as written. */
+    /** Each line (split at `\n`) gets a line of its own, and may wrap. */
     tagline?: string;
     socials?: {
         name: string;
         href: string;
         icon: string;
+        /** Shown beside the name, such as the account's handle. */
+        handle?: string;
     }[];
+    /** Labels for the groups, read out and shown. */
+    labels?: { socials?: string; friends?: string; branding?: string };
 }
 
-const { copyright, tagline, socials } = Astro.props;
+const {
+    copyright,
+    tagline,
+    socials,
+    labels: {
+        socials: socialsLabel = "Elsewhere",
+        friends: friendsLabel = "Friends",
+        branding: brandingLabel = "Link back",
+    } = {},
+} = Astro.props;
+
+const lines = tagline?.split("\n") ?? [];
+const hasFriends = Astro.slots.has("friends");
+const hasBranding = Astro.slots.has("branding");
+const year = new Date().getFullYear();
 ---
 
 <footer class="footer">
-    <div class="footer__content">
-        {tagline && <p class="footer__tagline text-body-sm">{tagline}</p>}
-        {socials && socials.length > 0 && (
-            <ul class="footer__socials">
-                {socials.map((social) => (
-                    <li>
-                        <a
-                            href={social.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`${social.name} (opens in new tab)`}
-                        >
-                            <Icon name={social.icon} aria-hidden="true" />
-                        </a>
-                    </li>
+    <div class="container footer__inner">
+        {lines.length > 0 && (
+            <p class="footer__tagline">
+                {/* A space between lines, for copying and reading aloud. */}
+                {lines.map((line) => (
+                    <>
+                        <span>{line}</span>{" "}
+                    </>
                 ))}
-            </ul>
+            </p>
         )}
-        {Astro.slots.has("branding") && (
-            <div class="footer__branding">
-                <slot name="branding" />
+
+        {socials && socials.length > 0 && (
+            <div class="footer__group footer__group--socials">
+                <p class="footer__label" aria-hidden="true">
+                    {socialsLabel}
+                </p>
+                <ul class="footer__socials" aria-label={socialsLabel}>
+                    {socials.map((social) => (
+                        <li>
+                            <a
+                                href={social.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Icon name={social.icon} aria-hidden="true" />
+                                <span class="footer__social-name">
+                                    {social.name}
+                                </span>
+                                {social.handle && (
+                                    <span class="footer__social-handle">
+                                        {social.handle}
+                                    </span>
+                                )}
+                                <span class="visually-hidden">
+                                    (opens in new tab)
+                                </span>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
             </div>
         )}
+
+        {hasFriends && (
+            <div class="footer__group footer__group--friends">
+                <p class="footer__label" aria-hidden="true">
+                    {friendsLabel}
+                </p>
+                <ul class="footer__friends-list" aria-label={friendsLabel}>
+                    <slot name="friends" />
+                </ul>
+            </div>
+        )}
+
+        {hasBranding && (
+            <div class="footer__group footer__group--branding">
+                <p class="footer__label">{brandingLabel}</p>
+                <div class="footer__branding">
+                    <slot name="branding" />
+                </div>
+            </div>
+        )}
+
+        {/* One string: Astro would drop the line break between "under" and the licence. */}
+        <p class="footer__copyright">
+            {`© ${copyright.holder} ${year}. Licensed under ${copyright.license}.`}
+        </p>
     </div>
-    <hr>
-    {/* One string: Astro would drop the line break between "under" and the licence. */}
-    <div class="footer__copyright text-body-sm">
-        {`© ${copyright.holder} ${new Date().getFullYear()}. Licensed under ${copyright.license}.`}
-    </div>
-    {Astro.slots.has("friends") && (
-        <div class="footer__friends">
-            <ul class="footer__friends-list">
-                <slot name="friends" />
-            </ul>
-        </div>
-    )}
 </footer>

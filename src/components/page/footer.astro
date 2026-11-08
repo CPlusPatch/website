@@ -26,3 +26,10 @@ import FooterFriend from "./footer-friend.astro";
         />
     ))}
 </Footer>
+
+<style>
+/* Room below the copyright for the music and smiley buttons in the corners. */
+:global(.footer) {
+    padding-bottom: calc(var(--control-height-lg) + var(--space-lg));
+}
+</style>
