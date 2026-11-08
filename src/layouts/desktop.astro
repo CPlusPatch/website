@@ -1,0 +1,62 @@
+---
+/**
+ * The layout for /desktop, the JesseOS page: the same <head> as every other
+ * page, but a bare body with no blueprint grid, since the desktop draws its
+ * own wallpaper. Tags for the page's own <head> go in the "head" slot.
+ */
+
+import "../styles/index.css";
+
+import Jesse from "../components/effects/jesse.astro";
+import Scanlines from "../components/effects/scanlines.astro";
+import Head, { type Props as HeadProps } from "../components/head.astro";
+
+type Props = HeadProps;
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <Head {...Astro.props} />
+        <slot name="head" />
+    </head>
+    <body>
+        <Scanlines />
+        <Jesse />
+        <a class="skip-link" href="#main">Skip to content</a>
+        <slot />
+    </body>
+</html>
+
+<style>
+body {
+    container-type: inline-size;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    isolation: isolate;
+    font: var(--type-body);
+    font-optical-sizing: auto;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+
+    .skip-link {
+        position: absolute;
+        left: var(--space-md);
+        top: var(--space-md);
+        /* Above the fx overlays, so the scanlines never dim it */
+        z-index: var(--z-skip-link);
+        padding: var(--space-sm) var(--space-md);
+        color: var(--color-on-accent);
+        background-color: var(--color-primary);
+        text-decoration: none;
+        translate: 0 -200%;
+
+        &:focus-visible {
+            translate: 0 0;
+        }
+    }
+}
+</style>
