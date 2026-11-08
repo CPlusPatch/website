@@ -70,6 +70,37 @@ jobs:
         with:
           path: dist
 
+  # The gallery's browser tests (tests/gallery), in all three engines; a
+  # local run is Chromium only. Without the media downloads above, the
+  # stories that use it fall back to their samples.
+  gallery:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: deno install --frozen
+
+      - name: Install browsers
+        run: node_modules/.bin/playwright install --with-deps chromium firefox webkit
+
+      # Builds the site, then tests it
+      - name: Test
+        run: deno run test:gallery
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 14
+
   deploy:
     needs: check
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
