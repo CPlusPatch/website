@@ -12,13 +12,13 @@ Where the browser already does something, use that. The accordion is a `<details
 
 Each component should do one thing and be easy to combine with others. The media card is a card with a header image, and a message is a bubble with an avatar and a name.
 
-When a component grows, split it. It gets its own folder once it has several parts, and any JavaScript logic goes in a `.ts` file next to it, or, for a component in the library, in `packages/ui/src/behaviours/` (like `carousel/track.ts`). Code that doesn't depend on the site at all, like the colour generator, goes in its own package under `packages/`.
+When a component grows, split it. It gets its own folder once it has several parts, and any JavaScript logic goes in a `.ts` file next to it, or, for a component in the library, in `packages/ui/src/behaviours/` (like `carousel/track.ts`). Code that doesn't depend on the site at all, like the color generator, goes in its own package under `packages/`.
 
 ## CSS variables are the source of truth
 
-Colours, spacing, font sizes, corner radius and animation timing are all CSS variables, defined in `packages/ui/src/styles/`. Components use those variables instead of their own values, which is what lets a theme restyle the whole site by overriding them.
+Colors, spacing, font sizes, corner radius and animation timing are all CSS variables, defined in `packages/ui/src/styles/`. Components use those variables instead of their own values, which is what lets a theme or a style restyle the whole site by overriding them.
 
-The default colours are generated from one config file, so they can't drift apart or lose contrast. See [Themes and colours](themes.md).
+The default colors are generated from one config file, so they can't drift apart or lose contrast. See [Themes, styles and colors](themes.md).
 
 ## JavaScript is optional
 
@@ -26,8 +26,8 @@ Pages should work without JavaScript. Scripts add to things that already work: t
 
 ## Accessible by default
 
-Everything should work with a keyboard and a screen reader, respect reduced motion, and hold up in high contrast mode. Colour is never the only way something is shown, and every theme keeps text readable against its background (the generated ones are checked automatically).
+Everything should work with a keyboard and a screen reader, respect reduced motion, and hold up in high contrast mode. Color is never the only way something is shown, and every theme keeps text readable against its background (the generated ones are checked automatically).
 
 ## Testing
 
-Logic that can be tested on its own, like colour maths, has unit tests. Components are still tested by looking at them: the gallery's stories cover the states that matter, and they double as documentation. The gallery is also checked in a browser: every story is run with JavaScript off, through axe, at narrow widths, with reduced motion and with the keyboard, and checked for errors. Those tests check that something is true of a story rather than compare it with a saved picture, so there's nothing to update when a component changes on purpose. The generated themes' contrast is checked automatically, and CI runs all of it on every push.
+Logic that can be tested on its own, like color math, has unit tests. Components are still tested by looking at them: the gallery's stories cover the states that matter, and they double as documentation. The gallery is also checked in a browser: every story is run with JavaScript off, through axe, at narrow widths, with reduced motion and with the keyboard, and checked for errors. Those tests check that something is true of a story rather than compare it with a saved picture, so there's nothing to update when a component changes on purpose. The generated themes' contrast is checked automatically, and CI runs all of it on every push.

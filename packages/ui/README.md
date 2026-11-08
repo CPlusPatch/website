@@ -88,7 +88,7 @@ For the rest of the markup, read the Astro component. They're short, and the com
 Three things the Astro components take from outside:
 
 - **Icons.** The icons a component draws itself (a dropdown's chevron, say) are a built-in set of 22 Lucide icons, in `ICONS` and `iconSvg()`. Icons you choose are an `icon="lucide:name"` prop, and any name outside the built-in set goes to `astro-icon`.
-- **Images.** Props take a URL or `{ src, width, height, srcset? }`. The Astro components also take an imported `ImageMetadata` and optimise it with `astro:assets`.
+- **Images.** Props take a URL or `{ src, width, height, srcset? }`. The Astro components also take an imported `ImageMetadata` and optimize it with `astro:assets`.
 - **Code.** `blocks/code.astro` shows whatever HTML is in its slot, so any highlighter works. With an empty slot it uses Astro's `<Code>` (Shiki).
 
 ## Astro
@@ -106,7 +106,7 @@ import Button from "@cpluspatch/ui/astro/ui/button.astro";
 
 Current browsers. The CSS uses nesting, `@layer`, `:has()`, container queries, `popover` and `@property`, and doesn't downlevel any of it. If you need older ones, run it through lightningcss with your own targets, like this site does.
 
-A few things are only an improvement where supported. Dropdown panels sit under their button with anchor positioning, and are centred on screen without it. Textareas grow with their content through `field-sizing`, and without it they stay at `rows` lines.
+A few things are only an improvement where supported. Dropdown panels sit under their button with anchor positioning, and are centered on screen without it. Textareas grow with their content through `field-sizing`, and without it they stay at `rows` lines.
 
 ## Without JavaScript
 

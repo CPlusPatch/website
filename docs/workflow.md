@@ -8,7 +8,7 @@ Most work happens in the gallery. Start the dev server with `deno run dev` and o
 
 ## Making a change
 
-Edit the component and keep an eye on its stories in the gallery. The Display menu at the top lets you switch themes, light and dark mode and the page effects, and its Compare row shows a page's stories in light and dark side by side, or in every theme. The toolbar above the stories sets the preview width. It's worth going through those before you call something done, and also trying it with the keyboard, with reduced motion turned on, and with JavaScript disabled if the component has a script.
+Edit the component and keep an eye on its stories in the gallery. The Display menu at the top lets you switch themes, styles, light and dark mode and the page effects, and its Compare row shows a page's stories in light and dark side by side, in every theme, or in every style. The toolbar above the stories sets the preview width. It's worth going through those before you call something done, and also trying it with the keyboard, with reduced motion turned on, and with JavaScript disabled if the component has a script.
 
 If you add a state that isn't covered yet, add a story for it. See [Adding a component](components.md).
 

@@ -1,24 +1,24 @@
-# Themes, styles and colours
+# Themes, styles and colors
 
-All colours are CSS variables, so a theme is basically a stylesheet that overrides them. Themes support both light and dark mode. A theme sets colour only: corners, borders, motion and fonts come from the style, picked separately, so any theme goes with any style.
+All colors are CSS variables, so a theme is basically a stylesheet that overrides them. Themes support both light and dark mode. A theme sets color only: corners, borders, motion and fonts come from the style, picked separately, so any theme goes with any style.
 
 To use a theme, set `data-theme` on the `<html>` element (e.g. `data-theme="nord"`), and `data-scheme="light"` or `"dark"` to force one mode. Visitors can also switch both from the Display menu in the navbar (or the gallery's bar), or with `theme <name>` in the front page's terminal. With JS, their choice carries over to other pages.
 
-## Which colour to use
+## Which color to use
 
-`--color-primary`, `--color-secondary` and the other role colours have enough contrast to be used for text. They also work as backgrounds, with `--color-on-accent` for the text on top.
+`--color-primary`, `--color-secondary` and the other role colors have enough contrast to be used for text. They also work as backgrounds, with `--color-on-accent` for the text on top.
 
 The `-accent` variants (`--color-primary-accent` etc.) are only meant for borders, shadows and other decoration. Don't use them for text.
 
-## Editing the colours
+## Editing the colors
 
 The default and Ocean themes are generated from `packages/ui/src/styles/themes/palette.config.ts`. After changing it, run `deno run theme` to update the stylesheets. It also prints a contrast report.
 
-Don't edit the generated colours by hand, CI fails if they don't match the config.
+Don't edit the generated colors by hand, CI fails if they don't match the config.
 
 ## Adding a theme
 
-Copy one of the existing files in `packages/ui/src/styles/themes/` (`nord.css` is a good starting point), then import it in `packages/ui/src/styles/themes.css` and add it to `THEMES` in `packages/ui/src/styles/themes/index.ts` so it shows up in the Display menu. Keep its first block's selectors in the same form as the others: the `[data-theme-preview]` one is what colours its swatch in the menu. If you'd rather have the colours generated, add it to `themes` in `palette.config.ts` instead.
+Copy one of the existing files in `packages/ui/src/styles/themes/` (`nord.css` is a good starting point), then import it in `packages/ui/src/styles/themes.css` and add it to `THEMES` in `packages/ui/src/styles/themes/index.ts` so it shows up in the Display menu. Keep its first block's selectors in the same form as the others: the `[data-theme-preview]` one is what colors its swatch in the menu. If you'd rather have the colors generated, add it to `themes` in `palette.config.ts` instead.
 
 Text should have at least 4.5:1 contrast with the background, and input borders at least 3:1.
 
