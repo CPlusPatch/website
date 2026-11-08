@@ -1,0 +1,59 @@
+name: Gallery diff
+
+# What a pull request changes in the gallery's stories, against the branch
+# it goes into: their HTML and how they look (see tests/gallery/diff.ts).
+# For reading, not a check: it passes whatever changed. Without the media
+# downloads CI's build has, the stories that use it show their samples on
+# both sides.
+on:
+  pull_request:
+    paths:
+      - packages/ui/**
+      - src/gallery/**
+      - src/components/**
+      - src/styles/**
+
+permissions:
+  contents: read
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The base commit, for the worktree it's built in
+          fetch-depth: 0
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Runs the script, which is TypeScript as it stands (22.18 and up)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: deno install --frozen
+
+      - name: Install Chromium
+        run: node_modules/.bin/playwright install --with-deps chromium
+
+      # The summary goes on the run's page too; the report is the artifact.
+      - name: Diff
+        continue-on-error: true
+        run: |
+          deno run gallery:diff --ref "$BASE" | tee "$RUNNER_TEMP/diff.txt"
+          { echo '```'; cat "$RUNNER_TEMP/diff.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gallery-diff
+          path: .gallery-diff
+          if-no-files-found: ignore
+          retention-days: 14
