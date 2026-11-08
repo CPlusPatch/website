@@ -1,0 +1,184 @@
+---
+/**
+ * The Projects folder, and a viewer for each project. The folder's tiles
+ * link to the viewers, which follow it on the page.
+ *
+ * Styles hang off wrappers inside each <App>, not a class passed to it: a
+ * class given to a component doesn't carry this file's style scope.
+ */
+
+import Icon from "@cpluspatch/ui/astro/icon.astro";
+import Image from "@cpluspatch/ui/astro/image.astro";
+import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import { projectId } from "../../data/desktop.ts";
+import { projects } from "../../data/home.ts";
+import App from "./app.astro";
+---
+
+<App id="projects" title="Projects" path="~/projects" icon="lucide:folder">
+    <ul class="folder">
+        {projects.map(({ title, header }) => (
+            <li>
+                <a class="folder__tile" href={`#w-${projectId(title)}`}>
+                    <span class="folder__thumb">
+                        {header ? (
+                            <Image
+                                src={header.src}
+                                alt=""
+                                widths={[240, 480]}
+                                sizes="12rem"
+                            />
+                        ) : (
+                            <Icon name="lucide:folder" aria-hidden="true" />
+                        )}
+                    </span>
+                    <span class="folder__name">{title}</span>
+                </a>
+            </li>
+        ))}
+    </ul>
+</App>
+
+{projects.map(({ title, body, header, links = [] }) => (
+    <App
+        id={projectId(title)}
+        {title}
+        path={`~/projects/${projectId(title).slice(2)}`}
+        icon="lucide:app-window"
+    >
+        <div class="viewer">
+            {header && (
+                <div class="viewer__shot">
+                    <Image
+                        src={header.src}
+                        alt={header.alt}
+                        widths={[320, 640, 960]}
+                        sizes="(min-width: 48rem) 18rem, 100vw"
+                    />
+                </div>
+            )}
+            <div class="viewer__text">
+                <p>{body}</p>
+                {links.length > 0 && (
+                    <div class="viewer__links">
+                        {links.map(({ href, icon, label }) => (
+                            <Button {href} variant="outline" size="sm">
+                                <Icon name={icon} aria-hidden="true" />
+                                {label}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    </App>
+))}
+
+<style>
+/* A file manager's icon view: framed thumbnails, names under them. */
+.folder {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg) var(--space-md);
+    padding: 0;
+    list-style: none;
+
+    @container (min-width: 30rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @container (min-width: 40rem) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .folder__thumb {
+        display: grid;
+        place-items: center;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        background-color: var(--color-surface);
+        color: var(--color-text-muted);
+        transition:
+            border-color var(--transition),
+            translate var(--transition);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top left;
+        }
+    }
+
+    .folder__name {
+        font: var(--type-ui);
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
+    .folder__tile {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        color: var(--color-text);
+        text-decoration: none;
+        outline-offset: var(--space-xs);
+
+        /* Not the site's link hover, which fills the link with the accent. */
+        &:hover {
+            color: var(--color-text);
+            background-color: transparent;
+        }
+
+        &:hover .folder__thumb {
+            border-color: var(--color-primary);
+            translate: 0 -2px;
+        }
+
+        &:hover .folder__name {
+            color: var(--color-primary);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            &:hover .folder__thumb {
+                translate: none;
+            }
+        }
+    }
+}
+
+/* A shot beside the blurb and links, or over them in a narrow column. */
+.viewer {
+    display: grid;
+    gap: var(--space-md) var(--space-lg);
+    align-items: start;
+
+    @container (min-width: 36rem) {
+        grid-template-columns: 18rem minmax(0, 1fr);
+    }
+
+    .viewer__shot {
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        background-color: var(--color-surface);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top left;
+        }
+    }
+
+    .viewer__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+    }
+}
+</style>

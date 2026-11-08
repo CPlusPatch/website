@@ -1,0 +1,55 @@
+---
+/** The README app: who I am, the rough figures, and a year of commits. */
+
+import Heatmap from "@cpluspatch/ui/astro/blocks/heatmap/heatmap.astro";
+import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
+import IconList from "@cpluspatch/ui/astro/ui/icon-list.astro";
+import { commits, details, stats } from "../../data/home.ts";
+import App from "./app.astro";
+---
+
+<App id="readme" title="README" path="~/README.md" icon="lucide:file-text">
+    <h1 class="readme__title">
+        Hi, I'm <span class="accent">CPlusPatch</span>. I like computers.
+    </h1>
+    <p class="lead">
+        I study engineering, run too many servers, and care a lot about making
+        good software. Poke at the terminal, or open a project.
+    </p>
+    <IconList items={details} />
+
+    <div class="readme__stats">{stats.map((stat) => <Stat {...stat} />)}</div>
+
+    <div class="readme__commits panel">
+        <h2 class="readme__commits-title text-subheading">{commits.title}</h2>
+        <Heatmap {...commits.heatmap}>
+            <span>Conway's Game of Life, seeded from the graph.</span>
+        </Heatmap>
+    </div>
+</App>
+
+<style>
+.readme__title {
+    margin-bottom: var(--space-sm);
+}
+
+/* Two across where they fit, so a row never ends on an orphan. */
+.readme__stats {
+    display: grid;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+
+    @container (min-width: 26rem) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.readme__commits {
+    margin-top: var(--space-md);
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+
+    .readme__commits-title {
+        margin-bottom: var(--space-md);
+    }
+}
+</style>

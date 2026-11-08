@@ -1,0 +1,107 @@
+---
+/**
+ * One app on the desktop page. Without the window manager it is a plain
+ * section of the page, titled by its bar; with it, the same markup becomes a
+ * window. The id, `w-<id>`, is what `#w-<id>` links open.
+ *
+ * A stand-in until the library's window component exists (step 3 of the
+ * desktop plan); the markup is the contract that one keeps.
+ */
+
+import Icon from "@cpluspatch/ui/astro/icon.astro";
+
+interface Props {
+    /** Unique on the page; the section is `w-<id>`. */
+    id: string;
+    title: string;
+    /** The icon on the app's tile and taskbar button. */
+    icon: string;
+    /** Shown dimmed after the title, like a path. */
+    path?: string;
+    class?: string;
+}
+
+const { id, title, icon, path, class: className } = Astro.props;
+---
+
+<section
+    class:list={["app", className]}
+    id={`w-${id}`}
+    aria-labelledby={`w-${id}-title`}
+    data-icon={icon}
+>
+    <header class="app__bar">
+        <Icon class="app__icon" name={icon} aria-hidden="true" />
+        <h2 id={`w-${id}-title`} class="app__title" tabindex="-1">
+            {title}
+            {path && <span class="app__path">{path}</span>}
+        </h2>
+    </header>
+    <div class="app__body"><slot /></div>
+</section>
+
+<style>
+/*
+ * The plain view: a column of sections, each under a title bar of its
+ * icon, its name and a dim path, ruled off from what it holds.
+ */
+.app {
+    padding-block: var(--space-lg);
+    scroll-margin-top: var(--space-md);
+
+    & + & {
+        border-top: 1px solid var(--color-border);
+    }
+
+    .app__bar {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px dashed var(--color-border);
+    }
+
+    .app__icon {
+        flex: none;
+        box-sizing: content-box;
+        width: 1rem;
+        height: 1rem;
+        padding: var(--space-xs);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        color: var(--color-primary);
+        background-color: var(--color-surface);
+    }
+
+    .app__title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        column-gap: var(--space-sm);
+        min-width: 0;
+        margin: 0;
+        font: var(--type-subheading);
+
+        &:focus {
+            outline: none;
+        }
+    }
+
+    .app__path {
+        font: var(--type-meta);
+        letter-spacing: 0;
+        color: var(--color-text-muted);
+        overflow-wrap: anywhere;
+    }
+
+    .app__body {
+        container-type: inline-size;
+
+        /* Every app starts the same distance under its bar. */
+        > :global(:first-child) {
+            margin-top: 0;
+        }
+    }
+}
+</style>
