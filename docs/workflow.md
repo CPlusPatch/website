@@ -45,6 +45,22 @@ After the build, `npx playwright test` runs the tests again without rebuilding. 
 
 Some axe rules are turned off in `a11y.spec.ts`, each with a comment saying why. Turn one off only when the gallery breaks it, not the component.
 
+## Seeing what a change does to the gallery
+
+```sh
+deno run gallery:diff              # the working tree against HEAD
+deno run gallery:diff --ref main   # against another commit or branch
+```
+
+This builds the gallery twice, at the ref (in a git worktree under `.gallery-diff/`, removed afterwards) and from the working tree, and compares every story:
+
+- its HTML, without build hashes, script bodies or Astro's scoping attributes
+- each group's page as a picture, in light and dark, at desktop and phone widths, with reduced motion and with videos masked
+
+It prints which stories changed and writes a report to `.gallery-diff/index.html`, with the HTML diffs and the before, after and difference pictures. Stories tagged `live` are left out of both. Nothing is kept between runs, so there is no baseline to update: a run only ever compares two builds made on the same machine. It takes about 20 seconds.
+
+The exit code is 0 whatever changed; pass `--strict` to make any change fail it. On pull requests that touch the components or the gallery, CI runs it against the base branch and keeps the report as the `gallery-diff` artifact. A ref from before the gallery had a manifest has nothing to compare, and says so.
+
 ## Committing
 
 Keep commits small, one change each. Messages follow this format:
