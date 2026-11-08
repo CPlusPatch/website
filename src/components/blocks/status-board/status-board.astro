@@ -245,6 +245,11 @@ for (const root of document.querySelectorAll<HTMLElement>(
 
         dt {
             white-space: nowrap;
+
+            /* Unless even that's too wide, as in a wide face like Mono's */
+            @container (max-width: 20rem) {
+                white-space: normal;
+            }
         }
 
         dd {

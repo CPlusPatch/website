@@ -67,7 +67,8 @@ const { latency, label, tone } = stateOf(feed, name);
     align-content: space-between;
     gap: var(--space-sm);
     padding: var(--space-sm);
-    border: var(--border-width) solid var(--border-color);
+    /* A hairline, inside the board's frame, however heavy a style's borders. */
+    border: min(var(--border-width), 1px) solid var(--border-color);
     container-type: inline-size;
 
     /* Down: the border says so as well as the words. */
