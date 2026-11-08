@@ -58,3 +58,13 @@ test("the Display menu changes the scheme and theme", async ({ page }) => {
     await pick("theme", "nord");
     expect(await background()).not.toBe(dark);
 });
+
+test("the index shows every component, and no filter", async ({ page }) => {
+    await page.goto("/gallery/");
+    await expect(page.locator(".gallery-filter")).toBeHidden();
+    await expect(page.locator(".gallery-index__empty")).toBeHidden();
+    const cards = page.locator(".gallery-card");
+    await expect(page.locator(".gallery-card:visible")).toHaveCount(
+        await cards.count(),
+    );
+});

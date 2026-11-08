@@ -115,3 +115,55 @@ test("code copies to the clipboard", async ({ page, context }) => {
         text,
     );
 });
+
+test.describe("the index's filter", () => {
+    test("narrows the cards by every word, and Escape clears it", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/");
+        const cards = page.locator(".gallery-card:visible");
+        const all = await cards.count();
+        const input = page.getByRole("searchbox", {
+            name: "Filter components",
+        });
+        await page.keyboard.press("/");
+        await expect(input).toBeFocused();
+
+        // A story's name finds its component.
+        await input.fill("carousel autoplay");
+        await expect(cards).toHaveCount(1);
+        await expect(cards).toContainText("Carousel");
+        await expect(
+            page.locator(".gallery-index__category:visible"),
+        ).toHaveCount(1);
+        await expect(page.getByRole("status")).toHaveText(
+            `1 of ${all} components`,
+        );
+
+        await input.fill("nothing-is-called-this");
+        await expect(cards).toHaveCount(0);
+        await expect(page.locator(".gallery-index__empty")).toBeVisible();
+
+        await input.press("Escape");
+        await expect(input).toHaveValue("");
+        await expect(cards).toHaveCount(all);
+        await expect(page.locator(".gallery-index__empty")).toBeHidden();
+    });
+
+    test("lets a / be typed into it", async ({ page }) => {
+        await page.goto("/gallery/");
+        const input = page.getByRole("searchbox", {
+            name: "Filter components",
+        });
+        await input.focus();
+        await page.keyboard.type("a/b");
+        await expect(input).toHaveValue("a/b");
+    });
+});
+
+test("a story's name links to it on its component's page", async ({ page }) => {
+    await page.goto("/gallery/buttons/");
+    await page.locator('[id="button-size/sm"] .story__name').click();
+    await expect(page).toHaveURL(/#button-size\/sm$/);
+    await expect(page.locator('[id="button-size/sm"]')).toBeInViewport();
+});
