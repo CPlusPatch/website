@@ -162,8 +162,12 @@
                 )
             );
 
+            /*
+             * Body text, not the tone: tone-coloured text on its own tint
+             * falls under 4.5:1. The border and the icon carry the colour.
+             */
             .attachment__description {
-                color: var(--tone);
+                color: var(--color-text);
             }
         }
 

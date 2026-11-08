@@ -106,13 +106,14 @@ const { tracks, class: className, ...rest } = Astro.props;
         outline-offset: -2px;
     }
 
+    /*
+     * Marked by a rule down its edge and its title in the tone, not by a
+     * tinted fill: a tint under tone-coloured and muted text pulls both
+     * under 4.5:1 in the darker themes.
+     */
     &[aria-current="true"] {
         color: var(--tone);
-        background-color: color-mix(
-            in oklab,
-            var(--tone) 10%,
-            var(--color-surface-raised)
-        );
+        box-shadow: inset 2px 0 0 var(--tone);
     }
 }
 
