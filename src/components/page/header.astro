@@ -15,13 +15,13 @@ const { current = "/" } = Astro.props;
     sticky
     title="CPlusPatch"
     links={navLinks.map((link) => ({ ...link, active: link.href === current }))}
-    finalLink={{ href: contact, label: "Email" }}
+    finalLink={{ href: contact, label: "Email", icon: "lucide:mail" }}
 >
     <DisplayMenu
         slot="actions"
         id="display"
         {effects}
         size="sm"
-        collapseBelow="48rem"
+        collapseBelow="52rem"
     />
 </Navbar>

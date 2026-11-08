@@ -22,13 +22,14 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            justify-content: space-between;
             gap: var(--space-lg);
             min-height: var(--header-height);
         }
 
+        /* The site's name in the display face, like the page's headings. */
         .navbar__brand {
             color: var(--color-text);
+            font: var(--type-wordmark);
             text-decoration: none;
             transition: color var(--transition);
 
@@ -57,46 +58,71 @@
         }
 
         /*
-         * With actions as a fourth item, auto margins keep the nav centred
-         * between the brand and the end, and the actions close to the final link.
+         * The links follow the name, plain text rather than accent, as tall
+         * as the bar, so the current page's marker can sit on its lower edge.
+         * Links are rendered by Button, so they are styled here by class.
          */
-        @container not (max-width: 48rem) {
-            &:has(.navbar__actions) {
-                .navbar__nav {
-                    margin-inline: auto;
-                }
-
-                .navbar__actions {
-                    margin-inline-start: calc(
-                        var(--space-sm) -
-                        var(--space-lg)
-                    );
-                }
-            }
-        }
-
         .navbar__nav {
             display: flex;
-            align-items: center;
+            align-self: stretch;
             gap: var(--space-xs);
+            margin-inline-end: auto;
 
-            /*
-             * Links are rendered by Button, so they are styled here by class,
-             * as in the mobile rules below.
-             */
+            /* Hover darkens, keeping the accent for the marker and Email. */
+            .navbar__link {
+                --button-color: var(--color-text-muted);
+                --button-color-hover: var(--color-text);
+                position: relative;
+                height: auto;
+
+                &:hover {
+                    text-decoration: none;
+                }
+
+                /* Inside the link, which runs from the bar's top to its border. */
+                &:focus-visible {
+                    outline-offset: calc(-2px - var(--border-width));
+                }
+
+                &::after {
+                    position: absolute;
+                    inset: auto 0 calc(-1 * var(--border-width));
+                    height: var(--space-xs);
+                    content: "";
+                }
+            }
+
             .navbar__link--active {
-                text-decoration: underline;
-                text-underline-offset: 0.35em;
+                --button-color: var(--color-text);
+
+                &::after {
+                    background-color: var(--color-primary);
+                }
             }
         }
 
-        @container (max-width: 48rem) {
+        /* The one link in the accent, at the end with the actions. */
+        .navbar__final-link {
+            --button-color: var(--color-primary);
+            padding-inline: var(--space-xs);
+        }
+
+        @container not (max-width: 52rem) {
+            &:has(.navbar__actions) .navbar__actions {
+                margin-inline-start: calc(var(--space-sm) - var(--space-lg));
+            }
+        }
+
+        @container (max-width: 52rem) {
             .container {
                 gap: 0;
             }
 
+            /* The top row keeps the bar's height when the menu opens below. */
             .navbar__brand {
-                padding-block: var(--space-sm);
+                display: flex;
+                align-items: center;
+                min-height: var(--header-height);
             }
 
             /* The actions join the menu button in the top row, the menu below. */
@@ -194,17 +220,27 @@
                     flex-direction: column;
                     align-items: stretch;
                     gap: 0;
+                    margin-inline-end: 0;
 
                     .navbar__link {
                         justify-content: flex-start;
                         height: var(--control-height-lg);
                         padding-inline: var(--space-md);
+
+                        /* The marker moves to the start of the row. */
+                        &::after {
+                            inset: 0 auto 0 0;
+                            width: var(--space-xs);
+                            height: auto;
+                        }
                     }
                 }
 
                 .navbar__final-link {
-                    align-self: stretch;
+                    justify-content: flex-start;
                     height: var(--control-height-lg);
+                    padding-inline: var(--space-md);
+                    border-top: var(--border-width) solid var(--border-color);
                 }
 
                 /* Margin, not padding, so it collapses away with the row */

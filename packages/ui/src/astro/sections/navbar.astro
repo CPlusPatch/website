@@ -15,6 +15,8 @@ interface Props extends HTMLAttributes<"header"> {
         href: string;
         label: string;
         external?: boolean;
+        /** An icon before the label, by name, such as `lucide:mail`. */
+        icon?: string;
     };
     /** Stays at the top of the viewport as the page scrolls. */
     sticky?: boolean;
@@ -23,7 +25,7 @@ interface Props extends HTMLAttributes<"header"> {
 /*
  * The `actions` slot is for controls rather than links, like a settings
  * dropdown. They sit after the final link, and stay in the top row beside
- * the menu button on a narrow screen (give a dropdown collapseBelow="48rem"
+ * the menu button on a narrow screen (give a dropdown collapseBelow="52rem"
  * to make it icon-only there).
  */
 const hasActions = Astro.slots.has("actions");
@@ -44,7 +46,7 @@ const {
 >
     <div class="container">
         <a class="navbar__brand" href="/">
-            <span class="navbar__brand-text text-subheading">{title}</span>
+            <span class="navbar__brand-text">{title}</span>
         </a>
 
         <label class="navbar__toggle">
@@ -95,10 +97,12 @@ const {
                     <Button
                         class="navbar__final-link"
                         as="a"
-                        variant="outline"
-                        size="sm"
+                        variant="link"
                         href={finalLink.href}
                     >
+                        {finalLink.icon && (
+                            <Icon name={finalLink.icon} aria-hidden="true" />
+                        )}
                         {finalLink.label}
                         {finalLink.external && (
                             <Icon

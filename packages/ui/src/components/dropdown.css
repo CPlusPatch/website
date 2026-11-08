@@ -46,8 +46,8 @@
             }
         }
 
-        @container (max-width: 48rem) {
-            &.dropdown--collapse-48rem {
+        @container (max-width: 52rem) {
+            &.dropdown--collapse-52rem {
                 .dropdown__chevron {
                     display: none;
                 }

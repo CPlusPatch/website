@@ -94,6 +94,10 @@
             var(--weight-display)
             calc(var(--font-size-5xl) * var(--display-scale)) /
             var(--leading-poster) var(--font-display);
+        /* A site's name in its header, in the display face at a fixed size. */
+        --type-wordmark:
+            var(--weight-display) var(--font-size-2xl) / var(--leading-poster)
+            var(--font-display);
         /* Section and hero headings in running content. */
         --type-headline:
             700 var(--font-size-3xl) / var(--leading-tight) var(--font-base);
