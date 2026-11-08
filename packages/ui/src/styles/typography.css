@@ -82,7 +82,7 @@
     :root {
         /* Big numbers and page-opening lines. */
         --type-display:
-            800 var(--font-size-4xl) / var(--leading-tight) var(--font-base);
+            800 var(--font-size-4xl) / var(--leading-display) var(--font-base);
         /* Section and hero headings in running content. */
         --type-headline:
             700 var(--font-size-3xl) / var(--leading-tight) var(--font-base);
@@ -97,7 +97,7 @@
             600 var(--font-size-lg) / var(--leading-snug) var(--font-base);
         /* Intro copy under a heading. */
         --type-lead:
-            400 var(--font-size-lg) / var(--leading-body) var(--font-base);
+            400 var(--font-size-lg) / var(--leading-normal) var(--font-base);
         /* Running text: the page default (see body in layouts/base.astro). */
         --type-body:
             400 var(--font-size-base) / var(--line-height) var(--font-base);
@@ -121,7 +121,8 @@
             400 var(--font-size-xs) / var(--leading-snug) var(--font-mono);
         /* Code and terminal output. */
         --type-code:
-            400 var(--font-size-sm) / var(--leading-code) var(--font-mono);
+            400 var(--font-size-code-block) / var(--leading-code)
+            var(--font-mono);
     }
 
     /*
