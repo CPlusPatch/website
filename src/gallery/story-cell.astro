@@ -19,10 +19,11 @@ const { group, story } = Astro.props;
 const id = `${group}/${story.name}`;
 ---
 
-<figure class="story" data-story={id}>
+<figure class="story" id={id} data-story={id}>
     <figcaption class="story__caption">
         <span class="story__title">
-            <code class="story__name">{story.name}</code>
+            {/* A link to itself: where to point someone at this story. */}
+            <a class="story__name" href={`#${id}`}><code>{story.name}</code></a>
             <StoryTags tags={story.tags ?? []} />
         </span>
         <span class="story__actions">
@@ -64,6 +65,12 @@ const id = `${group}/${story.name}`;
     border-radius: var(--radius);
     /* The Props panel lays over the stage, above anything the story raises. */
     isolation: isolate;
+
+    /* The story a link jumped to. */
+    &:target {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 1px var(--color-primary);
+    }
 }
 
 .story__caption {
@@ -88,9 +95,22 @@ const id = `${group}/${story.name}`;
 .story__name {
     min-width: 0;
     overflow: hidden;
+    /* The code's font, which the ellipsis is drawn in too. */
+    font-family: var(--font-mono);
     font-size: var(--font-size-xs);
+    color: inherit;
+    text-decoration: none;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    &:hover {
+        color: var(--color-primary);
+        background-color: transparent;
+    }
+
+    code {
+        font-size: inherit;
+    }
 }
 
 .story__actions {

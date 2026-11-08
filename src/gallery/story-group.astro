@@ -100,6 +100,7 @@ const at = (row: string, column: string) =>
                                     return (
                                         story && (
                                             <td
+                                                id={id(story.name)}
                                                 data-story={id(story.name)}
                                                 title={story.name}
                                             >
@@ -364,6 +365,12 @@ const at = (row: string, column: string) =>
             position: relative;
             padding: var(--space-sm);
             vertical-align: middle;
+
+            /* The story a link jumped to. */
+            &:target {
+                outline: 2px solid var(--color-primary);
+                outline-offset: -2px;
+            }
         }
 
         /* A size container has no width of its own, so a cell would shrink to nothing. */
