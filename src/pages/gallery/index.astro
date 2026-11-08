@@ -1,11 +1,15 @@
 ---
 import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
+import Input from "@cpluspatch/ui/astro/ui/input.astro";
 import { Icon } from "astro-icon/components";
 import {
     categories,
     components,
+    type GalleryComponent,
     origin,
+    sourceOf,
     storyCount,
+    tagsOf,
 } from "../../gallery/components.ts";
 import GalleryLayout from "../../gallery/gallery-layout.astro";
 import { groups } from "../../gallery/stories/index.ts";
@@ -28,6 +32,31 @@ const moved = Object.fromEntries(
         ]),
     ),
 );
+
+/**
+ * What the filter matches a card on, lowercased: its names, its groups' and
+ * stories' names (so "autoplay" finds the carousel), its files, its tags
+ * and its category.
+ */
+const searchText = (component: GalleryComponent, category: string) =>
+    [
+        component.id,
+        component.title,
+        category,
+        origin(component) === "site" ? "site only" : "",
+        ...component.groups.flatMap((group) => [
+            group.id,
+            group.title,
+            sourceOf(group).split("/").at(-1),
+            ...tagsOf(group),
+            ...group.stories.flatMap((story) => [
+                story.name,
+                ...(story.tags ?? []),
+            ]),
+        ]),
+    ]
+        .join(" ")
+        .toLowerCase();
 ---
 
 <GalleryLayout
@@ -50,6 +79,22 @@ const moved = Object.fromEntries(
         <p class="text-meta">
             {`${plural(components.length, "component")} · ${plural(stories, "story", "stories")}`}
         </p>
+        {/* A script's control: hidden until it runs. */}
+        <search class="gallery-filter" hidden>
+            <Input
+                class="gallery-filter__input"
+                type="search"
+                label="Filter components"
+                placeholder="Filter by name, story, file or tag (/)"
+                aria-keyshortcuts="/"
+                aria-describedby="gallery-filter-status"
+            />
+            <p
+                class="gallery-filter__status text-meta"
+                id="gallery-filter-status"
+                role="status"
+            ></p>
+        </search>
     </header>
 
     {categories.map((category) => (
@@ -59,7 +104,7 @@ const moved = Object.fromEntries(
                     <Icon name={category.icon} aria-hidden="true" />
                     {category.title}
                 </h2>
-                <p class="text-meta">
+                <p class="text-meta" data-count={category.components.length}>
                     {plural(category.components.length, "component")}
                 </p>
             </header>
@@ -67,7 +112,10 @@ const moved = Object.fromEntries(
                 {category.components.map((component) => {
                     const first = component.groups[0].stories[0];
                     return (
-                        <li class="gallery-card">
+                        <li
+                            class="gallery-card"
+                            data-search={searchText(component, category.title)}
+                        >
                             {/* Where /gallery/#<group-id> lands without JS. */}
                             {component.groups.map((group) => (
                                 <span
@@ -116,7 +164,69 @@ const moved = Object.fromEntries(
             </ul>
         </section>
     ))}
+    <p class="gallery-index__empty" hidden>
+        No component matches that. Try fewer words, or clear the filter with
+        Escape.
+    </p>
 </GalleryLayout>
+
+<script>
+// The filter: hides the cards that don't have every word typed, and the
+// categories left empty, and says how many are left.
+const filter = document.querySelector<HTMLElement>(".gallery-filter");
+const input = filter?.querySelector("input");
+const status = filter?.querySelector(".gallery-filter__status");
+const empty = document.querySelector<HTMLElement>(".gallery-index__empty");
+const cards = [...document.querySelectorAll<HTMLElement>("[data-search]")];
+const categories = [
+    ...document.querySelectorAll<HTMLElement>(".gallery-index__category"),
+];
+
+if (filter && input && status && empty) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const apply = () => {
+        const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+        let shown = 0;
+        for (const card of cards) {
+            const text = card.dataset.search ?? "";
+            card.hidden = !words.every((word) => text.includes(word));
+            if (!card.hidden) shown++;
+        }
+        for (const category of categories) {
+            category.hidden = !category.querySelector(
+                "[data-search]:not([hidden])",
+            );
+        }
+        empty.hidden = shown > 0;
+        // Said once typing stops, not at every key.
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            status.textContent = words.length
+                ? `${shown} of ${cards.length} components`
+                : "";
+        }, 400);
+    };
+    input.addEventListener("input", apply);
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && input.value) {
+            input.value = "";
+            apply();
+        }
+    });
+    // "/" from anywhere but a field jumps to the filter.
+    document.addEventListener("keydown", (e) => {
+        if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+        const target = e.target as HTMLElement;
+        if (target.closest("input, textarea, select, [contenteditable]"))
+            return;
+        e.preventDefault();
+        input.focus();
+    });
+    filter.hidden = false;
+    // A value the browser kept from before going back
+    if (input.value) apply();
+}
+</script>
 
 <style>
 .gallery-index__hero {
@@ -136,10 +246,37 @@ const moved = Object.fromEntries(
     color: var(--color-text-muted);
 }
 
+/* The filter's line under the intro, once its script has shown it. */
+.gallery-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-sm);
+    margin-top: var(--space-sm);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.gallery-filter__input {
+    flex: 1 1 16rem;
+    max-width: 28rem;
+}
+
+.gallery-index__empty {
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
 .gallery-index__category {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+
+    &[hidden] {
+        display: none;
+    }
 }
 
 /* A full-strength heading on a solid rule, clear over the backdrop grid. */
@@ -190,6 +327,10 @@ const moved = Object.fromEntries(
     &:hover,
     &:focus-within {
         border-color: var(--color-primary);
+    }
+
+    &[hidden] {
+        display: none;
     }
 }
 
