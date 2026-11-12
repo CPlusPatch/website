@@ -10,6 +10,15 @@ export default defineConfig({
     site: "https://cpluspatch.com",
     // src/icons must exist, or the dev server stops watching src/. See its README.
     integrations: [icon()],
+    build: {
+        // Every page's CSS goes in its <style>, so the first paint waits on
+        // the HTML alone rather than on stylesheet requests too. Measured with
+        // Lighthouse: ~150 ms sooner on the big pages (home, gallery, desktop),
+        // ~150 ms later on the small ones, whose HTML no longer fits in the
+        // first round trip; keeping head.css a file and inlining the rest was
+        // slower on both.
+        inlineStylesheets: "always",
+    },
     fonts: [
         {
             provider: fontProviders.fontsource(),
@@ -70,7 +79,9 @@ export default defineConfig({
             name: "Big Shoulders Display",
             cssVariable: "--font-big-shoulders",
             styles: ["normal"],
-            weights: ["700 900"],
+            // Only --weight-display (800) is drawn in it: a single static
+            // file is a fraction of the size of the variable one.
+            weights: ["800"],
             display: "swap",
             subsets: ["latin"],
             fallbacks: ["sans-serif"],
