@@ -89,12 +89,7 @@ const [first] = optimised;
     </div>
 
     {/* biome-ignore lint/a11y/useMediaCaption: captions are for video; audio needs a transcript, which is page content */}
-    <audio
-        src={first?.src}
-        preload="metadata"
-        controls
-        aria-label={name}
-    ></audio>
+    <audio src={first?.src} preload="none" controls aria-label={name}></audio>
     <div class="radio__controls" hidden data-radio-controls>
         <Button
             size="icon-sm"

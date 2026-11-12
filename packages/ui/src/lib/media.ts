@@ -39,8 +39,31 @@ export const renderSeek = (media: HTMLMediaElement, seek: HTMLInputElement) => {
 };
 
 /**
+ * Turns `preload="none"` into "metadata" once the page has loaded and gone
+ * idle, so the time readout gets its duration without the request competing
+ * with the page's own. For an Ogg file, "metadata" can mean the whole file, as
+ * the duration is only in its last page.
+ */
+const preloadWhenIdle = (media: HTMLMediaElement, signal: AbortSignal) => {
+    if (media.preload !== "none") return;
+    const upgrade = () => {
+        if (signal.aborted || media.preload !== "none") return;
+        media.preload = "metadata";
+    };
+    const idle = () =>
+        "requestIdleCallback" in window
+            ? requestIdleCallback(upgrade, { timeout: 3000 })
+            : setTimeout(upgrade, 1000);
+    if (document.readyState === "complete") idle();
+    else window.addEventListener("load", idle, { once: true, signal });
+};
+
+/**
  * Swaps the browser's controls for ours and keeps them in sync. Returns a
  * function that stops that and gives the browser's controls back.
+ *
+ * Players render their <audio> with `preload="none"`, so it does not load
+ * with the page; this asks for the metadata once the page is idle.
  */
 export const bindTransport = (
     media: HTMLMediaElement,
@@ -100,6 +123,7 @@ export const bindTransport = (
         { signal },
     );
     render();
+    preloadWhenIdle(media, signal);
 
     return () => {
         controller.abort();

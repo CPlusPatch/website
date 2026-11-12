@@ -36,7 +36,7 @@ const {
     {...rest}
 >
     {/* biome-ignore lint/a11y/useMediaCaption: captions are for video; audio needs a transcript, which is page content */}
-    <audio src={src} preload="metadata" controls aria-label={title}></audio>
+    <audio src={src} preload="none" controls aria-label={title}></audio>
     <div class="audio-player__controls" hidden>
         <Button
             class="audio-player__toggle"
