@@ -58,7 +58,7 @@ const { ground, class: className, ...rest } = Astro.props;
         padding: 0;
         border: 0;
         background:
-            url("../../images/destructor/gravgun-outline.png") center / contain
+            url("../../images/destructor/gravgun-outline.webp") center / contain
             no-repeat;
         cursor: pointer;
         transition: scale var(--transition);
@@ -66,14 +66,14 @@ const { ground, class: className, ...rest } = Astro.props;
         /* Sprite swaps are instant, like in the game */
         &:hover,
         &[data-hint] {
-            background-image: url("../../images/destructor/gravgun-hover.png");
+            background-image: url("../../images/destructor/gravgun-hover.webp");
         }
 
         &[aria-pressed="true"] {
-            background-image: url("../../images/destructor/gravgun-inset.png");
+            background-image: url("../../images/destructor/gravgun-inset.webp");
 
             &:hover {
-                background-image: url("../../images/destructor/gravgun-inset-hover.png");
+                background-image: url("../../images/destructor/gravgun-inset-hover.webp");
             }
         }
 

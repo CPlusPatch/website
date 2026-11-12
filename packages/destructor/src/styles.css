@@ -121,7 +121,7 @@ html:not([data-destructor-equipped]) .destructor-extracted * {
         content: "";
         position: absolute;
         inset: 0;
-        background: url("./assets/gravgun_vm_close.png") no-repeat;
+        background: url("./assets/gravgun_vm_close.webp") no-repeat;
         background-size: contain;
     }
 
@@ -133,7 +133,7 @@ html:not([data-destructor-equipped]) .destructor-extracted * {
         }
 
         &::after {
-            background-image: url("./assets/gravgun_vm_open.png");
+            background-image: url("./assets/gravgun_vm_open.webp");
         }
     }
 
