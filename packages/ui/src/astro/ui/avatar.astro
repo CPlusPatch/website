@@ -24,6 +24,9 @@ interface Props extends HTMLAttributes<"div"> {
 const { src, alt, size = "default", class: className, ...rest } = Astro.props;
 
 const initials = initialsOf(alt);
+// --avatar-size in CSS pixels, so an imported image is resized to the box
+// (and twice it, for dense screens) rather than sent at a fixed 128.
+const px = { sm: 28, default: 40, lg: 64 }[size];
 ---
 
 {/* The box carries the name, so it reads the same with or without an image. */}
@@ -39,8 +42,9 @@ const initials = initialsOf(alt);
             class="avatar__image"
             src={src}
             alt=""
-            width={128}
-            height={128}
+            width={px}
+            height={px}
+            densities={[1, 2]}
             loading="lazy"
         />
     )}

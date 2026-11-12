@@ -19,16 +19,25 @@ interface Props
     alt: string | null;
     /** Widths to resize to, for an imported image. */
     widths?: number[];
+    /**
+     * Pixel densities of `width` to resize to, for an imported image. Takes
+     * the place of `widths`.
+     */
+    densities?: number[];
 }
 
-const { src, alt, widths, ...rest } = Astro.props;
+const { src, alt, widths, densities, ...rest } = Astro.props;
 
 // ImageMetadata is the one with a `format`.
 const imported = typeof src === "object" && "format" in src;
 ---
 
 {imported ? (
-    <Image {src} {alt} {widths} {...rest} />
+    densities ? (
+        <Image {src} {alt} {densities} {...rest} />
+    ) : (
+        <Image {src} {alt} {widths} {...rest} />
+    )
 ) : (
     <img {...imageAttributes(src)} alt={alt} {...rest} />
 )}
