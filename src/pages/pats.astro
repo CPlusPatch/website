@@ -1,8 +1,25 @@
 ---
+// Only the parts of the DSFR this page uses, in its dependency order: the
+// whole of it is over 800 kB of CSS, all of it render-blocking.
 import "@gouvfr/dsfr/dist/core/core.main.min.css";
-import "@gouvfr/dsfr/dist/component/component.main.min.css";
-import "@gouvfr/dsfr/dist/utility/utility.main.min.css";
+import "@gouvfr/dsfr/dist/component/link/link.main.min.css";
+import "@gouvfr/dsfr/dist/component/button/button.main.min.css";
+import "@gouvfr/dsfr/dist/component/form/form.main.min.css";
+import "@gouvfr/dsfr/dist/component/input/input.main.min.css";
+import "@gouvfr/dsfr/dist/component/checkbox/checkbox.main.min.css";
+import "@gouvfr/dsfr/dist/component/radio/radio.main.min.css";
+import "@gouvfr/dsfr/dist/component/notice/notice.main.min.css";
+import "@gouvfr/dsfr/dist/component/alert/alert.main.min.css";
+import "@gouvfr/dsfr/dist/component/logo/logo.main.min.css";
+import "@gouvfr/dsfr/dist/component/modal/modal.main.min.css";
+import "@gouvfr/dsfr/dist/component/skiplink/skiplink.main.min.css";
+import "@gouvfr/dsfr/dist/component/header/header.main.min.css";
+import "@gouvfr/dsfr/dist/component/footer/footer.main.min.css";
 import "@gouvfr/dsfr/dist/scheme/scheme.min.css";
+// The faces above the fold, fetched with the HTML so they are in before the
+// first paint: swapping them in later reflows the text and moves the form.
+import marianneBold from "@gouvfr/dsfr/dist/fonts/Marianne-Bold.woff2?url";
+import marianneRegular from "@gouvfr/dsfr/dist/fonts/Marianne-Regular.woff2?url";
 import Layout from "../layouts/plain.astro";
 
 const serviceTitle = "Ministère des câlins et de la tendresse";
@@ -44,6 +61,17 @@ const qualifiers = [
     noindex
     icon="/favicon-gouv.ico"
 >
+    <Fragment slot="head">
+        {[marianneRegular, marianneBold].map((href) => (
+            <link
+                rel="preload"
+                href={href}
+                as="font"
+                type="font/woff2"
+                crossorigin
+            />
+        ))}
+    </Fragment>
     <div class="fr-skiplinks">
         <nav class="fr-container" aria-label="Accès rapide">
             <ul class="fr-skiplinks__list">
@@ -356,7 +384,13 @@ const qualifiers = [
 </Layout>
 
 <script>
-import "@gouvfr/dsfr/dist/dsfr.module.min.js";
+// The core, then the scripts of the components that have any: the header's
+// menu is a modal.
+import "@gouvfr/dsfr/dist/core/core.module.min.js";
+import "@gouvfr/dsfr/dist/component/button/button.module.min.js";
+import "@gouvfr/dsfr/dist/component/checkbox/checkbox.module.min.js";
+import "@gouvfr/dsfr/dist/component/modal/modal.module.min.js";
+import "@gouvfr/dsfr/dist/component/header/header.module.min.js";
 import { bindPatsForm } from "../components/pats/form.ts";
 
 const form = document.querySelector<HTMLFormElement>("#pats-form");

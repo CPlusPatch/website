@@ -25,6 +25,7 @@ const { title, description, lang = "en", noindex = false, icon } = Astro.props;
         {description && <meta name="description" content={description} />}
         {noindex && <meta name="robots" content="noindex, nofollow" />}
         {import.meta.env.PROD && <Analytics />}
+        <slot name="head" />
     </head>
     <body>
         <slot />
