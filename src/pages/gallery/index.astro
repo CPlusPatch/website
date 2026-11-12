@@ -95,6 +95,14 @@ const searchText = (component: GalleryComponent, category: string) =>
                 role="status"
             ></p>
         </search>
+        {/*
+         * Shown as soon as it is parsed when there is JS, rather than when the
+         * module below runs, which pushed everything under it down after the
+         * first paint. What was typed by then is applied once it runs.
+         */}
+        <script is:inline>
+        document.currentScript.previousElementSibling.hidden = false;
+        </script>
     </header>
 
     {categories.map((category) => (
@@ -319,6 +327,12 @@ if (filter && input && status && empty) {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    /*
+     * Off-screen cards skip layout and paint until scrolled near. Each is
+     * about as tall at every width, so the page keeps its height meanwhile.
+     */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 230px;
     background-color: var(--color-surface);
     border: var(--border-width) solid var(--border-color);
     border-radius: var(--radius);
