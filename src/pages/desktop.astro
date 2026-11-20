@@ -8,6 +8,7 @@
  */
 
 import InteractiveMessage from "@cpluspatch/ui/astro/blocks/message/interactive-message.astro";
+import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import DisplayMenu from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import { Icon } from "astro-icon/components";
@@ -20,7 +21,7 @@ import App from "../components/desktop/app.astro";
 import Letters from "../components/desktop/letters.astro";
 import Projects from "../components/desktop/projects.astro";
 import Readme from "../components/desktop/readme.astro";
-import { chat, effects } from "../data/home.ts";
+import { chat, effects, figures } from "../data/home.ts";
 import { radioTracks } from "../data/radio.ts";
 import { status } from "../data/status.ts";
 import verity from "../images/avatars/verity.png";
@@ -59,7 +60,17 @@ import Layout from "../layouts/desktop.astro";
         <Projects />
 
         <App id="monitor" title="Monitor" path="homelab" icon="lucide:activity">
-            <p class="lead">What I self-host, and whether it's up right now.</p>
+            <p class="lead">
+                What I self-host, and whether it's up right now. Lately, it has
+                been{" "}
+                <Stat
+                    inline
+                    {...figures.uptime}
+                    tone="success"
+                    class="desk__uptime"
+                />
+                {" "}of the time.
+            </p>
             <StatusBoard {...status}>Live from Prometheus</StatusBoard>
             <Button href="/status/" variant="outline" class="desk__more">
                 <Icon name="lucide:activity" aria-hidden="true" />
@@ -107,8 +118,7 @@ import "../components/page/dialogue-actions.ts";
 
     .desk-bar__brand {
         margin-right: auto;
-        font: var(--type-subheading);
-        font-style: italic;
+        font: var(--type-wordmark);
     }
 
     .desk-bar__home {
@@ -128,6 +138,10 @@ import "../components/page/dialogue-actions.ts";
         flex-direction: column;
         align-items: start;
         gap: var(--space-md);
+    }
+
+    :global(.desk__uptime) {
+        font-weight: 600;
     }
 
     .desk__more {

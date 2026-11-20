@@ -86,13 +86,6 @@ export const figures = {
     uptime: { value: 99.9, suffix: "%" },
 } satisfies Record<string, ComponentProps<typeof Stat>>;
 
-/** The same figures as cards, with labels, for the desktop's readme. */
-export const stats: ComponentProps<typeof Stat>[] = [
-    { ...figures.years, label: "Years writing software" },
-    { ...figures.commits, label: "Commits" },
-    { ...figures.uptime, label: "Homelab uptime" },
-];
-
 /**
  * Placeholder: a year of commits, a level from 0 to 4 for each day, Sunday to
  * Saturday down each week's column. Made up, but the same on every build:

@@ -1,37 +1,51 @@
 ---
 /**
  * The Projects folder, and a viewer for each project. The folder's tiles
- * link to the viewers, which follow it on the page.
+ * link to the viewers, which follow it on the page. Versia leads and has one
+ * viewer for itself and its parts, as on the front page.
  *
  * Styles hang off wrappers inside each <App>, not a class passed to it: a
  * class given to a component doesn't carry this file's style scope.
  */
 
 import Icon from "@cpluspatch/ui/astro/icon.astro";
-import Image from "@cpluspatch/ui/astro/image.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import { projectId } from "../../data/desktop.ts";
-import { projects } from "../../data/home.ts";
+import {
+    otherProjects,
+    ownLinks,
+    versia,
+    versiaParts,
+} from "../../data/home.ts";
+import Shot from "../blocks/shot.astro";
+import FlaviArt from "../page/flavi-art.astro";
 import App from "./app.astro";
+
+// Drawn rather than captured: Flavi is gone
+const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
+
+const tiles = [
+    { title: versia.title, src: versia.shots.dark, light: versia.shots.light },
+    ...otherProjects.map(({ title, header }) => ({
+        title,
+        src: header?.src,
+        light: header?.light,
+    })),
+];
 ---
 
 <App id="projects" title="Projects" path="~/projects" icon="lucide:folder">
     <ul class="folder">
-        {projects.map(({ title, header }) => (
+        {tiles.map(({ title, src, light }) => (
             <li>
                 <a class="folder__tile" href={`#w-${projectId(title)}`}>
-                    <span class="folder__thumb">
-                        {header ? (
-                            <Image
-                                src={header.src}
-                                alt=""
-                                widths={[240, 480]}
-                                sizes="12rem"
-                            />
-                        ) : (
-                            <Icon name="lucide:folder" aria-hidden="true" />
-                        )}
-                    </span>
+                    {art[title] ? (
+                        <Shot>
+                            <FlaviArt />
+                        </Shot>
+                    ) : (
+                        <Shot {src} {light} widths={[240, 480]} sizes="12rem" />
+                    )}
                     <span class="folder__name">{title}</span>
                 </a>
             </li>
@@ -39,7 +53,52 @@ import App from "./app.astro";
     </ul>
 </App>
 
-{projects.map(({ title, body, header, links = [] }) => (
+<App
+    id={projectId(versia.title)}
+    title={versia.title}
+    path={`~/projects/${projectId(versia.title).slice(2)}`}
+    icon="lucide:app-window"
+>
+    <div class="viewer">
+        <Shot
+            src={versia.shots.dark}
+            light={versia.shots.light}
+            alt={versia.shots.alt}
+            widths={[320, 640, 960]}
+            sizes="(min-width: 48rem) 18rem, 100vw"
+        />
+        <div class="viewer__text">
+            <p class="lead">{versia.body}</p>
+            <div class="viewer__links">
+                {versia.links.map(({ href, icon, label }) => (
+                    <Button {href} variant="outline" size="sm">
+                        <Icon name={icon} aria-hidden="true" />
+                        {label}
+                    </Button>
+                ))}
+            </div>
+        </div>
+    </div>
+    <ul class="parts">
+        {versiaParts.map(({ title, body, links }) => (
+            <li class="part">
+                <h3 class="part__title">{title}</h3>
+                <p class="part__body">{body}</p>
+                <div class="part__links">
+                    {ownLinks(links).map(({ href, icon, label }) => (
+                        <Button {href} size="sm" variant="ghost" tone="neutral">
+                            <Icon name={icon} aria-hidden="true" />
+                            {label}
+                            <span class="visually-hidden">, {title}</span>
+                        </Button>
+                    ))}
+                </div>
+            </li>
+        ))}
+    </ul>
+</App>
+
+{otherProjects.map(({ title, body, header, links = [] }) => (
     <App
         id={projectId(title)}
         {title}
@@ -47,15 +106,20 @@ import App from "./app.astro";
         icon="lucide:app-window"
     >
         <div class="viewer">
-            {header && (
-                <div class="viewer__shot">
-                    <Image
+            {art[title] ? (
+                <Shot>
+                    <FlaviArt />
+                </Shot>
+            ) : (
+                header && (
+                    <Shot
                         src={header.src}
+                        light={header.light}
                         alt={header.alt}
                         widths={[320, 640, 960]}
                         sizes="(min-width: 48rem) 18rem, 100vw"
                     />
-                </div>
+                )
             )}
             <div class="viewer__text">
                 <p>{body}</p>
@@ -91,27 +155,6 @@ import App from "./app.astro";
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .folder__thumb {
-        display: grid;
-        place-items: center;
-        aspect-ratio: 4 / 3;
-        overflow: hidden;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius);
-        background-color: var(--color-surface);
-        color: var(--color-text-muted);
-        transition:
-            border-color var(--transition),
-            translate var(--transition);
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: top left;
-        }
-    }
-
     .folder__name {
         font: var(--type-ui);
         text-align: center;
@@ -126,13 +169,19 @@ import App from "./app.astro";
         text-decoration: none;
         outline-offset: var(--space-xs);
 
+        :global(.shot) {
+            transition:
+                border-color var(--transition),
+                translate var(--transition);
+        }
+
         /* Not the site's link hover, which fills the link with the accent. */
         &:hover {
             color: var(--color-text);
             background-color: transparent;
         }
 
-        &:hover .folder__thumb {
+        &:hover :global(.shot) {
             border-color: var(--color-primary);
             translate: 0 -2px;
         }
@@ -142,7 +191,7 @@ import App from "./app.astro";
         }
 
         @media (prefers-reduced-motion: reduce) {
-            &:hover .folder__thumb {
+            &:hover :global(.shot) {
                 translate: none;
             }
         }
@@ -159,26 +208,55 @@ import App from "./app.astro";
         grid-template-columns: 18rem minmax(0, 1fr);
     }
 
-    .viewer__shot {
-        aspect-ratio: 4 / 3;
-        overflow: hidden;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius);
-        background-color: var(--color-surface);
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: top left;
-        }
-    }
-
     .viewer__links {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-sm);
         margin-top: var(--space-md);
+    }
+}
+
+/* Versia's parts, ruled like the front page's: a line above, no box. */
+.parts {
+    display: grid;
+    gap: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0 0;
+    padding: 0;
+    list-style: none;
+
+    @container (min-width: 36rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .part {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        padding-top: var(--space-md);
+        border-top: var(--border-width) solid var(--border-color);
+    }
+
+    .part__title {
+        margin: 0;
+        font: var(--type-body-strong);
+    }
+
+    .part__body {
+        margin: 0;
+        color: var(--color-text-muted);
+    }
+
+    /* Ghost buttons have no edge: line the first label up with the text */
+    .part__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        margin-top: auto;
+        padding-top: var(--space-sm);
+
+        > :first-child {
+            margin-inline-start: calc(-1 * (var(--space-sm) + 1px));
+        }
     }
 }
 </style>

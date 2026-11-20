@@ -4,18 +4,30 @@
 import Heatmap from "@cpluspatch/ui/astro/blocks/heatmap/heatmap.astro";
 import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import IconList from "@cpluspatch/ui/astro/ui/icon-list.astro";
-import { commits, details, intro, stats } from "../../data/home.ts";
+import { commits, details, figures, intro } from "../../data/home.ts";
 import App from "./app.astro";
 ---
 
 <App id="readme" title="README" path="~/README.md" icon="lucide:file-text">
-    <h1 class="readme__title">
-        Hi, I'm <span class="accent">CPlusPatch</span>. {intro.headline}
+    <h1 class="text-poster readme__title">
+        Hi,{" "}
+        <span class="readme__line">
+            I'm <span class="accent">CPlusPatch</span>.
+        </span>{" "}
+        <span class="readme__line">{intro.headline}</span>
     </h1>
-    <p class="lead">{intro.lead}</p>
+    <p class="lead">
+        {intro.lead}{" "}
+        The <a href="#w-terminal">Terminal</a> takes commands: try{" "}
+        <code>help</code>.
+    </p>
     <IconList items={details} />
 
-    <div class="readme__stats">{stats.map((stat) => <Stat {...stat} />)}</div>
+    {/* Spaced explicitly: the build drops whitespace beside components */}
+    <h2 class="page-section__title readme__stats">
+        I've been writing software for <Stat inline {...figures.years} />{" "}
+        years: <Stat inline {...figures.commits} />{" "}commits so far.
+    </h2>
 
     <div class="readme__commits panel">
         <h2 class="readme__commits-title text-subheading">{commits.title}</h2>
@@ -28,16 +40,27 @@ import App from "./app.astro";
 <style>
 .readme__title {
     margin-bottom: var(--space-sm);
+
+    /* A line each, so the breaks fall between the greeting and sentences. */
+    .readme__line {
+        display: block;
+    }
+
+    /* On the smallest phones, a little smaller, so each line still fits. */
+    @container (max-width: 20rem) {
+        font-size: min(
+            calc(var(--font-size-6xl) * var(--display-scale)),
+            14cqi
+        );
+    }
 }
 
-/* Two across where they fit, so a row never ends on an orphan. */
 .readme__stats {
-    display: grid;
-    gap: var(--space-md);
     margin-top: var(--space-lg);
 
-    @container (min-width: 26rem) {
-        grid-template-columns: repeat(2, 1fr);
+    :global(.stat) {
+        font-variant-numeric: tabular-nums;
+        color: var(--tone);
     }
 }
 

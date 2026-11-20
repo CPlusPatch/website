@@ -4,33 +4,16 @@
  * including the anonymous inbox.
  */
 
-import Masonry from "@cpluspatch/ui/astro/blocks/masonry.astro";
-import Quote from "@cpluspatch/ui/astro/blocks/quote.astro";
-import { contactNote, inboxNote, reviews, socials } from "../../data/home.ts";
+import { contactNote, inboxNote, socials } from "../../data/home.ts";
 import ContactMethod from "../blocks/contact-method.astro";
+import ReviewList from "../blocks/review-list.astro";
 import Inbox from "../page/inbox/inbox.astro";
 import App from "./app.astro";
-
-// The first is featured across the full width, as on the front page.
-const [featured, ...rest] = reviews;
 ---
 
 <App id="letters" title="Letters" path="~/mail" icon="lucide:mail">
     <h3 class="letters__heading text-subheading">Nice things people said</h3>
-    <div class="letters__reviews">
-        {featured && (
-            <Quote author={featured.author} featured>
-                <p>{featured.body}</p>
-            </Quote>
-        )}
-        <Masonry>
-            {rest.map((review) => (
-                <Quote author={review.author}>
-                    <p>{review.body}</p>
-                </Quote>
-            ))}
-        </Masonry>
-    </div>
+    <ReviewList />
 
     <h3 class="letters__heading text-subheading">Write to me</h3>
     <p class="letters__blurb">{contactNote}</p>
@@ -48,13 +31,6 @@ const [featured, ...rest] = reviews;
     &:first-child {
         margin-top: 0;
     }
-}
-
-/* A gap, not a margin, which Quote's own margin reset would outrank. */
-.letters__reviews {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
 }
 
 .letters__blurb {
