@@ -1,0 +1,190 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * The plain view: a column of sections, each under a title bar of its
+     * icon, its name and a dim path, ruled off from what it holds.
+     */
+    .window {
+        --window-width: 36rem;
+        --window-icon-size: 1rem;
+        /* The title's type. The bar sets it too, so `lh` is the title's line. */
+        --window-title: var(--type-heading);
+        /* The icon's outer box, to centre it on the title's first line. */
+        --window-icon-box: calc(
+            var(--window-icon-size) +
+            2 *
+            (var(--space-xs) + var(--border-width))
+        );
+
+        /* Fill the parent, even one that sizes to its content. */
+        inline-size: 100%;
+        padding-block: var(--space-lg);
+        scroll-margin-top: var(--space-md);
+
+        & + &:not(.window--framed) {
+            border-top: var(--border-width) solid var(--color-border);
+        }
+
+        .window__bar {
+            display: flex;
+            align-items: start;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+            font: var(--window-title);
+        }
+
+        .window__icon {
+            flex: none;
+            box-sizing: content-box;
+            width: var(--window-icon-size);
+            height: var(--window-icon-size);
+            margin-block-start: calc((1lh - var(--window-icon-box)) / 2);
+            padding: var(--space-xs);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--radius);
+            color: var(--color-primary);
+            background-color: var(--color-surface);
+        }
+
+        .window__label {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            column-gap: var(--space-sm);
+            min-width: 0;
+        }
+
+        .window__title {
+            margin: 0;
+            font: var(--window-title);
+
+            &:focus {
+                outline: none;
+            }
+        }
+
+        .window__path {
+            font: var(--type-meta);
+            letter-spacing: 0;
+            color: var(--color-text-muted);
+            overflow-wrap: anywhere;
+        }
+
+        .window__body {
+            container-type: inline-size;
+
+            /* Every window starts the same distance under its bar. */
+            > :first-child {
+                margin-top: 0;
+            }
+        }
+
+        /* The chrome a window manager shows: a raised panel like the corner window. */
+        &.window--framed {
+            --window-title: var(--type-label);
+            /* A bare icon, so its box is its size. */
+            --window-icon-box: var(--window-icon-size);
+
+            display: flex;
+            flex-direction: column;
+            inline-size: min(100%, var(--window-width));
+            padding-block: 0;
+            overflow: hidden;
+            color: var(--color-text);
+            background-color: var(--color-surface-raised);
+            border: var(--border-width) solid var(--color-border-strong);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-overlay);
+
+            /* The active window: one a window manager has focused. */
+            &:focus-within {
+                border-color: var(--color-primary);
+
+                @media (forced-colors: active) {
+                    border-color: Highlight;
+                }
+            }
+
+            /* Flush with the border, so the two read as one thick ring. */
+            &:has(> .window__body:focus-visible) {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 0;
+
+                @media (forced-colors: active) {
+                    outline-color: Highlight;
+                }
+            }
+
+            .window__bar {
+                flex: none;
+                margin: 0;
+                padding: var(--space-sm) var(--space-md);
+                border-bottom: var(--border-width) solid var(--color-border);
+            }
+
+            /*
+             * Muted text falls under 4.5:1 on raised surfaces in some dark
+             * themes (catppuccin, everforest, gruvbox, nord, solarized,
+             * tokyo-night).
+             */
+            .window__path {
+                color: var(--color-text);
+            }
+
+            .window__icon {
+                padding: 0;
+                border: 0;
+                background: none;
+            }
+
+            .window__body {
+                flex: 1 1 auto;
+                min-height: 0;
+                padding: var(--space-md);
+                overflow: auto;
+                overscroll-behavior: contain;
+
+                /*
+                 * The frame shows the ring instead: the frame clips one drawn
+                 * outside the body, and the fade's mask hides one inside it.
+                 */
+                &:focus-visible {
+                    outline: none;
+                }
+            }
+        }
+    }
+
+    /*
+     * Fades the bottom edge of a framed body while there's more to scroll to.
+     * With no overflow the timeline is inactive and the fade stays at 0.
+     */
+    @supports (animation-timeline: scroll()) {
+        @property --window-fade {
+            syntax: "<length>";
+            inherits: false;
+            initial-value: 0px;
+        }
+
+        /* No `to`: the animation ends on the underlying 0px. */
+        @keyframes window-fade {
+            from {
+                --window-fade: var(--space-lg);
+            }
+        }
+
+        .window--framed .window__body {
+            mask-image: linear-gradient(
+                to bottom,
+                #000 calc(100% - var(--window-fade)),
+                transparent
+            );
+            animation-name: window-fade;
+            animation-timing-function: linear;
+            animation-fill-mode: both;
+            animation-timeline: scroll(self);
+            animation-range: calc(100% - var(--space-lg)) 100%;
+        }
+    }
+}

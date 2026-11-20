@@ -76,7 +76,7 @@
                 background-color: var(--color-surface-raised);
                 border: var(--border-width) solid var(--color-border-strong);
                 border-radius: var(--radius);
-                box-shadow: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
+                box-shadow: var(--shadow-overlay);
                 transform-origin: var(--corner-window-origin);
                 transition:
                     opacity var(--transition),

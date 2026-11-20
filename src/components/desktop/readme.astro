@@ -4,18 +4,18 @@
 import Heatmap from "@cpluspatch/ui/astro/blocks/heatmap/heatmap.astro";
 import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import IconList from "@cpluspatch/ui/astro/ui/icon-list.astro";
+import Window from "@cpluspatch/ui/astro/ui/window.astro";
 import { commits, details, figures, intro } from "../../data/home.ts";
-import App from "./app.astro";
 ---
 
-<App id="readme" title="README" path="~/README.md" icon="lucide:file-text">
-    <h1 class="text-poster readme__title">
+<Window id="w-readme" title="README" path="~/README.md" icon="lucide:file-text">
+    <h3 class="text-poster readme__title">
         Hi,{" "}
         <span class="readme__line">
             I'm <span class="accent">CPlusPatch</span>.
         </span>{" "}
         <span class="readme__line">{intro.headline}</span>
-    </h1>
+    </h3>
     <p class="lead">
         {intro.lead}{" "}
         The <a href="#w-terminal">Terminal</a> takes commands: try{" "}
@@ -24,18 +24,18 @@ import App from "./app.astro";
     <IconList items={details} />
 
     {/* Spaced explicitly: the build drops whitespace beside components */}
-    <h2 class="page-section__title readme__stats">
+    <h3 class="page-section__title readme__stats">
         I've been writing software for <Stat inline {...figures.years} />{" "}
         years: <Stat inline {...figures.commits} />{" "}commits so far.
-    </h2>
+    </h3>
 
     <div class="readme__commits panel">
-        <h2 class="readme__commits-title text-subheading">{commits.title}</h2>
+        <h3 class="readme__commits-title text-subheading">{commits.title}</h3>
         <Heatmap {...commits.heatmap}>
             <span>Conway's Game of Life, seeded from the graph.</span>
         </Heatmap>
     </div>
-</App>
+</Window>
 
 <style>
 .readme__title {

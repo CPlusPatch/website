@@ -35,6 +35,7 @@ import { stats } from "./stats.ts";
 import { status } from "./status.ts";
 import { statusBoard } from "./status-board.ts";
 import { terminal } from "./terminal.ts";
+import { windows } from "./windows.ts";
 
 /** Every group. Within a category, groups keep this order. */
 export const groups: StoryGroup[] = [
@@ -47,6 +48,7 @@ export const groups: StoryGroup[] = [
     ...cards,
     ...dropdowns,
     ...cornerWindows,
+    ...windows,
     ...progress,
     ...scrollCue,
     ...forms,

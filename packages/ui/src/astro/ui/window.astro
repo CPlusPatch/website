@@ -1,0 +1,67 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { windowClasses } from "../../components/window.ts";
+import Icon from "../icon.astro";
+
+/**
+ * One app's window. Without a window manager it is a plain titled section
+ * of the page; `framed` gives it the window chrome: a border, a ruled bar
+ * and a shadow. Its heading has `tabindex="-1"` so a window manager can move
+ * focus to it.
+ */
+interface Props extends HTMLAttributes<"section"> {
+    /** Unique on the page. Used as the section's id; the heading is `<id>-title`. */
+    id: string;
+    title: string;
+    /** The icon on the app's tile and taskbar button. */
+    icon: string;
+    /** Shown dimmed after the title, like a path. */
+    path?: string;
+    /** The chrome a window manager shows, in the flow of the page. */
+    framed?: boolean;
+    /** The title's heading level, so it nests under the page's headings. */
+    level?: 2 | 3 | 4 | 5 | 6;
+}
+
+const {
+    id,
+    title,
+    icon,
+    path,
+    framed = false,
+    level = 2,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const Heading = `h${level}` as const;
+---
+
+<section
+    class:list={windowClasses({ framed, class: className })}
+    {id}
+    aria-labelledby={`${id}-title`}
+    data-icon={icon}
+    {...rest}
+>
+    <header class="window__bar">
+        <Icon class="window__icon" name={icon} aria-hidden="true" />
+        <div class="window__label">
+            <Heading id={`${id}-title`} class="window__title" tabindex="-1">
+                {title}
+            </Heading>
+            {path && (
+                <span class="window__path">
+                    {/* Wrap a long path after a slash rather than mid-name. */}
+                    {path.split(/(?<=\/)/).map((part) => (
+                        <>
+                            {part}
+                            <wbr />
+                        </>
+                    ))}
+                </span>
+            )}
+        </div>
+    </header>
+    <div class="window__body"><slot /></div>
+</section>

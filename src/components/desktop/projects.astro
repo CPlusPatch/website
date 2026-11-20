@@ -4,12 +4,13 @@
  * link to the viewers, which follow it on the page. Versia leads and has one
  * viewer for itself and its parts, as on the front page.
  *
- * Styles hang off wrappers inside each <App>, not a class passed to it: a
+ * Styles hang off wrappers inside each <Window>, not a class passed to it: a
  * class given to a component doesn't carry this file's style scope.
  */
 
 import Icon from "@cpluspatch/ui/astro/icon.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import Window from "@cpluspatch/ui/astro/ui/window.astro";
 import { projectId } from "../../data/desktop.ts";
 import {
     otherProjects,
@@ -19,7 +20,6 @@ import {
 } from "../../data/home.ts";
 import Shot from "../blocks/shot.astro";
 import FlaviArt from "../page/flavi-art.astro";
-import App from "./app.astro";
 
 // Drawn rather than captured: Flavi is gone
 const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
@@ -34,7 +34,7 @@ const tiles = [
 ];
 ---
 
-<App id="projects" title="Projects" path="~/projects" icon="lucide:folder">
+<Window id="w-projects" title="Projects" path="~/projects" icon="lucide:folder">
     <ul class="folder">
         {tiles.map(({ title, src, light }) => (
             <li>
@@ -51,10 +51,10 @@ const tiles = [
             </li>
         ))}
     </ul>
-</App>
+</Window>
 
-<App
-    id={projectId(versia.title)}
+<Window
+    id={`w-${projectId(versia.title)}`}
     title={versia.title}
     path={`~/projects/${projectId(versia.title).slice(2)}`}
     icon="lucide:app-window"
@@ -96,11 +96,11 @@ const tiles = [
             </li>
         ))}
     </ul>
-</App>
+</Window>
 
 {otherProjects.map(({ title, body, header, links = [] }) => (
-    <App
-        id={projectId(title)}
+    <Window
+        id={`w-${projectId(title)}`}
         {title}
         path={`~/projects/${projectId(title).slice(2)}`}
         icon="lucide:app-window"
@@ -135,7 +135,7 @@ const tiles = [
                 )}
             </div>
         </div>
-    </App>
+    </Window>
 ))}
 
 <style>

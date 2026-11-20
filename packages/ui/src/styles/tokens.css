@@ -118,6 +118,8 @@
         --radius: 0;
         --border-width: 1px;
         --border-color: var(--color-border);
+        /* The shadow of a floating panel: the corner window, a framed window. */
+        --shadow-overlay: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
         --transition: 120ms ease-out;
     }
 

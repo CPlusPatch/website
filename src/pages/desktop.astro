@@ -4,20 +4,20 @@
  *
  * For now, every app is a plain section of one long page, which is also how
  * the page reads without JS. The window manager will turn the same sections
- * into windows (see src/components/desktop/app.astro).
+ * into windows (see `<Window>` in @cpluspatch/ui).
  */
 
 import InteractiveMessage from "@cpluspatch/ui/astro/blocks/message/interactive-message.astro";
 import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
 import DisplayMenu from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
+import Window from "@cpluspatch/ui/astro/ui/window.astro";
 import { Icon } from "astro-icon/components";
 import Destructor from "../components/blocks/destructor.astro";
 import Radio from "../components/blocks/radio/radio.astro";
 import StatusBoard from "../components/blocks/status-board/status-board.astro";
 import Terminal from "../components/blocks/terminal/terminal.astro";
 import { neofetch, whoami } from "../components/blocks/terminal/terminal.ts";
-import App from "../components/desktop/app.astro";
 import Letters from "../components/desktop/letters.astro";
 import Projects from "../components/desktop/projects.astro";
 import Readme from "../components/desktop/readme.astro";
@@ -34,7 +34,7 @@ import Layout from "../layouts/desktop.astro";
     noindex
 >
     <header class="desk-bar">
-        <p class="desk-bar__brand">JesseOS</p>
+        <h1 class="desk-bar__brand">JesseOS</h1>
         <a class="desk-bar__home" href="/">Back to the site</a>
         <DisplayMenu id="display" {effects} size="sm" />
     </header>
@@ -42,8 +42,8 @@ import Layout from "../layouts/desktop.astro";
     <main id="main" class="desk">
         <Readme />
 
-        <App
-            id="terminal"
+        <Window
+            id="w-terminal"
             title="Terminal"
             path="guest@cpluspatch.com"
             icon="lucide:terminal"
@@ -55,11 +55,16 @@ import Layout from "../layouts/desktop.astro";
                     { command: "neofetch", output: neofetch() },
                 ]}
             />
-        </App>
+        </Window>
 
         <Projects />
 
-        <App id="monitor" title="Monitor" path="homelab" icon="lucide:activity">
+        <Window
+            id="w-monitor"
+            title="Monitor"
+            path="homelab"
+            icon="lucide:activity"
+        >
             <p class="lead">
                 What I self-host, and whether it's up right now. Lately, it has
                 been{" "}
@@ -76,28 +81,33 @@ import Layout from "../layouts/desktop.astro";
                 <Icon name="lucide:activity" aria-hidden="true" />
                 Full status page
             </Button>
-        </App>
+        </Window>
 
         <Letters />
 
-        <App id="radio" title="Radio" path="~/music" icon="lucide:music">
+        <Window id="w-radio" title="Radio" path="~/music" icon="lucide:music">
             <Radio
                 tracks={radioTracks}
                 name="CPlusPatch FM"
                 style="max-block-size: 36rem"
             />
-        </App>
+        </Window>
 
-        <App id="chat" title="Chat" path="Verity" icon="lucide:message-circle">
+        <Window
+            id="w-chat"
+            title="Chat"
+            path="Verity"
+            icon="lucide:message-circle"
+        >
             <InteractiveMessage tree={chat} author="Verity" avatar={verity} />
-        </App>
+        </Window>
 
-        <App id="toys" title="Toys" path="~/toys" icon="lucide:joystick">
+        <Window id="w-toys" title="Toys" path="~/toys" icon="lucide:joystick">
             <div class="desk__toy">
                 <p>Pick up the gravity gun, then click anything on the page.</p>
                 <Destructor />
             </div>
-        </App>
+        </Window>
     </main>
 </Layout>
 
@@ -117,8 +127,9 @@ import "../components/page/dialogue-actions.ts";
     border-bottom: 1px solid var(--color-border);
 
     .desk-bar__brand {
-        margin-right: auto;
+        margin: 0 auto 0 0;
         font: var(--type-wordmark);
+        letter-spacing: normal;
     }
 
     .desk-bar__home {

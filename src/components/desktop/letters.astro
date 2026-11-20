@@ -4,14 +4,14 @@
  * including the anonymous inbox.
  */
 
+import Window from "@cpluspatch/ui/astro/ui/window.astro";
 import { contactNote, inboxNote, socials } from "../../data/home.ts";
 import ContactMethod from "../blocks/contact-method.astro";
 import ReviewList from "../blocks/review-list.astro";
 import Inbox from "../page/inbox/inbox.astro";
-import App from "./app.astro";
 ---
 
-<App id="letters" title="Letters" path="~/mail" icon="lucide:mail">
+<Window id="w-letters" title="Letters" path="~/mail" icon="lucide:mail">
     <h3 class="letters__heading text-subheading">Nice things people said</h3>
     <ReviewList />
 
@@ -22,7 +22,7 @@ import App from "./app.astro";
     </div>
     <p class="letters__blurb">{inboxNote}</p>
     <Inbox />
-</App>
+</Window>
 
 <style>
 .letters__heading {
