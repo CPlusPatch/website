@@ -39,6 +39,8 @@ const look = (page: Page) =>
         }
         for (const animation of document.getAnimations()) {
             if (animation.playState !== "running") continue;
+            // Follows the reader's scroll, so it isn't motion on its own.
+            if (animation.timeline instanceof ScrollTimeline) continue;
             const target = (animation.effect as KeyframeEffect | null)?.target;
             const cell = target?.closest<HTMLElement>("[data-story]");
             const name =
