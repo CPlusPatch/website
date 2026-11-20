@@ -241,14 +241,14 @@ export class Destructor {
         const { options } = this;
         return Boolean(
             options.neverDraggable.some((s) => element.matches(s)) ||
-            // Clones left behind, and parts of things already thrown
-            element.closest(`.${CLASS.placeholder}`) ||
-            this.container.contains(element) ||
-            // The gun's own controls, and what thrown things land on
-            (options.trigger &&
-                (options.trigger.contains(element) ||
-                    element.contains(options.trigger))) ||
-            options.ground?.contains(element),
+                // Clones left behind, and parts of things already thrown
+                element.closest(`.${CLASS.placeholder}`) ||
+                this.container.contains(element) ||
+                // The gun's own controls, and what thrown things land on
+                (options.trigger &&
+                    (options.trigger.contains(element) ||
+                        element.contains(options.trigger))) ||
+                options.ground?.contains(element),
         );
     }
 
