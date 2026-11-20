@@ -46,7 +46,9 @@
                 #000 calc(100% - var(--sidebar-fade-end)),
                 transparent
             );
-            animation: sidebar-nav-fade linear both;
+            animation-name: sidebar-nav-fade;
+            animation-timing-function: linear;
+            animation-fill-mode: both;
             animation-timeline: scroll(self);
         }
     }

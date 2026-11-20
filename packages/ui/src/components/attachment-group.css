@@ -33,7 +33,9 @@
                 #000 calc(100% - var(--attachment-group-fade-end)),
                 transparent
             );
-            animation: attachment-group-fade linear both;
+            animation-name: attachment-group-fade;
+            animation-timing-function: linear;
+            animation-fill-mode: both;
             animation-timeline: scroll(self inline);
         }
 
