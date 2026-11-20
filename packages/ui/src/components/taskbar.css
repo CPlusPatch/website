@@ -1,0 +1,339 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /* Registered, so a scroll-driven animation can move them (see the list's fade). */
+    @property --taskbar-fade-start {
+        syntax: "<length>";
+        inherits: false;
+        initial-value: 0px;
+    }
+
+    @property --taskbar-fade-end {
+        syntax: "<length>";
+        inherits: false;
+        initial-value: 0px;
+    }
+
+    @keyframes taskbar-fade-start {
+        from {
+            --taskbar-fade-start: 0px;
+        }
+
+        to {
+            --taskbar-fade-start: var(--taskbar-fade);
+        }
+    }
+
+    @keyframes taskbar-fade-end {
+        from {
+            --taskbar-fade-end: var(--taskbar-fade);
+        }
+
+        to {
+            --taskbar-fade-end: 0px;
+        }
+    }
+
+    /*
+     * A bar of a launcher, the window buttons a window manager fills in, and
+     * a tray. Until a script adds .taskbar--on, it's only its tray.
+     */
+    .taskbar {
+        /*
+         * A fade's width: a 44px button and the gap after it, so part of a
+         * button's icon or label is always under it.
+         */
+        --taskbar-fade: calc(var(--space-lg) + var(--space-md));
+        /* The active rule's 3px and 2px more, so a ring clears the rule. */
+        --taskbar-focus-inset: -5px;
+
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+
+        .taskbar__start {
+            flex: none;
+        }
+
+        .taskbar__tray {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .taskbar__windows {
+            display: flex;
+            flex: 1;
+            align-items: stretch;
+            align-self: stretch;
+            gap: var(--space-xs);
+            min-width: 0;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            /* Not squeezed past 44px a button, so a crowded bar scrolls. */
+            overflow-x: auto;
+            scrollbar-width: thin;
+            /* Scrolling stops on a button's edge, not through its icon. */
+            scroll-snap-type: x proximity;
+            /* The fade's width, so a button scrolled to clears it. */
+            scroll-padding-inline: var(--taskbar-fade);
+
+            /*
+             * A fade at each edge that has buttons past it. It follows the
+             * scroll, so it isn't motion. A list that doesn't overflow has no
+             * scroll range, so its animations are inactive and both fades
+             * stay 0.
+             */
+            @supports (animation-timeline: scroll()) {
+                mask-image: linear-gradient(
+                    to right,
+                    transparent,
+                    #000 var(--taskbar-fade-start),
+                    #000 calc(100% - var(--taskbar-fade-end)),
+                    transparent
+                );
+                /*
+                 * Longhands, with the duration `auto`: the minifier turns
+                 * the shorthand into a duration of 0s, which ends the
+                 * animations before they start.
+                 */
+                animation-name: taskbar-fade-start, taskbar-fade-end;
+                animation-duration: auto;
+                animation-timing-function: linear;
+                animation-fill-mode: both;
+                animation-timeline: scroll(self inline);
+                animation-range:
+                    0 var(--taskbar-fade),
+                    calc(100% - var(--taskbar-fade)) 100%;
+            }
+
+            > li {
+                display: flex;
+                flex: 0 1 11rem;
+                min-width: 2.75rem;
+                scroll-snap-align: start;
+                /* So a button can drop its label when it's too narrow for one. */
+                container-type: inline-size;
+            }
+        }
+
+        .taskbar__icon {
+            flex: none;
+            width: 1rem;
+            height: 1rem;
+            color: var(--color-primary);
+
+            @media (forced-colors: active) {
+                color: CanvasText;
+            }
+        }
+
+        .taskbar__label {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Visually hidden, as it's still part of the button's name. */
+        .taskbar__state {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
+        .taskbar__item {
+            position: relative;
+            display: flex;
+            flex: 1;
+            align-items: center;
+            gap: var(--space-sm);
+            min-width: 0;
+            /* A 44px hit area. */
+            min-block-size: 2.75rem;
+            padding-inline: var(--space-sm);
+            font: var(--type-ui);
+            color: var(--color-text);
+            background: none;
+            border: 0;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background-color var(--transition);
+
+            /* Too close to the bar for --color-bg-alt to show. */
+            @media (hover: hover) {
+                &:hover {
+                    background-color: var(--hover-fill);
+                }
+            }
+
+            /* Forced colours turn a transparent border into a rule, so only the active one has one. */
+            @media (forced-colors: active) {
+                border-bottom: 3px solid Canvas;
+                /* Balances the rule, so the label stays centred. */
+                border-top: 3px solid Canvas;
+            }
+
+            /*
+             * The window on top: a rule under it and a heavier label, so it
+             * isn't colour alone. The rule is a bar, not a shadow, so it stays
+             * straight under round corners. Forced colours drop the bar, and a
+             * border takes its place there.
+             */
+            &[aria-current="true"] {
+                font-weight: 700;
+
+                &::after {
+                    content: "";
+                    position: absolute;
+                    inset-inline: 0;
+                    inset-block-end: 0;
+                    block-size: 3px;
+                    background: var(--color-text);
+                }
+
+                @media (forced-colors: active) {
+                    border-bottom-color: Highlight;
+
+                    &::after {
+                        display: none;
+                    }
+                }
+            }
+
+            /*
+             * A hidden window: quieter and in italics, so it isn't colour
+             * alone. The muted colour is 4.5:1 or more in every theme.
+             */
+            &.taskbar__item--minimised {
+                font-style: italic;
+                color: var(--color-text-muted);
+                /* A shape cue that stays when the label is hidden. Focus's ring, below, wins. */
+                outline: 1px dashed var(--color-border-strong);
+                outline-offset: calc(-1 * var(--space-xs));
+
+                /* The muted colour is under 4.5:1 on the hover fill. */
+                @media (hover: hover) {
+                    &:hover {
+                        color: var(--color-text);
+                    }
+                }
+
+                /* The slanted last letter overhangs the label's box. */
+                .taskbar__label {
+                    padding-inline-end: 0.1em;
+                }
+
+                .taskbar__icon {
+                    opacity: 0.6;
+                }
+
+                @media (forced-colors: active) {
+                    color: GrayText;
+                    outline-color: GrayText;
+                }
+            }
+
+            /*
+             * After the minimised rule, so a focused minimised button keeps the ring.
+             */
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: var(--taskbar-focus-inset);
+
+                @media (forced-colors: active) {
+                    outline-color: Highlight;
+                }
+            }
+        }
+
+        /*
+         * Under 5.5rem a label is cut to a letter or two, so the icon stands
+         * for it. The label stays in the name, and the button's title shows it.
+         */
+        @container (width < 5.5rem) {
+            .taskbar__item {
+                justify-content: center;
+                padding-inline: 0;
+            }
+
+            .taskbar__label {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+            }
+        }
+
+        &:not(.taskbar--on) {
+            .taskbar__start,
+            .taskbar__windows {
+                display: none;
+            }
+        }
+
+        &.taskbar--on {
+            --taskbar-height: 3.5rem;
+
+            flex: none;
+            min-block-size: var(--taskbar-height);
+            padding-inline: var(--space-md);
+            background-color: var(--color-bg);
+            border-top: var(--border-width) solid var(--color-border-strong);
+
+            /* Full height, so a tray item can stretch like the window buttons. */
+            .taskbar__tray {
+                flex: none;
+                align-self: stretch;
+                /* At the end even while the list is hidden (it has no buttons). */
+                margin-inline-start: auto;
+            }
+
+            /*
+             * A menu opens above its button, with its bottom --space-xs over
+             * the bar's top edge. The button is centred in the bar, under its
+             * border, so the gap is measured from that edge. Under
+             * position-area, 100% is the room from the viewport's top to the
+             * button's top, which is already above the bar. A tall panel
+             * gives up that gap and --space-md, so it stops --space-md below
+             * the viewport's top. A dropdown's panel opens below its button
+             * and flips above it, taking its margin along, so the gap is on
+             * its other side.
+             */
+            @supports (position-area: top) {
+                --taskbar-menu-gap: calc(
+                    (
+                        var(--taskbar-height) +
+                        var(--border-width) -
+                        var(--control-height-sm)
+                    ) /
+                    2 +
+                    var(--space-xs)
+                );
+
+                .dropdown__panel,
+                .launcher__panel {
+                    max-height: calc(
+                        100% -
+                        var(--taskbar-menu-gap) -
+                        var(--space-md)
+                    );
+                }
+
+                .dropdown__panel {
+                    margin-top: var(--taskbar-menu-gap);
+                }
+
+                .launcher__panel {
+                    margin-bottom: var(--taskbar-menu-gap);
+                }
+            }
+        }
+    }
+}

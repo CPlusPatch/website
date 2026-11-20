@@ -1,0 +1,124 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /* On the desk too, so its inset below and the column's width are one value. */
+    .desk-icons,
+    .window-manager:has(> .desk-icons) {
+        --desk-icons-width: 4.5rem;
+    }
+
+    .desk-icons {
+        .desk-icons__list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .desk-icons__tile {
+            display: grid;
+            place-items: center;
+            inline-size: 3rem;
+            aspect-ratio: 1;
+            background-color: var(--color-surface);
+            border: var(--border-width) solid var(--color-border-strong);
+            border-radius: var(--radius);
+            transition:
+                background-color var(--transition),
+                border-color var(--transition);
+        }
+
+        .desk-icons__link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-xs);
+            inline-size: var(--desk-icons-width);
+            padding: var(--space-xs);
+            font: var(--type-caption);
+            color: var(--color-text);
+            text-align: center;
+            text-decoration: none;
+            /* The tile's corners, outside its padding, so the ring follows them. */
+            border-radius: calc(var(--radius) + var(--space-xs));
+
+            /* The tile shows hover, not the global link hover's fill. */
+            @media (hover: hover) {
+                &:hover {
+                    color: var(--color-text);
+                    background-color: transparent;
+
+                    .desk-icons__tile {
+                        /* The tint over the tile's own fill, as the tile isn't see-through. */
+                        background-image: linear-gradient(
+                            var(--hover-fill),
+                            var(--hover-fill)
+                        );
+                        border-color: var(--color-text);
+                    }
+
+                    /* Forced colours drop the tile's tint, so the link is outlined. */
+                    @media (forced-colors: active) {
+                        outline: 1px solid LinkText;
+                        outline-offset: -1px;
+                    }
+                }
+            }
+
+            /*
+             * On the link's edge, so it doesn't reach into the icon above (the
+             * gap is 4px). The column's padding leaves room for it, as the
+             * column scrolls and would clip it.
+             */
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 0;
+
+                @media (forced-colors: active) {
+                    outline-color: Highlight;
+                }
+            }
+        }
+
+        .desk-icons__icon {
+            width: 2rem;
+            height: 2rem;
+            color: var(--color-primary);
+
+            @media (forced-colors: active) {
+                color: CanvasText;
+            }
+        }
+
+        .desk-icons__label {
+            max-inline-size: 100%;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    /*
+     * On a desk: a column at the right edge, under every window. On a desk
+     * too short for it, the column scrolls rather than run off the edge.
+     */
+    .window-manager--on > .desk-icons {
+        position: absolute;
+        inset: var(--window-margin) var(--window-margin) auto auto;
+        /* Room for the focus ring (2px wide, on the link's edge) inside the scroll area. */
+        padding: var(--space-xs);
+        /* So the links stay where the margin puts them. */
+        margin: calc(-1 * var(--space-xs));
+        max-block-size: calc(100% - 2 * var(--window-margin));
+        overflow-y: auto;
+        z-index: 0;
+    }
+
+    /* New windows keep clear of the column (see behaviours/window-manager.ts). */
+    .window-manager--on:has(> .desk-icons) {
+        --window-manager-inset-end: calc(
+            var(--desk-icons-width) +
+            var(--window-margin)
+        );
+    }
+}

@@ -17,6 +17,7 @@
 @import "./components/icon-list.css";
 @import "./components/input.css";
 @import "./components/kbd.css";
+@import "./components/launcher.css";
 @import "./components/progress.css";
 @import "./components/scroll-cue.css";
 @import "./components/segmented-control.css";
@@ -72,3 +73,5 @@
 @import "./components/display-menu.css";
 @import "./components/display-row.css";
 @import "./components/theme-picker.css";
+@import "./components/taskbar.css";
+@import "./components/desk-icons.css";

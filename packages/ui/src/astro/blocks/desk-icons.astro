@@ -1,0 +1,37 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { LauncherItem } from "../../components/launcher.ts";
+import Icon from "../icon.astro";
+
+/**
+ * A column of links, each an icon on a square tile above its label, like the
+ * icons on a desktop. On a window manager's desk (`.window-manager--on`) it
+ * stays at the right edge, under the windows.
+ */
+interface Props extends HTMLAttributes<"nav"> {
+    items: LauncherItem[];
+    /** Names the navigation. */
+    label?: string;
+}
+
+const { items, label = "Desktop", class: className, ...rest } = Astro.props;
+---
+
+<nav class:list={["desk-icons", className]} aria-label={label} {...rest}>
+    <ul class="desk-icons__list">
+        {items.map(({ href, label, icon }) => (
+            <li>
+                <a class="desk-icons__link" {href}>
+                    <span class="desk-icons__tile">
+                        <Icon
+                            class="desk-icons__icon"
+                            name={icon}
+                            aria-hidden="true"
+                        />
+                    </span>
+                    <span class="desk-icons__label">{label}</span>
+                </a>
+            </li>
+        ))}
+    </ul>
+</nav>

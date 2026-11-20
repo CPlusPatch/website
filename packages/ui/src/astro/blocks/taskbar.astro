@@ -1,0 +1,30 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * A bar of three parts: a `start` slot for a launcher, a list of window
+ * buttons, and a `tray` slot. A window manager fills the list (see
+ * `data-window-list` in behaviours/window-manager.ts). Anything in the
+ * default slot goes in the list as `<li>`s, for a bar drawn without one.
+ *
+ * Until a script adds `taskbar--on`, the start part and the list are
+ * hidden, and the bar is only its tray. Whatever the page needs without
+ * JS goes there.
+ */
+interface Props extends HTMLAttributes<"header"> {
+    /** The window list's id, so a window manager can find it. */
+    id: string;
+    /** Names the window list. */
+    label?: string;
+}
+
+const { id, label = "Open windows", class: className, ...rest } = Astro.props;
+---
+
+<header class:list={["taskbar", className]} {...rest}>
+    <div class="taskbar__start"><slot name="start" /></div>
+    <ul class="taskbar__windows" {id} aria-label={label}>
+        <slot />
+    </ul>
+    <div class="taskbar__tray"><slot name="tray" /></div>
+</header>

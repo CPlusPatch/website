@@ -34,6 +34,7 @@ import { shorts } from "./shorts.ts";
 import { stats } from "./stats.ts";
 import { status } from "./status.ts";
 import { statusBoard } from "./status-board.ts";
+import { taskbar } from "./taskbar.ts";
 import { terminal } from "./terminal.ts";
 import { windows } from "./windows.ts";
 
@@ -49,6 +50,7 @@ export const groups: StoryGroup[] = [
     ...dropdowns,
     ...cornerWindows,
     ...windows,
+    ...taskbar,
     ...progress,
     ...scrollCue,
     ...forms,

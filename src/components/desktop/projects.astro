@@ -24,6 +24,16 @@ import FlaviArt from "../page/flavi-art.astro";
 // Drawn rather than captured: Flavi is gone
 const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
 
+// Each viewer's icon, so its taskbar button isn't one of five alike.
+const icons: Record<string, string> = {
+    Versia: "lucide:network",
+    Website: "lucide:globe",
+    "Join Mastodon": "lucide:user-plus",
+    Flavi: "lucide:messages-square",
+    "Kitsu.life": "lucide:paw-print",
+};
+const iconFor = (title: string) => icons[title] ?? "lucide:app-window";
+
 const tiles = [
     { title: versia.title, src: versia.shots.dark, light: versia.shots.light },
     ...otherProjects.map(({ title, header }) => ({
@@ -57,7 +67,7 @@ const tiles = [
     id={`w-${projectId(versia.title)}`}
     title={versia.title}
     path={`~/projects/${projectId(versia.title).slice(2)}`}
-    icon="lucide:app-window"
+    icon={iconFor(versia.title)}
 >
     <div class="viewer">
         <Shot
@@ -103,7 +113,7 @@ const tiles = [
         id={`w-${projectId(title)}`}
         {title}
         path={`~/projects/${projectId(title).slice(2)}`}
-        icon="lucide:app-window"
+        icon={iconFor(title)}
     >
         <div class="viewer">
             {art[title] ? (

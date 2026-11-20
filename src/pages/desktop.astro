@@ -7,8 +7,11 @@
  * into windows (see `<Window>` in @cpluspatch/ui).
  */
 
+import DeskIcons from "@cpluspatch/ui/astro/blocks/desk-icons.astro";
+import Launcher from "@cpluspatch/ui/astro/blocks/launcher.astro";
 import InteractiveMessage from "@cpluspatch/ui/astro/blocks/message/interactive-message.astro";
 import Stat from "@cpluspatch/ui/astro/blocks/stat.astro";
+import Taskbar from "@cpluspatch/ui/astro/blocks/taskbar.astro";
 import DisplayMenu from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import Window from "@cpluspatch/ui/astro/ui/window.astro";
@@ -18,14 +21,22 @@ import Radio from "../components/blocks/radio/radio.astro";
 import StatusBoard from "../components/blocks/status-board/status-board.astro";
 import Terminal from "../components/blocks/terminal/terminal.astro";
 import { neofetch, whoami } from "../components/blocks/terminal/terminal.ts";
+import Clock from "../components/desktop/clock.astro";
 import Letters from "../components/desktop/letters.astro";
 import Projects from "../components/desktop/projects.astro";
 import Readme from "../components/desktop/readme.astro";
+import { apps } from "../data/desktop.ts";
 import { chat, effects, figures } from "../data/home.ts";
 import { radioTracks } from "../data/radio.ts";
 import { status } from "../data/status.ts";
 import verity from "../images/avatars/verity.png";
 import Layout from "../layouts/desktop.astro";
+
+const items = apps.map(({ id, title, icon }) => ({
+    href: `#${id}`,
+    label: title,
+    icon,
+}));
 ---
 
 <Layout
@@ -43,13 +54,32 @@ import Layout from "../layouts/desktop.astro";
         </script>
     </Fragment>
 
-    <header class="desk-bar">
-        <h1 class="desk-bar__brand">JesseOS</h1>
-        <a class="desk-bar__home" href="/">Back to the site</a>
-        <DisplayMenu id="display" {effects} size="sm" />
-    </header>
+    <Taskbar class="desk-bar" id="taskbar-windows">
+        <Launcher slot="start" id="launcher" {items} />
+        <Fragment slot="tray">
+            <h1 class="desk-bar__brand">JesseOS</h1>
+            <Clock />
+            <a class="desk-bar__home" href="/" title="Back to the site">
+                <Icon name="lucide:house" aria-hidden="true" />
+                <span class="desk-bar__home-text">Back to the site</span>
+            </a>
+            <DisplayMenu id="display" {effects} size="sm" />
+        </Fragment>
+    </Taskbar>
+    {/* Turns the taskbar on before first paint too, so it doesn't jump from the top. */}
+    <script is:inline>
+    if (document.documentElement.classList.contains("wm")) {
+        document.currentScript?.previousElementSibling?.classList.add(
+            "taskbar--on",
+        );
+    }
+    </script>
 
-    <main id="main" class="desk window-manager">
+    <main
+        id="main"
+        class="desk window-manager"
+        data-window-list="taskbar-windows"
+    >
         <Readme />
 
         <Window
@@ -119,6 +149,8 @@ import Layout from "../layouts/desktop.astro";
                 <Destructor />
             </div>
         </Window>
+
+        <DeskIcons {items} />
     </main>
 </Layout>
 
@@ -132,6 +164,7 @@ import { initWindowManager } from "@cpluspatch/ui/behaviours/window-manager.ts";
 const DESKTOP = "(min-width: 760px)";
 
 const desk = document.querySelector<HTMLElement>(".desk");
+const taskbar = document.querySelector<HTMLElement>(".desk-bar");
 const wide = matchMedia(DESKTOP);
 let stop: (() => void) | undefined;
 
@@ -142,9 +175,17 @@ const sync = () => {
     if (wide.matches) {
         document.documentElement.classList.add("wm");
         stop = initWindowManager(desk);
+        taskbar?.classList.add("taskbar--on");
     } else {
         stop?.();
         stop = undefined;
+        // An open menu would stay over the plain page.
+        for (const panel of document.querySelectorAll<HTMLElement>(
+            ".launcher__panel:popover-open",
+        )) {
+            panel.hidePopover();
+        }
+        taskbar?.classList.remove("taskbar--on");
         document.documentElement.classList.remove("wm");
     }
 };
@@ -154,36 +195,116 @@ wide.addEventListener("change", sync);
 </script>
 
 <style>
-.desk-bar {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
+/* The plain page: a header with the brand and links, over a column of apps. */
+:global(.desk-bar:not(.taskbar--on)) {
     width: min(100% - 2 * var(--space-md), 46rem);
     margin-inline: auto;
     padding-block: var(--space-md);
     border-bottom: var(--border-width) solid var(--color-border);
+}
 
-    .desk-bar__brand {
-        margin: 0 auto 0 0;
-        font: var(--type-wordmark);
-        letter-spacing: normal;
+.desk-bar__brand {
+    margin: 0 auto 0 0;
+    font: var(--type-wordmark);
+    letter-spacing: normal;
+}
+
+.desk-bar__home {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font: var(--type-ui);
+
+    /* A 44px hit area, centred on the 18px of text. */
+    &::before {
+        content: "";
+        position: absolute;
+        inset-inline: 0;
+        top: 50%;
+        height: 2.75rem;
+        translate: 0 -50%;
+    }
+}
+
+/* The icon is for the taskbar, where the text goes first on a narrow screen. */
+.desk-bar__home :global(svg) {
+    display: none;
+}
+
+/* A window button's box: 44px tall, with its hover fill instead of the link's. */
+:global(.taskbar--on) .desk-bar__home {
+    align-self: stretch;
+    min-block-size: 2.75rem;
+    padding-inline: var(--space-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: var(--radius);
+}
+
+/* Inside the box: the bar is full height, so an outside ring would leave the screen. */
+:global(.taskbar--on) .desk-bar__home:focus-visible {
+    outline-offset: var(--taskbar-focus-inset);
+}
+
+:global(.taskbar--on) .desk-bar__home::before {
+    content: none;
+}
+
+@media (hover: hover) {
+    :global(.taskbar--on) .desk-bar__home:hover {
+        color: var(--color-text);
+        background-color: var(--hover-fill);
+    }
+}
+
+:global(.taskbar--on) .desk-bar__home :global(svg) {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-primary);
+
+    @media (forced-colors: active) {
+        color: CanvasText;
+    }
+}
+
+/* The icon stands for the text, which stays in the name. */
+@media (max-width: 1023px) {
+    :global(.taskbar--on) .desk-bar__home {
+        justify-content: center;
+        min-inline-size: 2.75rem;
     }
 
-    .desk-bar__home {
-        font: var(--type-ui);
+    :global(.taskbar--on) .desk-bar__home-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
     }
+}
 
-    /* A 44px hit area around the 28px button. */
-    :global(.dropdown__trigger) {
-        position: relative;
+/* A 44px hit area around the 28px button. */
+:global(.desk-bar .dropdown__trigger) {
+    position: relative;
 
-        &::before {
-            content: "";
-            position: absolute;
-            inset-block: -0.5rem;
-            inset-inline: 0;
-        }
+    &::before {
+        content: "";
+        position: absolute;
+        inset-block: -0.5rem;
+        inset-inline: 0;
     }
+}
+
+/* The clock and the icons belong to the window manager's desk. */
+:global(.desk-bar:not(.taskbar--on) .clock) {
+    display: none;
+}
+
+.desk:not(.window-manager--on) > :global(.desk-icons) {
+    display: none;
 }
 
 /* One column of apps, like a long README, until the window manager runs. */
@@ -215,33 +336,43 @@ wide.addEventListener("change", sync);
     overflow: hidden;
 }
 
-:global(html.wm) .desk-bar {
-    flex: none;
-    width: 100%;
-    margin-inline: 0;
-    padding-inline: var(--space-md);
+/* Last in the column, so it's the bottom of the screen. The DOM keeps it first. */
+:global(.desk-bar.taskbar--on) {
+    order: 1;
+}
+
+/* The taskbar names the page; the heading stays for screen readers. */
+:global(.taskbar--on) .desk-bar__brand {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 :global(html.wm) .desk {
     flex: 1;
     min-height: 0;
-    width: 100%;
-    max-width: none;
-    margin-inline: 0;
     background-color: var(--color-bg);
     /* The same gap to the desk's edges as the bar's text, so windows line up with the header. */
     --window-margin: var(--space-md);
 
     /*
      * Until the window manager runs, so a failed script still leaves every
-     * window reachable. It sets overflow: clip, which this must not beat.
+     * window reachable: the plain column, which scrolls. It sets
+     * overflow: clip, which this must not beat.
      */
     &:not(.window-manager--on) {
         overflow: auto;
     }
 
-    /* Only once windows are on it: until then the page keeps its padding. */
+    /* Only once windows are on it: until then the page keeps its column and padding. */
     &.window-manager--on {
+        width: 100%;
+        max-width: none;
+        margin-inline: 0;
         padding-bottom: 0;
     }
 }

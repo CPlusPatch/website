@@ -1,0 +1,39 @@
+---
+/**
+ * The time, as hours and minutes in the reader's locale. Hidden until its
+ * script runs, since the server can't know the reader's time zone. It
+ * updates on the minute and isn't announced.
+ */
+---
+
+<time class="clock" hidden></time>
+
+<script>
+const format = new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+});
+
+const clocks = document.querySelectorAll<HTMLTimeElement>(".clock");
+
+const tick = () => {
+    const now = new Date();
+    for (const clock of clocks) {
+        clock.dateTime = now.toISOString();
+        clock.textContent = format.format(now);
+        clock.hidden = false;
+    }
+
+    // To the next minute, so the display never shows a stale one for long.
+    setTimeout(tick, 60_000 - (now.getTime() % 60_000));
+};
+
+tick();
+</script>
+
+<style>
+.clock {
+    font: var(--type-ui);
+    font-variant-numeric: tabular-nums;
+}
+</style>

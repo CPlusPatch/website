@@ -11,6 +11,16 @@
  * closed. If the URL's hash names a window, that one is open too, on top,
  * and has focus.
  *
+ * With `data-window-list="<id>"` on the root, the element with that id (a
+ * `<ul>`, see <Taskbar>) gets one `<li><button>` per open window, in the
+ * order they were opened. The top window's button has `aria-current="true"`.
+ * A click on it minimises the window if it's on top, and otherwise raises it,
+ * or restores it if it was minimised. A minimised window is hidden but keeps
+ * its place, and a link to it restores it.
+ *
+ * If the root sets `--window-manager-inset-end`, new windows keep that much
+ * clear at the desk's right edge. Dragging and resizing don't.
+ *
  * Not in `initAll`: it changes how the whole desktop lays out, so a page
  * opts in, and only where there is room for windows.
  */
@@ -93,6 +103,10 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
     // reader dragged or resized it to. Only those change it. A smaller desk
     // never does, so a bigger one gives the windows back.
     const rects = new Map<string, Rect>();
+    // The open windows that are hidden. They keep their rects and leave the stack.
+    const minimised = new Set<string>();
+    // The open windows in the order they were opened, for the window list.
+    let opened: string[] = [];
     // Where each is now: the same, unless a smaller desk moved or shrank it.
     const shown = new Map<string, Rect>();
     // What `render` last wrote as a pixel size, to tell the reader's resize apart.
@@ -112,16 +126,111 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
 
     const desk = () => ({ width: root.clientWidth, height: root.clientHeight });
 
-    /** The margin the stylesheet asks for, in pixels, if it sets one. */
-    const margin = () => {
+    /** A length the stylesheet sets on the root, in pixels, or 0 if it doesn't. */
+    const length = (property: string) => {
         const probe = document.createElement("div");
-        probe.style.cssText =
-            "position:absolute;visibility:hidden;inline-size:var(--window-margin, 0px)";
+        probe.style.cssText = `position:absolute;visibility:hidden;inline-size:var(${property}, 0px)`;
         root.append(probe);
         const width = probe.offsetWidth;
         probe.remove();
 
-        return width || DEFAULT_CASCADE.origin.x;
+        return width;
+    };
+
+    /** The margin the stylesheet asks for, in pixels, if it sets one. */
+    const margin = () => length("--window-margin") || DEFAULT_CASCADE.origin.x;
+
+    // What new windows leave clear at the desk's right edge, like a column of
+    // icons. Only placing keeps off it: a reader may drag a window over it.
+    let inset = 0;
+    const placing = () => ({
+        width: Math.max(desk().width - inset, 0),
+        height: desk().height,
+    });
+
+    const list = document.getElementById(root.dataset.windowList ?? "");
+    const listWasHidden = list?.hidden ?? false;
+    const items = new Map<
+        string,
+        { button: HTMLElement; state: HTMLElement }
+    >();
+
+    /** Makes a window's button: its icon, its title, and a note for when it's minimised. */
+    const makeItem = (id: string) => {
+        const win = managed.get(id);
+        if (!win) return;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "taskbar__item";
+        button.dataset.window = id;
+
+        const icon = win.el.querySelector(".window__icon")?.cloneNode(true);
+        if (icon instanceof SVGElement) {
+            icon.setAttribute("class", "taskbar__icon");
+            icon.setAttribute("aria-hidden", "true");
+            button.append(icon);
+        }
+
+        const label = document.createElement("span");
+        label.className = "taskbar__label";
+        label.textContent = win.title?.textContent?.trim() ?? id;
+        // The full title, for when a crowded bar leaves only the icon.
+        button.title = label.textContent;
+
+        const state = document.createElement("span");
+        state.className = "taskbar__state";
+        state.textContent = " (minimised)";
+        state.hidden = true;
+        button.append(label, state);
+
+        items.set(id, { button, state });
+        const li = document.createElement("li");
+        li.append(button);
+        list?.append(li);
+    };
+
+    /** A crowded list scrolls: keeps the top window's button in view. */
+    const keepInView = (button: HTMLElement) => {
+        if (list && list.scrollWidth > list.clientWidth) {
+            button.scrollIntoView({ block: "nearest", inline: "nearest" });
+        }
+    };
+
+    /** Brings the window list in step with the windows. */
+    const renderList = () => {
+        if (!list) return;
+
+        for (const [id, item] of items) {
+            if (rects.has(id)) continue;
+
+            item.button.closest("li")?.remove();
+            items.delete(id);
+        }
+
+        const active = top(stack);
+        let arrived: HTMLElement | undefined;
+        for (const id of opened) {
+            if (!items.has(id)) makeItem(id);
+
+            const item = items.get(id);
+            if (!item) continue;
+
+            const hidden = minimised.has(id);
+            item.button.classList.toggle("taskbar__item--minimised", hidden);
+            item.state.hidden = !hidden;
+            if (id === active) {
+                if (item.button.getAttribute("aria-current") !== "true") {
+                    arrived = item.button;
+                }
+                item.button.setAttribute("aria-current", "true");
+            } else item.button.removeAttribute("aria-current");
+        }
+
+        // An empty list would be announced as one, so it's hidden.
+        list.hidden = items.size === 0;
+
+        if (arrived) keepInView(arrived);
     };
 
     const render = () => {
@@ -129,8 +238,11 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
 
         for (const { id, el } of managed.values()) {
             const rect = shown.get(id);
-            el.hidden = !rect;
-            el.classList.toggle("window--active", !!rect && id === active);
+            const visible = !!rect && !minimised.has(id);
+            el.hidden = !visible;
+            el.classList.toggle("window--active", visible && id === active);
+            // A minimised window keeps its styles, as it comes back as it was.
+            if (rect && !visible) continue;
             if (!rect) {
                 el.style.removeProperty("--window-max-width");
                 el.style.removeProperty("--window-max-height");
@@ -164,6 +276,8 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
                 drawn.set(id, { width: rect.width, height: rect.height });
             else drawn.delete(id);
         }
+
+        renderList();
     };
 
     /** Sets where a window is meant to be, and shows it there. */
@@ -216,9 +330,11 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
             // From bottom to top, so the last one is the top window.
             const others = stack.flatMap((w) => shown.get(w) ?? []);
 
-            add(id, place(size, desk(), others, cascade), size);
+            add(id, place(size, placing(), others, cascade), size);
+            opened.push(id);
             touched = true;
         }
+        minimised.delete(id);
         stack = raise(stack, id);
     };
 
@@ -285,6 +401,8 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
             win.el.classList.remove("window--dragging");
         }
         stack = remove(stack, id);
+        minimised.delete(id);
+        opened = opened.filter((other) => other !== id);
         rects.delete(id);
         shown.delete(id);
         drawn.delete(id);
@@ -307,10 +425,27 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         dropStaleHash();
     };
 
+    /** Hides a window and takes it out of the stack. Its place is kept. */
+    const minimise = (id: string) => {
+        const win = managed.get(id);
+        if (!win || !rects.has(id) || minimised.has(id)) return;
+
+        if (drag?.id === id) {
+            drag = undefined;
+            win.el.classList.remove("window--dragging");
+        }
+        minimised.add(id);
+        stack = remove(stack, id);
+        touched = true;
+        render();
+        dropStaleHash();
+    };
+
     // Set up
     root.classList.add("window-manager--on");
     const gap = margin();
     cascade = { ...DEFAULT_CASCADE, origin: { x: gap, y: gap } };
+    inset = length("--window-manager-inset-end");
     for (const { el, body, close: button } of managed.values()) {
         el.classList.add("window--framed");
         if (button) button.hidden = false;
@@ -339,10 +474,11 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         // From bottom to top: the first in the document is on top.
         const order = [...first].reverse();
         const sizes = order.map(measure);
-        const placed = arrange(sizes, desk(), cascade);
+        const placed = arrange(sizes, placing(), cascade);
         for (const [i, id] of order.entries()) add(id, placed[i], sizes[i]);
     };
     arrangeFirst();
+    opened = [...first];
     for (const id of [...first].reverse()) stack = raise(stack, id);
 
     const linked = idOf(location.hash);
@@ -457,6 +593,74 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         { signal },
     );
 
+    // The window list
+    list?.addEventListener(
+        "click",
+        (event) => {
+            if (!(event.target instanceof Element)) return;
+
+            const id =
+                event.target.closest<HTMLElement>("button")?.dataset.window;
+            if (!id || !items.has(id)) return;
+
+            // A click with no pointer, from a key, keeps the focus ring.
+            const visible = event.detail === 0;
+            if (id === top(stack)) {
+                minimise(id);
+                items.get(id)?.button.focus({ preventScroll: true });
+            } else {
+                show(id, visible);
+                dropStaleHash();
+            }
+        },
+        { signal },
+    );
+
+    // The browser only scrolls a focused button in once it's hidden entirely,
+    // so this also scrolls one that's partly under an edge fade.
+    list?.addEventListener(
+        "focusin",
+        (event) => {
+            if (!(event.target instanceof HTMLElement)) return;
+            if (list.scrollWidth <= list.clientWidth) return;
+
+            event.target.scrollIntoView({
+                block: "nearest",
+                inline: "nearest",
+            });
+        },
+        { signal },
+    );
+
+    // A wheel turns vertical scrolling into horizontal, as the list has no
+    // vertical scroll of its own. Not at the end it's scrolling toward, so the
+    // page isn't trapped.
+    list?.addEventListener(
+        "wheel",
+        (event) => {
+            if (event.ctrlKey || event.deltaX !== 0 || event.deltaY === 0)
+                return;
+
+            const room = list.scrollWidth - list.clientWidth;
+            if (room <= 0) return;
+
+            const unit =
+                event.deltaMode === WheelEvent.DOM_DELTA_LINE
+                    ? 16
+                    : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+                      ? list.clientWidth
+                      : 1;
+            const delta = event.deltaY * unit;
+            const atEnd =
+                delta > 0 ? list.scrollLeft >= room - 1 : list.scrollLeft <= 0;
+            if (atEnd) return;
+
+            list.scrollLeft += delta;
+            event.preventDefault();
+        },
+        { signal },
+    );
+
     // Closing
     root.addEventListener(
         "click",
@@ -567,6 +771,13 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
     });
     deskObserver.observe(root);
 
+    // A narrower list can push the top window's button out of view.
+    const listObserver = new ResizeObserver(() => {
+        const current = list?.querySelector<HTMLElement>("[aria-current]");
+        if (current) keepInView(current);
+    });
+    if (list) listObserver.observe(list);
+
     // The native handle writes the window's own width and height as styles, so
     // only note them: rendering here would fight the drag of the handle.
     // It also fires on observe and on our own renders, which is harmless since
@@ -578,7 +789,8 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
 
             const meant = rects.get(target.id);
             const written = drawn.get(target.id);
-            if (!meant) continue;
+            // Hidden, so it has no size to note.
+            if (!meant || minimised.has(target.id)) continue;
 
             const size = {
                 width: target.offsetWidth,
@@ -609,7 +821,12 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
 
     return () => {
         deskObserver.disconnect();
+        listObserver.disconnect();
         windowObserver.disconnect();
+
+        for (const { button } of items.values()) button.closest("li")?.remove();
+        items.clear();
+        if (list) list.hidden = listWasHidden;
 
         root.classList.remove("window-manager--on");
         if (rootTabindex) root.removeAttribute("tabindex");

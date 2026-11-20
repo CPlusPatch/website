@@ -1,0 +1,108 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .launcher {
+        display: inline-block;
+
+        /* A 44px hit area around the 28px button. */
+        .launcher__trigger {
+            position: relative;
+
+            &::before {
+                content: "";
+                position: absolute;
+                inset-block: -0.5rem;
+                inset-inline: 0;
+            }
+        }
+
+        /* The menu is open: the button keeps a fill after the pointer leaves, like the Display menu's chevron. */
+        &:has(.launcher__panel:popover-open) .launcher__trigger:not(:hover) {
+            color: var(--color-text);
+            background-color: var(--hover-fill);
+
+            @media (forced-colors: active) {
+                border-color: Highlight;
+            }
+        }
+
+        .launcher__panel {
+            width: min(16rem, 100vw - 2 * var(--space-md));
+            margin: 0;
+            padding: var(--space-sm);
+            color: var(--color-text);
+            background-color: var(--color-surface-raised);
+            border: var(--border-width) solid var(--color-border-strong);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-overlay);
+            max-height: calc(100% - var(--space-md));
+            overflow-y: auto;
+            overscroll-behavior: contain;
+
+            /* Above the button where anchor positioning exists; centred otherwise. */
+            @supports (position-area: top) {
+                margin-bottom: var(--space-xs);
+                position-area: top span-right;
+                position-try-fallbacks: flip-block;
+            }
+
+            @supports not (position-area: top) {
+                margin: auto;
+            }
+        }
+
+        .launcher__list {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .launcher__link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            /* A 44px hit area. */
+            min-block-size: 2.75rem;
+            padding-inline: var(--space-sm);
+            font: var(--type-ui);
+            color: var(--color-text);
+            text-decoration: none;
+            /* Nests in the panel's corners: its radius less its padding. */
+            border-radius: max(0px, var(--radius) - var(--space-sm));
+
+            svg {
+                flex: none;
+                width: 1.25rem;
+                height: 1.25rem;
+                color: var(--color-primary);
+
+                @media (forced-colors: active) {
+                    color: CanvasText;
+                }
+            }
+
+            @media (hover: hover) {
+                &:hover {
+                    background-color: var(--hover-fill);
+
+                    @media (forced-colors: active) {
+                        outline: 1px solid LinkText;
+                        outline-offset: -1px;
+                    }
+                }
+            }
+
+            /* After the hover rule, so a focused, hovered link keeps the ring. */
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: -2px;
+
+                @media (forced-colors: active) {
+                    outline-color: Highlight;
+                }
+            }
+        }
+    }
+}

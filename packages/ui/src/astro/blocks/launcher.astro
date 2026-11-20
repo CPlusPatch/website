@@ -1,0 +1,62 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { LauncherItem } from "../../components/launcher.ts";
+import Icon from "../icon.astro";
+import Button from "../ui/button.astro";
+
+/**
+ * A button that opens a menu of links, on the native popover attribute, so
+ * it opens, closes on Esc or an outside click, and returns focus without JS.
+ * The menu opens above the button, as it's meant for the bottom of the
+ * screen. Choosing a link closes it (a line of script).
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** Unique on the page: ties the button to its menu (which gets this id). */
+    id: string;
+    items: LauncherItem[];
+    /** The button's text, and the menu's name. */
+    label?: string;
+}
+
+// `slot` places the block in its parent; on the div it'd be a stray attribute.
+const {
+    id,
+    items,
+    label = "Apps",
+    class: className,
+    slot: _slot,
+    ...rest
+} = Astro.props;
+---
+
+<div class:list={["launcher", className]} {...rest}>
+    <Button
+        class="launcher__trigger"
+        variant="outline"
+        tone="neutral"
+        size="sm"
+        popovertarget={id}
+    >
+        <Icon name="lucide:layout-grid" aria-hidden="true" />
+        {label}
+    </Button>
+
+    <nav class="launcher__panel" {id} popover aria-label={label}>
+        <ul class="launcher__list">
+            {items.map(({ href, label, icon }) => (
+                <li>
+                    <a class="launcher__link" {href}>
+                        <Icon name={icon} aria-hidden="true" />
+                        {label}
+                    </a>
+                </li>
+            ))}
+        </ul>
+    </nav>
+</div>
+
+<script>
+import { initDropdowns } from "../../behaviours/dropdown.ts";
+
+initDropdowns();
+</script>
