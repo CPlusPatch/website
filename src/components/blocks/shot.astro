@@ -1,0 +1,126 @@
+---
+/**
+ * A framed screenshot at 16:10. Given a `light` capture as well as the
+ * `src` (the dark one), it's a pair and only the reader's scheme shows. With
+ * no `src`, it frames whatever is slotted in, like a drawing.
+ *
+ * Styles for it on a page go on a wrapper, or are `:global`: a class passed
+ * here doesn't carry the caller's style scope.
+ */
+import Image from "@cpluspatch/ui/astro/image.astro";
+import type { ComponentProps, HTMLAttributes } from "astro/types";
+
+type Source = ComponentProps<typeof Image>["src"];
+
+type Props = Omit<HTMLAttributes<"div">, "class"> & {
+    /** The capture, or its dark one when `light` is given. */
+    src?: Source;
+    /** The same capture in the light scheme. */
+    light?: Source;
+    alt?: string;
+    /** Widths to resize to. */
+    widths?: number[];
+    sizes?: string;
+    class?: string;
+};
+
+const {
+    src,
+    light,
+    alt = "",
+    widths = [320, 640],
+    sizes,
+    class: className,
+    ...rest
+} = Astro.props;
+
+// Each scheme's image, in the order they appear
+const images = src
+    ? light
+        ? ([
+              ["shot__img--light", light],
+              ["shot__img--dark", src],
+          ] as const)
+        : ([["", src]] as const)
+    : [];
+---
+
+<div class:list={["shot", className]} {...rest}>
+    {images.map(([modifier, image]) => (
+        <Image
+            class:list={["shot__img", modifier]}
+            src={image}
+            {alt}
+            {widths}
+            {sizes}
+        />
+    ))}
+    <slot />
+</div>
+
+<style>
+.shot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+
+    /* Captures and drawings alike fill the frame */
+    :global(.shot__img),
+    > :global(svg) {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+    }
+
+    /*
+     * A capture in each scheme shows the reader's: the system's, unless
+     * the Display menu's Mode picks one (as data-scheme, or its radio).
+     */
+    :global(.shot__img--dark) {
+        display: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :global(.shot__img--light) {
+            display: none;
+        }
+
+        :global(.shot__img--dark) {
+            display: block;
+        }
+    }
+
+    :root:is(
+            [data-scheme="light"],
+            :has(input[name="scheme"][value="light"]:checked)
+        )
+        & {
+        :global(.shot__img--light) {
+            display: block;
+        }
+
+        :global(.shot__img--dark) {
+            display: none;
+        }
+    }
+
+    :root:is(
+            [data-scheme="dark"],
+            :has(input[name="scheme"][value="dark"]:checked)
+        )
+        & {
+        :global(.shot__img--light) {
+            display: none;
+        }
+
+        :global(.shot__img--dark) {
+            display: block;
+        }
+    }
+}
+</style>

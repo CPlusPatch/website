@@ -393,6 +393,20 @@ export const projects: (Omit<ComponentProps<typeof MediaCard>, "header"> & {
     },
 ];
 
+/** The projects that are parts of Versia, shown under it, not in the list. */
+export const versiaParts = projects.filter(({ versia }) => versia);
+
+/** The rest of the projects. */
+export const otherProjects = projects.filter(({ versia }) => !versia);
+
+type Links = NonNullable<(typeof projects)[number]["links"]>;
+
+const versiaHrefs = new Set(versia.links.map(({ href }) => href));
+
+/** A part's links without Versia's own (site, donations), which it shares. */
+export const ownLinks = (links: Links = []): Links =>
+    links.filter(({ href }) => !versiaHrefs.has(href));
+
 /**
  * Verity's chat (see interactive-message.astro). His lines are in
  * verity.json, which is plain JSON as that is what the build imports.

@@ -1,0 +1,64 @@
+---
+/**
+ * What people said: the first review featured across the full width, the
+ * rest in a masonry wall under it. A long one featured keeps it from
+ * stretching one column of the wall far past the others.
+ */
+import Masonry from "@cpluspatch/ui/astro/blocks/masonry.astro";
+import Quote from "@cpluspatch/ui/astro/blocks/quote.astro";
+import { reviews } from "../../data/home.ts";
+
+const [featured, ...rest] = reviews;
+---
+
+<div class="reviews">
+    {featured && (
+        <Quote author={featured.author} featured>
+            <p>{featured.body}</p>
+        </Quote>
+    )}
+    <Masonry>
+        {rest.map((review) => (
+            <Quote author={review.author}>
+                <p>{review.body}</p>
+            </Quote>
+        ))}
+    </Masonry>
+</div>
+
+<style>
+/* A gap, not a margin, which Quote's own margin reset would outrank. */
+.reviews {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+
+    /*
+     * Quotes on the page rather than in boxes: a rule above each one, like
+     * the stack's groups, instead of a panel around it.
+     */
+    :global(.quote) {
+        padding: var(--space-md) 0 0;
+        background: none;
+        border: 0;
+        border-top: var(--border-width) solid var(--border-color);
+        border-radius: 0;
+    }
+
+    :global(.quote__author) {
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    /* The one pulled out, a size up and set off by a heavier rule */
+    :global(.quote--featured) {
+        padding-block: var(--space-lg);
+        border-top-width: 2px;
+        border-top-color: var(--color-primary);
+    }
+
+    :global(.quote--featured .quote__body) {
+        max-inline-size: 62ch;
+    }
+}
+</style>

@@ -1,20 +1,15 @@
 ---
 import Icon from "@cpluspatch/ui/astro/icon.astro";
-import Image from "@cpluspatch/ui/astro/image.astro";
 import Section from "@cpluspatch/ui/astro/sections/section.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
-import { projects, versia } from "../../data/home.ts";
+import {
+    otherProjects,
+    ownLinks,
+    versia,
+    versiaParts,
+} from "../../data/home.ts";
+import Shot from "../blocks/shot.astro";
 import FlaviArt from "./flavi-art.astro";
-
-// Versia is most of the work, so it leads as one piece with its parts under
-// it, and the rest follow as a list rather than as equal cards
-const parts = projects.filter(({ versia }) => versia);
-const others = projects.filter((project) => !parts.includes(project));
-
-// Versia's own links (site, donations) aren't repeated on each part
-const shared = new Set(versia.links.map(({ href }) => href));
-const own = (links: (typeof projects)[number]["links"] = []) =>
-    links.filter(({ href }) => !shared.has(href));
 
 // Drawn rather than captured: Flavi is gone
 const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
@@ -22,17 +17,18 @@ const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
 
 <Section id="projects" title="Things I've made" alt>
     <div class="projects">
+        {/*
+            Versia is most of the work, so it leads as one piece with its
+            parts under it, and the rest follow as a list, not equal cards
+        */}
         <article class="versia" aria-labelledby="versia-title">
-            {/* One per scheme; only the reader's is shown */}
-            {(["light", "dark"] as const).map((scheme) => (
-                <Image
-                    class={`shot shot--${scheme} versia__shot`}
-                    src={versia.shots[scheme]}
-                    alt={versia.shots.alt}
-                    widths={[640, 1280]}
-                    sizes="(min-width: 64rem) 36rem, 100vw"
-                />
-            ))}
+            <Shot
+                src={versia.shots.dark}
+                light={versia.shots.light}
+                alt={versia.shots.alt}
+                widths={[640, 1280]}
+                sizes="(min-width: 64rem) 36rem, 100vw"
+            />
             <div class="versia__intro">
                 <h3 id="versia-title" class="versia__title">{versia.title}</h3>
                 <p class="lead">{versia.body}</p>
@@ -52,12 +48,12 @@ const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
                 </ul>
             </div>
             <ul class="versia__parts">
-                {parts.map(({ title, body, links }) => (
+                {versiaParts.map(({ title, body, links }) => (
                     <li class="part">
                         <h4 class="part__title">{title}</h4>
                         <p class="part__body">{body}</p>
                         <ul class="links links--quiet">
-                            {own(links).map((link) => (
+                            {ownLinks(links).map((link) => (
                                 <li>
                                     <Button
                                         href={link.href}
@@ -83,26 +79,17 @@ const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
         </article>
 
         <ul class="others">
-            {others.map(({ title, body, header, links = [] }) => (
+            {otherProjects.map(({ title, body, header, links = [] }) => (
                 <li class="other">
                     {art[title] ? (
-                        <FlaviArt class="shot other__shot" />
-                    ) : header?.light ? (
-                        [header.light, header.src].map((src, i) => (
-                            <Image
-                                class={`shot ${i ? "shot--dark" : "shot--light"} other__shot`}
-                                {src}
-                                alt=""
-                                widths={[320, 640]}
-                                sizes="12rem"
-                            />
-                        ))
+                        <Shot>
+                            <FlaviArt />
+                        </Shot>
                     ) : (
                         header && (
-                            <Image
-                                class="shot other__shot"
+                            <Shot
                                 src={header.src}
-                                alt=""
+                                light={header.light}
                                 widths={[320, 640]}
                                 sizes="12rem"
                             />
@@ -139,64 +126,6 @@ const art: Record<string, typeof FlaviArt> = { Flavi: FlaviArt };
 <style>
 .projects {
     container-type: inline-size;
-
-    /* Captures and drawings alike: framed at the same 16:10 */
-    .shot {
-        display: block;
-        width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 10;
-        object-fit: cover;
-        object-position: top;
-        border: var(--border-width) solid var(--border-color);
-        border-radius: var(--radius);
-
-        /*
-         * A capture in each scheme shows the reader's: the system's, unless
-         * the Display menu's Mode picks one (as data-scheme, or its radio).
-         */
-        &.shot--dark {
-            display: none;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            &.shot--light {
-                display: none;
-            }
-
-            &.shot--dark {
-                display: block;
-            }
-        }
-
-        :root:is(
-                [data-scheme="light"],
-                :has(input[name="scheme"][value="light"]:checked)
-            )
-            & {
-            &.shot--light {
-                display: block;
-            }
-
-            &.shot--dark {
-                display: none;
-            }
-        }
-
-        :root:is(
-                [data-scheme="dark"],
-                :has(input[name="scheme"][value="dark"]:checked)
-            )
-            & {
-            &.shot--light {
-                display: none;
-            }
-
-            &.shot--dark {
-                display: block;
-            }
-        }
-    }
 
     .links {
         display: flex;
