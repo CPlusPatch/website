@@ -75,21 +75,27 @@ export const forceSize = (
 export const bakeComputedStyles = (root: HTMLElement): void => {
     const elements = [root, ...root.querySelectorAll<HTMLElement>("*")];
 
+    // Every element lists the same properties, so list them once
+    const properties = Array.from(getComputedStyle(root)).filter(
+        (property) => !UNBAKED.has(property),
+    );
+
     // Read everything before writing anything, to avoid layout thrashing
     const baked = elements.map((element) => {
         const styles = getComputedStyle(element);
-        return Array.from(
-            styles,
+        return properties.map(
             (property) =>
                 [property, styles.getPropertyValue(property)] as const,
-        ).filter(([property]) => !UNBAKED.has(property));
+        );
     });
 
+    // One write per element: each setProperty() rewrites the style attribute,
+    // which took seconds when baking a whole page
     elements.forEach((element, i) => {
-        for (const [property, value] of baked[i] ?? []) {
-            element.style.setProperty(property, value);
-        }
-        element.style.contain = "layout";
+        const declarations = (baked[i] ?? []).map(
+            ([property, value]) => `${property}:${value}`,
+        );
+        element.style.cssText = [...declarations, "contain:layout"].join(";");
     });
 };
 
