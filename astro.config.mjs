@@ -94,6 +94,21 @@ export default defineConfig({
                 targets: browserslistToTargets(browserslist(">= 2%")),
             },
         },
+        // Imported only from client scripts, so the dev server finds them
+        // when a page first loads them. That re-bundles the deps under a new
+        // hash, and modules still asking for the old one get an empty 504,
+        // which drops their styles and breaks the page until a reload.
+        optimizeDeps: {
+            include: [
+                "uwuifier",
+                "matter-js",
+                "@gouvfr/dsfr/dist/core/core.module.min.js",
+                "@gouvfr/dsfr/dist/component/button/button.module.min.js",
+                "@gouvfr/dsfr/dist/component/checkbox/checkbox.module.min.js",
+                "@gouvfr/dsfr/dist/component/modal/modal.module.min.js",
+                "@gouvfr/dsfr/dist/component/header/header.module.min.js",
+            ],
+        },
         server: {
             watch: {
                 // gallery:diff checks out and builds a whole second copy of
