@@ -33,13 +33,23 @@ import Layout from "../layouts/desktop.astro";
     description="CPlusPatch's site as a desktop: projects, a terminal, the homelab's status and more, in windows."
     noindex
 >
+    <Fragment slot="head">
+        {/* Lays the desktop out before the module runs, so the page doesn't jump. */}
+        {/* Same width as DESKTOP in the module script below. */}
+        <script is:inline>
+        if (matchMedia("(min-width: 760px)").matches) {
+            document.documentElement.classList.add("wm");
+        }
+        </script>
+    </Fragment>
+
     <header class="desk-bar">
         <h1 class="desk-bar__brand">JesseOS</h1>
         <a class="desk-bar__home" href="/">Back to the site</a>
         <DisplayMenu id="display" {effects} size="sm" />
     </header>
 
-    <main id="main" class="desk">
+    <main id="main" class="desk window-manager">
         <Readme />
 
         <Window
@@ -47,6 +57,7 @@ import Layout from "../layouts/desktop.astro";
             title="Terminal"
             path="guest@cpluspatch.com"
             icon="lucide:terminal"
+            open
         >
             <Terminal
                 interactive
@@ -114,6 +125,32 @@ import Layout from "../layouts/desktop.astro";
 <script>
 // The page-wide easter eggs Verity's chat runs.
 import "../components/page/dialogue-actions.ts";
+
+import { initWindowManager } from "@cpluspatch/ui/behaviours/window-manager.ts";
+
+// Wide enough for windows. Also in the inline script in the <head>.
+const DESKTOP = "(min-width: 760px)";
+
+const desk = document.querySelector<HTMLElement>(".desk");
+const wide = matchMedia(DESKTOP);
+let stop: (() => void) | undefined;
+
+// Also crossing the width after load, like rotating a tablet.
+const sync = () => {
+    if (!desk) return;
+
+    if (wide.matches) {
+        document.documentElement.classList.add("wm");
+        stop = initWindowManager(desk);
+    } else {
+        stop?.();
+        stop = undefined;
+        document.documentElement.classList.remove("wm");
+    }
+};
+
+sync();
+wide.addEventListener("change", sync);
 </script>
 
 <style>
@@ -124,7 +161,7 @@ import "../components/page/dialogue-actions.ts";
     width: min(100% - 2 * var(--space-md), 46rem);
     margin-inline: auto;
     padding-block: var(--space-md);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--border-width) solid var(--color-border);
 
     .desk-bar__brand {
         margin: 0 auto 0 0;
@@ -134,6 +171,18 @@ import "../components/page/dialogue-actions.ts";
 
     .desk-bar__home {
         font: var(--type-ui);
+    }
+
+    /* A 44px hit area around the 28px button. */
+    :global(.dropdown__trigger) {
+        position: relative;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset-block: -0.5rem;
+            inset-inline: 0;
+        }
     }
 }
 
@@ -157,6 +206,43 @@ import "../components/page/dialogue-actions.ts";
 
     .desk__more {
         margin-top: var(--space-md);
+    }
+}
+
+/* With room for windows: the desk fills the screen under the bar. */
+:global(html.wm body) {
+    height: 100dvh;
+    overflow: hidden;
+}
+
+:global(html.wm) .desk-bar {
+    flex: none;
+    width: 100%;
+    margin-inline: 0;
+    padding-inline: var(--space-md);
+}
+
+:global(html.wm) .desk {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    background-color: var(--color-bg);
+    /* The same gap to the desk's edges as the bar's text, so windows line up with the header. */
+    --window-margin: var(--space-md);
+
+    /*
+     * Until the window manager runs, so a failed script still leaves every
+     * window reachable. It sets overflow: clip, which this must not beat.
+     */
+    &:not(.window-manager--on) {
+        overflow: auto;
+    }
+
+    /* Only once windows are on it: until then the page keeps its padding. */
+    &.window-manager--on {
+        padding-bottom: 0;
     }
 }
 </style>

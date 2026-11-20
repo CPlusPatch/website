@@ -63,11 +63,14 @@ export type {
     TerminalResult,
 } from "./terminal.ts";
 export { CLEAR, initTerminal, initTerminals } from "./terminal.ts";
+export { initWindowManager, initWindowManagers } from "./window-manager.ts";
 
 /**
  * Binds every behaviour that needs nothing but markup, to what is inside
  * `scope`, and returns a function that undoes them all. Not the terminal,
- * which needs a `run` option: call `initTerminals(scope, { run })`.
+ * which needs a `run` option: call `initTerminals(scope, { run })`. Nor the
+ * window manager, which lays out a whole desktop: a page opts in with
+ * `initWindowManager(desk)`.
  */
 export const initAll = (scope: ParentNode = document): (() => void) => {
     const cleanups = [

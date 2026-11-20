@@ -1,0 +1,108 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * What a window manager (behaviours/window-manager.ts) adds to a desktop
+     * of <Window>s: each one floats at a spot of its own, over the others.
+     * The behaviour sets --window-x and --window-y, a z-index, and a size
+     * once the window has been fitted or resized. Without it the windows
+     * stay in the flow of the page.
+     */
+    .window-manager--on {
+        /* Keep in step with `min` in DEFAULT_CASCADE (lib/window-layout.ts). */
+        --window-min-width: 16rem;
+        /* The gap to the desk's edges. Keep in step with `origin` in DEFAULT_CASCADE. */
+        --window-margin: 1.5rem;
+        --window-min-height: 10rem;
+        /* Black reads on the dark desk only when it's strong. */
+        --window-shadow: 0 var(--space-sm) var(--space-lg)
+            light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.7));
+        /* The windows behind the active one: closer to the desk, so less lift. */
+        --window-shadow-inactive: 0 2px 8px
+            light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.5));
+        --window-shadow-lifted: 0 var(--space-md) var(--space-xl)
+            light-dark(rgb(0 0 0 / 0.3), rgb(0 0 0 / 0.9));
+
+        position: relative;
+        /* Clip, not hidden: focus can't scroll a clipped box. */
+        overflow: clip;
+        isolation: isolate;
+
+        /* Shown when every window is closed and focus is on the desk. */
+        &:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: -2px;
+
+            @media (forced-colors: active) {
+                outline-color: Highlight;
+            }
+        }
+
+        > .window {
+            --window-width: clamp(36rem, 40vw, 52rem);
+
+            position: absolute;
+            inset: 0 auto auto 0;
+            translate: var(--window-x, 0) var(--window-y, 0);
+            min-inline-size: var(--window-min-width);
+            min-block-size: var(--window-min-height);
+            /* The manager sets these to the room left, so a resize stays on the desk. */
+            max-inline-size: var(--window-max-width, 100%);
+            max-block-size: var(--window-max-height, 100%);
+            margin: 0;
+            resize: both;
+
+            &.window--framed {
+                box-shadow: var(--window-shadow);
+
+                @media (prefers-reduced-motion: no-preference) {
+                    transition:
+                        box-shadow var(--transition),
+                        border-color var(--transition);
+                }
+            }
+
+            /*
+             * Windows have the desk's own background, so the border tells them
+             * apart from it and from each other. In dark, --color-border-strong
+             * is only 3.0:1 on the desk in the default theme, so the muted
+             * text colour (4.5:1 or more in every theme) takes its place.
+             * The active window keeps its own border.
+             */
+            &.window--framed:not(.window--active) {
+                border-color: light-dark(
+                    var(--color-border-strong),
+                    var(--color-text-muted)
+                );
+            }
+
+            /*
+             * Not told apart by colour alone: a lighter shadow, no heavy line
+             * under the bar (see window.css) and a muted title and icon. The
+             * muted colour is 4.5:1 or more on the window in every theme.
+             */
+            &.window--framed:not(.window--active) {
+                box-shadow: var(--window-shadow-inactive);
+
+                .window__title,
+                .window__icon {
+                    color: var(--color-text-muted);
+                }
+            }
+
+            &.window--dragging {
+                --window-shadow: var(--window-shadow-lifted);
+            }
+        }
+
+        .window__bar {
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+        }
+
+        > .window--dragging .window__bar {
+            cursor: grabbing;
+        }
+    }
+}

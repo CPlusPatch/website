@@ -26,6 +26,7 @@
 @import "./components/textarea.css";
 @import "./components/toggle.css";
 @import "./components/window.css";
+@import "./components/window-manager.css";
 @import "./components/accordion-item.css";
 @import "./components/accordion.css";
 @import "./components/attachment-group.css";

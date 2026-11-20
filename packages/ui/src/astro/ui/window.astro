@@ -2,6 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { windowClasses } from "../../components/window.ts";
 import Icon from "../icon.astro";
+import Button from "./button.astro";
 
 /**
  * One app's window. Without a window manager it is a plain titled section
@@ -19,6 +20,8 @@ interface Props extends HTMLAttributes<"section"> {
     path?: string;
     /** The chrome a window manager shows, in the flow of the page. */
     framed?: boolean;
+    /** Open when a window manager starts. */
+    open?: boolean;
     /** The title's heading level, so it nests under the page's headings. */
     level?: 2 | 3 | 4 | 5 | 6;
 }
@@ -29,12 +32,19 @@ const {
     icon,
     path,
     framed = false,
+    open = false,
     level = 2,
     class: className,
     ...rest
 } = Astro.props;
 
 const Heading = `h${level}` as const;
+// A focusable body needs a name: the path, not the title, which would double
+// the section's own name.
+const bodyName =
+    framed && path
+        ? { role: "group" as const, "aria-labelledby": `${id}-path` }
+        : undefined;
 ---
 
 <section
@@ -42,6 +52,7 @@ const Heading = `h${level}` as const;
     {id}
     aria-labelledby={`${id}-title`}
     data-icon={icon}
+    data-window-open={open ? "" : undefined}
     {...rest}
 >
     <header class="window__bar">
@@ -51,7 +62,7 @@ const Heading = `h${level}` as const;
                 {title}
             </Heading>
             {path && (
-                <span class="window__path">
+                <span class="window__path" id={`${id}-path`}>
                     {/* Wrap a long path after a slash rather than mid-name. */}
                     {path.split(/(?<=\/)/).map((part) => (
                         <>
@@ -62,6 +73,20 @@ const Heading = `h${level}` as const;
                 </span>
             )}
         </div>
+        {/* A window manager shows it. */}
+        <Button
+            size="icon"
+            variant="ghost"
+            tone="neutral"
+            class="window__close"
+            hidden
+            aria-label={`Close ${title}`}
+        >
+            <Icon name="lucide:x" aria-hidden="true" />
+        </Button>
     </header>
-    <div class="window__body"><slot /></div>
+    {/* A scroller isn't a tab stop in Safari, so a framed one is made to be. */}
+    <div class="window__body" tabindex={framed ? 0 : undefined} {...bodyName}>
+        <slot />
+    </div>
 </section>

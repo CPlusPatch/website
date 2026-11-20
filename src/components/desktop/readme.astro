@@ -8,7 +8,13 @@ import Window from "@cpluspatch/ui/astro/ui/window.astro";
 import { commits, details, figures, intro } from "../../data/home.ts";
 ---
 
-<Window id="w-readme" title="README" path="~/README.md" icon="lucide:file-text">
+<Window
+    id="w-readme"
+    title="README"
+    path="~/README.md"
+    icon="lucide:file-text"
+    open
+>
     <h3 class="text-poster readme__title">
         Hi,{" "}
         <span class="readme__line">
@@ -46,6 +52,14 @@ import { commits, details, figures, intro } from "../../data/home.ts";
         display: block;
     }
 
+    /* The page-sized greeting is too big for a window. */
+    :global(.window--framed) & {
+        font-size: min(
+            calc(var(--font-size-4xl) * var(--display-scale)),
+            14cqi
+        );
+    }
+
     /* On the smallest phones, a little smaller, so each line still fits. */
     @container (max-width: 20rem) {
         font-size: min(
@@ -70,6 +84,23 @@ import { commits, details, figures, intro } from "../../data/home.ts";
 
     .readme__commits-title {
         margin-bottom: var(--space-md);
+    }
+
+    /*
+     * In a window the graph is narrower than its 52 weeks at the usual
+     * smallest cell, which cropped the first month and the weekday names.
+     * Smaller cells fit them at the window's usual width. Narrower than that
+     * it scrolls, and the weekday names stay put.
+     */
+    :global(.window--framed) & :global(.heatmap) {
+        --heatmap-cell-min: 0.4375rem;
+    }
+
+    :global(.window--framed) & :global(.heatmap__days) {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background-color: var(--color-surface-raised);
     }
 }
 </style>

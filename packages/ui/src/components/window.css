@@ -45,6 +45,10 @@
             border-radius: var(--radius);
             color: var(--color-primary);
             background-color: var(--color-surface);
+
+            @media (forced-colors: active) {
+                color: CanvasText;
+            }
         }
 
         .window__label {
@@ -59,8 +63,18 @@
             margin: 0;
             font: var(--window-title);
 
-            &:focus {
+            /* Focus is only moved here by a window manager, not by Tab. */
+            &:focus:not(:focus-visible) {
                 outline: none;
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 2px;
+
+                @media (forced-colors: active) {
+                    outline-color: Highlight;
+                }
             }
         }
 
@@ -92,56 +106,131 @@
             padding-block: 0;
             overflow: hidden;
             color: var(--color-text);
-            background-color: var(--color-surface-raised);
+            /*
+             * The page's own background, not a raised surface: muted text
+             * falls under 4.5:1 on raised surfaces in several dark themes.
+             * The border, shadow and bar carry the lift.
+             */
+            background-color: var(--color-bg);
             border: var(--border-width) solid var(--color-border-strong);
             border-radius: var(--radius);
             box-shadow: var(--shadow-overlay);
 
-            /* The active window: one a window manager has focused. */
-            &:focus-within {
-                border-color: var(--color-primary);
-
-                @media (forced-colors: active) {
-                    border-color: Highlight;
-                }
-            }
-
-            /* Flush with the border, so the two read as one thick ring. */
+            /*
+             * Outside the frame, so it differs in shape from the active
+             * window's flush outline and shows in every theme.
+             */
             &:has(> .window__body:focus-visible) {
                 outline: 2px solid var(--color-primary);
-                outline-offset: 0;
+                outline-offset: 2px;
 
                 @media (forced-colors: active) {
                     outline-color: Highlight;
+                    /* Wider than the active window's 1px outline, so the two differ. */
+                    outline-width: 3px;
                 }
             }
 
             .window__bar {
                 flex: none;
+                align-items: center;
                 margin: 0;
-                padding: var(--space-sm) var(--space-md);
+                /* Less at the end, so the close button sits in the corner. */
+                padding: var(--space-xs) var(--space-xs) var(--space-xs)
+                    var(--space-md);
                 border-bottom: var(--border-width) solid var(--color-border);
+
+                /*
+                 * The ring goes round the bar, not the word, so it isn't cut
+                 * off. It sits 2px in from the frame, so the bar's background
+                 * separates it from the active window's frame.
+                 */
+                &:has(> .window__label .window__title:focus-visible) {
+                    outline: 2px solid var(--color-primary);
+                    outline-offset: -4px;
+
+                    @media (forced-colors: active) {
+                        outline-color: Highlight;
+                    }
+                }
+            }
+
+            .window__title:focus-visible {
+                outline: none;
             }
 
             /*
-             * Muted text falls under 4.5:1 on raised surfaces in some dark
-             * themes (catppuccin, everforest, gruvbox, nord, solarized,
-             * tokyo-night).
+             * The window on top, set by a window manager. The border is the
+             * text colour, over 3:1 on the desk in light and dark, and a
+             * different colour from the focus rings inside it. The outline
+             * doubles it, so it isn't colour alone, without moving the
+             * window's content.
              */
-            .window__path {
-                color: var(--color-text);
+            &.window--active {
+                border-color: var(--color-text);
+                outline: var(--border-width) solid var(--color-text);
+
+                @media (forced-colors: active) {
+                    border-color: Highlight;
+                    outline-color: Highlight;
+
+                    .window__icon {
+                        color: Highlight;
+                    }
+                }
+
+                /*
+                 * A 2px rule under the bar: not colour alone, and it moves
+                 * nothing. The border is its first pixel and the shadow the
+                 * second. Forced colours drop shadows, so the border alone
+                 * shows there.
+                 */
+                .window__bar {
+                    border-bottom-color: var(--color-text);
+                    box-shadow: inset 0 -1px 0 var(--color-text);
+
+                    @media (forced-colors: active) {
+                        border-bottom-color: Highlight;
+                        box-shadow: inset 0 -1px 0 Highlight;
+                    }
+                }
             }
 
             .window__icon {
+                margin-block-start: 0;
                 padding: 0;
                 border: 0;
                 background: none;
+            }
+
+            /* A <Button>, hidden until a window manager turns it on (it needs JS). */
+            .window__close {
+                position: relative;
+                flex: none;
+                margin-inline-start: auto;
+
+                /*
+                 * A 40px hit area around the 32px button. The bar's padding is
+                 * 4px, and the window clips what reaches past that.
+                 */
+                &::before {
+                    content: "";
+                    position: absolute;
+                    inset: calc(-1 * var(--space-xs));
+                }
+
+                /* Inside the bar: the frame clips a ring drawn outside it. */
+                &:focus-visible {
+                    outline-offset: -2px;
+                }
             }
 
             .window__body {
                 flex: 1 1 auto;
                 min-height: 0;
                 padding: var(--space-md);
+                /* A focused link scrolls in with room around it, not flush with the bar. */
+                scroll-padding-block: var(--space-md);
                 overflow: auto;
                 overscroll-behavior: contain;
 
@@ -185,6 +274,11 @@
             animation-fill-mode: both;
             animation-timeline: scroll(self);
             animation-range: calc(100% - var(--space-lg)) 100%;
+
+            /* The mask would grey the last line. */
+            @media (forced-colors: active) {
+                mask-image: none;
+            }
         }
     }
 }
