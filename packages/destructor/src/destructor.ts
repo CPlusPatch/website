@@ -12,10 +12,13 @@ import {
     type ResolvedOptions,
     ROOT_ATTR,
 } from "./config.ts";
-import { getTextBounds } from "./dom.ts";
+import { getTextBounds, hasOwnText } from "./dom.ts";
 import { PhysicsElement } from "./element.ts";
 import { GravityGun } from "./gun.ts";
 import { SoundEffects } from "./sfx.ts";
+
+/** The size of the pieces `shatter()` breaks the page into, at most. */
+const BRICK_SIZE = { width: 480, height: 240 };
 
 // The ground is a slab this thick, so fast bodies can't tunnel through it
 const GROUND_THICKNESS = 10_000;
@@ -28,7 +31,8 @@ export class Destructor {
     /** Fed the page's mouse events; see mouseHandlers(). */
     readonly mouse: Matter.Mouse;
     readonly mouseConstraint: Matter.MouseConstraint;
-    readonly gun: GravityGun;
+    /** Null without a trigger to equip it with. */
+    readonly gun: GravityGun | null;
 
     private readonly elements = new WeakMap<Element, PhysicsElement>();
     private readonly extracted = new Set<PhysicsElement>();
@@ -83,7 +87,9 @@ export class Destructor {
             this.options.debug,
         );
 
-        this.gun = new GravityGun(this);
+        this.gun = this.options.trigger
+            ? new GravityGun(this, this.options.trigger)
+            : null;
 
         // Scrolling only moves the ground if it is a page element
         if (this.options.ground) {
@@ -103,7 +109,74 @@ export class Destructor {
      * the simulation, which happened before it was listening.
      */
     press(event: MouseEvent): void {
-        this.gun.press(event);
+        this.gun?.press(event);
+    }
+
+    /**
+     * Breaks everything in view above the ground out of the page at once, in pieces of at
+     * most `BRICK_SIZE`, and flings each one a little. A piece is the
+     * largest element that fits, or one too big that holds text of its own,
+     * since that text can't fall without it.
+     */
+    shatter(): void {
+        const { trigger, ground } = this.options;
+        const width = window.innerWidth;
+        // Pieces below the ground would start inside it and push the rest
+        // through it
+        const height = Math.min(
+            window.innerHeight,
+            ground?.getBoundingClientRect().top ?? Infinity,
+        );
+        const bricks: HTMLElement[] = [];
+
+        const visit = (element: Element): void => {
+            if (!(element instanceof HTMLElement)) return;
+
+            // What holds the trigger or the ground can't go, but its other
+            // children can
+            const holds = (inner: Element | null): boolean =>
+                Boolean(inner && inner !== element && element.contains(inner));
+            if (holds(trigger) || holds(ground)) {
+                for (const child of element.children) visit(child);
+                return;
+            }
+            if (this.isExcluded(element)) return;
+
+            const rect = element.getBoundingClientRect();
+            const offscreen =
+                rect.bottom <= 0 ||
+                rect.right <= 0 ||
+                rect.top >= height ||
+                rect.left >= width;
+            // No box (display: contents) doesn't mean no children to show
+            const boxless = rect.width === 0 && rect.height === 0;
+            if (offscreen && !boxless) return;
+
+            const fits =
+                rect.width <= BRICK_SIZE.width &&
+                rect.height <= BRICK_SIZE.height;
+            if (!boxless && (fits || hasOwnText(element))) {
+                bricks.push(element);
+                return;
+            }
+            for (const child of element.children) visit(child);
+        };
+        for (const child of document.body.children) visit(child);
+
+        // Measured before any is moved, as moving one forces a layout
+        for (const element of bricks) {
+            const physicsElement =
+                this.elements.get(element) ??
+                this.track(element, this.isTextBounded(element));
+            this.extract(physicsElement);
+            const { body } = physicsElement;
+            if (!body) continue;
+            Matter.Body.setVelocity(body, {
+                x: (Math.random() - 0.5) * 10,
+                y: 0,
+            });
+            Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1);
+        }
     }
 
     /**
@@ -114,11 +187,17 @@ export class Destructor {
         const known = this.elements.get(element);
         if (known) return known;
 
-        const textBounded = this.options.textBounded.some((s) =>
-            element.matches(s),
-        );
+        const textBounded = this.isTextBounded(element);
         if (!this.isGrabbable(element, textBounded)) return undefined;
 
+        return this.track(element, textBounded);
+    }
+
+    private isTextBounded(element: Element): boolean {
+        return this.options.textBounded.some((s) => element.matches(s));
+    }
+
+    private track(element: HTMLElement, textBounded: boolean): PhysicsElement {
         const physicsElement = new PhysicsElement(element, textBounded);
         this.elements.set(element, physicsElement);
         return physicsElement;
@@ -142,14 +221,7 @@ export class Destructor {
         if (
             !(element instanceof HTMLElement) ||
             !options.draggable.some((s) => element.matches(s)) ||
-            options.neverDraggable.some((s) => element.matches(s)) ||
-            // Clones left behind, and parts of things already thrown
-            element.closest(`.${CLASS.placeholder}`) ||
-            this.container.contains(element) ||
-            // The gun's own controls, and what thrown things land on
-            options.trigger.contains(element) ||
-            element.contains(options.trigger) ||
-            options.ground?.contains(element)
+            this.isExcluded(element)
         ) {
             return false;
         }
@@ -161,6 +233,22 @@ export class Destructor {
             element.getBoundingClientRect();
         return (
             width <= options.maxSize.width && height <= options.maxSize.height
+        );
+    }
+
+    /** Whether an element must stay where it is, whatever its size. */
+    private isExcluded(element: HTMLElement): boolean {
+        const { options } = this;
+        return Boolean(
+            options.neverDraggable.some((s) => element.matches(s)) ||
+            // Clones left behind, and parts of things already thrown
+            element.closest(`.${CLASS.placeholder}`) ||
+            this.container.contains(element) ||
+            // The gun's own controls, and what thrown things land on
+            (options.trigger &&
+                (options.trigger.contains(element) ||
+                    element.contains(options.trigger))) ||
+            options.ground?.contains(element),
         );
     }
 

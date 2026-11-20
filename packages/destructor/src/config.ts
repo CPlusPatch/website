@@ -7,8 +7,10 @@ export interface DestructorOptions {
      *   data-hint      "mouse" or "desktop" after a touch press, until the gun
      *                  is next equipped: the gun needs a mouse.
      *   data-wiggle    set again on every touch press, to restart an animation.
+     *
+     * Without one there's no gun, and only `shatter()` puts things in motion.
      */
-    trigger: HTMLElement;
+    trigger?: HTMLElement | null;
     /**
      * Thrown elements land on its top edge, or on the bottom of the viewport
      * if that is higher. Without one, the viewport bottom is the ground.
@@ -28,7 +30,8 @@ export interface DestructorOptions {
 
 export type ResolvedOptions = Required<DestructorOptions>;
 
-export const DEFAULT_OPTIONS: Omit<ResolvedOptions, "trigger"> = {
+export const DEFAULT_OPTIONS: ResolvedOptions = {
+    trigger: null,
     ground: null,
     draggable: [
         "[data-destructor=grab]",

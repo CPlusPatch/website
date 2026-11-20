@@ -133,28 +133,24 @@ const { ground, class: className, ...rest } = Astro.props;
 </style>
 
 <script>
-type DestructorModule = typeof import("@cpluspatch/destructor");
+import { isDestructorRunning, loadDestructor } from "../../lib/destructor.ts";
 
-const root = document.querySelector<HTMLElement>(".destructor");
-const trigger = root?.querySelector<HTMLButtonElement>(".destructor__trigger");
+const trigger = document.querySelector<HTMLButtonElement>(
+    ".destructor .destructor__trigger",
+);
 
-if (root && trigger) {
-    let module: Promise<DestructorModule> | undefined;
-    const load = () => (module ??= import("@cpluspatch/destructor"));
-
+if (trigger) {
     // Start fetching on intent, so the first press doesn't wait on it
-    trigger.addEventListener("pointerenter", load, { once: true });
-    trigger.addEventListener("focus", load, { once: true });
+    trigger.addEventListener("pointerenter", loadDestructor, { once: true });
+    trigger.addEventListener("focus", loadDestructor, { once: true });
 
     trigger.addEventListener(
         "click",
         async (event) => {
-            const { Destructor } = await load();
-            const ground = root.dataset.ground
-                ? document.querySelector(root.dataset.ground)
-                : null;
-            // From here on the package listens to the trigger itself
-            new Destructor({ trigger, ground }).press(event);
+            // Once running, the package listens to the trigger itself, so
+            // only a press that came before that needs passing on
+            if (isDestructorRunning()) return;
+            (await loadDestructor()).press(event);
         },
         { once: true },
     );

@@ -144,3 +144,11 @@ export const getCumulativeRotation = (element: HTMLElement): number => {
     }
     return degrees;
 };
+
+/** Whether an element has text directly in it, not only in its children. */
+export const hasOwnText = (element: HTMLElement): boolean =>
+    Array.from(element.childNodes).some(
+        (node) =>
+            node.nodeType === Node.TEXT_NODE &&
+            Boolean(node.textContent?.trim()),
+    );

@@ -37,15 +37,16 @@ const restartAnimation = (element: HTMLElement, attribute: string): void => {
 export class GravityGun {
     private readonly cursor: HTMLDivElement;
     private readonly sprite: HTMLDivElement;
-    private readonly trigger: HTMLElement;
 
     private equipped = false;
     private held: PhysicsElement | null = null;
     private hovered: PhysicsElement | null = null;
     private closeTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    constructor(private readonly simulation: Destructor) {
-        this.trigger = simulation.options.trigger;
+    constructor(
+        private readonly simulation: Destructor,
+        private readonly trigger: HTMLElement,
+    ) {
         this.trigger.setAttribute("aria-pressed", "false");
 
         this.cursor = document.createElement("div");

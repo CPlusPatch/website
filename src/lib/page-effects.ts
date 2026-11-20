@@ -7,6 +7,8 @@
 
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import Uwuifier from "uwuifier";
+import legoSound from "../data/lego/lego.mp3?url";
+import { loadDestructor } from "./destructor.ts";
 
 /** Text the reader never sees as words, and fields they may be typing in. */
 const SKIPPED = "script, style, template, textarea, input, svg, code, pre";
@@ -146,6 +148,19 @@ export const shake = async () => {
         ),
     );
     root.style.overflowX = overflow;
+};
+
+/**
+ * Breaks the page apart like a Lego model: with the sound of one falling,
+ * everything in view drops out of the page and tumbles down, to be picked up
+ * by the gravity gun. With reduced motion, only the sound plays. Resolves
+ * once it has fallen.
+ */
+export const lego = async () => {
+    // A failed play (say, audio blocked) only loses the sound, so it's ignored
+    new Audio(legoSound).play().catch(() => undefined);
+    if (reducedMotion()) return;
+    (await loadDestructor()).shatter();
 };
 
 /** Uwuifies every text on the page. Returns a function that undoes it. */
