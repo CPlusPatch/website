@@ -11,6 +11,7 @@ import {
     period,
     solveKepler,
     stateAt,
+    trueAnomalyAt,
     wrapAngle,
 } from "./kepler.ts";
 import { dot, length } from "./vec.ts";
@@ -135,4 +136,47 @@ Deno.test("orbit points lie on the orbit, starting at periapsis", () => {
 
 Deno.test("orbit points default to 256 samples", () => {
     assertEquals(orbitPoints(base).length, 256 * 3);
+});
+
+Deno.test("the true anomaly is 0 at periapsis and π at apoapsis", () => {
+    const el = { ...base, e: 0.6, m0: 0 };
+    const half = period(el, MU) / 2;
+
+    assertAlmostEquals(trueAnomalyAt(el, MU, 0), 0, 1e-9);
+    assertAlmostEquals(trueAnomalyAt(el, MU, half), Math.PI, 1e-6);
+});
+
+Deno.test("on a circular orbit the true anomaly is the mean anomaly", () => {
+    for (const t of [0, 100, 5000, 1e5]) {
+        assertAlmostEquals(
+            trueAnomalyAt(base, MU, t),
+            meanAnomalyAt(base, MU, t),
+            1e-9,
+        );
+    }
+});
+
+Deno.test("the true anomaly is the angle from the periapsis direction to the radius", () => {
+    const rand = mulberry32(3);
+
+    for (let k = 0; k < 50; k++) {
+        const el = randomElements(rand);
+        const t = rand() * 1e7;
+        const periapsisDirection = stateAt({ ...el, m0: 0 }, MU, el.epoch).r;
+        const { r } = stateAt(el, MU, t);
+        const angle = Math.acos(
+            Math.min(
+                1,
+                Math.max(
+                    -1,
+                    dot(r, periapsisDirection) /
+                        (length(r) * length(periapsisDirection)),
+                ),
+            ),
+        );
+        const nu = trueAnomalyAt(el, MU, t);
+
+        assert(nu >= 0 && nu < 2 * Math.PI);
+        assertAlmostEquals(Math.min(nu, 2 * Math.PI - nu), angle, 1e-6);
+    }
 });

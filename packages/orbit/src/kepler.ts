@@ -65,6 +65,20 @@ export const solveKepler = (m: number, e: number): number => {
     return ea;
 };
 
+/** The true anomaly at time `t` (seconds since J2000), in [0, 2π). */
+export const trueAnomalyAt = (el: Elements, mu: number, t: number): number => {
+    const ea = solveKepler(meanAnomalyAt(el, mu, t), el.e);
+    const half = ea / 2;
+
+    return wrapAngle(
+        2 *
+            Math.atan2(
+                Math.sqrt(1 + el.e) * Math.sin(half),
+                Math.sqrt(1 - el.e) * Math.cos(half),
+            ),
+    );
+};
+
 /** The perifocal x and y axes in the parent frame. */
 const axes = (el: Elements): { p: Vec3; q: Vec3 } => {
     const cO = Math.cos(el.raan);

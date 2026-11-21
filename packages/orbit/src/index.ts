@@ -20,6 +20,7 @@ export {
     period,
     solveKepler,
     stateAt,
+    trueAnomalyAt,
     wrapAngle,
 } from "./kepler.ts";
 export type { Body, BodyKind, Scenario, ScenarioResult } from "./scenario.ts";
