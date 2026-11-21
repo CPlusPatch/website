@@ -1,0 +1,169 @@
+import type { Body, Scenario, State, Vec3 } from "@cpluspatch/orbit";
+import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
+import type { PerspectiveCamera } from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import {
+    fitDistanceKm,
+    focusDistanceKm,
+    focusTween,
+    minDistanceKm,
+    type Pose,
+} from "./geometry.ts";
+
+/** The camera and its controls, which orbit the focused body. */
+export type Rig = {
+    /** The world position in metres that the scene is drawn relative to. */
+    origin: () => Vec3;
+    /** The id of the focused body. */
+    focusId: () => string;
+    /** Places the camera above the ecliptic so every planet's orbit fits. */
+    fit: () => void;
+    /** Whether the user or a focus change has moved the camera since the first fit. */
+    moved: () => boolean;
+    /** Moves the view to a body, keeping the view direction. */
+    focus: (id: string) => void;
+    /** Advances a focus move by `dt` seconds and updates the controls. */
+    update: (dt: number) => void;
+    /** Removes the controls' listeners. */
+    dispose: () => void;
+};
+
+const MAX_DISTANCE_FACTOR = 4;
+const FOCUS_SECONDS = 0.4;
+const START_ELEVATION = Math.PI / 6;
+
+type Move = { from: Pose; id: string; distance: number; elapsed: number };
+
+/** A camera that starts above the ecliptic and looks at the root. */
+export const createRig = (
+    camera: PerspectiveCamera,
+    canvas: HTMLElement,
+    scenario: Scenario,
+    states: Map<string, State>,
+): Rig => {
+    const byId = new Map(scenario.bodies.map((body) => [body.id, body]));
+    const root = scenario.bodies.find((body) => body.parent === null);
+    if (!root) throw new Error("The scenario has no root body.");
+
+    const bodyOf = (id: string): Body => {
+        const body = byId.get(id);
+        if (!body) throw new Error(`There is no body "${id}".`);
+
+        return body;
+    };
+
+    const positionOf = (id: string): Vec3 => {
+        const state = states.get(id);
+        if (!state) throw new Error(`There is no state for "${id}".`);
+
+        return state.r;
+    };
+
+    // The ecliptic is the XY plane, so north is Z.
+    camera.up.set(0, 0, 1);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enablePan = false;
+    controls.enableDamping = !reducedMotion();
+
+    let focused = root.id;
+    let touched = false;
+    controls.addEventListener("start", () => {
+        touched = true;
+    });
+    let move: Move | null = null;
+    const origin: Vec3 = { ...positionOf(root.id) };
+
+    const fovRad = (camera.fov * Math.PI) / 180;
+    controls.minDistance = minDistanceKm(root, fovRad);
+
+    const reach = Math.max(
+        ...scenario.bodies
+            // Planets only, so Pluto's wide orbit doesn't shrink the view.
+            .filter((body) => body.parent === root.id && body.kind === "planet")
+            .map(
+                (body) =>
+                    (body.elements?.a ?? 0) * (1 + (body.elements?.e ?? 0)),
+            ),
+        root.radius,
+    );
+    const fit = () => {
+        const distance = fitDistanceKm(
+            reach / 1000,
+            fovRad,
+            camera.aspect,
+            START_ELEVATION,
+        );
+        controls.maxDistance = distance * MAX_DISTANCE_FACTOR;
+        camera.position.set(
+            0,
+            -Math.cos(START_ELEVATION) * distance,
+            Math.sin(START_ELEVATION) * distance,
+        );
+        controls.update();
+    };
+    fit();
+
+    const settle = (id: string) => {
+        controls.minDistance = minDistanceKm(bodyOf(id), fovRad);
+    };
+
+    return {
+        origin: () => origin,
+        focusId: () => focused,
+        fit,
+        moved: () => touched,
+        focus: (id) => {
+            const body = bodyOf(id);
+            touched = true;
+            const target = focusDistanceKm(body);
+            focused = id;
+
+            if (reducedMotion()) {
+                move = null;
+                Object.assign(origin, positionOf(id));
+                camera.position.setLength(target);
+                settle(id);
+
+                return;
+            }
+
+            move = {
+                from: {
+                    distance: camera.position.length(),
+                    position: { ...origin },
+                },
+                id,
+                distance: target,
+                elapsed: 0,
+            };
+            // The old minimum must not stop the camera on its way in.
+            controls.minDistance = Math.min(
+                controls.minDistance,
+                minDistanceKm(body, fovRad),
+            );
+        },
+        update: (dt) => {
+            if (move) {
+                move.elapsed += dt;
+
+                const s = Math.min(move.elapsed / FOCUS_SECONDS, 1);
+                const pose = focusTween(
+                    move.from,
+                    { distance: move.distance, position: positionOf(move.id) },
+                    s,
+                );
+                Object.assign(origin, pose.position);
+                camera.position.setLength(pose.distance);
+
+                if (s === 1) {
+                    settle(move.id);
+                    move = null;
+                }
+            }
+
+            controls.update();
+        },
+        dispose: () => controls.dispose(),
+    };
+};

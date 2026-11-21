@@ -3,12 +3,17 @@
  * The Orrery, an interactive model of the solar system drawn with three.js.
  */
 
+import { solarSystem } from "@cpluspatch/orbit";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { h } from "./ui/dom.ts";
 import { createView } from "./view/scene.ts";
 
 /** A mounted Orrery. */
-export type Orrery = { destroy: () => void };
+export type Orrery = {
+    /** Centres the view on a body. */
+    focus: (id: string) => void;
+    destroy: () => void;
+};
 
 const webglAlert = (): HTMLElement =>
     h(
@@ -34,17 +39,18 @@ export const mount = (root: HTMLElement): Orrery => {
     const container = root.querySelector<HTMLElement>(".orrery__canvas");
     if (!container) throw new Error("The Orrery needs a .orrery__canvas.");
 
-    const view = createView(container);
+    const view = createView(container, solarSystem);
     if (!view) {
         const alert = webglAlert();
         container.append(alert);
-        return { destroy: () => alert.remove() };
+        return { focus: () => {}, destroy: () => alert.remove() };
     }
 
     const panels = root.querySelectorAll<HTMLElement>(".orrery__panel");
     for (const panel of panels) panel.hidden = false;
 
     return {
+        focus: view.focus,
         destroy: () => {
             view.destroy();
             for (const panel of panels) panel.hidden = true;
