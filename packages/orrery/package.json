@@ -1,0 +1,19 @@
+{
+    "name": "@cpluspatch/orrery",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./styles.css": "./src/styles.css"
+    },
+    "dependencies": {
+        "@cpluspatch/orbit": "workspace:*",
+        "@cpluspatch/ui": "workspace:*",
+        "three": "^0.187.0"
+    },
+    "devDependencies": {
+        "@std/assert": "jsr:^1.0.0",
+        "@types/three": "^0.187.0"
+    }
+}

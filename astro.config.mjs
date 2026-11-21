@@ -102,6 +102,12 @@ export default defineConfig({
             include: [
                 "uwuifier",
                 "matter-js",
+                "three",
+                "three/addons/controls/OrbitControls.js",
+                "three/addons/lines/Line2.js",
+                "three/addons/lines/LineMaterial.js",
+                "three/addons/lines/LineGeometry.js",
+                "three/addons/renderers/CSS2DRenderer.js",
                 "@gouvfr/dsfr/dist/core/core.module.min.js",
                 "@gouvfr/dsfr/dist/component/button/button.module.min.js",
                 "@gouvfr/dsfr/dist/component/checkbox/checkbox.module.min.js",

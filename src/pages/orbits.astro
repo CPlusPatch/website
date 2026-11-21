@@ -1,0 +1,39 @@
+---
+/** The Orrery: a 3D model of the solar system, the Moon and the ISS. */
+
+import DisplayMenu from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
+import "@cpluspatch/orrery/styles.css";
+import { effects } from "../data/home.ts";
+import Layout from "../layouts/desktop.astro";
+---
+
+<Layout
+    title="Orbits"
+    description="An interactive model of the solar system, the Moon and the International Space Station."
+    noindex
+>
+    <main id="main">
+        <h1 class="visually-hidden">Orbits</h1>
+        <div class="orrery">
+            <div class="orrery__canvas"></div>
+            <noscript>
+                <p class="orrery__notice">
+                    Turn on JavaScript to see the Orrery.
+                </p>
+            </noscript>
+            <div class="orrery__panel orrery__panel--top" hidden>
+                <DisplayMenu id="display" {effects} size="sm" />
+            </div>
+            <div class="orrery__panel orrery__panel--left" hidden></div>
+            <div class="orrery__panel orrery__panel--right" hidden></div>
+            <div class="orrery__panel orrery__panel--bottom" hidden></div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+import { loadOrrery } from "../lib/orrery.ts";
+
+const root = document.querySelector<HTMLElement>(".orrery");
+if (root) await loadOrrery(root);
+</script>

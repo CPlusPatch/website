@@ -1,0 +1,84 @@
+.orrery {
+    position: relative;
+    isolation: isolate;
+    block-size: 100dvh;
+    overflow: hidden;
+    background-color: var(--color-bg);
+
+    .orrery__canvas {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+
+        canvas {
+            position: absolute;
+            inset: 0;
+            display: block;
+            inline-size: 100%;
+            block-size: 100%;
+        }
+
+        .alert {
+            position: relative;
+            margin: var(--space-md);
+        }
+    }
+
+    .orrery__notice {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        padding: var(--space-md);
+        text-align: center;
+    }
+
+    /* Clicks between the controls reach the canvas. */
+    .orrery__panel {
+        position: absolute;
+        display: flex;
+        gap: var(--space-sm);
+        padding: var(--space-sm);
+        pointer-events: none;
+
+        &[hidden] {
+            display: none;
+        }
+
+        > * {
+            pointer-events: auto;
+        }
+    }
+
+    .orrery__panel--top {
+        inset-block-start: 0;
+        inset-inline: 0;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .orrery__panel--bottom {
+        inset-block-end: 0;
+        inset-inline: 0;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .orrery__panel--left,
+    .orrery__panel--right {
+        inset-block: 0;
+        flex-direction: column;
+        justify-content: center;
+        max-inline-size: 100%;
+    }
+
+    .orrery__panel--left {
+        inset-inline-start: 0;
+    }
+
+    .orrery__panel--right {
+        inset-inline-end: 0;
+    }
+}
