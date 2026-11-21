@@ -33,7 +33,12 @@ import {
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
     /** Places every body relative to `origin` and picks what to show. */
-    update: (camera: PerspectiveCamera, origin: Vec3, focus: string) => void;
+    update: (
+        camera: PerspectiveCamera,
+        origin: Vec3,
+        focus: string,
+        states: Map<string, State>,
+    ) => void;
     /** Sizes the markers for a viewport. */
     resize: (camera: PerspectiveCamera, width: number, height: number) => void;
     /** Recolours the bodies. */
@@ -99,7 +104,6 @@ export const createBodies = (
     scene: Scene,
     host: HTMLElement,
     bodies: Body[],
-    states: Map<string, State>,
     color: (body: Body) => Color,
 ): Bodies => {
     const sphereGeometry = new SphereGeometry(1, 128, 64);
@@ -207,7 +211,7 @@ export const createBodies = (
     let size = { width: 1, height: 1 };
 
     return {
-        update: (camera, origin, focus) => {
+        update: (camera, origin, focus, states) => {
             const fov = (camera.fov * Math.PI) / 180;
             const anchors: Anchor[] = [];
             const spheres: Sphere[] = [];

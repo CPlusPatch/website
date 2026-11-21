@@ -28,6 +28,8 @@
 
     .orrery__labels {
         position: absolute;
+        /* CSS2DRenderer sets a z-index on each label; keep them below the panels. */
+        z-index: 0;
         inset: 0;
         pointer-events: none;
     }
@@ -66,6 +68,8 @@
     /* Clicks between the controls reach the canvas. */
     .orrery__panel {
         position: absolute;
+        /* Above the body labels. */
+        z-index: 1;
         display: flex;
         gap: var(--space-sm);
         padding: var(--space-sm);
@@ -108,5 +112,48 @@
 
     .orrery__panel--right {
         inset-inline-end: 0;
+    }
+
+    .orrery__time-bar {
+        display: flex;
+        /* The card stacks its children in a column. */
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm) var(--space-md);
+        margin-inline: auto;
+        padding: var(--space-sm);
+        max-inline-size: 100%;
+    }
+
+    .orrery__time {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .orrery__time-jump {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-xs) var(--space-sm);
+
+        /* `.field` makes the input fill its row. */
+        .input {
+            inline-size: auto;
+            /* Chrome sizes the field by its text, so the bar would shift as the date changes. */
+            font-variant-numeric: tabular-nums;
+        }
+    }
+
+    .orrery__time-keys {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs) var(--space-md);
+
+        /* Touch screens have no keyboard. */
+        @media (hover: none), (max-width: 720px) {
+            display: none;
+        }
     }
 }

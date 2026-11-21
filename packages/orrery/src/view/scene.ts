@@ -1,7 +1,6 @@
-import type { Scenario } from "@cpluspatch/orbit";
-import { sortByDepth, unixMsToJ2000s, worldStates } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
+import type { World } from "../world.ts";
 import { createBodies } from "./bodies.ts";
 import { createRig } from "./camera.ts";
 import { createOrbits } from "./orbits.ts";
@@ -9,15 +8,13 @@ import { createTheme } from "./theme.ts";
 
 /** The 3D view drawn into a container. */
 export type View = {
-    /** Centres the view on a body. */
-    focus: (id: string) => void;
     destroy: () => void;
 };
 
-/** The 3D view of `scenario` in `container`, or `null` if WebGL isn't available. */
+/** The 3D view of `world` in `container`, or `null` if WebGL isn't available. */
 export const createView = (
     container: HTMLElement,
-    scenario: Scenario,
+    world: World,
 ): View | null => {
     let renderer: WebGLRenderer;
     try {
@@ -30,9 +27,9 @@ export const createView = (
         return null;
     }
 
-    const names = new Map(scenario.bodies.map((body) => [body.id, body.name]));
-    const order = sortByDepth(scenario);
-    const states = worldStates(scenario, order, unixMsToJ2000s(Date.now()));
+    const names = new Map(
+        world.scenario.bodies.map((body) => [body.id, body.name]),
+    );
 
     const scene = new Scene();
     const camera = new PerspectiveCamera(50, 1, 1e-6, 1e12);
@@ -51,16 +48,14 @@ export const createView = (
     });
     const orbits = createOrbits(
         scene,
-        order,
-        states,
+        world.order,
         theme.color,
         theme.background(),
     );
     const bodies = createBodies(
         scene,
         labels.domElement,
-        order,
-        states,
+        world.order,
         theme.color,
     );
 
@@ -80,7 +75,7 @@ export const createView = (
         if (!rig.moved()) rig.fit();
     };
 
-    const rig = createRig(camera, canvas, scenario, states);
+    const rig = createRig(camera, canvas, world.scenario, world.states());
     resize();
 
     const describe = () =>
@@ -98,10 +93,13 @@ export const createView = (
         const dt = Math.min((now - last) / 1000, 0.1);
         last = now;
 
-        rig.update(dt);
+        world.clock.tick(dt);
+        const states = world.states();
+
+        rig.update(dt, states);
         camera.updateMatrixWorld();
-        orbits.update(rig.origin());
-        bodies.update(camera, rig.origin(), rig.focusId());
+        orbits.update(rig.origin(), states);
+        bodies.update(camera, rig.origin(), rig.focusId(), states);
 
         renderer.render(scene, camera);
         labels.render(scene, camera);
@@ -111,12 +109,16 @@ export const createView = (
     const observer = new ResizeObserver(resize);
     observer.observe(container);
 
+    const unsubscribe = world.on((event) => {
+        if (event.type !== "focus") return;
+
+        rig.focus(event.id);
+        describe();
+    });
+
     return {
-        focus: (id) => {
-            rig.focus(id);
-            describe();
-        },
         destroy: () => {
+            unsubscribe();
             cancelAnimationFrame(frame);
             observer.disconnect();
             theme.stop();

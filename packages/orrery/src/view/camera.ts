@@ -22,8 +22,8 @@ export type Rig = {
     moved: () => boolean;
     /** Moves the view to a body, keeping the view direction. */
     focus: (id: string) => void;
-    /** Advances a focus move by `dt` seconds and updates the controls. */
-    update: (dt: number) => void;
+    /** Advances a focus move by `dt` seconds, follows the focus and updates the controls. */
+    update: (dt: number, states: Map<string, State>) => void;
     /** Removes the controls' listeners. */
     dispose: () => void;
 };
@@ -39,7 +39,7 @@ export const createRig = (
     camera: PerspectiveCamera,
     canvas: HTMLElement,
     scenario: Scenario,
-    states: Map<string, State>,
+    firstStates: Map<string, State>,
 ): Rig => {
     const byId = new Map(scenario.bodies.map((body) => [body.id, body]));
     const root = scenario.bodies.find((body) => body.parent === null);
@@ -51,6 +51,8 @@ export const createRig = (
 
         return body;
     };
+
+    let states = firstStates;
 
     const positionOf = (id: string): Vec3 => {
         const state = states.get(id);
@@ -143,7 +145,9 @@ export const createRig = (
                 minDistanceKm(body, fovRad),
             );
         },
-        update: (dt) => {
+        update: (dt, latest) => {
+            states = latest;
+
             if (move) {
                 move.elapsed += dt;
 
@@ -160,6 +164,8 @@ export const createRig = (
                     settle(move.id);
                     move = null;
                 }
+            } else {
+                Object.assign(origin, positionOf(focused));
             }
 
             controls.update();

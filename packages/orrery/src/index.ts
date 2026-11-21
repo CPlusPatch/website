@@ -3,10 +3,15 @@
  * The Orrery, an interactive model of the solar system drawn with three.js.
  */
 
-import { solarSystem } from "@cpluspatch/orbit";
+import { solarSystem, unixMsToJ2000s } from "@cpluspatch/orbit";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
+import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
+import { Clock, DEFAULT_RATE } from "./clock.ts";
 import { h } from "./ui/dom.ts";
+import { bindTimeShortcuts } from "./ui/shortcuts.ts";
+import { createTimeBar } from "./ui/time-bar.ts";
 import { createView } from "./view/scene.ts";
+import { World } from "./world.ts";
 
 /** A mounted Orrery. */
 export type Orrery = {
@@ -39,7 +44,14 @@ export const mount = (root: HTMLElement): Orrery => {
     const container = root.querySelector<HTMLElement>(".orrery__canvas");
     if (!container) throw new Error("The Orrery needs a .orrery__canvas.");
 
-    const view = createView(container, solarSystem);
+    const clock = new Clock(
+        unixMsToJ2000s(Date.now()),
+        DEFAULT_RATE,
+        reducedMotion(),
+    );
+    const world = new World(solarSystem, clock);
+
+    const view = createView(container, world);
     if (!view) {
         const alert = webglAlert();
         container.append(alert);
@@ -49,9 +61,15 @@ export const mount = (root: HTMLElement): Orrery => {
     const panels = root.querySelectorAll<HTMLElement>(".orrery__panel");
     for (const panel of panels) panel.hidden = false;
 
+    const timeBar = createTimeBar(world);
+    root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
+    const unbind = bindTimeShortcuts(world);
+
     return {
-        focus: view.focus,
+        focus: (id) => world.focus(id),
         destroy: () => {
+            unbind();
+            timeBar.destroy();
             view.destroy();
             for (const panel of panels) panel.hidden = true;
         },

@@ -8,7 +8,7 @@ import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 /** The orbit lines of a scene. */
 export type Orbits = {
     /** Moves each line to its parent's position relative to `origin`. */
-    update: (origin: Vec3) => void;
+    update: (origin: Vec3, states: Map<string, State>) => void;
     /** Sets the line width's screen size. */
     resize: (width: number, height: number) => void;
     /** Recolours the lines and their casings. */
@@ -29,7 +29,6 @@ const CASING_PX = 4;
 export const createOrbits = (
     scene: Scene,
     bodies: Body[],
-    states: Map<string, State>,
     color: (body: Body) => Color,
     background: Color,
 ): Orbits => {
@@ -72,7 +71,7 @@ export const createOrbits = (
     }
 
     return {
-        update: (origin) => {
+        update: (origin, states) => {
             for (const { parent, line, casing } of orbits) {
                 const r = states.get(parent)?.r;
                 if (!r) continue;
