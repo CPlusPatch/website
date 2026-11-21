@@ -10,6 +10,12 @@ import { effects } from "../data/home.ts";
 import Layout from "../layouts/desktop.astro";
 
 const actions = [
+    { action: "add-body", label: "Add body", icon: "lucide:plus" },
+    {
+        action: "remove-body",
+        label: "Remove selected body",
+        icon: "lucide:trash-2",
+    },
     { action: "reset", label: "Reset", icon: "lucide:rotate-ccw" },
     { action: "import", label: "Import JSON", icon: "lucide:upload" },
     { action: "export", label: "Export JSON", icon: "lucide:download" },

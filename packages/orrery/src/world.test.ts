@@ -1,11 +1,12 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/orbit";
+import { type Body, solarSystem } from "@cpluspatch/orbit";
 import {
     assert,
     assertEquals,
     assertNotEquals,
     assertThrows,
 } from "@std/assert";
+import { newBody } from "./adding.ts";
 import { Clock } from "./clock.ts";
 import { World, type WorldEvent } from "./world.ts";
 
@@ -219,4 +220,135 @@ Deno.test("loading a scenario resets the selection and focus, and sets the clock
     assertEquals(world.focused, "sun");
     assertEquals(world.clock.t, 500);
     assertEquals(world.states().has("mars"), false);
+});
+
+const rock = (id: string, parent: string): Body => {
+    const body = solarSystem.bodies.find(
+        (candidate) => candidate.id === "moon",
+    );
+    if (!body?.elements) throw new Error("The scenario has no Moon.");
+
+    return { ...body, id, name: id, parent };
+};
+
+Deno.test("adding a body emits one scenario event and keeps focus and selection", () => {
+    const world = make();
+    world.focus("earth");
+    world.select("mars");
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    world.addBody(rock("rock", "moon"));
+
+    assertEquals(events, [{ type: "scenario" }]);
+    assert(world.scenario.bodies.some((body) => body.id === "rock"));
+    assertEquals(world.order.at(-1)?.id, "rock");
+    assert(world.states().has("rock"));
+    assertEquals(world.focused, "earth");
+    assertEquals(world.selected, "mars");
+});
+
+Deno.test("adding a body with a bad parent or a taken id throws and emits nothing", () => {
+    const world = make();
+    const before = world.scenario;
+    let count = 0;
+    world.on(() => count++);
+
+    assertThrows(() => world.addBody(rock("rock", "nowhere")));
+    assertThrows(() => world.addBody(rock("moon", "earth")));
+
+    assert(world.scenario === before);
+    assertEquals(count, 0);
+});
+
+Deno.test("adding a body made by newBody works", () => {
+    const world = make();
+    const earth = world.scenario.bodies.find((body) => body.id === "earth");
+    if (!earth) throw new Error("The scenario has no Earth.");
+
+    world.addBody(
+        newBody(
+            {
+                id: "probe",
+                name: "Probe",
+                kind: "spacecraft",
+                parent: earth,
+                radiusKm: 1,
+                massKg: 0,
+                aKm: 20000,
+                e: 0,
+                iDeg: 0,
+            },
+            world.clock.t,
+        ),
+    );
+
+    assert(world.scenario.bodies.some((body) => body.id === "probe"));
+});
+
+Deno.test("removing a body removes the bodies that orbit it, in one event", () => {
+    const world = make();
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    world.removeBody("earth");
+
+    const ids = world.scenario.bodies.map((body) => body.id);
+    assertEquals(events, [{ type: "scenario" }]);
+    assert(!ids.includes("earth"));
+    assert(!ids.includes("moon"));
+    assert(!ids.includes("iss"));
+    assert(ids.includes("mars"));
+    assertEquals(world.order.length, ids.length);
+});
+
+Deno.test("removing the focused body's ancestor moves the focus to its parent", () => {
+    const world = make();
+    world.focus("moon");
+
+    world.removeBody("earth");
+
+    assertEquals(world.focused, "sun");
+});
+
+Deno.test("removing another body leaves the focus alone", () => {
+    const world = make();
+    world.focus("mars");
+
+    world.removeBody("earth");
+
+    assertEquals(world.focused, "mars");
+});
+
+Deno.test("removing the selected body or one above it clears the selection", () => {
+    const world = make();
+    world.select("moon");
+    world.removeBody("moon");
+    assertEquals(world.selected, null);
+
+    world.select("iss");
+    world.removeBody("earth");
+    assertEquals(world.selected, null);
+});
+
+Deno.test("removing another body keeps the selection", () => {
+    const world = make();
+    world.select("mars");
+
+    world.removeBody("earth");
+
+    assertEquals(world.selected, "mars");
+});
+
+Deno.test("removing the root or an unknown body throws and emits nothing", () => {
+    const world = make();
+    const before = world.scenario;
+    let count = 0;
+    world.on(() => count++);
+
+    assertThrows(() => world.removeBody("sun"));
+    assertThrows(() => world.removeBody("nowhere"));
+
+    assert(world.scenario === before);
+    assertEquals(count, 0);
 });

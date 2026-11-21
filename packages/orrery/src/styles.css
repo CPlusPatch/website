@@ -533,4 +533,33 @@
             margin: 0;
         }
     }
+
+    .orrery__form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: var(--space-md);
+    }
+
+    .orrery__field {
+        display: grid;
+        gap: var(--space-xs);
+        align-content: start;
+
+        label {
+            font: var(--type-label);
+        }
+
+        .field,
+        .select {
+            inline-size: 100%;
+        }
+    }
+
+    .orrery__field--wide {
+        grid-column: 1 / -1;
+    }
+
+    .orrery__form-error[hidden] {
+        display: none;
+    }
 }

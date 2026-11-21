@@ -6,7 +6,13 @@ import type {
     Scenario,
     State,
 } from "@cpluspatch/orbit";
-import { applyBurn, sortByDepth, worldStates } from "@cpluspatch/orbit";
+import {
+    applyBurn,
+    sortByDepth,
+    validateScenario,
+    worldStates,
+} from "@cpluspatch/orbit";
+import { subtreeIds } from "./adding.ts";
 import type { Clock } from "./clock.ts";
 
 /** What a listener of a `World` is told about. */
@@ -107,6 +113,42 @@ export class World {
         this.#emit({ type: "scenario" });
     }
 
+    /** Adds `body` to the scenario, or throws why it can't. Keeps the focus and selection. */
+    addBody(body: Body): void {
+        const result = validateScenario({
+            ...this.#scenario,
+            bodies: [...this.#scenario.bodies, body],
+        });
+        if (!result.ok) throw new Error(result.errors.join(" "));
+
+        this.#replace(result.scenario);
+        this.#emit({ type: "scenario" });
+    }
+
+    /** Removes body `id` and every body that orbits it. */
+    removeBody(id: string): void {
+        this.#check(id);
+
+        const body = this.#scenario.bodies.find(
+            (candidate) => candidate.id === id,
+        );
+        if (!body?.parent) throw new Error(`"${id}" is the root.`);
+
+        const gone = new Set(subtreeIds(this.#scenario, id));
+
+        this.#replace({
+            ...this.#scenario,
+            bodies: this.#scenario.bodies.filter(
+                (candidate) => !gone.has(candidate.id),
+            ),
+        });
+        if (gone.has(this.focused)) this.focused = body.parent;
+        if (this.selected !== null && gone.has(this.selected)) {
+            this.selected = null;
+        }
+        this.#emit({ type: "scenario" });
+    }
+
     /** Replaces the orbit of body `id`. */
     setElements(id: string, el: Elements): void {
         const body = this.#scenario.bodies.find(
@@ -153,6 +195,12 @@ export class World {
         this.setElements(id, result.elements);
 
         return { ok: true };
+    }
+
+    #replace(scenario: Scenario): void {
+        this.#scenario = scenario;
+        this.#order = sortByDepth(scenario);
+        this.#cache = null;
     }
 
     #check(id: string): void {
