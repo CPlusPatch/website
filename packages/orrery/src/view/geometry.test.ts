@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 import { AU, type Body, solarSystem } from "@cpluspatch/orbit";
-import { assertAlmostEquals, assertEquals } from "@std/assert";
+import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
     ease,
     fitDistanceKm,
@@ -310,7 +310,7 @@ Deno.test("easing starts and ends at rest and clamps outside 0 to 1", () => {
     assertAlmostEquals(ease(0.5), 0.5);
 });
 
-Deno.test("a focus move lands on the target and is halfway by ratio at the middle", () => {
+Deno.test("a focus move lands on the target, halfway by ratio at the middle, moved as far as the distance", () => {
     const from = { distance: 100, position: { x: 0, y: 0, z: 0 } };
     const to = { distance: 400, position: { x: 10, y: -20, z: 30 } };
 
@@ -324,7 +324,120 @@ Deno.test("a focus move lands on the target and is halfway by ratio at the middl
     const middle = focusTween(from, to, 0.5);
 
     assertAlmostEquals(middle.distance, 200);
-    assertAlmostEquals(middle.position.x, 5);
-    assertAlmostEquals(middle.position.y, -10);
-    assertAlmostEquals(middle.position.z, 15);
+    assertAlmostEquals(middle.position.x, 10 / 3);
+    assertAlmostEquals(middle.position.y, -20 / 3);
+    assertAlmostEquals(middle.position.z, 10);
+});
+
+Deno.test("zooming in on a focus never pushes the target further across the screen", () => {
+    const from = { distance: 1000, position: { x: 0, y: 0, z: 0 } };
+    const to = { distance: 1, position: { x: 500, y: 0, z: 0 } };
+
+    for (let s = 0; s <= 1; s += 0.05) {
+        const pose = focusTween(from, to, s);
+        const offScreen = (to.position.x - pose.position.x) / pose.distance;
+
+        assert(offScreen <= 0.5 + 1e-9);
+    }
+});
+
+Deno.test("a focus move between equal distances moves by the eased progress", () => {
+    const pose = { distance: 5, position: { x: 0, y: 0, z: 0 } };
+    const to = { distance: 5, position: { x: 8, y: 0, z: 0 } };
+
+    assertAlmostEquals(focusTween(pose, to, 0.5).position.x, 4);
+});
+
+Deno.test("a label keeps the side it had when it still fits there", () => {
+    const labels = [box("sun", 100, 100, 1e9), box("moon", 108, 101, 1)];
+    const previous = new Map([["moon", "left" as const]]);
+
+    const placements = placeLabels(labels, view, "x", [], ["moon"], previous);
+
+    assertEquals(placements.get("moon"), "left");
+    assertEquals(placements.get("sun"), "right");
+    assertEquals(
+        placeLabels(
+            [box("a", 100, 100, 1)],
+            view,
+            "x",
+            [],
+            [],
+            new Map([["a", "left" as const]]),
+        ).get("a"),
+        "left",
+    );
+    assertEquals(
+        placeLabels(
+            [box("a", 20, 100, 1)],
+            view,
+            "x",
+            [],
+            [],
+            new Map([["a", "left" as const]]),
+        ).get("a"),
+        "right",
+    );
+});
+
+Deno.test("the selection's label is placed right after the focus's, and hides a bigger body's label it touches", () => {
+    const labels = [box("sun", 100, 100, 1e9), box("moon", 108, 101, 1)];
+
+    assertEquals(placeLabels(labels, view, "x").get("moon"), "left");
+    assertEquals(
+        placeLabels(labels, view, "x", [], ["moon"]).get("moon"),
+        "right",
+    );
+    assertEquals(
+        placeLabels(labels, view, "x", [], ["moon"]).get("sun"),
+        "left",
+    );
+});
+
+Deno.test("the focus is placed before the selection", () => {
+    const labels = [box("a", 100, 100, 1), box("b", 108, 101, 1e9)];
+    const placements = placeLabels(labels, view, "a", [], ["b"]);
+
+    assertEquals(placements.get("a"), "right");
+    assertEquals(placements.get("b"), "left");
+});
+
+Deno.test("the selection's label isn't hidden for sitting on a larger body's anchor", () => {
+    const labels = [
+        box("earth", 300, 300, 6.4e6),
+        box("moon", 303, 302, 1.7e6),
+    ];
+
+    assertEquals(placeLabels(labels, view, "x").get("moon"), "hidden");
+    assertEquals(
+        placeLabels(labels, view, "x", [], ["moon"]).get("moon"),
+        "right",
+    );
+});
+
+Deno.test("the selection's label is still drawn when markers block both sides", () => {
+    const labels = [box("moon", 400, 300, 1)];
+    const dots = [
+        { id: "a", x: 430, y: 300, size: 5 },
+        { id: "b", x: 370, y: 300, size: 5 },
+    ];
+
+    assertEquals(placeLabels(labels, view, "x", dots).get("moon"), "hidden");
+    assertEquals(
+        placeLabels(labels, view, "x", dots, ["moon"]).get("moon"),
+        "right",
+    );
+});
+
+Deno.test("a hovered body's label shows like the selection's, after it", () => {
+    const labels = [
+        box("earth", 300, 300, 6.4e6),
+        box("moon", 303, 302, 1.7e6),
+        box("probe", 309, 301, 1),
+    ];
+    const placements = placeLabels(labels, view, "x", [], ["moon", "probe"]);
+
+    assertEquals(placeLabels(labels, view, "x").get("probe"), "hidden");
+    assertEquals(placements.get("moon"), "right");
+    assertEquals(placements.get("probe"), "left");
 });

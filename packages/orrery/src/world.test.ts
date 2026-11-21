@@ -77,3 +77,34 @@ Deno.test("focusing an unknown body throws and changes nothing", () => {
     assertEquals(world.focused, "sun");
     assertEquals(count, 0);
 });
+
+Deno.test("nothing is selected at first", () => {
+    assertEquals(make().selected, null);
+});
+
+Deno.test("selecting a body emits one event, and null clears it", () => {
+    const world = make();
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    world.select("moon");
+    world.select(null);
+
+    assertEquals(events, [
+        { type: "selection", id: "moon" },
+        { type: "selection", id: null },
+    ]);
+    assertEquals(world.selected, null);
+});
+
+Deno.test("selecting an unknown body throws and changes nothing", () => {
+    const world = make();
+    world.select("earth");
+    let count = 0;
+    world.on(() => count++);
+
+    assertThrows(() => world.select("nowhere"));
+
+    assertEquals(world.selected, "earth");
+    assertEquals(count, 0);
+});

@@ -7,8 +7,10 @@ import { solarSystem, unixMsToJ2000s } from "@cpluspatch/orbit";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { Clock, DEFAULT_RATE } from "./clock.ts";
+import { createBodyList } from "./ui/body-list.ts";
 import { h } from "./ui/dom.ts";
-import { bindTimeShortcuts } from "./ui/shortcuts.ts";
+import { createInspector } from "./ui/inspector.ts";
+import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
 import { createView } from "./view/scene.ts";
 import { World } from "./world.ts";
@@ -17,6 +19,8 @@ import { World } from "./world.ts";
 export type Orrery = {
     /** Centres the view on a body. */
     focus: (id: string) => void;
+    /** Selects a body, or clears the selection with `null`. */
+    select: (id: string | null) => void;
     destroy: () => void;
 };
 
@@ -55,7 +59,11 @@ export const mount = (root: HTMLElement): Orrery => {
     if (!view) {
         const alert = webglAlert();
         container.append(alert);
-        return { focus: () => {}, destroy: () => alert.remove() };
+        return {
+            focus: () => {},
+            select: () => {},
+            destroy: () => alert.remove(),
+        };
     }
 
     const panels = root.querySelectorAll<HTMLElement>(".orrery__panel");
@@ -63,13 +71,20 @@ export const mount = (root: HTMLElement): Orrery => {
 
     const timeBar = createTimeBar(world);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
-    const unbind = bindTimeShortcuts(world);
+    const bodyList = createBodyList(world);
+    root.querySelector(".orrery__panel--left")?.append(bodyList.element);
+    const inspector = createInspector(world, (id) => bodyList.focusRow(id));
+    root.querySelector(".orrery__panel--right")?.append(inspector.element);
+    const unbind = bindShortcuts(world);
 
     return {
         focus: (id) => world.focus(id),
+        select: (id) => world.select(id),
         destroy: () => {
             unbind();
             timeBar.destroy();
+            bodyList.destroy();
+            inspector.destroy();
             view.destroy();
             for (const panel of panels) panel.hidden = true;
         },

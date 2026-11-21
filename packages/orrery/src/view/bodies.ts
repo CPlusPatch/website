@@ -25,20 +25,27 @@ import {
     LABEL_ANCHOR_GAP_PX,
     type LabelBox,
     type MarkerPoint,
+    type Placement,
     placeLabels,
     projectedRadiusPx,
     type Sphere,
 } from "./geometry.ts";
+import { type LabelRect, type PickPoint, pickLabel } from "./picking.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
-    /** Places every body relative to `origin` and picks what to show. */
+    /** Places every body relative to `origin` and picks what to show. Returns where the shown bodies are on screen. */
     update: (
         camera: PerspectiveCamera,
         origin: Vec3,
         focus: string,
+        selected: string | null,
         states: Map<string, State>,
-    ) => void;
+    ) => PickPoint[];
+    /** The body whose shown label holds a point, in px from the canvas's top left. */
+    labelAt: (x: number, y: number, canvas: DOMRect) => string | null;
+    /** Marks the label of the hovered body, or clears it. */
+    hover: (id: string | null) => void;
     /** Sizes the markers for a viewport. */
     resize: (camera: PerspectiveCamera, width: number, height: number) => void;
     /** Recolours the bodies. */
@@ -186,9 +193,18 @@ export const createBodies = (
             marker.renderOrder = rank + 1;
         });
 
+    // The selected label is bold, so it's wider.
+    let selectedId: string | null = null;
+    let hoverId: string | null = null;
+    let placements = new Map<string, Placement>();
+
     const measure = () => {
         for (const entry of entries) {
             probe.textContent = entry.body.name;
+            probe.classList.toggle(
+                "orrery__label--selected",
+                entry.body.id === selectedId,
+            );
             entry.text = {
                 width: probe.offsetWidth,
                 height: probe.offsetHeight,
@@ -211,13 +227,25 @@ export const createBodies = (
     let size = { width: 1, height: 1 };
 
     return {
-        update: (camera, origin, focus, states) => {
+        update: (camera, origin, focus, selected, states) => {
+            if (selected !== selectedId) {
+                selectedId = selected;
+                for (const { body, label } of entries) {
+                    label.element.classList.toggle(
+                        "orrery__label--selected",
+                        body.id === selected,
+                    );
+                }
+                measure();
+            }
+
             const fov = (camera.fov * Math.PI) / 180;
             const anchors: Anchor[] = [];
             const spheres: Sphere[] = [];
             const labels: LabelBox[] = [];
             const markers: MarkerPoint[] = [];
             const dots: Dot[] = [];
+            const picks: PickPoint[] = [];
 
             for (const entry of entries) {
                 const { body, group, sphere, marker, halo, label } = entry;
@@ -266,6 +294,13 @@ export const createBodies = (
                 const x = (view.x * 0.5 + 0.5) * size.width;
                 const y = (0.5 - view.y * 0.5) * size.height;
 
+                picks.push({
+                    id: body.id,
+                    x,
+                    y,
+                    depth,
+                    radius: big ? radiusPx : markerPx(body) / 2,
+                });
                 anchors.push({ id: body.id, pos });
                 labels.push({
                     id: body.id,
@@ -290,13 +325,16 @@ export const createBodies = (
             }
 
             const keep = new Set([focus]);
+            if (selected) keep.add(selected);
             const behind = hiddenBehindSpheres(anchors, spheres, keep);
             const covered = hiddenMarkers(markers, keep);
-            const placements = placeLabels(
+            placements = placeLabels(
                 labels.filter(({ id }) => !behind.has(id)),
                 size,
                 focus,
                 dots.filter(({ id }) => !covered.has(id)),
+                [selected, hoverId].filter((id) => id !== null),
+                placements,
             );
 
             for (const entry of entries) {
@@ -317,6 +355,38 @@ export const createBodies = (
             }
 
             if (rootGroup) sun.position.copy(rootGroup.position);
+
+            return picks.filter(
+                ({ id }) => !behind.has(id) && !covered.has(id),
+            );
+        },
+        labelAt: (x, y, canvas) => {
+            const rects: LabelRect[] = [];
+            for (const { body, label } of entries) {
+                if (!label.visible) continue;
+
+                const box = label.element.getBoundingClientRect();
+                rects.push({
+                    id: body.id,
+                    left: box.left - canvas.left,
+                    top: box.top - canvas.top,
+                    right: box.right - canvas.left,
+                    bottom: box.bottom - canvas.top,
+                });
+            }
+
+            return pickLabel(rects, x, y);
+        },
+        hover: (id) => {
+            if (id === hoverId) return;
+
+            hoverId = id;
+            for (const { body, label } of entries) {
+                label.element.classList.toggle(
+                    "orrery__label--hover",
+                    body.id === id,
+                );
+            }
         },
         resize: (camera, width, height) => {
             size = { width, height };

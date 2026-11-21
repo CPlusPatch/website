@@ -4,6 +4,8 @@ import type { World } from "../world.ts";
 import { createBodies } from "./bodies.ts";
 import { createRig } from "./camera.ts";
 import { createOrbits } from "./orbits.ts";
+import { type PickPoint, pickBody } from "./picking.ts";
+import { bindPointer } from "./pointer.ts";
 import { createTheme } from "./theme.ts";
 
 /** The 3D view drawn into a container. */
@@ -75,6 +77,18 @@ export const createView = (
         if (!rig.moved()) rig.fit();
     };
 
+    let points: PickPoint[] = [];
+    const unbindPointer = bindPointer(canvas, {
+        // A visible label names its body, so it wins over a nearby marker.
+        pick: (x, y) =>
+            bodies.labelAt(x, y, canvas.getBoundingClientRect()) ??
+            pickBody(points, x, y),
+        select: (id) => world.select(id),
+        focus: (id) => world.focus(id),
+        hover: (id) => bodies.hover(id),
+    });
+    orbits.highlight(world.selected);
+
     const rig = createRig(camera, canvas, world.scenario, world.states());
     resize();
 
@@ -99,7 +113,13 @@ export const createView = (
         rig.update(dt, states);
         camera.updateMatrixWorld();
         orbits.update(rig.origin(), states);
-        bodies.update(camera, rig.origin(), rig.focusId(), states);
+        points = bodies.update(
+            camera,
+            rig.origin(),
+            rig.focusId(),
+            world.selected,
+            states,
+        );
 
         renderer.render(scene, camera);
         labels.render(scene, camera);
@@ -110,15 +130,18 @@ export const createView = (
     observer.observe(container);
 
     const unsubscribe = world.on((event) => {
-        if (event.type !== "focus") return;
-
-        rig.focus(event.id);
-        describe();
+        if (event.type === "selection") {
+            orbits.highlight(event.id);
+        } else if (event.type === "focus") {
+            rig.focus(event.id);
+            describe();
+        }
     });
 
     return {
         destroy: () => {
             unsubscribe();
+            unbindPointer();
             cancelAnimationFrame(frame);
             observer.disconnect();
             theme.stop();

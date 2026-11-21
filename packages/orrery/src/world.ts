@@ -3,14 +3,18 @@ import { sortByDepth, worldStates } from "@cpluspatch/orbit";
 import type { Clock } from "./clock.ts";
 
 /** What a listener of a `World` is told about. */
-export type WorldEvent = { type: "focus"; id: string } | { type: "clock" };
+export type WorldEvent =
+    | { type: "focus"; id: string }
+    | { type: "selection"; id: string | null }
+    | { type: "clock" };
 
-/** The scenario, the clock and what's focused. */
+/** The scenario, the clock, what's focused and what's selected. */
 export class World {
     readonly clock: Clock;
     readonly scenario: Scenario;
     readonly order: Body[];
     focused: string;
+    selected: string | null = null;
 
     #listeners = new Set<(e: WorldEvent) => void>();
     #cache: { t: number; states: Map<string, State> } | null = null;
@@ -49,12 +53,17 @@ export class World {
     }
 
     focus(id: string): void {
-        if (!this.scenario.bodies.some((body) => body.id === id)) {
-            throw new Error(`There is no body "${id}".`);
-        }
+        this.#check(id);
 
         this.focused = id;
         this.#emit({ type: "focus", id });
+    }
+
+    select(id: string | null): void {
+        if (id !== null) this.#check(id);
+
+        this.selected = id;
+        this.#emit({ type: "selection", id });
     }
 
     setClock(change: { t?: number; rate?: number; paused?: boolean }): void {
@@ -63,6 +72,12 @@ export class World {
         if (change.paused !== undefined) this.clock.paused = change.paused;
 
         this.#emit({ type: "clock" });
+    }
+
+    #check(id: string): void {
+        if (!this.scenario.bodies.some((body) => body.id === id)) {
+            throw new Error(`There is no body "${id}".`);
+        }
     }
 
     #emit(event: WorldEvent): void {

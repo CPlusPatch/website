@@ -9,6 +9,8 @@ import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 export type Orbits = {
     /** Moves each line to its parent's position relative to `origin`. */
     update: (origin: Vec3, states: Map<string, State>) => void;
+    /** Draws the orbit of a body, or of none, thicker. */
+    highlight: (id: string | null) => void;
     /** Sets the line width's screen size. */
     resize: (width: number, height: number) => void;
     /** Recolours the lines and their casings. */
@@ -23,7 +25,11 @@ type Orbit = { body: Body; parent: string; line: Line2; casing: Line2 };
 const SAMPLES = 2048;
 
 const LINE_PX = 1.5;
+const SELECTED_LINE_PX = 2.5;
 const CASING_PX = 4;
+
+/** The casing is the line plus a margin, so it grows with the line. */
+const casingPx = (linePx: number): number => CASING_PX + (linePx - LINE_PX);
 
 /** One line per body that has an orbit, in km. */
 export const createOrbits = (
@@ -58,7 +64,7 @@ export const createOrbits = (
         const casing = new Line2(
             geometry,
             new LineMaterial({
-                linewidth: CASING_PX,
+                linewidth: casingPx(LINE_PX),
                 transparent: true,
                 depthWrite: false,
                 color: background,
@@ -82,6 +88,13 @@ export const createOrbits = (
                     (r.z - origin.z) / 1000,
                 );
                 casing.position.copy(line.position);
+            }
+        },
+        highlight: (id) => {
+            for (const { body, line, casing } of orbits) {
+                const px = body.id === id ? SELECTED_LINE_PX : LINE_PX;
+                line.material.linewidth = px;
+                casing.material.linewidth = casingPx(px);
             }
         },
         resize: (width, height) => {

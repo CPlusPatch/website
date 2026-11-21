@@ -117,23 +117,31 @@ export type Placement = "right" | "left" | "hidden";
 export const LABEL_ANCHOR_GAP_PX = 6;
 
 /**
- * Where each label goes. The focus is placed first, then larger bodies before smaller.
+ * Where each label goes. The focus is placed first, then each of `pinned` (the selection,
+ * then the hovered body) in order, then larger bodies before smaller.
  * A label tries the right of its anchor, then the left, and hides if both run
  * off the viewport or touch a larger body's label. It also hides when its anchor
  * is on top of an earlier label's anchor, and never covers another body's dot.
- * The focus is never hidden.
+ * The focus is never hidden, and a pinned label only when it's off screen.
+ * A label tries the side it had in `previous` first, so it doesn't jump when the selection changes.
  */
 export const placeLabels = (
     labels: LabelBox[],
     viewport: { width: number; height: number },
     focus: string,
     dots: Dot[] = [],
+    pinned: readonly string[] = [],
+    previous: ReadonlyMap<string, Placement> = new Map(),
 ): Map<string, Placement> => {
     const placements = new Map<string, Placement>();
     const placed: Box[] = [];
     const anchors: { x: number; y: number }[] = [];
     const priority = (label: LabelBox) =>
-        label.id === focus ? Infinity : label.radius;
+        label.id === focus
+            ? Infinity
+            : pinned.includes(label.id)
+              ? Number.MAX_VALUE / (pinned.indexOf(label.id) + 1)
+              : label.radius;
 
     for (const label of [...labels].sort((a, b) => priority(b) - priority(a))) {
         const { id, x, y, width, height, offset } = label;
@@ -154,9 +162,11 @@ export const placeLabels = (
             y < -margin ||
             y > viewport.height + margin;
         // From far away a moon sits on its planet, and two labels on one dot read as one body.
-        const stacked = anchors.some(
-            (other) => Math.hypot(other.x - x, other.y - y) < MARKER_GAP_PX,
-        );
+        const stacked =
+            !pinned.includes(id) &&
+            anchors.some(
+                (other) => Math.hypot(other.x - x, other.y - y) < MARKER_GAP_PX,
+            );
         if (outside || stacked) {
             placements.set(id, "hidden");
             continue;
@@ -195,13 +205,14 @@ export const placeLabels = (
                     dot.y - dot.size < box.bottom,
             );
 
-        const placement: Placement = free(right, right.right <= viewport.width)
-            ? "right"
-            : free(left, left.left >= 0)
-              ? "left"
-              : id === focus
-                ? "right"
-                : "hidden";
+        const fitsRight = free(right, right.right <= viewport.width);
+        const fitsLeft = free(left, left.left >= 0);
+        const placement: Placement =
+            fitsLeft && (previous.get(id) === "left" || !fitsRight)
+                ? "left"
+                : fitsRight || id === focus || pinned.includes(id)
+                  ? "right"
+                  : "hidden";
 
         placements.set(id, placement);
         if (placement !== "hidden") {
@@ -279,19 +290,27 @@ export const ease = (s: number): number => {
     return c * c * (3 - 2 * c);
 };
 
-/** The pose at progress `s` between two poses: distance by ratio, position by difference. */
+/** The pose at progress `s` between two poses: distance by ratio, position by the distance covered. */
 export const focusTween = (from: Pose, to: Pose, s: number): Pose => {
     const k = ease(s);
+    if (k === 1) return { distance: to.distance, position: { ...to.position } };
+
+    const distance = Math.exp(
+        Math.log(from.distance) +
+            (Math.log(to.distance) - Math.log(from.distance)) * k,
+    );
+    // Moving by `k` while the zoom runs by ratio leaves the target off screen until the end.
+    const p =
+        to.distance === from.distance
+            ? k
+            : (distance - from.distance) / (to.distance - from.distance);
 
     return {
-        distance: Math.exp(
-            Math.log(from.distance) +
-                (Math.log(to.distance) - Math.log(from.distance)) * k,
-        ),
+        distance,
         position: {
-            x: from.position.x + (to.position.x - from.position.x) * k,
-            y: from.position.y + (to.position.y - from.position.y) * k,
-            z: from.position.z + (to.position.z - from.position.z) * k,
+            x: from.position.x + (to.position.x - from.position.x) * p,
+            y: from.position.y + (to.position.y - from.position.y) * p,
+            z: from.position.z + (to.position.z - from.position.z) * p,
         },
     };
 };
