@@ -1,5 +1,4 @@
 import { iconSvg } from "@cpluspatch/ui";
-import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { fill } from "@cpluspatch/ui/lib/media.ts";
 import {
     A_MAX,
@@ -19,6 +18,7 @@ import {
 } from "../editing.ts";
 import type { World } from "../world.ts";
 import { h } from "./dom.ts";
+import { createWarning } from "./warning.ts";
 
 /** The Orbit section's element and how to update and remove it. */
 export type ElementEditor = {
@@ -60,40 +60,6 @@ const SCALES: Record<
 };
 
 const DEGREES = 180 / Math.PI;
-
-// Lucide's triangle-alert (ISC); @cpluspatch/ui only ships the icons its components draw.
-const TRIANGLE_ALERT =
-    '<svg class="icon" width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4m0 4h.01"/></svg>';
-
-const warning = (): { element: HTMLElement; text: HTMLElement } => {
-    const text = h("span");
-    const element = h(
-        "div",
-        {
-            class: `${alertClasses({ variant: "warning", icon: true }).join(" ")} orrery__warning`,
-            role: "status",
-        },
-        h(
-            "div",
-            { class: "content" },
-            h(
-                "p",
-                {},
-                h(
-                    "span",
-                    { class: "visually-hidden" },
-                    alertPrefix("warning") ?? "",
-                ),
-                " ",
-                text,
-            ),
-        ),
-    );
-    element.insertAdjacentHTML("afterbegin", TRIANGLE_ALERT);
-    element.hidden = true;
-
-    return { element, text };
-};
 
 /** The Orbit section for body `id`, or `null` if it has no orbit to edit. */
 export const createElementEditor = (
@@ -175,7 +141,8 @@ export const createElementEditor = (
         };
     });
 
-    const alert = warning();
+    const alert = createWarning();
+    alert.element.classList.add("orrery__warning--sticky");
 
     // A range keeps focus after a drag, so only a drag or keyboard focus counts.
     const busy = (row: Row, control: HTMLInputElement): boolean =>

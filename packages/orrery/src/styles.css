@@ -354,21 +354,32 @@
         }
     }
 
-    /* Sticks to the card's bottom, so it shows even when the card needs scrolling. */
     .orrery__warning {
-        position: sticky;
-        inset-block-end: 0;
         margin-block-start: var(--space-md);
         /* Compact, since it holds one sentence. */
         gap: var(--space-sm);
         padding: var(--space-sm);
-        background-color: var(--color-surface-raised);
-        /* Covers the gap above it, so rows scrolling under don't show cut through. */
-        box-shadow: 0 calc(-1 * var(--space-md)) 0 var(--color-surface-raised);
 
         &[hidden] {
             display: none;
         }
+    }
+
+    /* Equal columns, so buttons that wrap still line up. */
+    .orrery__burn-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+        margin-block-start: var(--space-md);
+        gap: var(--space-xs);
+    }
+
+    /* Sticks to the card's bottom, so it shows even when the card needs scrolling. */
+    .orrery__warning--sticky {
+        position: sticky;
+        inset-block-end: 0;
+        background-color: var(--color-surface-raised);
+        /* Covers the gap above it, so rows scrolling under don't show cut through. */
+        box-shadow: 0 calc(-1 * var(--space-md)) 0 var(--color-surface-raised);
     }
 
     .orrery__editor-row {
@@ -401,5 +412,89 @@
         inline-size: 12ch;
         /* Chrome sizes the field by its text, so the row would shift as the value changes. */
         font-variant-numeric: tabular-nums;
+    }
+
+    .orrery__editor-hint {
+        margin: 0;
+        color: var(--color-text-muted);
+        font: var(--type-caption);
+    }
+
+    /* The positioned ancestor of the visually hidden text, which would otherwise widen the card's scroll. */
+    .orrery__burn {
+        position: relative;
+
+        /* Without this the row is as wide as the input's own size, so it overflows the card. */
+        .orrery__editor-row {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        /* Fill the row, so the three controls span the card. */
+        .orrery__editor-number {
+            flex: 1;
+            inline-size: auto;
+            min-inline-size: 0;
+            appearance: textfield;
+
+            &::-webkit-inner-spin-button,
+            &::-webkit-outer-spin-button {
+                appearance: none;
+                margin: 0;
+            }
+        }
+    }
+
+    .orrery__burn-dv {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-inline-size: 0;
+    }
+
+    .orrery__burn-step {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-block-end: var(--space-md);
+        color: var(--color-text-muted);
+        font: var(--type-ui);
+    }
+
+    .orrery__burn-pending {
+        margin-inline-end: auto;
+        color: var(--color-text-muted);
+        font: var(--type-caption);
+    }
+
+    .orrery__burn-heading {
+        margin: 0;
+        color: var(--color-text-muted);
+        font: var(--type-label);
+    }
+
+    /* Sticks to the card's bottom, so the result and Apply show while the inputs scroll. */
+    .orrery__burn-footer {
+        position: sticky;
+        display: grid;
+        gap: var(--space-md);
+        margin-block-start: var(--space-md);
+        /* A rule like the summaries', so rows sliced under it read as scrolled. */
+        border-block-start: var(--border-width) solid var(--color-border);
+        padding-block-start: var(--space-md);
+        /* Reaches over the card's bottom padding, so rows scrolling under can't show or take clicks there. */
+        inset-block-end: calc(-1 * var(--space-sm));
+        margin-block-end: calc(-1 * var(--space-sm));
+        padding-block-end: var(--space-sm);
+        background-color: var(--color-surface-raised);
+
+        &[hidden] {
+            display: none;
+        }
+
+        .orrery__warning,
+        .orrery__burn-actions {
+            justify-items: start;
+            margin: 0;
+        }
     }
 }

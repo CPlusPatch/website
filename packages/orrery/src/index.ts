@@ -73,7 +73,11 @@ export const mount = (root: HTMLElement): Orrery => {
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
     const bodyList = createBodyList(world);
     root.querySelector(".orrery__panel--left")?.append(bodyList.element);
-    const inspector = createInspector(world, (id) => bodyList.focusRow(id));
+    const inspector = createInspector(
+        world,
+        (id) => bodyList.focusRow(id),
+        view.ghost,
+    );
     root.querySelector(".orrery__panel--right")?.append(inspector.element);
     const unbind = bindShortcuts(world);
 

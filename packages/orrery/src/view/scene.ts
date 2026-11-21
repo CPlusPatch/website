@@ -1,3 +1,4 @@
+import type { Elements } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import type { World } from "../world.ts";
@@ -10,6 +11,8 @@ import { createTheme } from "./theme.ts";
 
 /** The 3D view drawn into a container. */
 export type View = {
+    /** Draws a dashed orbit for body `id`, or none with `null`. */
+    ghost: (id: string, elements: Elements | null) => void;
     destroy: () => void;
 };
 
@@ -142,6 +145,10 @@ export const createView = (
     });
 
     return {
+        ghost: (id, elements) => {
+            const body = world.order.find((candidate) => candidate.id === id);
+            if (body) orbits.ghost(body, elements);
+        },
         destroy: () => {
             unsubscribe();
             unbindPointer();

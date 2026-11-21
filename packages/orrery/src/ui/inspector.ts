@@ -1,3 +1,4 @@
+import type { Elements } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -9,6 +10,7 @@ import {
 } from "../format.ts";
 import { type Readouts, readouts } from "../readouts.ts";
 import type { World } from "../world.ts";
+import { type BurnEditor, createBurnEditor } from "./burn-editor.ts";
 import { h } from "./dom.ts";
 import { createElementEditor, type ElementEditor } from "./element-editor.ts";
 
@@ -41,6 +43,8 @@ export const createInspector = (
     world: World,
     /** Takes keyboard focus when the inspector hides while it holds it. */
     restoreFocus: (id: string) => void,
+    /** Draws an orbit for a body, or none with `null`. */
+    ghost: (id: string, elements: Elements | null) => void,
 ): Inspector => {
     const names = new Map(
         world.scenario.bodies.map((body) => [body.id, body.name]),
@@ -76,12 +80,14 @@ export const createInspector = (
     let values: HTMLElement[] = [];
     let shown: string | null = null;
     let editor: ElementEditor | null = null;
+    let burn: BurnEditor | null = null;
 
     const refresh = () => {
         const id = world.selected;
         if (!id || values.length === 0) return;
 
         editor?.refresh();
+        burn?.refresh();
 
         const current = readouts(
             world.scenario,
@@ -112,6 +118,8 @@ export const createInspector = (
         list.hidden = true;
         editor?.destroy();
         editor = null;
+        burn?.destroy();
+        burn = null;
         if (!body) return;
 
         title.textContent = body.name;
@@ -131,6 +139,8 @@ export const createInspector = (
         }
         editor = createElementEditor(world, body.id);
         if (editor) element.append(...editor.elements);
+        burn = createBurnEditor(world, body.id, ghost);
+        if (burn) element.append(...burn.elements);
         refresh();
     };
     render();
@@ -149,6 +159,7 @@ export const createInspector = (
             off();
             clearInterval(interval);
             editor?.destroy();
+            burn?.destroy();
             element.remove();
         },
     };

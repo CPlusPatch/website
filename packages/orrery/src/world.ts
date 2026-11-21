@@ -1,5 +1,12 @@
-import type { Body, Elements, Scenario, State } from "@cpluspatch/orbit";
-import { sortByDepth, worldStates } from "@cpluspatch/orbit";
+import type {
+    Body,
+    Burn,
+    Elements,
+    ElementsResult,
+    Scenario,
+    State,
+} from "@cpluspatch/orbit";
+import { applyBurn, sortByDepth, worldStates } from "@cpluspatch/orbit";
 import type { Clock } from "./clock.ts";
 
 /** What a listener of a `World` is told about. */
@@ -103,6 +110,34 @@ export class World {
         this.#order = sortByDepth(this.#scenario);
         this.#cache = null;
         this.#emit({ type: "body", id });
+    }
+
+    /** The orbit body `id` would have after burning `dv` now. Changes nothing. */
+    previewBurn(id: string, dv: Burn): ElementsResult {
+        const body = this.#scenario.bodies.find(
+            (candidate) => candidate.id === id,
+        );
+        const parent = this.#scenario.bodies.find(
+            (candidate) => candidate.id === body?.parent,
+        );
+        if (!body) throw new Error(`There is no body "${id}".`);
+        if (!body.elements || !parent)
+            throw new Error(`"${id}" has no orbit to burn on.`);
+
+        return applyBurn(body.elements, parent.mu + body.mu, this.clock.t, dv);
+    }
+
+    /** Burns `dv` on body `id` now, or says why it can't and changes nothing. */
+    burn(
+        id: string,
+        dv: Burn,
+    ): { ok: true } | { ok: false; reason: "escape" | "degenerate" } {
+        const result = this.previewBurn(id, dv);
+        if (!result.ok) return result;
+
+        this.setElements(id, result.elements);
+
+        return { ok: true };
     }
 
     #check(id: string): void {

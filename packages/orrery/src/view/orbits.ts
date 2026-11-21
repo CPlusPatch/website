@@ -13,6 +13,8 @@ export type Orbits = {
     highlight: (id: string | null) => void;
     /** Draws the line of `body` again from its new elements. */
     rebuild: (body: Body) => void;
+    /** Draws a dashed line for `elements` around the parent of `body`, or none with `null`. */
+    ghost: (body: Body, elements: Elements | null) => void;
     /** Sets the line width's screen size. */
     resize: (width: number, height: number) => void;
     /** Recolours the lines and their casings. */
@@ -33,8 +35,8 @@ const CASING_PX = 4;
 /** The casing is the line plus a margin, so it grows with the line. */
 const casingPx = (linePx: number): number => CASING_PX + (linePx - LINE_PX);
 
-/** The line geometry of an orbit, in km. */
-const orbitGeometry = (elements: Elements): LineGeometry => {
+/** The closed loop of an orbit's points, in km. */
+const orbitPositions = (elements: Elements): Float32Array => {
     const points = orbitPoints(elements, SAMPLES);
     const positions = new Float32Array(points.length + 3);
     for (let k = 0; k < points.length; k++) {
@@ -43,11 +45,33 @@ const orbitGeometry = (elements: Elements): LineGeometry => {
     // Repeat the first point to close the loop.
     positions.set(positions.subarray(0, 3), points.length);
 
+    return positions;
+};
+
+/** The line geometry of an orbit, in km. */
+const orbitGeometry = (elements: Elements): LineGeometry => {
     const geometry = new LineGeometry();
-    geometry.setPositions(positions);
+    geometry.setPositions(orbitPositions(elements));
 
     return geometry;
 };
+
+/** The length of a polyline of x, y, z triples. */
+const pathLength = (positions: Float32Array): number => {
+    let total = 0;
+    for (let k = 3; k < positions.length; k += 3) {
+        total += Math.hypot(
+            (positions[k] ?? 0) - (positions[k - 3] ?? 0),
+            (positions[k + 1] ?? 0) - (positions[k - 2] ?? 0),
+            (positions[k + 2] ?? 0) - (positions[k - 1] ?? 0),
+        );
+    }
+
+    return total;
+};
+
+/** The dashes and gaps along a ghost line, so an orbit has this many of each. */
+const GHOST_DASHES = 160;
 
 /** One line per body that has an orbit, in km. */
 export const createOrbits = (
@@ -57,6 +81,10 @@ export const createOrbits = (
     background: Color,
 ): Orbits => {
     const orbits: Orbit[] = [];
+    let pick = color;
+    let ghost: { body: Body; parent: string; line: Line2 } | null = null;
+    // The ghost may be made after the last resize.
+    let size = { width: 0, height: 0 };
 
     for (const body of bodies) {
         if (body.parent === null || body.elements === null) continue;
@@ -86,6 +114,39 @@ export const createOrbits = (
     }
 
     return {
+        ghost: (body, elements) => {
+            if (!elements || body.parent === null) {
+                if (ghost) ghost.line.visible = false;
+                return;
+            }
+
+            const positions = orbitPositions(elements);
+            const geometry = new LineGeometry();
+            geometry.setPositions(positions);
+            const dash = pathLength(positions) / GHOST_DASHES;
+
+            if (!ghost) {
+                const material = new LineMaterial({
+                    linewidth: SELECTED_LINE_PX,
+                    dashed: true,
+                    transparent: true,
+                });
+                material.resolution.set(size.width, size.height);
+                const line = new Line2(geometry, material);
+                scene.add(line);
+                ghost = { body, parent: body.parent, line };
+            } else {
+                ghost.line.geometry.dispose();
+                ghost.line.geometry = geometry;
+            }
+            ghost.body = body;
+            ghost.parent = body.parent;
+            ghost.line.material.dashSize = dash;
+            ghost.line.material.gapSize = dash;
+            ghost.line.material.color.copy(pick(body));
+            ghost.line.computeLineDistances();
+            ghost.line.visible = true;
+        },
         rebuild: (body) => {
             const orbit = orbits.find(
                 (candidate) => candidate.body.id === body.id,
@@ -110,6 +171,17 @@ export const createOrbits = (
                 );
                 casing.position.copy(line.position);
             }
+
+            if (ghost) {
+                const r = states.get(ghost.parent)?.r;
+                if (r) {
+                    ghost.line.position.set(
+                        (r.x - origin.x) / 1000,
+                        (r.y - origin.y) / 1000,
+                        (r.z - origin.z) / 1000,
+                    );
+                }
+            }
         },
         highlight: (id) => {
             for (const { body, line, casing } of orbits) {
@@ -119,18 +191,27 @@ export const createOrbits = (
             }
         },
         resize: (width, height) => {
+            size = { width, height };
+            ghost?.line.material.resolution.set(width, height);
             for (const { line, casing } of orbits) {
                 line.material.resolution.set(width, height);
                 casing.material.resolution.set(width, height);
             }
         },
-        recolor: (pick, background) => {
+        recolor: (next, background) => {
+            pick = next;
+            if (ghost) ghost.line.material.color.copy(next(ghost.body));
             for (const { body, line, casing } of orbits) {
-                line.material.color.copy(pick(body));
+                line.material.color.copy(next(body));
                 casing.material.color.copy(background);
             }
         },
         dispose: () => {
+            if (ghost) {
+                ghost.line.removeFromParent();
+                ghost.line.geometry.dispose();
+                ghost.line.material.dispose();
+            }
             for (const { line, casing } of orbits) {
                 line.removeFromParent();
                 casing.removeFromParent();

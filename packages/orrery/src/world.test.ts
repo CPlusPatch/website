@@ -144,3 +144,53 @@ Deno.test("setElements throws for an unknown body or one with no parent", () => 
 
     assertEquals(count, 0);
 });
+
+const PROGRADE = { prograde: 100, normal: 0, radial: 0 };
+
+Deno.test("a burn emits one body event and changes the orbit", () => {
+    const world = make();
+    const before = world.scenario.bodies.find((body) => body.id === "moon");
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    const result = world.burn("moon", PROGRADE);
+
+    const after = world.scenario.bodies.find((body) => body.id === "moon");
+    assertEquals(result, { ok: true });
+    assertEquals(events, [{ type: "body", id: "moon" }]);
+    assertNotEquals(after?.elements, before?.elements);
+    assertEquals(after?.elements?.epoch, world.clock.t);
+});
+
+Deno.test("a burn that escapes returns why and emits nothing", () => {
+    const world = make();
+    const before = world.scenario;
+    let count = 0;
+    world.on(() => count++);
+
+    const result = world.burn("moon", { prograde: 1e6, normal: 0, radial: 0 });
+
+    assertEquals(result, { ok: false, reason: "escape" });
+    assert(world.scenario === before);
+    assertEquals(count, 0);
+});
+
+Deno.test("previewBurn returns the new orbit without changing the scenario", () => {
+    const world = make();
+    const before = world.scenario;
+    let count = 0;
+    world.on(() => count++);
+
+    const result = world.previewBurn("moon", PROGRADE);
+
+    assert(result.ok);
+    assert(world.scenario === before);
+    assertEquals(count, 0);
+});
+
+Deno.test("burning a body with no orbit throws", () => {
+    const world = make();
+
+    assertThrows(() => world.burn("sun", PROGRADE));
+    assertThrows(() => world.previewBurn("nowhere", PROGRADE));
+});
