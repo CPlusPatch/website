@@ -18,6 +18,11 @@
  * or restores it if it was minimised. A minimised window is hidden but keeps
  * its place, and a link to it restores it.
  *
+ * With focus on a window's title, the arrow keys move the window and
+ * Ctrl with them resizes it (see `KEY_STEP`). The manager adds two hidden
+ * elements to the root for screen readers: a hint that describes each title,
+ * and a status that says where a key put the window.
+ *
  * If the root sets `--window-manager-inset-end`, new windows keep that much
  * clear at the desk's right edge. Dragging and resizing don't.
  *
@@ -32,6 +37,7 @@ import {
     type Rect,
     raise,
     remove,
+    resize,
     reveal,
     type Size,
     type Stack,
@@ -52,6 +58,8 @@ type Managed = {
         bodyTabindex: boolean;
         bodyRole: boolean;
         bodyLabel: boolean;
+        /** The title's `aria-describedby`, or null if it had none. */
+        titleDescribedby: string | null;
     };
 };
 
@@ -74,6 +82,24 @@ const idOf = (hash: string) => {
 /** `focusVisible` is in Chromium and Firefox, but not yet in TypeScript's DOM types. */
 type FocusOptionsWithVisible = FocusOptions & { focusVisible?: boolean };
 
+/** How far an arrow key moves or resizes a window, in pixels, and with Shift. */
+const KEY_STEP = 16;
+const KEY_STEP_SHIFT = 64;
+
+const KEY_HINT =
+    "Arrow keys move the window, with Shift further. Control and the arrow keys resize it. Escape closes it.";
+
+/** The direction of each arrow key. */
+const ARROWS: Record<string, { x: number; y: number } | undefined> = {
+    ArrowLeft: { x: -1, y: 0 },
+    ArrowRight: { x: 1, y: 0 },
+    ArrowUp: { x: 0, y: -1 },
+    ArrowDown: { x: 0, y: 1 },
+};
+
+// Gives each manager's hint an id of its own.
+let hints = 0;
+
 const EDITABLE = "input, textarea, select, [contenteditable]";
 
 const windowManager = behaviour(".window-manager", (root, signal) => {
@@ -93,6 +119,10 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
                 bodyTabindex: body?.hasAttribute("tabindex") ?? false,
                 bodyRole: body?.hasAttribute("role") ?? false,
                 bodyLabel: body?.hasAttribute("aria-labelledby") ?? false,
+                titleDescribedby:
+                    el
+                        .querySelector(".window__title")
+                        ?.getAttribute("aria-describedby") ?? null,
             },
         });
     }
@@ -461,6 +491,22 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         }
     }
 
+    // Both sit outside every window, so `:scope > .window` doesn't find them.
+    const hint = document.createElement("div");
+    hint.className = "visually-hidden";
+    hint.id = `window-manager-hint-${hints++}`;
+    hint.textContent = KEY_HINT;
+    const status = document.createElement("div");
+    status.className = "visually-hidden";
+    status.setAttribute("role", "status");
+    root.append(hint, status);
+    for (const { title, was } of managed.values()) {
+        title?.setAttribute(
+            "aria-describedby",
+            [was.titleDescribedby, hint.id].filter(Boolean).join(" "),
+        );
+    }
+
     // Side by side in document order, then stacked with the first on top.
     const all = [...managed.keys()];
     const marked = all.filter((id) =>
@@ -688,6 +734,88 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         { signal },
     );
 
+    // Moving and resizing with the keys
+    let announcing = 0;
+    /** Says what a key did. The text is cleared first, so the same one is read again. */
+    const announce = (text: string) => {
+        cancelAnimationFrame(announcing);
+        status.textContent = "";
+        announcing = requestAnimationFrame(() => {
+            status.textContent = text;
+        });
+    };
+    root.addEventListener(
+        "keydown",
+        (event) => {
+            const arrow = ARROWS[event.key];
+            if (!arrow || event.altKey || event.metaKey) return;
+            if (event.defaultPrevented) return;
+
+            const win = [...managed.values()].find(
+                ({ title }) => title === event.target,
+            );
+            const rect = win && shown.get(win.id);
+            const meant = win && rects.get(win.id);
+            if (!win || !rect || !meant) return;
+
+            // The page would scroll otherwise.
+            event.preventDefault();
+            const step = event.shiftKey ? KEY_STEP_SHIFT : KEY_STEP;
+            const name = win.title?.textContent?.trim() || win.id;
+            const next = event.ctrlKey
+                ? resize(
+                      rect,
+                      { width: arrow.x * step, height: arrow.y * step },
+                      desk(),
+                      cascade,
+                  )
+                : clamp(
+                      {
+                          ...rect,
+                          x: rect.x + arrow.x * step,
+                          y: rect.y + arrow.y * step,
+                      },
+                      desk(),
+                  );
+            const moved =
+                next.x !== rect.x ||
+                next.y !== rect.y ||
+                next.width !== rect.width ||
+                next.height !== rect.height;
+
+            if (!moved) {
+                announce(
+                    `${name} can't ${event.ctrlKey ? "resize" : "move"} further that way`,
+                );
+                return;
+            }
+
+            if (event.ctrlKey) {
+                // Like the native handle: a window moved in by a smaller
+                // desk keeps the place it's meant to have.
+                rects.set(win.id, {
+                    ...meant,
+                    width: next.width,
+                    height: next.height,
+                });
+                sized.add(win.id);
+            } else {
+                // A window shrunk by the desk keeps the size it's meant to have.
+                rects.set(win.id, { ...meant, x: next.x, y: next.y });
+            }
+            shown.set(win.id, next);
+            touched = true;
+            render();
+
+            if (event.ctrlKey) {
+                announce(`${name} resized to ${next.width} by ${next.height}`);
+            } else {
+                announce(`${name} moved to ${next.x}, ${next.y}`);
+            }
+        },
+        { signal },
+    );
+
     // Dragging
     root.addEventListener(
         "pointerdown",
@@ -823,6 +951,9 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         deskObserver.disconnect();
         listObserver.disconnect();
         windowObserver.disconnect();
+        cancelAnimationFrame(announcing);
+        hint.remove();
+        status.remove();
 
         for (const { button } of items.values()) button.closest("li")?.remove();
         items.clear();
@@ -830,7 +961,18 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
 
         root.classList.remove("window-manager--on");
         if (rootTabindex) root.removeAttribute("tabindex");
-        for (const { el, body, close: button, was } of managed.values()) {
+        for (const {
+            el,
+            title,
+            body,
+            close: button,
+            was,
+        } of managed.values()) {
+            if (was.titleDescribedby === null) {
+                title?.removeAttribute("aria-describedby");
+            } else {
+                title?.setAttribute("aria-describedby", was.titleDescribedby);
+            }
             el.hidden = was.hidden;
             el.classList.remove("window--dragging");
             el.classList.remove("window--active");

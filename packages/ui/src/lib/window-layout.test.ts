@@ -12,6 +12,7 @@ import {
     type Rect,
     raise,
     remove,
+    resize,
     reveal,
     type Size,
     top,
@@ -329,6 +330,49 @@ Deno.test("clamping shrinks a window that outgrew a smaller desktop", () => {
         x: 10,
         y: 10,
         ...desktop,
+    });
+});
+
+Deno.test("resizing adds the amount to the size and keeps the corner", () => {
+    const rect = { x: 100, y: 50, ...size };
+
+    assertEquals(resize(rect, { width: 16, height: -16 }, desktop), {
+        x: 100,
+        y: 50,
+        width: 416,
+        height: 284,
+    });
+});
+
+Deno.test("a window grows only to the far margin", () => {
+    const rect = { x: 500, y: 200, ...size };
+    const { origin } = DEFAULT_CASCADE;
+
+    assertEquals(resize(rect, { width: 400, height: 400 }, desktop), {
+        ...rect,
+        width: desktop.width - origin.x - rect.x,
+        height: desktop.height - origin.y - rect.y,
+    });
+});
+
+Deno.test("a window shrinks only to the minimum size", () => {
+    const rect = { x: 100, y: 50, ...size };
+    const { min } = DEFAULT_CASCADE;
+
+    assertEquals(resize(rect, { width: -900, height: -900 }, desktop), {
+        ...rect,
+        ...min,
+    });
+});
+
+Deno.test("a window past the far margin doesn't shrink when it's asked to grow, and can still shrink", () => {
+    const rect = { x: 900, y: 500, ...size };
+
+    assertEquals(resize(rect, { width: 16, height: 16 }, desktop), rect);
+    assertEquals(resize(rect, { width: -16, height: -64 }, desktop), {
+        ...rect,
+        width: 384,
+        height: 236,
     });
 });
 

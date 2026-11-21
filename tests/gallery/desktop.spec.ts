@@ -673,6 +673,10 @@ test("the manager turns off below 760px after load, and on again above it", asyn
     await open(page);
     const opened = await openIds(page);
     expect(opened).toEqual(["w-readme", "w-terminal"]);
+    await expect(page.locator(".window__title[aria-describedby]")).toHaveCount(
+        APPS.length,
+    );
+    await expect(status(page)).toHaveCount(1);
 
     await page.setViewportSize({ width: 700, height: 900 });
 
@@ -690,6 +694,11 @@ test("the manager turns off below 760px after load, and on again above it", asyn
     await expect(page.locator(".window__body[tabindex]")).toHaveCount(0);
     await expect(page.locator(".window__body[role]")).toHaveCount(0);
     await expect(page.locator(".window__body[aria-labelledby]")).toHaveCount(0);
+    await expect(page.locator(".window__title[aria-describedby]")).toHaveCount(
+        0,
+    );
+    await expect(page.locator(".desk > .visually-hidden")).toHaveCount(0);
+    await expect(status(page)).toHaveCount(0);
     await expect(page.locator("#w-projects")).toBeVisible();
 
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -1071,6 +1080,213 @@ test("shrinking the viewport and growing it back restores every window, after a 
         for (const [id, win] of before) {
             expect(after.get(id), id).toEqual(win);
         }
+    }).toPass();
+});
+
+/** Presses a key `times` times. */
+const press = async (page: Page, key: string, times = 1) => {
+    for (let i = 0; i < times; i++) await page.keyboard.press(key);
+};
+
+/** The status region the manager adds for screen readers. */
+const status = (page: Page) => page.locator('.desk > [role="status"]');
+
+test("the arrow keys on a window's title move it 16px, or 64px with Shift, and keep its size and focus", async ({
+    page,
+}) => {
+    await open(page);
+    const title = page.locator("#w-terminal-title");
+    await title.focus();
+    const before = await box(page.locator("#w-terminal"));
+
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowDown");
+
+    const moved = await box(page.locator("#w-terminal"));
+    expect(moved).toEqual({
+        ...before,
+        x: before.x + 16,
+        y: before.y + 16,
+    });
+
+    await page.keyboard.press("Shift+ArrowLeft");
+
+    const shifted = await box(page.locator("#w-terminal"));
+    expect(shifted).toEqual({ ...moved, x: moved.x - 64 });
+    await expect(title).toBeFocused();
+});
+
+test("Ctrl and the arrow keys resize a window from its bottom-right corner, 16px or 64px with Shift", async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator("#w-terminal-title").focus();
+    const before = await box(page.locator("#w-terminal"));
+
+    await page.keyboard.press("Control+ArrowRight");
+    await page.keyboard.press("Control+ArrowUp");
+
+    const resized = await box(page.locator("#w-terminal"));
+    expect(resized).toEqual({
+        ...before,
+        width: before.width + 16,
+        height: before.height - 16,
+    });
+
+    await page.keyboard.press("Control+Shift+ArrowLeft");
+
+    expect(await box(page.locator("#w-terminal"))).toEqual({
+        ...resized,
+        width: resized.width - 64,
+    });
+});
+
+test("holding Ctrl and Left stops at the minimum width, and Ctrl and Right at the desk's far margin", async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator("#w-terminal-title").focus();
+    const desk = await box(page.locator(".desk"));
+
+    await press(page, "Control+Shift+ArrowLeft", 30);
+    await press(page, "Control+Shift+ArrowUp", 30);
+    const least = await box(page.locator("#w-terminal"));
+
+    // --window-min-width and --window-min-height in components/window-manager.css
+    expect(least.width).toBe(256);
+    expect(least.height).toBe(160);
+
+    await press(page, "Control+Shift+ArrowRight", 30);
+    await press(page, "Control+Shift+ArrowDown", 30);
+    const most = await box(page.locator("#w-terminal"));
+
+    expect(most.x).toBe(least.x);
+    expect(most.y).toBe(least.y);
+    expect(desk.x + desk.width - (most.x + most.width)).toBeCloseTo(MARGIN, 0);
+    expect(desk.y + desk.height - (most.y + most.height)).toBeCloseTo(
+        MARGIN,
+        0,
+    );
+});
+
+test("the arrow keys can't move a window past the desk's left or top edge", async ({
+    page,
+}) => {
+    await open(page);
+    await page.locator("#w-terminal-title").focus();
+    const desk = await box(page.locator(".desk"));
+
+    await press(page, "Shift+ArrowLeft", 30);
+    await press(page, "Shift+ArrowUp", 30);
+
+    const win = await box(page.locator("#w-terminal"));
+    // Room for the focus ring: FOCUS_RING in lib/window-layout.ts
+    expect(win.x - desk.x).toBeCloseTo(4, 0);
+    expect(win.y - desk.y).toBeCloseTo(4, 0);
+});
+
+test("the arrow keys in a window's scroll body and in the terminal's input don't move it", async ({
+    page,
+}) => {
+    await open(page);
+
+    for (const [id, field] of [
+        ["w-readme", "#w-readme .window__body"],
+        ["w-terminal", "#w-terminal input"],
+    ]) {
+        await page.locator(field).focus();
+        const before = await box(page.locator(`#${id}`));
+
+        await press(page, "ArrowRight", 2);
+        await press(page, "ArrowLeft", 2);
+        await press(page, "ArrowDown");
+        await press(page, "Control+ArrowRight");
+
+        expect(await box(page.locator(`#${id}`)), id).toEqual(before);
+    }
+});
+
+test("each key says what it did in the status region, and the title is described by the hint", async ({
+    page,
+}) => {
+    await open(page);
+    const title = page.locator("#w-terminal-title");
+    const name = (await title.textContent())?.trim() ?? "";
+    await title.focus();
+    const desk = await box(page.locator(".desk"));
+    const win = page.locator("#w-terminal");
+
+    await expect(title).toHaveAccessibleDescription(
+        "Arrow keys move the window, with Shift further. Control and the arrow keys resize it. Escape closes it.",
+    );
+    await expect(status(page)).toHaveText("");
+
+    await page.keyboard.press("ArrowRight");
+    let at = await box(win);
+    await expect(status(page)).toHaveText(
+        `${name} moved to ${Math.round(at.x - desk.x)}, ${Math.round(at.y - desk.y)}`,
+    );
+
+    await page.keyboard.press("Control+ArrowDown");
+    at = await box(win);
+    await expect(status(page)).toHaveText(
+        `${name} resized to ${Math.round(at.width)} by ${Math.round(at.height)}`,
+    );
+
+    await press(page, "Shift+ArrowLeft", 30);
+    await page.keyboard.press("ArrowLeft");
+    await expect(status(page)).toHaveText(
+        `${name} can't move further that way`,
+    );
+
+    // The same text again is cleared first, so it's read again.
+    await status(page).evaluate((el) => {
+        const seen: string[] = [];
+        new MutationObserver(() => seen.push(el.textContent ?? "")).observe(
+            el,
+            { childList: true, characterData: true, subtree: true },
+        );
+        Object.assign(window, { seen });
+    });
+    await page.keyboard.press("ArrowLeft");
+    await expect
+        .poll(() => page.evaluate(() => Reflect.get(window, "seen")))
+        .toEqual(["", `${name} can't move further that way`]);
+
+    await press(page, "Control+Shift+ArrowLeft", 30);
+    await page.keyboard.press("Control+ArrowLeft");
+    await expect(status(page)).toHaveText(
+        `${name} can't resize further that way`,
+    );
+});
+
+test("a window moved or resized by the keys comes back after the viewport shrinks and grows again", async ({
+    page,
+}) => {
+    await open(page, 1280, 800);
+    const start = await box(page.locator("#w-terminal"));
+    await page.locator("#w-terminal-title").focus();
+    await press(page, "Shift+ArrowRight");
+    await press(page, "Shift+ArrowDown", 2);
+    await press(page, "Control+ArrowRight", 3);
+    const before = await box(page.locator("#w-terminal"));
+    expect(before).not.toEqual(start);
+
+    await page.setViewportSize({ width: 761, height: 480 });
+
+    await expect(async () => {
+        const desk = await box(page.locator(".desk"));
+        const win = await box(page.locator("#w-terminal"));
+        expect(win.x + win.width).toBeLessThan(before.x + before.width);
+        expect(
+            desk.x + desk.width - (win.x + win.width),
+        ).toBeGreaterThanOrEqual(MARGIN - 1);
+    }).toPass();
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    await expect(async () => {
+        expect(await box(page.locator("#w-terminal"))).toEqual(before);
     }).toPass();
 });
 

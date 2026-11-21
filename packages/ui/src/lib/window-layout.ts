@@ -387,6 +387,49 @@ export const clamp = (
 };
 
 /**
+ * A rect resized from its bottom-right corner by `by`, which is negative to
+ * shrink. Each side stays between the minimum size and the room left to the
+ * desktop's far edge, less the margin. A window already past that edge keeps
+ * the size it has, so growing it does nothing, but it can still shrink. The
+ * same room is written as `--window-max-width` and `--window-max-height`, so
+ * the keys stop where the native handle does.
+ */
+export const resize = (
+    rect: Rect,
+    by: Size,
+    desktop: Size,
+    cascade: Cascade = DEFAULT_CASCADE,
+): Rect => {
+    const { origin, min } = cascade;
+    const side = (
+        size: number,
+        change: number,
+        least: number,
+        room: number,
+    ) => {
+        const most = Math.max(room, size);
+
+        return Math.max(least, Math.min(size + change, most));
+    };
+
+    return {
+        ...rect,
+        width: side(
+            rect.width,
+            by.width,
+            Math.min(min.width, desktop.width),
+            desktop.width - origin.x - rect.x,
+        ),
+        height: side(
+            rect.height,
+            by.height,
+            Math.min(min.height, desktop.height),
+            desktop.height - origin.y - rect.y,
+        ),
+    };
+};
+
+/**
  * A rect brought fully onto the desktop, with a margin of the origin at every
  * edge if it fits with one. If it's too big for that, it's shrunk to fit
  * inside the margins, but not below the minimum size. Used when the desktop
