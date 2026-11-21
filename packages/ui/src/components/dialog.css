@@ -1,0 +1,148 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .dialog {
+        --dialog-width: 32rem;
+        --dialog-max-height: min(40rem, 100dvh - 2 * var(--space-xl));
+        --border-color: var(--color-border-strong);
+
+        padding: 0;
+        color: var(--color-text);
+
+        &.dialog--sm {
+            --dialog-width: 24rem;
+        }
+
+        &[open] {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Everything but the sheet's own narrow case (see .sheet). */
+        @media (width >= 40rem) and (height >= 32rem) {
+            &:not(.dialog--inline) {
+                /* Preflight zeroes the margin that centres a modal. */
+                margin: auto;
+                width: min(var(--dialog-width), 100% - 2 * var(--space-md));
+                max-height: var(--dialog-max-height);
+                box-shadow: var(--shadow-overlay);
+                transition:
+                    opacity var(--transition),
+                    scale var(--transition),
+                    display var(--transition) allow-discrete,
+                    overlay var(--transition) allow-discrete;
+
+                &[open] {
+                    @starting-style {
+                        opacity: 0;
+                        scale: 0.96;
+                    }
+                }
+
+                &:not([open]) {
+                    opacity: 0;
+                    scale: 0.96;
+                }
+
+                &::backdrop {
+                    background-color: var(--color-backdrop);
+                    transition:
+                        opacity var(--transition),
+                        display var(--transition) allow-discrete,
+                        overlay var(--transition) allow-discrete;
+                }
+
+                &[open]::backdrop {
+                    @starting-style {
+                        opacity: 0;
+                    }
+                }
+
+                &:not([open])::backdrop {
+                    opacity: 0;
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    &,
+                    &::backdrop {
+                        transition: none;
+                    }
+                }
+            }
+        }
+
+        /* In the page flow, so it has no sheet or modal box to take over. */
+        &.dialog--inline {
+            position: static;
+            width: 100%;
+            max-width: var(--dialog-width);
+            max-height: var(--dialog-max-height);
+            margin: 0;
+        }
+
+        .dialog__header {
+            display: flex;
+            flex: none;
+            align-items: start;
+            justify-content: space-between;
+            gap: var(--space-sm);
+            min-height: calc(2 * var(--space-sm) + var(--control-height-md));
+            padding: var(--space-sm) var(--space-sm) var(--space-sm)
+                var(--space-md);
+            border-bottom: var(--border-width) solid var(--color-border);
+        }
+
+        .dialog__close {
+            flex: none;
+        }
+
+        .dialog__title {
+            min-width: 0;
+            margin: 0;
+            /* Centres a one-line title on the close button. */
+            padding-block: calc((var(--control-height-md) - 1lh) / 2);
+            font: var(--type-subheading);
+            letter-spacing: normal;
+            overflow-wrap: anywhere;
+        }
+
+        /* A form that wraps the body and footer keeps them laid out as siblings. */
+        .dialog__form {
+            display: contents;
+        }
+
+        .dialog__body {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            gap: var(--space-md);
+            min-height: 0;
+            padding: var(--space-md);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+
+            /* Focusable so a keyboard can scroll it; the ring sits inside the borders. */
+            &:focus-visible {
+                outline-offset: -2px;
+            }
+
+            p {
+                margin: 0;
+            }
+        }
+
+        .dialog__footer {
+            display: flex;
+            flex: none;
+            flex-wrap: wrap;
+            justify-content: end;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            border-top: var(--border-width) solid var(--color-border);
+
+            &:empty {
+                display: none;
+            }
+        }
+    }
+}

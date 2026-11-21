@@ -7,6 +7,7 @@ import { buttonClasses, isAnchor } from "./button.ts";
 import { cardClasses } from "./card.ts";
 import { autoplaySeconds } from "./carousel.ts";
 import { cornerWindowClasses } from "./corner-window.ts";
+import { dialogClasses } from "./dialog.ts";
 import { dropdownClasses, dropdownPanelClasses } from "./dropdown.ts";
 import { formatCount, postActionClasses, postClasses } from "./post.ts";
 import { progressClasses } from "./progress.ts";
@@ -128,6 +129,16 @@ Deno.test("corner window is pinned unless inline", () => {
     assertEquals(cornerWindowClasses({ corner: "start", inline: true }), [
         "corner-window",
         "corner-window--start",
+    ]);
+});
+
+Deno.test("dialog is a medium sheet unless small or inline", () => {
+    assertEquals(dialogClasses(), ["dialog", "panel", "sheet", "dialog--md"]);
+    assertEquals(dialogClasses({ size: "sm", inline: true }), [
+        "dialog",
+        "panel",
+        "dialog--sm",
+        "dialog--inline",
     ]);
 });
 

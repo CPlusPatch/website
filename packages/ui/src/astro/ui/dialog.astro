@@ -1,0 +1,110 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { type DialogSize, dialogClasses } from "../../components/dialog.ts";
+import Icon from "../icon.astro";
+import Button from "./button.astro";
+
+/**
+ * A native `<dialog>` with a title, a body and footer actions. It opens
+ * without JS from a button with `commandfor={id} command="show-modal"` (pass
+ * `trigger` to get one). It closes on Esc, with its close button
+ * (`command="close"`) or with a `method="dialog"` form (set `form`).
+ *
+ * On a wide screen the modal is centred over the page. On a narrow or short
+ * one it slides up from the bottom as a sheet (`.sheet` in utilities.css).
+ *
+ * Slots:
+ * - default: the body.
+ * - `footer`: the actions, right-aligned. The footer is left out when empty.
+ *
+ * On open, focus goes to the first focusable element, the close button. In a
+ * form, put `autofocus` on the first field instead.
+ */
+interface Props extends HTMLAttributes<"dialog"> {
+    /** Unique on the page: ties buttons to the dialog (which gets this id). */
+    id: string;
+    /** The heading. The dialog is named by it. */
+    title: string;
+    size?: DialogSize;
+    /** Shows a close button in the header. */
+    closeButton?: boolean;
+    /** A click outside closes it too (`closedby="any"`), not only Esc. */
+    lightDismiss?: boolean;
+    /** Wraps the body and footer in a `method="dialog"` form, so a footer submit button closes it. */
+    form?: boolean;
+    /** Text of a button that opens the dialog, rendered before it. */
+    trigger?: string;
+    /** Open in the flow rather than as a modal, as in the gallery. */
+    inline?: boolean;
+    /** The body is long text with nothing focusable, so it becomes a tab stop a keyboard can scroll. */
+    scrollable?: boolean;
+}
+
+const {
+    id,
+    title,
+    size = "md",
+    closeButton = true,
+    lightDismiss = false,
+    form = false,
+    trigger,
+    inline = false,
+    scrollable = false,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const titleId = `${id}-title`;
+const footer = ((await Astro.slots.render("footer")) ?? "").trim();
+const Wrapper = form ? "form" : Fragment;
+const wrapperProps = form ? { method: "dialog", class: "dialog__form" } : {};
+---
+
+{trigger && (
+    <Button commandfor={id} command="show-modal">
+        {trigger}
+    </Button>
+)}
+
+<dialog
+    class:list={dialogClasses({ size, inline, class: className })}
+    {id}
+    aria-labelledby={titleId}
+    open={inline}
+    closedby={lightDismiss ? "any" : undefined}
+    {...rest}
+>
+    <div class="dialog__header">
+        <h2 class="dialog__title" id={titleId}>{title}</h2>
+        {closeButton && (
+            <Button
+                size="icon"
+                variant="ghost"
+                tone="neutral"
+                commandfor={id}
+                command="close"
+                class="dialog__close"
+                aria-label="Close"
+            >
+                <Icon name="lucide:x" aria-hidden="true" />
+            </Button>
+        )}
+    </div>
+    <Wrapper {...wrapperProps}>
+        {scrollable ? (
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: a keyboard has to reach a body that scrolls (axe scrollable-region-focusable).
+            <section
+                class="dialog__body"
+                tabindex="0"
+                aria-labelledby={titleId}
+            >
+                <slot />
+            </section>
+        ) : (
+            <div class="dialog__body">
+                <slot />
+            </div>
+        )}
+        {footer && <div class="dialog__footer" set:html={footer} />}
+    </Wrapper>
+</dialog>

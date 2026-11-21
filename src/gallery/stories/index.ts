@@ -14,6 +14,7 @@ import { code } from "./code.ts";
 import { contactMethod } from "./contact-method.ts";
 import { cornerWindows } from "./corner-windows.ts";
 import { destructor } from "./destructor.ts";
+import { dialogs } from "./dialogs.ts";
 import { dropdowns } from "./dropdowns.ts";
 import { figures } from "./figures.ts";
 import { forms } from "./forms.ts";
@@ -49,6 +50,7 @@ export const groups: StoryGroup[] = [
     ...cards,
     ...dropdowns,
     ...cornerWindows,
+    ...dialogs,
     ...windows,
     ...taskbar,
     ...progress,

@@ -120,6 +120,8 @@
         --border-color: var(--color-border);
         /* The shadow of a floating panel: the corner window, a framed window. */
         --shadow-overlay: 0 var(--space-sm) var(--space-lg) rgb(0 0 0 / 0.2);
+        /* Behind a modal or sheet; darker in dark, where 0.4 barely dims. */
+        --color-backdrop: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.7));
         --transition: 120ms ease-out;
         /* A hover fill for items on a plain surface: lighter in dark, darker in light. */
         --hover-fill: color-mix(in oklab, var(--color-text) 10%, transparent);

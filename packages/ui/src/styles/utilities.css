@@ -221,7 +221,7 @@
             }
 
             &::backdrop {
-                background-color: rgb(0 0 0 / 0.4);
+                background-color: var(--color-backdrop);
                 transition:
                     opacity 250ms,
                     display 250ms allow-discrete,
