@@ -1,4 +1,4 @@
-import type { Body, State, Vec3 } from "@cpluspatch/orbit";
+import type { Body, Elements, State, Vec3 } from "@cpluspatch/orbit";
 import { orbitPoints } from "@cpluspatch/orbit";
 import type { Color, Scene } from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
@@ -11,6 +11,8 @@ export type Orbits = {
     update: (origin: Vec3, states: Map<string, State>) => void;
     /** Draws the orbit of a body, or of none, thicker. */
     highlight: (id: string | null) => void;
+    /** Draws the line of `body` again from its new elements. */
+    rebuild: (body: Body) => void;
     /** Sets the line width's screen size. */
     resize: (width: number, height: number) => void;
     /** Recolours the lines and their casings. */
@@ -31,6 +33,22 @@ const CASING_PX = 4;
 /** The casing is the line plus a margin, so it grows with the line. */
 const casingPx = (linePx: number): number => CASING_PX + (linePx - LINE_PX);
 
+/** The line geometry of an orbit, in km. */
+const orbitGeometry = (elements: Elements): LineGeometry => {
+    const points = orbitPoints(elements, SAMPLES);
+    const positions = new Float32Array(points.length + 3);
+    for (let k = 0; k < points.length; k++) {
+        positions[k] = (points[k] ?? 0) / 1000;
+    }
+    // Repeat the first point to close the loop.
+    positions.set(positions.subarray(0, 3), points.length);
+
+    const geometry = new LineGeometry();
+    geometry.setPositions(positions);
+
+    return geometry;
+};
+
 /** One line per body that has an orbit, in km. */
 export const createOrbits = (
     scene: Scene,
@@ -43,16 +61,7 @@ export const createOrbits = (
     for (const body of bodies) {
         if (body.parent === null || body.elements === null) continue;
 
-        const points = orbitPoints(body.elements, SAMPLES);
-        const positions = new Float32Array(points.length + 3);
-        for (let k = 0; k < points.length; k++) {
-            positions[k] = (points[k] ?? 0) / 1000;
-        }
-        // Repeat the first point to close the loop.
-        positions.set(positions.subarray(0, 3), points.length);
-
-        const geometry = new LineGeometry();
-        geometry.setPositions(positions);
+        const geometry = orbitGeometry(body.elements);
         const material = new LineMaterial({
             linewidth: LINE_PX,
             transparent: true,
@@ -77,6 +86,18 @@ export const createOrbits = (
     }
 
     return {
+        rebuild: (body) => {
+            const orbit = orbits.find(
+                (candidate) => candidate.body.id === body.id,
+            );
+            if (!orbit || !body.elements) return;
+
+            const geometry = orbitGeometry(body.elements);
+            orbit.line.geometry.dispose();
+            orbit.line.geometry = geometry;
+            orbit.casing.geometry = geometry;
+            orbit.body = body;
+        },
         update: (origin, states) => {
             for (const { parent, line, casing } of orbits) {
                 const r = states.get(parent)?.r;

@@ -88,6 +88,10 @@ Deno.test("formatDistance groups thousands of kilometres below 0.1 AU", () => {
     assertEquals(formatDistance(500), "1 km");
 });
 
+Deno.test("formatDistance writes a negative distance with a minus sign", () => {
+    assertEquals(formatDistance(-2_527_000), "\u22122,527 km");
+});
+
 Deno.test("formatDistance switches to AU at 0.1 AU", () => {
     assertEquals(formatDistance(0.1 * AU - 1000), "14,959,786 km");
     assertEquals(formatDistance(0.1 * AU), "0.100 AU");

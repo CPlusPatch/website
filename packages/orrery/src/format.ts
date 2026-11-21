@@ -88,9 +88,12 @@ const AU_VALUE = new Intl.NumberFormat("en", {
 const KM_PER_S = unit("kilometer-per-second", 2);
 const DEGREES = unit("degree", 1, "narrow");
 
-/** A distance in metres, as `6,790 km` or, from 0.1 AU, `1.000 AU`. */
+/** A distance in metres, as `6,790 km` or, from 0.1 AU, `1.000 AU`, with a true minus sign. */
 export const formatDistance = (m: number): string =>
-    m < 0.1 * AU ? KM.format(m / 1000) : `${AU_VALUE.format(m / AU)} AU`;
+    (m < 0.1 * AU
+        ? KM.format(m / 1000)
+        : `${AU_VALUE.format(m / AU)} AU`
+    ).replace(/^-/, "\u2212");
 
 /** A speed in m/s, as `7.66 km/s`. */
 export const formatSpeed = (mps: number): string => KM_PER_S.format(mps / 1000);

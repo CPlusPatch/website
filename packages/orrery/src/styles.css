@@ -199,7 +199,8 @@
         }
     }
 
-    .orrery__body-list summary {
+    .orrery__body-list summary,
+    .orrery__editor summary {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -225,7 +226,10 @@
 
     .orrery__body-list details[open] > summary {
         margin-block-end: var(--space-sm);
+    }
 
+    .orrery__body-list details[open] > summary,
+    .orrery__editor[open] > summary {
         [data-icon] {
             rotate: 180deg;
         }
@@ -332,5 +336,70 @@
     .orrery__readout {
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
+    }
+
+    /* Margins, since `<details>` ignores `gap` for its content. */
+    .orrery__editor {
+        margin-block-start: var(--space-sm);
+        padding-block-start: var(--space-sm);
+        border-block-start: var(--border-width) solid var(--color-border);
+
+        /* A group title, below the card's own. */
+        summary {
+            font: var(--type-label);
+        }
+
+        &[open] > summary {
+            margin-block-end: var(--space-sm);
+        }
+    }
+
+    /* Sticks to the card's bottom, so it shows even when the card needs scrolling. */
+    .orrery__warning {
+        position: sticky;
+        inset-block-end: 0;
+        margin-block-start: var(--space-md);
+        /* Compact, since it holds one sentence. */
+        gap: var(--space-sm);
+        padding: var(--space-sm);
+        background-color: var(--color-surface-raised);
+        /* Covers the gap above it, so rows scrolling under don't show cut through. */
+        box-shadow: 0 calc(-1 * var(--space-md)) 0 var(--color-surface-raised);
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .orrery__editor-row {
+        display: grid;
+        gap: var(--space-xs);
+        font: var(--type-ui);
+
+        & + & {
+            margin-block-start: var(--space-md);
+        }
+
+        label {
+            color: var(--color-text-muted);
+        }
+    }
+
+    .orrery__editor-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+
+        .slider {
+            flex: 1;
+        }
+    }
+
+    .orrery__editor-number {
+        flex: none;
+        /* Eight digits (a in km up to 0.1 AU) plus Chrome's spin buttons. */
+        inline-size: 12ch;
+        /* Chrome sizes the field by its text, so the row would shift as the value changes. */
+        font-variant-numeric: tabular-nums;
     }
 }

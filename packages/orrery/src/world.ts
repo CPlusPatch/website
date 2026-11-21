@@ -1,4 +1,4 @@
-import type { Body, Scenario, State } from "@cpluspatch/orbit";
+import type { Body, Elements, Scenario, State } from "@cpluspatch/orbit";
 import { sortByDepth, worldStates } from "@cpluspatch/orbit";
 import type { Clock } from "./clock.ts";
 
@@ -6,16 +6,17 @@ import type { Clock } from "./clock.ts";
 export type WorldEvent =
     | { type: "focus"; id: string }
     | { type: "selection"; id: string | null }
-    | { type: "clock" };
+    | { type: "clock" }
+    | { type: "body"; id: string };
 
 /** The scenario, the clock, what's focused and what's selected. */
 export class World {
     readonly clock: Clock;
-    readonly scenario: Scenario;
-    readonly order: Body[];
     focused: string;
     selected: string | null = null;
 
+    #scenario: Scenario;
+    #order: Body[];
     #listeners = new Set<(e: WorldEvent) => void>();
     #cache: { t: number; states: Map<string, State> } | null = null;
 
@@ -24,9 +25,19 @@ export class World {
         if (!root) throw new Error("The scenario has no root body.");
 
         this.clock = clock;
-        this.scenario = scenario;
-        this.order = sortByDepth(scenario);
+        this.#scenario = scenario;
+        this.#order = sortByDepth(scenario);
         this.focused = root.id;
+    }
+
+    /** The bodies and their orbits. */
+    get scenario(): Scenario {
+        return this.#scenario;
+    }
+
+    /** The bodies with every parent before its children. */
+    get order(): Body[] {
+        return this.#order;
     }
 
     /** Calls `fn` on every change. Returns a function that stops it. */
@@ -72,6 +83,26 @@ export class World {
         if (change.paused !== undefined) this.clock.paused = change.paused;
 
         this.#emit({ type: "clock" });
+    }
+
+    /** Replaces the orbit of body `id`. */
+    setElements(id: string, el: Elements): void {
+        const body = this.#scenario.bodies.find(
+            (candidate) => candidate.id === id,
+        );
+        if (!body) throw new Error(`There is no body "${id}".`);
+        if (body.parent === null)
+            throw new Error(`"${id}" has no parent to orbit.`);
+
+        this.#scenario = {
+            ...this.#scenario,
+            bodies: this.#scenario.bodies.map((candidate) =>
+                candidate === body ? { ...body, elements: el } : candidate,
+            ),
+        };
+        this.#order = sortByDepth(this.#scenario);
+        this.#cache = null;
+        this.#emit({ type: "body", id });
     }
 
     #check(id: string): void {

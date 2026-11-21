@@ -135,6 +135,9 @@ export const createView = (
         } else if (event.type === "focus") {
             rig.focus(event.id);
             describe();
+        } else if (event.type === "body") {
+            const body = world.scenario.bodies.find((b) => b.id === event.id);
+            if (body) orbits.rebuild(body);
         }
     });
 

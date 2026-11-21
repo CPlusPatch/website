@@ -10,6 +10,7 @@ import {
 import { type Readouts, readouts } from "../readouts.ts";
 import type { World } from "../world.ts";
 import { h } from "./dom.ts";
+import { createElementEditor, type ElementEditor } from "./element-editor.ts";
 
 /** The inspector's element and how to remove it. */
 export type Inspector = {
@@ -74,10 +75,13 @@ export const createInspector = (
 
     let values: HTMLElement[] = [];
     let shown: string | null = null;
+    let editor: ElementEditor | null = null;
 
     const refresh = () => {
         const id = world.selected;
         if (!id || values.length === 0) return;
+
+        editor?.refresh();
 
         const current = readouts(
             world.scenario,
@@ -106,6 +110,8 @@ export const createInspector = (
         values = [];
         list.replaceChildren();
         list.hidden = true;
+        editor?.destroy();
+        editor = null;
         if (!body) return;
 
         title.textContent = body.name;
@@ -123,6 +129,8 @@ export const createInspector = (
             values.push(value);
             list.append(h("dt", {}, label(parent)), value);
         }
+        editor = createElementEditor(world, body.id);
+        if (editor) element.append(...editor.elements);
         refresh();
     };
     render();
@@ -130,6 +138,8 @@ export const createInspector = (
     const off = world.on((event) => {
         if (event.type === "selection") render();
         else if (event.type === "clock") refresh();
+        else if (event.type === "body" && event.id === world.selected)
+            refresh();
     });
     const interval = setInterval(refresh, REFRESH_MS);
 
@@ -138,6 +148,7 @@ export const createInspector = (
         destroy: () => {
             off();
             clearInterval(interval);
+            editor?.destroy();
             element.remove();
         },
     };

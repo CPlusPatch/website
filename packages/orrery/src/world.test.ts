@@ -108,3 +108,39 @@ Deno.test("selecting an unknown body throws and changes nothing", () => {
     assertEquals(world.selected, "earth");
     assertEquals(count, 0);
 });
+
+Deno.test("setElements emits one body event and the states follow the new orbit", () => {
+    const world = make();
+    const moon = world.scenario.bodies.find((body) => body.id === "moon");
+    const before = world.states().get("moon");
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    if (!moon?.elements) throw new Error("The scenario has no Moon.");
+    world.setElements("moon", { ...moon.elements, a: moon.elements.a * 2 });
+
+    assertEquals(events, [{ type: "body", id: "moon" }]);
+    assertEquals(
+        world.scenario.bodies.find((body) => body.id === "moon")?.elements?.a,
+        moon.elements.a * 2,
+    );
+    assertEquals(
+        world.order.find((body) => body.id === "moon")?.elements?.a,
+        moon.elements.a * 2,
+    );
+    assertNotEquals(world.states().get("moon"), before);
+});
+
+Deno.test("setElements throws for an unknown body or one with no parent", () => {
+    const world = make();
+    const earth = world.scenario.bodies.find((body) => body.id === "earth");
+    const el = earth?.elements;
+    if (!el) throw new Error("The scenario has no Earth.");
+    let count = 0;
+    world.on(() => count++);
+
+    assertThrows(() => world.setElements("nowhere", el));
+    assertThrows(() => world.setElements("sun", el));
+
+    assertEquals(count, 0);
+});
