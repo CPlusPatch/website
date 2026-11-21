@@ -105,7 +105,9 @@
         }
     }
 
+    /* Above the side panels, so a long notice covers them instead. */
     .orrery__panel--top {
+        z-index: 2;
         inset-block-start: 0;
         inset-inline: 0;
         flex-wrap: wrap;
@@ -363,6 +365,40 @@
         &[hidden] {
             display: none;
         }
+    }
+
+    /* Takes a row of the top panel, under the menus. */
+    .orrery__notices {
+        flex: 1 0 100%;
+        max-inline-size: 40rem;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .orrery__alert {
+        grid-template-columns: 1fr auto;
+        align-items: start;
+        gap: var(--space-sm);
+        padding: var(--space-sm);
+
+        ul {
+            margin: 0;
+            padding-inline-start: var(--space-md);
+            font: var(--type-body-sm);
+            color: var(--color-text-muted);
+        }
+    }
+
+    .orrery__menu {
+        display: grid;
+        gap: var(--space-xs);
+    }
+
+    .orrery__menu-item {
+        justify-content: flex-start;
+        inline-size: 100%;
     }
 
     /* Equal columns, so buttons that wrap still line up. */

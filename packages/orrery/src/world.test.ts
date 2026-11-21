@@ -194,3 +194,29 @@ Deno.test("burning a body with no orbit throws", () => {
     assertThrows(() => world.burn("sun", PROGRADE));
     assertThrows(() => world.previewBurn("nowhere", PROGRADE));
 });
+
+Deno.test("loading a scenario resets the selection and focus, and sets the clock", () => {
+    const world = make();
+    world.select("mars");
+    world.focus("earth");
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+    const next = {
+        ...solarSystem,
+        name: "Next",
+        bodies: solarSystem.bodies.filter((body) => body.id !== "mars"),
+    };
+
+    world.load(next, 500);
+
+    assertEquals(events, [{ type: "scenario" }]);
+    assertEquals(world.scenario, next);
+    assertEquals(
+        world.order.some((body) => body.id === "mars"),
+        false,
+    );
+    assertEquals(world.selected, null);
+    assertEquals(world.focused, "sun");
+    assertEquals(world.clock.t, 500);
+    assertEquals(world.states().has("mars"), false);
+});

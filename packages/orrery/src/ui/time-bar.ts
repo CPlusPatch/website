@@ -154,7 +154,7 @@ export const createTimeBar = (world: World): TimeBar => {
     });
 
     const off = world.on((event) => {
-        if (event.type === "clock") show();
+        if (event.type === "clock" || event.type === "scenario") show();
     });
     const interval = setInterval(showTime, REFRESH_MS);
     show();

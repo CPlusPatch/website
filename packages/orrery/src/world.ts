@@ -14,7 +14,8 @@ export type WorldEvent =
     | { type: "focus"; id: string }
     | { type: "selection"; id: string | null }
     | { type: "clock" }
-    | { type: "body"; id: string };
+    | { type: "body"; id: string }
+    | { type: "scenario" };
 
 /** The scenario, the clock, what's focused and what's selected. */
 export class World {
@@ -90,6 +91,20 @@ export class World {
         if (change.paused !== undefined) this.clock.paused = change.paused;
 
         this.#emit({ type: "clock" });
+    }
+
+    /** Replaces the whole scenario and sets the clock to `t`. */
+    load(scenario: Scenario, t: number): void {
+        const root = scenario.bodies.find((body) => body.parent === null);
+        if (!root) throw new Error("The scenario has no root body.");
+
+        this.#scenario = scenario;
+        this.#order = sortByDepth(scenario);
+        this.#cache = null;
+        this.selected = null;
+        this.focused = root.id;
+        this.clock.set(t);
+        this.#emit({ type: "scenario" });
     }
 
     /** Replaces the orbit of body `id`. */
