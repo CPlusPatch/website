@@ -2,6 +2,7 @@
 import { AU, type Body, solarSystem } from "@cpluspatch/orbit";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
+    centreShift,
     ease,
     fitDistanceKm,
     focusDistanceKm,
@@ -11,6 +12,7 @@ import {
     minDistanceKm,
     placeLabels,
     projectedRadiusPx,
+    reachKm,
 } from "./geometry.ts";
 
 const body = (id: string): Body => {
@@ -219,6 +221,51 @@ Deno.test("a label avoids another body's marker, unless it's the focus", () => {
 Deno.test("the focus's label stays right even when it can't fit anywhere", () => {
     const wide = { ...box("a", 30, 100, 1), width: 60 };
     const placements = placeLabels([wide], { width: 80, height: 600 }, "a");
+
+    assertEquals(placements.get("a"), "right");
+});
+
+Deno.test("a label avoids a blocked rect, like a panel, on the side it overlaps", () => {
+    const labels = [box("a", 100, 100, 1)];
+    // Covers the right side (x 106 to 156) but not the left (x 44 to 94).
+    const right = { left: 120, top: 90, right: 300, bottom: 110 };
+    const left = { left: 0, top: 90, right: 90, bottom: 110 };
+
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map(), [right]).get("a"),
+        "left",
+    );
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map(), [left]).get("a"),
+        "right",
+    );
+});
+
+Deno.test("a label with both sides blocked hides, unless it's the focus or pinned", () => {
+    const labels = [box("a", 100, 100, 1)];
+    const covered = { left: 0, top: 0, right: 400, bottom: 400 };
+    const place = (focus: string, pinned: string[]) =>
+        placeLabels(labels, view, focus, [], pinned, new Map(), [covered]).get(
+            "a",
+        );
+
+    assertEquals(place("x", []), "hidden");
+    assertEquals(place("a", []), "right");
+    assertEquals(place("x", ["a"]), "right");
+});
+
+Deno.test("a blocked rect that only touches a label's box doesn't block it", () => {
+    // The label's right box spans x 106 to 156.
+    const touching = { left: 156, top: 0, right: 400, bottom: 400 };
+    const placements = placeLabels(
+        [box("a", 100, 100, 1)],
+        view,
+        "x",
+        [],
+        [],
+        new Map(),
+        [touching],
+    );
 
     assertEquals(placements.get("a"), "right");
 });
@@ -440,4 +487,30 @@ Deno.test("a hovered body's label shows like the selection's, after it", () => {
     assertEquals(placeLabels(labels, view, "x").get("probe"), "hidden");
     assertEquals(placements.get("moon"), "right");
     assertEquals(placements.get("probe"), "left");
+});
+
+Deno.test("the reach is the farthest planet's aphelion in km, and ignores dwarf planets", () => {
+    const neptune = body("neptune");
+    const { a = 0, e = 0 } = neptune.elements ?? {};
+
+    assertAlmostEquals(reachKm(solarSystem), (a * (1 + e)) / 1000, 1);
+});
+
+Deno.test("moving a planet out to 100 AU moves the reach out with it", () => {
+    const far = {
+        ...solarSystem,
+        bodies: solarSystem.bodies.map((b) =>
+            b.id === "earth" && b.elements
+                ? { ...b, elements: { ...b.elements, a: 100 * AU, e: 0 } }
+                : b,
+        ),
+    };
+
+    assertAlmostEquals(reachKm(far), (100 * AU) / 1000, 1);
+});
+
+Deno.test("the view shifts by the gap between its centre and the free band's, and not at all when the band is centred", () => {
+    assertEquals(centreShift(740, { top: 48, bottom: 100 }), 296);
+    assertEquals(centreShift(800, { top: 60, bottom: 740 }), 0);
+    assertEquals(centreShift(800, { top: 0, bottom: 700 }), 50);
 });

@@ -65,6 +65,8 @@ export const createInspector = (
     const title = h("h2", { class: "orrery__inspector-title" });
     const meta = h("p", { class: "orrery__inspector-meta" });
     const list = h("dl", { class: "orrery__readouts" });
+    // Scrolls under the head, as a scrolling card left a blank band in Chromium's canvas.
+    const content = h("div", { class: "orrery__inspector-body" }, meta, list);
     const element = h(
         "section",
         {
@@ -72,8 +74,7 @@ export const createInspector = (
             "aria-label": "Selected body",
         },
         h("div", { class: "orrery__inspector-head" }, title, close),
-        meta,
-        list,
+        content,
     );
     element.hidden = true;
 
@@ -138,9 +139,9 @@ export const createInspector = (
             list.append(h("dt", {}, label(parent)), value);
         }
         editor = createElementEditor(world, body.id);
-        if (editor) element.append(...editor.elements);
+        if (editor) content.append(...editor.elements);
         burn = createBurnEditor(world, body.id, ghost);
-        if (burn) element.append(...burn.elements);
+        if (burn) content.append(...burn.elements);
         refresh();
     };
     render();

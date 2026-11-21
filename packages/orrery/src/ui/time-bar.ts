@@ -110,6 +110,8 @@ export const createTimeBar = (world: World): TimeBar => {
             key("[ ]", "speed"),
             key("R", "reverse"),
             key("F", "focus"),
+            key("Arrows", "rotate"),
+            key("+ −", "zoom"),
             key("Esc", "deselect"),
         ),
     );

@@ -8,6 +8,7 @@ import {
     focusTween,
     minDistanceKm,
     type Pose,
+    reachKm,
 } from "./geometry.ts";
 
 /** The camera and its controls, which orbit the focused body. */
@@ -20,15 +21,20 @@ export type Rig = {
     fit: () => void;
     /** Whether the user or a focus change has moved the camera since the first fit. */
     moved: () => boolean;
+    /** Takes the scenario's new reach: it sets the farthest zoom, and refits if the camera hasn't moved. */
+    rescale: () => void;
     /** Moves the view to a body, keeping the view direction. */
     focus: (id: string) => void;
     /** Advances a focus move by `dt` seconds, follows the focus and updates the controls. */
     update: (dt: number, states: Map<string, State>) => void;
-    /** Removes the controls' listeners. */
+    /** Removes the controls' and the keys' listeners. */
     dispose: () => void;
 };
 
 const MAX_DISTANCE_FACTOR = 4;
+const KEY_ROTATE_RAD = (5 * Math.PI) / 180;
+/** A dolly scale below 1 brings the camera closer. */
+const KEY_ZOOM = 1 / 1.25;
 const FOCUS_SECONDS = 0.4;
 const START_ELEVATION = Math.PI / 6;
 
@@ -38,15 +44,15 @@ type Move = { from: Pose; id: string; distance: number; elapsed: number };
 export const createRig = (
     camera: PerspectiveCamera,
     canvas: HTMLElement,
-    scenario: Scenario,
+    scenario: () => Scenario,
     firstStates: Map<string, State>,
 ): Rig => {
-    const byId = new Map(scenario.bodies.map((body) => [body.id, body]));
-    const root = scenario.bodies.find((body) => body.parent === null);
+    const root = scenario().bodies.find((body) => body.parent === null);
     if (!root) throw new Error("The scenario has no root body.");
 
+    // Looked up each time, since the element editor replaces bodies.
     const bodyOf = (id: string): Body => {
-        const body = byId.get(id);
+        const body = scenario().bodies.find((candidate) => candidate.id === id);
         if (!body) throw new Error(`There is no body "${id}".`);
 
         return body;
@@ -79,23 +85,15 @@ export const createRig = (
     const fovRad = (camera.fov * Math.PI) / 180;
     controls.minDistance = minDistanceKm(root, fovRad);
 
-    const reach = Math.max(
-        ...scenario.bodies
-            // Planets only, so Pluto's wide orbit doesn't shrink the view.
-            .filter((body) => body.parent === root.id && body.kind === "planet")
-            .map(
-                (body) =>
-                    (body.elements?.a ?? 0) * (1 + (body.elements?.e ?? 0)),
-            ),
-        root.radius,
-    );
-    const fit = () => {
-        const distance = fitDistanceKm(
-            reach / 1000,
+    const fitDistance = () =>
+        fitDistanceKm(
+            reachKm(scenario()),
             fovRad,
             camera.aspect,
             START_ELEVATION,
         );
+    const fit = () => {
+        const distance = fitDistance();
         controls.maxDistance = distance * MAX_DISTANCE_FACTOR;
         camera.position.set(
             0,
@@ -106,6 +104,41 @@ export const createRig = (
     };
     fit();
 
+    const onKeyDown = (event: KeyboardEvent) => {
+        if (event.ctrlKey || event.altKey || event.metaKey) return;
+
+        switch (event.key) {
+            case "ArrowLeft":
+                controls.rotateLeft(KEY_ROTATE_RAD);
+                break;
+            case "ArrowRight":
+                controls.rotateLeft(-KEY_ROTATE_RAD);
+                break;
+            case "ArrowUp":
+                controls.rotateUp(KEY_ROTATE_RAD);
+                break;
+            case "ArrowDown":
+                controls.rotateUp(-KEY_ROTATE_RAD);
+                break;
+            case "+":
+            case "=":
+            case "PageUp":
+                controls.dollyIn(KEY_ZOOM);
+                break;
+            case "-":
+            case "PageDown":
+                controls.dollyOut(KEY_ZOOM);
+                break;
+            default:
+                return;
+        }
+
+        // The rotate and dolly methods update the controls.
+        touched = true;
+        event.preventDefault();
+    };
+    canvas.addEventListener("keydown", onKeyDown);
+
     const settle = (id: string) => {
         controls.minDistance = minDistanceKm(bodyOf(id), fovRad);
     };
@@ -115,6 +148,10 @@ export const createRig = (
         focusId: () => focused,
         fit,
         moved: () => touched,
+        rescale: () => {
+            controls.maxDistance = fitDistance() * MAX_DISTANCE_FACTOR;
+            if (!touched) fit();
+        },
         focus: (id) => {
             const body = bodyOf(id);
             touched = true;
@@ -170,6 +207,9 @@ export const createRig = (
 
             controls.update();
         },
-        dispose: () => controls.dispose(),
+        dispose: () => {
+            canvas.removeEventListener("keydown", onKeyDown);
+            controls.dispose();
+        },
     };
 };

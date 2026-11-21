@@ -71,6 +71,11 @@ export const createBurnEditor = (
     let step = DEFAULT_STEP;
     let ghosted: Elements | null = null;
     let wasNonzero = false;
+    // Only a pause this editor made is undone after Apply.
+    let pausedHere = false;
+    const offClock = world.on((event) => {
+        if (event.type === "clock" && !world.clock.paused) pausedHere = false;
+    });
 
     const move = (axis: Axis, delta: number) => {
         const input = inputs[axis];
@@ -308,13 +313,18 @@ export const createBurnEditor = (
         const nonzero = !isZero(read());
         if (nonzero && !wasNonzero && !world.clock.paused) {
             world.setClock({ paused: true });
+            pausedHere = true;
         }
+        if (!nonzero) pausedHere = false;
         wasNonzero = nonzero;
         update();
     };
 
     apply.addEventListener("click", () => {
         if (!world.burn(id, read()).ok) return;
+
+        if (pausedHere && world.clock.paused) world.setClock({ paused: false });
+        pausedHere = false;
 
         // Apply is disabled next, which would drop focus to <body>.
         inputs.prograde.focus();
@@ -367,10 +377,21 @@ export const createBurnEditor = (
 
     // Focus scrolling keeps fields clear of the footer that covers the card's bottom.
     const footerSize = new ResizeObserver(() => {
-        footer.parentElement?.style.setProperty(
+        const card = footer.parentElement;
+        card?.style.setProperty(
             "scroll-padding-block-end",
             `${footer.offsetHeight}px`,
         );
+
+        // The footer grows on the first nudge, over the button just pressed.
+        const active = document.activeElement;
+        if (
+            active instanceof HTMLElement &&
+            card?.contains(active) &&
+            !footer.contains(active)
+        ) {
+            active.scrollIntoView({ block: "nearest" });
+        }
     });
     footerSize.observe(footer);
 
@@ -385,6 +406,7 @@ export const createBurnEditor = (
         refresh: update,
         destroy: () => {
             showGhost(null);
+            offClock();
             footerSize.disconnect();
             footer.parentElement?.style.removeProperty(
                 "scroll-padding-block-end",

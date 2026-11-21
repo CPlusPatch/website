@@ -3,7 +3,7 @@
  * Camera and screen math for the view, with no three.js and no DOM.
  */
 
-import type { Body, Vec3 } from "@cpluspatch/orbit";
+import type { Body, Scenario, Vec3 } from "@cpluspatch/orbit";
 import { AU } from "@cpluspatch/orbit";
 
 /** A camera distance in km and the floating origin it orbits, in metres. */
@@ -31,6 +31,27 @@ export const focusDistanceKm = (body: Body): number =>
 /** The closest the camera may get to a body, in km: its sphere spans 80% of the view's height. */
 export const minDistanceKm = (body: Body, fovRad: number): number =>
     Math.max(body.radius / 1000 / Math.sin(0.4 * fovRad), 0.01);
+
+/** The farthest a planet gets from the root, in km, or the root's radius if there are none. */
+export const reachKm = (scenario: Scenario): number => {
+    const root = scenario.bodies.find((body) => body.parent === null);
+    if (!root) throw new Error("The scenario has no root body.");
+
+    return (
+        Math.max(
+            ...scenario.bodies
+                // Planets only, so Pluto's wide orbit doesn't shrink the view.
+                .filter(
+                    (body) => body.parent === root.id && body.kind === "planet",
+                )
+                .map(
+                    (body) =>
+                        (body.elements?.a ?? 0) * (1 + (body.elements?.e ?? 0)),
+                ),
+            root.radius,
+        ) / 1000
+    );
+};
 
 /** The margin, as a share of the viewport, left around the orbit of the fit. */
 const FIT_MARGIN = 1.1;
@@ -107,6 +128,16 @@ export type LabelBox = {
     radius: number;
 };
 
+/** A rectangle on screen in px, from the canvas's top left. */
+export type Rect = { left: number; top: number; right: number; bottom: number };
+
+/** The rows of a view that no panel covers, in px from its top. */
+export type Band = { top: number; bottom: number };
+
+/** How far up, in whole px, to shift a view of `height` so its centre is the middle of `band`. */
+export const centreShift = (height: number, band: Band): number =>
+    Math.round(height / 2 - (band.top + band.bottom) / 2);
+
 /** A body's marker on screen, with its half-width in px. */
 export type Dot = { id: string; x: number; y: number; size: number };
 
@@ -124,6 +155,7 @@ export const LABEL_ANCHOR_GAP_PX = 6;
  * is on top of an earlier label's anchor, and never covers another body's dot.
  * The focus is never hidden, and a pinned label only when it's off screen.
  * A label tries the side it had in `previous` first, so it doesn't jump when the selection changes.
+ * A side that overlaps a `blocked` rect, like a panel, isn't free.
  */
 export const placeLabels = (
     labels: LabelBox[],
@@ -132,6 +164,7 @@ export const placeLabels = (
     dots: Dot[] = [],
     pinned: readonly string[] = [],
     previous: ReadonlyMap<string, Placement> = new Map(),
+    blocked: readonly Rect[] = [],
 ): Map<string, Placement> => {
     const placements = new Map<string, Placement>();
     const placed: Box[] = [];
@@ -188,6 +221,13 @@ export const placeLabels = (
         };
         const free = (box: Box, onScreen: boolean) =>
             onScreen &&
+            !blocked.some(
+                (rect) =>
+                    box.left < rect.right &&
+                    rect.left < box.right &&
+                    box.top < rect.bottom &&
+                    rect.top < box.bottom,
+            ) &&
             !placed.some(
                 (other) =>
                     other.radius > radius &&

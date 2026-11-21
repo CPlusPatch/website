@@ -4,6 +4,7 @@ import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import type { World } from "../world.ts";
 import { createBodies } from "./bodies.ts";
 import { createRig } from "./camera.ts";
+import { type Band, centreShift, type Rect } from "./geometry.ts";
 import { createOrbits } from "./orbits.ts";
 import { type PickPoint, pickBody } from "./picking.ts";
 import { bindPointer } from "./pointer.ts";
@@ -16,10 +17,16 @@ export type View = {
     destroy: () => void;
 };
 
-/** The 3D view of `world` in `container`, or `null` if WebGL isn't available. */
+/**
+ * The 3D view of `world` in `container`, or `null` if WebGL isn't available.
+ * `blocked` gives the rects, in px from the container's top left, that labels keep out of.
+ * `band` gives the rows the panels leave free, where the focus is centred.
+ */
 export const createView = (
     container: HTMLElement,
     world: World,
+    blocked: () => Rect[],
+    band: () => Band,
 ): View | null => {
     let renderer: WebGLRenderer;
     try {
@@ -44,6 +51,7 @@ export const createView = (
     labels.domElement.setAttribute("aria-hidden", "true");
     const canvas = renderer.domElement;
     canvas.setAttribute("role", "img");
+    canvas.tabIndex = 0;
 
     container.append(canvas, labels.domElement);
 
@@ -64,9 +72,35 @@ export const createView = (
         theme.color,
     );
 
+    let size = { width: 0, height: 0 };
+    let shift = 0;
+    // Moves the picture, so the focus sits in the free band rather than under a panel.
+    const offset = (free: Band) => {
+        const next = centreShift(size.height, free);
+        if (next === shift) return;
+
+        shift = next;
+        if (shift === 0) camera.clearViewOffset();
+        else {
+            camera.setViewOffset(
+                size.width,
+                size.height,
+                0,
+                shift,
+                size.width,
+                size.height,
+            );
+        }
+    };
+
     const resize = () => {
         const { clientWidth: width, clientHeight: height } = container;
         if (width === 0 || height === 0) return;
+
+        size = { width, height };
+        // The offset is in px of the old size, so it's set again next frame.
+        camera.clearViewOffset();
+        shift = 0;
 
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(width, height);
@@ -92,13 +126,15 @@ export const createView = (
     });
     orbits.highlight(world.selected);
 
-    const rig = createRig(camera, canvas, world.scenario, world.states());
+    const rig = createRig(camera, canvas, () => world.scenario, world.states());
     resize();
 
     const describe = () =>
         canvas.setAttribute(
             "aria-label",
-            `The solar system, centred on ${names.get(rig.focusId())}`,
+            `The solar system, centred on ${names.get(
+                rig.focusId(),
+            )}. Arrow keys rotate, plus and minus zoom.`,
         );
     describe();
 
@@ -107,12 +143,17 @@ export const createView = (
     const draw = (now: number) => {
         frame = requestAnimationFrame(draw);
 
+        // Read before this frame's writes, so the layout isn't forced twice.
+        const keepOut = blocked();
+        const free = band();
+
         const dt = Math.min((now - last) / 1000, 0.1);
         last = now;
 
         world.clock.tick(dt);
         const states = world.states();
 
+        offset(free);
         rig.update(dt, states);
         camera.updateMatrixWorld();
         orbits.update(rig.origin(), states);
@@ -122,6 +163,7 @@ export const createView = (
             rig.focusId(),
             world.selected,
             states,
+            keepOut,
         );
 
         renderer.render(scene, camera);
@@ -141,6 +183,7 @@ export const createView = (
         } else if (event.type === "body") {
             const body = world.scenario.bodies.find((b) => b.id === event.id);
             if (body) orbits.rebuild(body);
+            rig.rescale();
         }
     });
 

@@ -28,19 +28,21 @@ import {
     type Placement,
     placeLabels,
     projectedRadiusPx,
+    type Rect,
     type Sphere,
 } from "./geometry.ts";
 import { type LabelRect, type PickPoint, pickLabel } from "./picking.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
-    /** Places every body relative to `origin` and picks what to show. Returns where the shown bodies are on screen. */
+    /** Places every body relative to `origin` and picks what to show. Labels keep out of `blocked`. Returns where the shown bodies are on screen. */
     update: (
         camera: PerspectiveCamera,
         origin: Vec3,
         focus: string,
         selected: string | null,
         states: Map<string, State>,
+        blocked: Rect[],
     ) => PickPoint[];
     /** The body whose shown label holds a point, in px from the canvas's top left. */
     labelAt: (x: number, y: number, canvas: DOMRect) => string | null;
@@ -227,7 +229,7 @@ export const createBodies = (
     let size = { width: 1, height: 1 };
 
     return {
-        update: (camera, origin, focus, selected, states) => {
+        update: (camera, origin, focus, selected, states, blocked) => {
             if (selected !== selectedId) {
                 selectedId = selected;
                 for (const { body, label } of entries) {
@@ -312,13 +314,13 @@ export const createBodies = (
                     disc: big,
                     radius: body.radius,
                 });
-                if (big)
+                if (big) {
                     spheres.push({
                         id: body.id,
                         pos,
                         radius: body.radius / 1000,
                     });
-                else {
+                } else {
                     markers.push({ id: body.id, x, y, radius: body.radius });
                     dots.push({ id: body.id, x, y, size: markerPx(body) / 2 });
                 }
@@ -335,6 +337,7 @@ export const createBodies = (
                 dots.filter(({ id }) => !covered.has(id)),
                 [selected, hoverId].filter((id) => id !== null),
                 placements,
+                blocked,
             );
 
             for (const entry of entries) {

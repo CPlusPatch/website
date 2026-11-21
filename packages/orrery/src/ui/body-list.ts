@@ -8,8 +8,13 @@ import { h } from "./dom.ts";
 /** The body list's element and how to remove it. */
 export type BodyList = {
     element: HTMLElement;
-    /** Moves keyboard focus to the row of `id`, or to the list's summary while it's closed. */
+    /**
+     * Moves keyboard focus to the row of `id`. While the row is out of sight, it goes to the
+     * list's summary, or to the button of the dropdown that holds the list.
+     */
     focusRow: (id: string) => void;
+    /** Drops the card's frame and keeps the list open and without a summary, for a dropdown. */
+    embed: (embedded: boolean) => void;
     destroy: () => void;
 };
 
@@ -53,10 +58,17 @@ export const createBodyList = (world: World): BodyList => {
             },
             "Focus",
         );
+        // In the narrow layout the list is in a popover, which gets out of the way.
+        const closePopover = () =>
+            element.closest<HTMLElement>("[popover]")?.hidePopover();
         select.addEventListener("click", () => {
             world.select(world.selected === body.id ? null : body.id);
+            closePopover();
         });
-        focus.addEventListener("click", () => world.focus(body.id));
+        focus.addEventListener("click", () => {
+            world.focus(body.id);
+            closePopover();
+        });
         rows.set(body.id, { select, check, focus });
 
         return h(
@@ -109,8 +121,20 @@ export const createBodyList = (world: World): BodyList => {
         element,
         focusRow: (id) => {
             const target = rows.get(id)?.select;
-            if (details.open && target) target.focus();
-            else summary.focus();
+            if (target?.checkVisibility()) {
+                target.focus();
+            } else if (summary.checkVisibility()) {
+                summary.focus();
+            } else {
+                element
+                    .closest(".dropdown")
+                    ?.querySelector<HTMLElement>(".dropdown__trigger")
+                    ?.focus();
+            }
+        },
+        embed: (embedded) => {
+            element.classList.toggle("orrery__body-list--embedded", embedded);
+            if (embedded) details.open = true;
         },
         destroy: () => {
             off();

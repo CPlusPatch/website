@@ -23,6 +23,11 @@
             display: block;
             inline-size: 100%;
             block-size: 100%;
+
+            /* Inside, since the root clips anything outside its edge. */
+            &:focus-visible {
+                outline-offset: -2px;
+            }
         }
 
         .alert {
@@ -121,6 +126,31 @@
         align-items: flex-end;
     }
 
+    /* A dropdown of the body list, for the narrow layout. */
+    .orrery__bodies-menu {
+        display: none;
+    }
+
+    /* The menus sit on the canvas, so a planet behind one mustn't show through. */
+    .orrery__panel--top .dropdown__trigger {
+        &:not(:hover) {
+            background-color: var(--color-surface-raised);
+        }
+
+        /* A tap leaves :hover on, which would keep the dark fill. */
+        @media (hover: none) {
+            background-color: var(--color-surface-raised);
+        }
+    }
+
+    /* A panel lines up with its button's edge, so it can end up flush with the viewport's. */
+    @supports (position-area: bottom) {
+        .orrery__panel--top .dropdown__panel {
+            margin-inline: var(--space-sm);
+            max-inline-size: calc(100vw - 2 * var(--space-sm));
+        }
+    }
+
     .orrery__panel--left,
     .orrery__panel--right {
         inset-block: var(--orrery-top-space) var(--orrery-bottom-space);
@@ -167,6 +197,8 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        /* Like the bar, so Now doesn't sit alone at the left when it wraps. */
+        justify-content: center;
         gap: var(--space-xs) var(--space-sm);
 
         /* `.field` makes the input fill its row. */
@@ -189,7 +221,7 @@
     }
 
     .orrery__body-list,
-    .orrery__inspector {
+    .orrery__inspector-body {
         align-items: stretch;
         /* Scrolls inside, so it never covers the other panels. */
         max-block-size: 100%;
@@ -223,6 +255,20 @@
             @media (prefers-reduced-motion: reduce) {
                 transition: none;
             }
+        }
+    }
+
+    /* In a dropdown, which is the frame. Its button is the summary, so the list stays open. */
+    .orrery__body-list--embedded {
+        padding: 0;
+        border: 0;
+        background: none;
+        box-shadow: none;
+        max-block-size: none;
+        overflow: visible;
+
+        summary {
+            display: none;
         }
     }
 
@@ -285,9 +331,11 @@
         }
 
         /* The ghost button's inverted hover would outshout the pressed row. */
-        > :hover {
-            color: var(--color-text);
-            background-color: var(--orrery-row-hover);
+        @media (hover: hover) {
+            > :hover {
+                color: var(--color-text);
+                background-color: var(--orrery-row-hover);
+            }
         }
 
         > [aria-pressed="true"] {
@@ -296,11 +344,33 @@
         }
     }
 
+    .orrery__inspector {
+        align-items: stretch;
+        gap: 0;
+        max-block-size: 100%;
+        overflow: hidden;
+        padding: 0;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
     .orrery__inspector-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: var(--space-sm);
+        padding: var(--space-sm);
+        /* Marks where the rows scroll under the head. */
+        border-block-end: var(--border-width) solid var(--color-border);
+    }
+
+    .orrery__inspector-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        min-block-size: 0;
     }
 
     .orrery__inspector-title {
@@ -404,9 +474,14 @@
     /* Equal columns, so buttons that wrap still line up. */
     .orrery__burn-actions {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
         margin-block-start: var(--space-md);
         gap: var(--space-xs);
+
+        /* A wrapped label spills out of the fixed-height button. */
+        .button {
+            white-space: nowrap;
+        }
     }
 
     /* Sticks to the card's bottom, so it shows even when the card needs scrolling. */
@@ -561,5 +636,58 @@
 
     .orrery__form-error[hidden] {
         display: none;
+    }
+
+    @media (max-width: 720px) {
+        /* The same sizes as a coarse pointer gets, since a narrow screen is touched. */
+        --control-height-sm: 2.5rem;
+        --control-height-md: 2.75rem;
+        --control-height-lg: 3rem;
+
+        /* The body list is in the top bar. */
+        .orrery__bodies-menu {
+            display: inline-block;
+        }
+
+        .orrery__panel--left {
+            display: none;
+        }
+
+        /* A sheet above the time bar, that stops under the top bar on a short screen. */
+        .orrery__panel--right {
+            inset-inline: 0;
+            justify-content: flex-end;
+            align-items: stretch;
+            inline-size: auto;
+        }
+
+        .orrery__inspector {
+            inline-size: 100%;
+            max-block-size: min(50dvh, 100%);
+        }
+
+        /* Every menu spans the bar, rather than lining up with its own button. */
+        @supports (position-area: bottom) {
+            .orrery__panel--top .dropdown__panel {
+                position-area: bottom span-all;
+                inline-size: calc(100vw - 2 * var(--space-sm));
+            }
+        }
+
+        .orrery__editor summary {
+            min-block-size: var(--control-height-sm);
+        }
+
+        /* The thumb is the touch target. */
+        .slider {
+            --thumb: 1.5rem;
+        }
+    }
+
+    /* The three triggers fit on one row at 320 px without their icons. */
+    @media (max-width: 360px) {
+        .orrery__panel--top .dropdown__trigger svg {
+            display: none;
+        }
     }
 }
