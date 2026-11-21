@@ -343,6 +343,51 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         return { width: el.offsetWidth, height: el.offsetHeight };
     };
 
+    /**
+     * The narrowest a measured window can be before its content overflows or
+     * crops. Not its `min-content` width, which is 0 for a scroll container
+     * and so gives back the window's minimum width. Instead the window starts
+     * as narrow as it goes and grows by what its scroll containers overflow
+     * by, until none does. Content reflows as it widens, so one step isn't
+     * always enough. The window goes back to its natural width.
+     */
+    const floorOf = (id: string) => {
+        const el = managed.get(id)?.el;
+        const body = el?.querySelector<HTMLElement>(".window__body");
+        if (!el || !body) return 0;
+
+        const overflow = () => {
+            let most = 0;
+
+            for (const part of [
+                body,
+                ...body.querySelectorAll<HTMLElement>("*"),
+            ]) {
+                // Not `hidden`: that crops on purpose, like visually hidden text.
+                if (!/auto|scroll/.test(getComputedStyle(part).overflowX)) {
+                    continue;
+                }
+
+                most = Math.max(most, part.scrollWidth - part.clientWidth);
+            }
+
+            return most;
+        };
+
+        el.style.width = "min-content";
+        let width = el.offsetWidth;
+        for (let pass = 0; pass < 6; pass++) {
+            const extra = overflow();
+            if (extra <= 0) break;
+
+            width += extra;
+            el.style.width = `${width}px`;
+        }
+        el.style.width = "";
+
+        return width;
+    };
+
     /** Records a new window's rect, and whether it was shrunk from `size`. */
     const add = (id: string, rect: Rect, size: Size) => {
         if (rect.width !== size.width || rect.height !== size.height) {
@@ -351,16 +396,31 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         setRect(id, rect);
     };
 
-    /** Opens the window if it's closed, and puts it on top. */
-    const open = (id: string) => {
+    /**
+     * Opens the window if it's closed, and puts it on top. `opener` is the
+     * window the reader opened it from, if any.
+     */
+    const open = (id: string, opener?: string) => {
         if (!managed.has(id)) return;
 
         if (!rects.has(id)) {
             const size = measure(id);
             // From bottom to top, so the last one is the top window.
-            const others = stack.flatMap((w) => shown.get(w) ?? []);
+            const ids = stack.filter((w) => shown.has(w));
+            const others = ids.flatMap((w) => shown.get(w) ?? []);
+            const from = opener ? ids.indexOf(opener) : -1;
 
-            add(id, place(size, placing(), others, cascade), size);
+            add(
+                id,
+                place(
+                    size,
+                    placing(),
+                    others,
+                    cascade,
+                    from < 0 ? undefined : from,
+                ),
+                size,
+            );
             opened.push(id);
             touched = true;
         }
@@ -414,8 +474,8 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
         touched = true;
     };
 
-    const show = (id: string, visible = true) => {
-        open(id);
+    const show = (id: string, visible = true, opener?: string) => {
+        open(id, opener);
         bringIn(id);
         render();
         focusTitle(id, visible);
@@ -519,7 +579,10 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
 
         // From bottom to top: the first in the document is on top.
         const order = [...first].reverse();
-        const sizes = order.map(measure);
+        const sizes = order.map((id) => ({
+            ...measure(id),
+            floor: floorOf(id),
+        }));
         const placed = arrange(sizes, placing(), cascade);
         for (const [i, id] of order.entries()) add(id, placed[i], sizes[i]);
     };
@@ -621,7 +684,7 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
             event.preventDefault();
             const wasOpen = rects.has(id);
             // A click with no pointer, from a key, keeps the focus ring.
-            show(id, event.detail === 0);
+            show(id, event.detail === 0, windowOf(event.target));
             if (location.hash !== href) {
                 // Raising a window that's already open isn't a place to go back to.
                 if (wasOpen) history.replaceState(null, "", href);

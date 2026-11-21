@@ -60,21 +60,174 @@ Deno.test("a window goes into free room at the right of a window, before the roo
     });
 });
 
-Deno.test("a window opens a step from the top window when there is no free room", () => {
-    const behind = { x: 56, y: 56, width: 300, height: 300 };
-    const above = { x: 40, y: 90, width: 300, height: 300 };
-
+Deno.test("a window opens a step from the top window when there is no free room and every spot covers the same", () => {
     assertEquals(place(size, desktop, [full]), { ...size, x: 56, y: 56 });
+    assertEquals(place(size, desktop, [full], undefined, 0), {
+        ...size,
+        x: 56,
+        y: 56,
+    });
+});
+
+Deno.test("with every spot covering the same, a window cascades from the top window, not the first", () => {
+    const top = { x: 8, y: 8, width: 984, height: 584 };
+
+    assertEquals(place(size, desktop, [full, top]), {
+        ...size,
+        x: 40,
+        y: 40,
+    });
+});
+
+const leftHalf = { x: 24, y: 24, width: 470, height: 552 };
+const rightHalf = { x: 506, y: 24, width: 470, height: 552 };
+
+const overlapping = (a: Rect, b: Rect) =>
+    a.x < b.x + b.width &&
+    b.x < a.x + a.width &&
+    a.y < b.y + b.height &&
+    b.y < a.y + a.height;
+
+Deno.test("with no free room a window opens over the others and leaves the window it was opened from uncovered", () => {
+    const fromRight = place(size, desktop, [leftHalf, rightHalf], undefined, 1);
+    const fromLeft = place(size, desktop, [leftHalf, rightHalf], undefined, 0);
+
+    assertEquals(overlapping(fromRight, rightHalf), false);
+    assertEquals(overlapping(fromRight, leftHalf), true);
+    assertEquals(overlapping(fromLeft, leftHalf), false);
+    assertEquals(overlapping(fromLeft, rightHalf), true);
+});
+
+Deno.test("a cascade spot is taken over a grid spot that covers a little less", () => {
+    const behind = { x: 56, y: 56, width: 300, height: 300 };
+
+    // The grid spot at (312, 248) covers 4% of `behind` on top of `full`. The
+    // cascade spot at (248, 248) covers 7% of it, but cascade spots go first.
     assertEquals(place(size, desktop, [full, behind]), {
         ...size,
-        x: 88,
-        y: 88,
+        x: 248,
+        y: 248,
     });
-    // The step is from the last window, which is the top one.
-    assertEquals(place(size, desktop, [full, above]), {
-        ...size,
-        x: 72,
-        y: 122,
+});
+
+Deno.test("over a window that covers the desktop, a tall window opens at its cascade spot at full height, not shrunk at a far spot", () => {
+    const tall = { width: 400, height: 900 };
+
+    // 600 - 56 - 24 = 520 tall. The spot at y 216 would cover as much, but
+    // leaves only 360.
+    assertEquals(place(tall, desktop, [full]), {
+        x: 56,
+        y: 56,
+        width: 400,
+        height: 520,
+    });
+});
+
+Deno.test("a window still leaves every title bar showing when a spot that hides one covers less", () => {
+    const left = { x: 24, y: 24, width: 452, height: 552 };
+    // Its bar, 200 to 232, shows 96px or more only from a window that ends
+    // 96px short of its right edge, or starts below it. The spot at (536, 24)
+    // covers little of it but hides the bar. It's too low for a window to
+    // shrink to stop short of its top.
+    const narrow = { x: 500, y: 200, width: 200, height: 376 };
+
+    const rect = place(size, desktop, [left, narrow]);
+
+    assertEquals(
+        rect.y >= narrow.y + DEFAULT_CASCADE.step ||
+            rect.x + rect.width <= narrow.x + narrow.width - GRIP,
+        true,
+    );
+});
+
+Deno.test("free room with a spot that needs a small shrink is taken before covering a window", () => {
+    const open = [{ x: 24, y: 24, width: 400, height: 300 }];
+    const wide = { width: 600, height: 300 };
+
+    // 1000 - 448 - 24 = 528 wide is left at the right of it, a shrink of 12%.
+    assertEquals(place(wide, desktop, open), {
+        x: 448,
+        y: 24,
+        width: 528,
+        height: 300,
+    });
+});
+
+Deno.test("a window shrunk to clear the window it was opened from wins over covering it", () => {
+    const opener = { x: 400, y: 40, width: 576, height: 536 };
+    const left = { x: 24, y: 24, width: 200, height: 200 };
+
+    // From x 56, off `left`, it would end 56px into the opener. Shrunk to
+    // 400 - 24 - 56 = 320 wide it stops a gap short, and loses 20% of its
+    // area. The cascade off the opener covers it, which counts four times.
+    assertEquals(place(size, desktop, [left, opener], undefined, 1), {
+        x: 56,
+        y: 56,
+        width: 320,
+        height: 300,
+    });
+});
+
+Deno.test("a window leaves the left of the title bar of the window it was opened from uncovered", () => {
+    const opener = { x: 72, y: 280, width: 904, height: 296 };
+
+    // At x 56 it would hide the opener's icon and title, and still leave
+    // more than a grip at the right of its bar. At (184, 56) it would graze
+    // the opener by 76px.
+    const rect = place(size, desktop, [full, opener], undefined, 1);
+
+    assertEquals(rect, { ...size, x: 184, y: 184 });
+    assertEquals(rect.x >= opener.x + GRIP, true);
+});
+
+Deno.test("spots of nearly equal cost go to the cascade off the top window", () => {
+    const top = { x: 200, y: 200, width: 128, height: 128 };
+    const wide = { width: 640, height: 300 };
+
+    // The spot a step from it covers 4.8% of the window on top of the window
+    // under it, a grip's overlap of the top one. Another spot covers only the
+    // window under it, but this one lines up first.
+    assertEquals(place(wide, desktop, [full, top]), {
+        ...wide,
+        x: 232,
+        y: 232,
+    });
+});
+
+Deno.test("a window that stops short of another beats one that grazes it by less than a grip", () => {
+    const left = { x: 24, y: 24, width: 560, height: 552 };
+    const right = { x: 600, y: 24, width: 376, height: 552 };
+    const wide = { width: 560, height: 500 };
+
+    // From (56, 56) it would end 16px into `right`. Shrunk to 600 - 24 - 56
+    // = 520 wide it stops a gap short.
+    assertEquals(place(wide, desktop, [left, right]), {
+        x: 56,
+        y: 56,
+        width: 520,
+        height: 500,
+    });
+});
+
+Deno.test("the grid is used when no cascade spot has the room", () => {
+    const low = { x: 400, y: 200, width: 576, height: 376 };
+    const wide = { width: 700, height: 300 };
+
+    // A step off `low` leaves 544px at the right, short of the 600 a window
+    // this wide gets at least.
+    assertEquals(place(wide, desktop, [low]), { x: 24, y: 24, ...wide });
+});
+
+Deno.test("a window isn't cut short to cover a little less", () => {
+    const tall = { width: 400, height: 900 };
+    const row = { x: 24, y: 24, width: 952, height: 300 };
+
+    // At y 216 it would be 360 tall and cover 30% of its area, not 52%.
+    assertEquals(place(tall, desktop, [row]), {
+        x: 56,
+        y: 56,
+        width: 400,
+        height: 520,
     });
 });
 
@@ -104,10 +257,13 @@ Deno.test("a window skips a cascade spot another window's corner is near, so it 
     const open = [full, { x: 88, y: 88, width: 300, height: 300 }];
     const top = { x: 56, y: 56, width: 300, height: 300 };
 
+    // (88, 88) is out, and so is every spot within 16px of an edge of the
+    // others. Of the rest, this is the first cascade spot that covers the
+    // least, give or take the tolerance.
     assertEquals(place(size, desktop, [...open, top]), {
         ...size,
-        x: 120,
-        y: 120,
+        x: 248,
+        y: 248,
     });
 });
 
@@ -502,19 +658,26 @@ for (const desk of deskSizes) {
         }
     });
 
-    Deno.test(`eight windows opened in turn on a ${name} desk each get 60% of the desk, or their own size`, () => {
+    Deno.test(`eight windows opened in turn on a ${name} desk each get three quarters of 60% of the desk, or of their own size`, () => {
         const { sizes, placed } = openEight(desk, origin16);
 
         for (const [i, rect] of placed.entries()) {
+            // A window can be shrunk by a quarter to line up or to fit.
             assertEquals(
-                rect.width >= Math.min(sizes[i].width, 0.6 * desk.width) ||
+                rect.width >=
+                    Math.ceil(
+                        0.75 * Math.min(sizes[i].width, 0.6 * desk.width),
+                    ) ||
                     // The pair is narrowed to fit side by side.
                     i < 2,
                 true,
                 `window ${i} is ${rect.width} wide`,
             );
             assertEquals(
-                rect.height >= Math.min(sizes[i].height, 0.6 * desk.height),
+                rect.height >=
+                    Math.ceil(
+                        0.75 * Math.min(sizes[i].height, 0.6 * desk.height),
+                    ),
                 true,
                 `window ${i} is ${rect.height} tall`,
             );
@@ -545,15 +708,15 @@ for (const desk of deskSizes) {
     });
 }
 
-Deno.test("the windows arranged at load start at the margin, and the next one cascades from the top one", () => {
+Deno.test("the windows arranged at load start at the margin, and the next one opens in the free room under the second", () => {
     const desk = { width: 1280, height: 739 };
     const { placed } = openEight(desk, origin16);
 
     assertEquals(placed[1].x, 16);
     // The pair's room left over is on the right: 16 + 576 + 16 + 576 = 1184
     assertEquals(placed[0].x + placed[0].width, 16 + 576 + 16 + 576);
-    // README is on top, so the third window cascades from its corner
-    assertEquals([placed[2].x, placed[2].y], [16 + 32, 16 + 32]);
+    // Under Terminal, a gap away, with the room there: 739 - 411 - 16 = 312
+    assertEquals(placed[2], { x: 608, y: 411, width: 576, height: 312 });
 });
 
 Deno.test("windows are narrowed beside each other only to three quarters of their own width", () => {
@@ -580,6 +743,36 @@ Deno.test("windows are narrowed beside each other only to three quarters of thei
             [16, 16, 488],
         ],
     );
+});
+
+Deno.test("a window isn't narrowed below its content's floor", () => {
+    const wide = { width: 576, height: 400 };
+    const pair = [wide, { ...wide, floor: 520 }];
+
+    // 1024: 992 of room. Evenly they'd be 488 each, under the second's floor.
+    const rects = arrange(pair, { width: 1024, height: 600 }, origin16);
+
+    assertEquals(rects[1].width >= 520, true);
+    assertEquals(
+        rects.map((r) => [r.x, r.width]),
+        [
+            [552, 456],
+            [16, 520],
+        ],
+    );
+});
+
+Deno.test("windows whose floors don't fit side by side overlap instead of narrowing", () => {
+    const wide = { width: 576, height: 400, floor: 500 };
+
+    // 1000 + 16 is over the 992 of room, though 2 * 432 + 16 isn't
+    const rects = arrange([wide, wide], { width: 1024, height: 600 }, origin16);
+
+    assertEquals(
+        rects.map((r) => r.width),
+        [576, 576],
+    );
+    assertEquals(rects[1].y > rects[0].y, true);
 });
 
 Deno.test("windows of one width are narrowed to one width, with the spare pixel on the right", () => {

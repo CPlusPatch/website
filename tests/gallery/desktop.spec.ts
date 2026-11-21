@@ -383,7 +383,7 @@ const naturalSize = (page: Page, id: string) =>
         return size;
     }, id);
 
-test("opening each closed window in turn leaves no sliver between edges, and each window at least 60% of the desk's width and 55% of its height, or its natural size", async ({
+test("opening each closed window in turn leaves no sliver between edges, and each window at least three quarters of 60% of the desk's width and of 55% of its height, or of its natural size", async ({
     page,
 }) => {
     await open(page, 1280, 800);
@@ -420,7 +420,8 @@ test("opening each closed window in turn leaves no sliver between edges, and eac
 
         // The pair open at load is narrowed to fit side by side, so it's exempt.
         // The height floor is lower: the desk icons' column leaves fewer free
-        // spots, so Radio lands lower down.
+        // spots, so Radio lands lower down. A window can be shrunk by a
+        // quarter to line up with the others or to fit the room left.
         for (const target of opened.slice(2)) {
             const natural = await naturalSize(page, target);
             const win = boxes.get(target);
@@ -430,13 +431,13 @@ test("opening each closed window in turn leaves no sliver between edges, and eac
                 win.width,
                 `after ${id}: ${target} width`,
             ).toBeGreaterThanOrEqual(
-                Math.min(natural.width, 0.6 * desk.width) - 1,
+                0.75 * Math.min(natural.width, 0.6 * desk.width) - 1,
             );
             expect(
                 win.height,
                 `after ${id}: ${target} height`,
             ).toBeGreaterThanOrEqual(
-                Math.min(natural.height, 0.55 * desk.height) - 1,
+                0.75 * Math.min(natural.height, 0.55 * desk.height) - 1,
             );
         }
     }
@@ -793,6 +794,174 @@ for (const [width, height] of [
                 `Projects covers the bar of ${id}`,
             ).toBe(true);
         }
+    });
+}
+
+test("a project opened from Projects doesn't cover the link that opened it, and every title bar keeps a grip showing", async ({
+    page,
+}) => {
+    await open(page, 1280, 800);
+    await page.locator(".launcher__trigger").click();
+    await page.locator('#launcher a[href="#w-projects"]').click();
+    await expect(page.locator("#w-projects")).toBeVisible();
+
+    const link = page.locator('#w-projects a[href="#w-p-versia"]');
+    const at = await box(link);
+    await link.click();
+    await expect(page.locator("#w-p-versia")).toBeVisible();
+
+    const covered = await page.evaluate(
+        ({ x, y }) => !document.elementFromPoint(x, y)?.closest("#w-projects"),
+        { x: at.x + at.width / 2, y: at.y + at.height / 2 },
+    );
+    expect(covered, "the viewer covers the link").toBe(false);
+
+    const boxes = await openBoxes(page);
+    const ids = [...boxes.keys()];
+    const zs = new Map<string, number>();
+    for (const id of ids) zs.set(id, await zIndex(page.locator(`#${id}`)));
+    for (const id of ids) {
+        const bar = await box(page.locator(`#${id} .window__bar`));
+        for (const over of ids) {
+            if ((zs.get(over) ?? 0) <= (zs.get(id) ?? 0)) continue;
+
+            const above = boxes.get(over);
+            if (!above) continue;
+
+            expect(
+                barShows(bar, above),
+                `${over} covers the bar of ${id}`,
+            ).toBe(true);
+        }
+    }
+});
+
+/** Opens a window from the launcher menu, as a reader does. */
+const fromLauncher = async (page: Page, id: string) => {
+    await page.locator(".launcher__trigger").click();
+    await page.locator(`#launcher a[href="#${id}"]`).click();
+    await expect(page.locator(`#${id}`)).toBeVisible();
+    await expect(page.locator("#launcher")).toBeHidden();
+};
+
+/** Whether two boxes share any area. */
+const overlap = (a: Rect, b: Rect) =>
+    a.x < b.x + b.width &&
+    b.x < a.x + a.width &&
+    a.y < b.y + b.height &&
+    b.y < a.y + a.height;
+
+test("at 1280 by 800 Chat from the launcher opens below Terminal, at its left edge, over no window", async ({
+    page,
+}) => {
+    await open(page, 1280, 800);
+
+    await fromLauncher(page, "w-chat");
+
+    const chat = await box(page.locator("#w-chat"));
+    const terminal = await box(page.locator("#w-terminal"));
+    expect(Math.abs(chat.x - terminal.x), "chat's left edge").toBeLessThan(1);
+    expect(chat.y, "chat's top").toBeGreaterThanOrEqual(
+        terminal.y + terminal.height,
+    );
+    for (const id of ["w-readme", "w-terminal"]) {
+        expect(
+            overlap(chat, await box(page.locator(`#${id}`))),
+            `chat covers ${id}`,
+        ).toBe(false);
+    }
+});
+
+for (const [width, height] of [
+    [1280, 800],
+    [1440, 900],
+] as const) {
+    test(`at ${width} by ${height} Projects, Radio and Chat opened in turn never overlap by less than ${GRIP}px`, async ({
+        page,
+    }) => {
+        await open(page, width, height);
+
+        for (const id of ["w-projects", "w-radio", "w-chat"]) {
+            await fromLauncher(page, id);
+
+            // A thin overlap hides a sliver of a window and reads as a mistake.
+            const boxes = [...(await openBoxes(page))];
+            for (const [i, [a, first]] of boxes.entries()) {
+                for (const [b, second] of boxes.slice(i + 1)) {
+                    if (!overlap(first, second)) continue;
+
+                    const across =
+                        Math.min(
+                            first.x + first.width,
+                            second.x + second.width,
+                        ) - Math.max(first.x, second.x);
+                    const down =
+                        Math.min(
+                            first.y + first.height,
+                            second.y + second.height,
+                        ) - Math.max(first.y, second.y);
+                    expect(
+                        Math.min(across, down),
+                        `after ${id}: ${a} and ${b} overlap by ${across} by ${down}`,
+                    ).toBeGreaterThanOrEqual(GRIP);
+                }
+            }
+        }
+    });
+}
+
+for (const [width, height] of [
+    [1280, 800],
+    [1440, 900],
+    [1920, 1080],
+] as const) {
+    test(`at ${width} by ${height} a project opened from Projects leaves the left ${GRIP}px of Projects' title bar showing`, async ({
+        page,
+    }) => {
+        await open(page, width, height);
+        await fromLauncher(page, "w-projects");
+
+        await page.locator('#w-projects a[href="#w-p-versia"]').click();
+        await expect(page.locator("#w-p-versia")).toBeVisible();
+
+        const bar = await box(page.locator("#w-projects .window__bar"));
+        const viewer = await box(page.locator("#w-p-versia"));
+        const grip = { ...bar, width: Math.min(GRIP, bar.width) };
+        expect(overlap(viewer, grip), "the viewer covers the title").toBe(
+            false,
+        );
+    });
+}
+
+for (const width of [960, 1000, 1024]) {
+    test(`at ${width}px wide README's and Terminal's scroll containers don't overflow sideways, so nothing in them is cropped`, async ({
+        page,
+    }) => {
+        await open(page, width, 768);
+        await expect(page.locator("#w-readme")).toBeVisible();
+        await expect(page.locator("#w-terminal")).toBeVisible();
+
+        // A scroll container with more content than room scrolls it.
+        const cropped = await page.evaluate(() =>
+            ["w-readme", "w-terminal"].flatMap((id) => {
+                const body = document.querySelector(`#${id} .window__body`);
+                if (!body) return [`${id} has no body`];
+
+                return [body, ...body.querySelectorAll("*")]
+                    .filter(
+                        (el) =>
+                            /auto|scroll/.test(
+                                getComputedStyle(el).overflowX,
+                            ) && el.scrollWidth > el.clientWidth,
+                    )
+                    .map(
+                        (el) =>
+                            `${id} ${el.className}: ${el.scrollWidth} > ${el.clientWidth}`,
+                    );
+            }),
+        );
+
+        expect(cropped).toEqual([]);
     });
 }
 
