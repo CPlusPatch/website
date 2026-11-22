@@ -14,15 +14,35 @@ export type Precession = {
     argpRate: number;
 };
 
-/** The orbit `el` after it has precessed by `p` from its epoch to time `t`. */
-export const precess = (el: Elements, p: Precession, t: number): Elements => {
+/** A rotation about a unit axis. */
+export type Turn = { axis: Vec3; angle: number };
+
+/**
+ * The two rotations that carry the epoch orbit of `el` to its orbit at `t`, in order: about the
+ * epoch orbit normal by the periapsis rate, then about the pole by the node rate.
+ */
+export const precessionTurns = (
+    el: Elements,
+    p: Precession,
+    t: number,
+): [Turn, Turn] => {
     const dt = t - el.epoch;
     const { p: periapsis, q } = axes(el);
-    const normal = cross(periapsis, q);
 
-    const turned = rotate(periapsis, normal, p.argpRate * dt);
-    const h = normalize(rotate(normal, p.pole, p.nodeRate * dt));
-    const peri = rotate(turned, p.pole, p.nodeRate * dt);
+    return [
+        { axis: cross(periapsis, q), angle: p.argpRate * dt },
+        { axis: p.pole, angle: p.nodeRate * dt },
+    ];
+};
+
+/** The orbit `el` after it has precessed by `p` from its epoch to time `t`. */
+export const precess = (el: Elements, p: Precession, t: number): Elements => {
+    const { p: periapsis } = axes(el);
+    const [about, turn] = precessionTurns(el, p, t);
+
+    const turned = rotate(periapsis, about.axis, about.angle);
+    const h = normalize(rotate(about.axis, turn.axis, turn.angle));
+    const peri = rotate(turned, turn.axis, turn.angle);
 
     const i = Math.atan2(Math.hypot(h.x, h.y), h.z);
 

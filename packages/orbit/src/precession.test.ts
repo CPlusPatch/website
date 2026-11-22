@@ -2,11 +2,11 @@
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import { assertVecClose, MU } from "./fixture.ts";
 import type { Elements } from "./kepler.ts";
-import { axes, stateAt, wrapAngle } from "./kepler.ts";
+import { axes, orbitPoints, stateAt, wrapAngle } from "./kepler.ts";
 import type { Precession } from "./precession.ts";
-import { elementsAt, precess } from "./precession.ts";
+import { elementsAt, precess, precessionTurns } from "./precession.ts";
 import type { Body } from "./scenario.ts";
-import { cross, dot, normalize } from "./vec.ts";
+import { cross, dot, normalize, rotate } from "./vec.ts";
 
 const el: Elements = {
     a: 4e8,
@@ -162,4 +162,41 @@ Deno.test("a retrograde orbit keeps its inclination as its node turns", () => {
         wrapAngle(retro.argp + p.argpRate * dt),
         1e-12,
     );
+});
+
+Deno.test("turning the epoch orbit by the precession turns gives the precessed orbit", () => {
+    const eccentric: Elements = { ...el, e: 0.4, i: 0.9 };
+    const p: Precession = {
+        pole: normalize({ x: 0.3, y: -0.2, z: 0.9 }),
+        nodeRate: -4e-9,
+        argpRate: 7e-9,
+    };
+    const t = eccentric.epoch + 30 * 365.25 * 86400;
+    const [about, turn] = precessionTurns(eccentric, p, t);
+
+    const epoch = orbitPoints(eccentric, 64);
+    const expected = orbitPoints(precess(eccentric, p, t), 64);
+
+    for (let k = 0; k < 64; k++) {
+        const point = {
+            x: epoch[3 * k],
+            y: epoch[3 * k + 1],
+            z: epoch[3 * k + 2],
+        };
+        const turned = rotate(
+            rotate(point, about.axis, about.angle),
+            turn.axis,
+            turn.angle,
+        );
+
+        assertVecClose(
+            turned,
+            {
+                x: expected[3 * k],
+                y: expected[3 * k + 1],
+                z: expected[3 * k + 2],
+            },
+            1e-6,
+        );
+    }
 });
