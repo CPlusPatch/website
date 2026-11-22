@@ -241,6 +241,7 @@ export const createBodies = (
                             sphere.material.toneMapped = body.kind !== "star";
                             sphere.material.needsUpdate = true;
                         });
+                        entry.extras.load(maps);
                     }
 
                     const orientation = bodyOrientation(body.id, t);
@@ -251,6 +252,8 @@ export const createBodies = (
                 }
                 sphere.geometry =
                     radiusPx > size.height ? fineGeometry : sphereGeometry;
+                if (big && entry.mapped)
+                    entry.extras.update(camera, sphere.geometry);
                 marker.visible = !big;
                 if (halo) halo.visible = !big;
 
@@ -403,7 +406,15 @@ export const createBodies = (
         },
         dispose: () => {
             disposed = true;
-            for (const { group, sphere, marker, halo, label } of entries) {
+            for (const {
+                group,
+                sphere,
+                marker,
+                halo,
+                label,
+                extras,
+            } of entries) {
+                extras.dispose();
                 label.removeFromParent();
                 group.removeFromParent();
                 sphere.material.dispose();

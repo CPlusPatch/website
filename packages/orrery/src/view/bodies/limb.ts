@@ -1,4 +1,5 @@
-import { Color, type MeshStandardMaterial } from "three";
+import { Color } from "three";
+import type { Patch } from "./patches.ts";
 
 /** The colour of the thin atmosphere at the edge of each body that has one, in sRGB. */
 const LIMBS: Record<string, string> = {
@@ -13,27 +14,23 @@ const LIMBS: Record<string, string> = {
 /** How bright the limb is at the very edge of the disc. */
 const STRENGTH = 0.35;
 
-/** Adds a faint sunlit rim to a body with an atmosphere, inside its disc. Does nothing for others. */
-export const addLimb = (material: MeshStandardMaterial, id: string): void => {
+/** A faint sunlit rim for a body with an atmosphere, inside its disc. Null for others. */
+export const limbPatch = (id: string): Patch | null => {
     const hex = LIMBS[id];
-    if (!hex) return;
+    if (!hex) return null;
 
-    const color = new Color(hex).multiplyScalar(STRENGTH);
-    material.onBeforeCompile = (shader) => {
-        shader.uniforms.limbColor = { value: color };
-        shader.fragmentShader =
-            `uniform vec3 limbColor;\n${shader.fragmentShader}`.replace(
-                "#include <opaque_fragment>",
-                `{
-                float facing = 1.0 - saturate(dot(geometryNormal, geometryViewDir));
-                vec3 toSun = normalize(pointLights[0].position - geometryPosition);
-                float light = dot(geometryNormal, toSun);
-                // Starts at the terminator, so the night side has no rim, and fades where the
-                // surface is already bright.
-                float lit = smoothstep(0.0, 0.4, light) * (1.0 - saturate(light));
-                outgoingLight += limbColor * pow(facing, 3.0) * lit;
-            }
-            #include <opaque_fragment>`,
-            );
+    return {
+        name: "limb",
+        uniforms: {
+            limbColor: { value: new Color(hex).multiplyScalar(STRENGTH) },
+        },
+        declarations: "uniform vec3 limbColor;",
+        code: `float facing = 1.0 - saturate(dot(geometryNormal, geometryViewDir));
+            vec3 toSun = normalize(pointLights[0].position - geometryPosition);
+            float light = dot(geometryNormal, toSun);
+            // Starts at the terminator, so the night side has no rim, and fades where the
+            // surface is already bright.
+            float lit = smoothstep(0.0, 0.4, light) * (1.0 - saturate(light));
+            outgoingLight += limbColor * pow(facing, 3.0) * lit;`,
     };
 };

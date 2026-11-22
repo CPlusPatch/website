@@ -12,9 +12,10 @@ import {
 } from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Placement } from "../geometry/labels.ts";
+import { createExtras } from "./extras.ts";
 import { CENTERS } from "./labels.ts";
-import { addLimb } from "./limb.ts";
 import { HALO_OPACITY, SHAPES, type Shape } from "./markers.ts";
+import type { Extra } from "./patches.ts";
 
 export type Entry = {
     body: Body;
@@ -35,6 +36,8 @@ export type Entry = {
     offset: number;
     /** Where the label sits, as a class modifier. */
     side: Placement;
+    /** What the sphere has beyond its map: a limb, and Earth's lights and clouds or Saturn's rings. */
+    extras: Extra;
     /** Whether the body's map has been asked for. */
     mapped: boolean;
 };
@@ -61,8 +64,6 @@ export const createEntry = (
               }),
     );
     sphere.scale.setScalar(body.radius / 1000);
-    if (sphere.material instanceof MeshStandardMaterial)
-        addLimb(sphere.material, body.id);
 
     const marker = new Sprite(
         new SpriteMaterial({
@@ -102,6 +103,7 @@ export const createEntry = (
 
     group.add(sphere, marker, label);
     if (halo) group.add(halo);
+    const extras = createExtras(body, sphere);
 
     return {
         body,
@@ -117,6 +119,7 @@ export const createEntry = (
         // Unset, so the first update writes it.
         offset: -1,
         side: "right",
+        extras,
         mapped: false,
     };
 };
