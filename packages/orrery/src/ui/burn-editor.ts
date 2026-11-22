@@ -1,5 +1,5 @@
 import type { Burn, Elements } from "@cpluspatch/orbit";
-import { nextApsisTime } from "@cpluspatch/orbit";
+import { elementsAt, nextApsisTime } from "@cpluspatch/orbit";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
 import {
@@ -68,9 +68,10 @@ export const createBurnEditor = (
         const parent = world.scenario.bodies.find(
             (candidate) => candidate.id === body?.parent,
         );
-        if (!body?.elements || !parent) return null;
+        const el = body ? elementsAt(body, world.clock.t) : null;
+        if (!body || !el || !parent) return null;
 
-        return { body, el: body.elements, mu: parent.mu + body.mu, parent };
+        return { body, el, mu: parent.mu + body.mu, parent };
     };
 
     if (!context()) return null;

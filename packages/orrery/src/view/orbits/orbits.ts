@@ -1,10 +1,12 @@
 import type { Body, Elements, State, Vec3 } from "@cpluspatch/orbit";
+import { precessionTurns } from "@cpluspatch/orbit";
 import {
     Color,
     CustomBlending,
     MaxEquation,
     NormalBlending,
     type PerspectiveCamera,
+    Quaternion,
     type Scene,
     SRGBColorSpace,
     Vector3,
@@ -34,13 +36,15 @@ import type { Ghost, Orbit, Paint } from "./types.ts";
 export type Orbits = {
     /**
      * Moves each line to its parent's position relative to `origin`, fades it back from its body
-     * against the clock's `rate`, and hides it if it shows too small or too big.
+     * against the clock's `rate`, turns it to its precession at the clock's time `t`, and hides it
+     * if it shows too small or too big.
      */
     update: (
         origin: Vec3,
         states: Map<string, State>,
         camera: PerspectiveCamera,
         rate: number,
+        t: number,
     ) => void;
     /** Draws the orbit of a body, or of none, in the pick colour and thicker. */
     highlight: (id: string | null) => void;
@@ -125,6 +129,11 @@ export const createOrbits = (
 
     const target = new Vector3();
     const parentAt = new Vector3();
+    const turn = new Quaternion();
+    const turnInverse = new Quaternion();
+    const normalTurn = new Quaternion();
+    const axis = new Vector3();
+    const relative = new Vector3();
 
     // Over the sky the casing is a dark rail, and additive lines turn white where segments overlap.
     const styleLines = (orbit: Orbit) => {
@@ -218,7 +227,7 @@ export const createOrbits = (
             // The new geometry has the static layout.
             if (orbit.near) restoreStatic(orbit);
         },
-        update: (origin, states, camera, rate) => {
+        update: (origin, states, camera, rate, t) => {
             const fov = (camera.fov * Math.PI) / 180;
             const direction = rate < 0 ? -1 : 1;
             const dim = ghost?.line.visible ? GHOST_DIM : 1;
@@ -256,6 +265,27 @@ export const createOrbits = (
                     : Infinity;
                 const near = orbitNear(distance, body.elements.a / 1000);
                 if (orbit.near && !near) restoreStatic(orbit);
+
+                // The near points are already placed in the world, so they take no turn.
+                turn.identity();
+                if (!near && body.precession) {
+                    const [about, pole] = precessionTurns(
+                        body.elements,
+                        body.precession,
+                        t,
+                    );
+                    normalTurn.setFromAxisAngle(
+                        axis.set(about.axis.x, about.axis.y, about.axis.z),
+                        about.angle,
+                    );
+                    turn.setFromAxisAngle(
+                        axis.set(pole.axis.x, pole.axis.y, pole.axis.z),
+                        pole.angle,
+                    );
+                    turn.multiply(normalTurn);
+                }
+                line.quaternion.copy(turn);
+                casing.quaternion.copy(turn);
                 if (!near) {
                     line.position.copy(parentAt);
                     casing.position.copy(parentAt);
@@ -270,19 +300,28 @@ export const createOrbits = (
                         r,
                         origin,
                         distance,
+                        t,
                         { index: 0, direction, picked, dim },
                         paintRamp,
                     );
                     continue;
                 }
 
+                // The points are in the epoch orbit, so undo the turn on the body's position.
+                relative
+                    .set(
+                        (r.x - parentR.x) / 1000,
+                        (r.y - parentR.y) / 1000,
+                        (r.z - parentR.z) / 1000,
+                    )
+                    .applyQuaternion(turnInverse.copy(turn).invert());
                 const next: Paint = {
                     index: nearestPoint(
                         orbit.positions,
                         SAMPLES,
-                        (r.x - parentR.x) / 1000,
-                        (r.y - parentR.y) / 1000,
-                        (r.z - parentR.z) / 1000,
+                        relative.x,
+                        relative.y,
+                        relative.z,
                     ),
                     direction,
                     picked,

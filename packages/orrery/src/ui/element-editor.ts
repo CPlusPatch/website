@@ -1,4 +1,4 @@
-import { AU, type Elements } from "@cpluspatch/orbit";
+import { AU, type Elements, elementsAt } from "@cpluspatch/orbit";
 import {
     type AUnit,
     aMin,
@@ -85,9 +85,9 @@ export const createElementEditor = (
     const parent = world.scenario.bodies.find(
         (candidate) => candidate.id === body?.parent,
     );
-    if (!body?.elements || !parent) return null;
+    const original = body ? elementsAt(body, world.clock.t) : null;
+    if (!body || !original || !parent) return null;
 
-    const original = body.elements;
     const mu = parent.mu + body.mu;
     const min = aMin(parent.radius);
     // Only the unit switch changes it, and then the field converts in place.

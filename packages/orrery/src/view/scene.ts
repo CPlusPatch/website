@@ -196,7 +196,13 @@ export const createView = (
         offset(free);
         rig.update(dt, states);
         camera.updateMatrixWorld();
-        orbits.update(rig.origin(), states, camera, world.clock.rate);
+        orbits.update(
+            rig.origin(),
+            states,
+            camera,
+            world.clock.rate,
+            world.clock.t,
+        );
         const rooms = grips.update({
             camera,
             origin: rig.origin(),

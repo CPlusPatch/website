@@ -4,7 +4,7 @@
  */
 
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
-import { orbitPoints } from "@cpluspatch/orbit";
+import { elementsAt, orbitPoints } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
 import {
     formatDistance,
@@ -185,7 +185,7 @@ export const createReadouts = (
                 selected === null
                     ? undefined
                     : world.scenario.bodies.find(({ id }) => id === selected);
-            const elements = body?.elements;
+            const elements = body ? elementsAt(body, world.clock.t) : null;
             const parentR = body?.parent
                 ? states.get(body.parent)?.r
                 : undefined;

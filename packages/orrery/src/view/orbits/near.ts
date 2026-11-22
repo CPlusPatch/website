@@ -1,6 +1,7 @@
 import type { Vec3 } from "@cpluspatch/orbit";
 import {
     eccentricAnomalyOf,
+    elementsAt,
     orbitPointsAt,
     wrapAngle,
 } from "@cpluspatch/orbit";
@@ -18,10 +19,11 @@ export const rebuildNear = (
     r: Vec3,
     origin: Vec3,
     distance: number,
+    t: number,
     next: Paint,
     paintRamp: (orbit: Orbit, picked: boolean, dim: number) => void,
 ): void => {
-    const elements = orbit.body.elements;
+    const elements = elementsAt(orbit.body, t);
     if (!elements) return;
 
     const center = eccentricAnomalyOf(elements, {
