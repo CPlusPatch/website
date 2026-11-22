@@ -103,12 +103,12 @@
         flex-wrap: wrap;
         gap: 0 var(--space-sm);
 
-        /* The dot belongs to its item, so a wrap can't leave one at the end of a line. */
+        /* The dot ends the item before it, so a wrapped line can't start with one. */
         span {
             white-space: nowrap;
 
-            & + span::before {
-                content: "· ";
+            &:not(:last-child)::after {
+                content: " ·";
             }
         }
     }
@@ -128,18 +128,17 @@
             font-weight: 500;
         }
 
+        /* A grid, so every row shares its columns. */
         ul {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
             gap: var(--orrery-chip-gap);
             margin: 0;
             padding: 0;
             list-style: none;
         }
 
-        /* Each line of chips grows to the card's width, like the action row. */
         li {
-            flex: 1 1 auto;
             display: flex;
         }
     }

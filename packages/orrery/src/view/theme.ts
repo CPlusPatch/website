@@ -32,6 +32,20 @@ export const BODY_COLORS: Record<string, string> = {
     uranus: "#93e0dc",
     neptune: "#7c8cff",
     pluto: "#c8a593",
+    // Only bodies with a look of their own; grey moons keep their kind's colour.
+    io: "#e6cf63",
+    europa: "#dccdb2",
+    ganymede: "#aa9f90",
+    callisto: "#6f6a66",
+    titan: "#e0a452",
+    enceladus: "#eef4f7",
+    triton: "#dbc1b6",
+    ceres: "#a7a199",
+    eris: "#e8e6e2",
+    haumea: "#c9cfd4",
+    makemake: "#c99877",
+    vesta: "#bcae9a",
+    halley: "#b5c9d6",
 };
 
 const KIND_COLORS: Record<BodyKind, string> = {

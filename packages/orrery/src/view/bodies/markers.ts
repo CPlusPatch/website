@@ -29,8 +29,8 @@ const MARKER_PX: Record<BodyKind, number> = {
     planet: 8,
     dwarf: 7,
     moon: 9,
-    asteroid: 7,
-    comet: 9,
+    asteroid: 8,
+    comet: 11,
     spacecraft: 6,
 };
 
@@ -52,7 +52,7 @@ const teardrop = (context: CanvasRenderingContext2D, reach: number): void => {
     // The tail's sides are tangent to the head.
     const spread = Math.acos(head / Math.hypot(tip - cx, EDGE_PX - cy));
 
-    context.globalAlpha = 0.6;
+    context.globalAlpha = 0.8;
     context.beginPath();
     context.moveTo(tip, EDGE_PX);
     context.lineTo(

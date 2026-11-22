@@ -1,4 +1,4 @@
-import type { Body, Elements, State, Vec3 } from "@cpluspatch/orbit";
+import type { Body, BodyKind, Elements, State, Vec3 } from "@cpluspatch/orbit";
 import { precessionTurns } from "@cpluspatch/orbit";
 import {
     Color,
@@ -63,6 +63,10 @@ export type Orbits = {
 /** How much a picked orbit's trail dims while a ghost shows. */
 const GHOST_DIM = 0.4;
 
+// Dwarf, asteroid and comet lines cross the planets' frame, and shouldn't outshine them.
+const MINOR_DIM = 0.6;
+const MINOR_KINDS: readonly BodyKind[] = ["dwarf", "asteroid", "comet"];
+
 /** One line per body that has an orbit, in km. */
 export const createOrbits = (
     scene: Scene,
@@ -89,8 +93,10 @@ export const createOrbits = (
             { r: 0, g: 0, b: 0 },
             SRGBColorSpace,
         );
+        const minor =
+            !picked && MINOR_KINDS.includes(orbit.body.kind) ? MINOR_DIM : 1;
         for (let back = 0; back < SAMPLES; back++) {
-            const alpha = trailAlpha(back, SAMPLES, picked) * dim;
+            const alpha = trailAlpha(back, SAMPLES, picked) * dim * minor;
             mixed.setRGB(
                 from.r + (to.r - from.r) * alpha,
                 from.g + (to.g - from.g) * alpha,
@@ -158,6 +164,8 @@ export const createOrbits = (
             color: 0xffffff,
             vertexColors: true,
             toneMapped: false,
+            // Markers draw over the line, which their own depth would lose to.
+            depthWrite: false,
         });
         const line = new Line2(geometry, material);
         // Keeps the line readable where it crosses a sphere.
@@ -249,7 +257,8 @@ export const createOrbits = (
                     fov,
                     size.height,
                 );
-                const shown = orbitShown(aPx, size.width, size.height);
+                const picked = body.id === pickedId;
+                const shown = orbitShown(aPx, size.width, size.height, picked);
                 line.visible = shown;
                 casing.visible = shown;
 
@@ -292,7 +301,6 @@ export const createOrbits = (
                 }
                 if (!shown || !r) continue;
 
-                const picked = body.id === pickedId;
                 if (near) {
                     rebuildNear(
                         orbit,

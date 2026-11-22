@@ -337,6 +337,7 @@ export const createBodies = (
             );
 
             const boxes = new Map(labels.map((box) => [box.id, box]));
+            const unnamed = new Set<string>();
             placed.clear();
             for (const entry of entries) {
                 const { body, marker, halo, label } = entry;
@@ -355,7 +356,11 @@ export const createBodies = (
                     entry.side = placement;
                 }
 
-                if (covered.has(body.id)) {
+                // A moon with no label would show as an unnamed marker the "+N" doesn't count.
+                if (placement === "hidden" && body.kind === "moon") {
+                    unnamed.add(body.id);
+                }
+                if (covered.has(body.id) || unnamed.has(body.id)) {
                     marker.visible = false;
                     if (halo) halo.visible = false;
                 }
@@ -364,7 +369,8 @@ export const createBodies = (
             if (rootGroup) sun.position.copy(rootGroup.position);
 
             return picks.filter(
-                ({ id }) => !behind.has(id) && !covered.has(id),
+                ({ id }) =>
+                    !behind.has(id) && !covered.has(id) && !unnamed.has(id),
             );
         },
         placed: () => placed,

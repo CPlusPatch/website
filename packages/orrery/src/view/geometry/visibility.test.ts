@@ -82,6 +82,11 @@ Deno.test("the largest orbit allowed follows the longer side of a tall viewport"
     assertEquals(orbitShown(3300, 600, 800), false);
 });
 
+Deno.test("a picked orbit shows at any size over the minimum", () => {
+    assertEquals(orbitShown(1e6, 800, 600, true), true);
+    assertEquals(orbitShown(15.9, 800, 600, true), false);
+});
+
 Deno.test("a label ranks the star over planets over the rest, then by mu", () => {
     assert(labelRank("star", 1) > labelRank("planet", 1e30));
     assert(labelRank("planet", 1) > labelRank("dwarf", 1e30));

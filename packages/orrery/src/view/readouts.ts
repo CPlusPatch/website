@@ -216,7 +216,7 @@ export const createReadouts = (
             if (
                 !numbers ||
                 aPx <= READOUTS_MIN_ORBIT_PX ||
-                !orbitShown(aPx, size.width, size.height)
+                !orbitShown(aPx, size.width, size.height, true)
             ) {
                 setShown(false);
                 return;

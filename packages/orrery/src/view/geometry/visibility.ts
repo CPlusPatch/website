@@ -26,13 +26,18 @@ export const LABEL_MIN_ORBIT_PX = 28;
 /** An orbit whose semi-major axis shows over this many times the viewport's longer side is left out. */
 export const ORBIT_MAX_VIEWPORTS = 4;
 
-/** Whether an orbit with a semi-major axis of `aPx` is drawn in a viewport of this size. */
+/**
+ * Whether an orbit with a semi-major axis of `aPx` is drawn in a viewport of this size.
+ * A `picked` orbit has no upper limit, since an eccentric one can pass close by.
+ */
 export const orbitShown = (
     aPx: number,
     width: number,
     height: number,
+    picked = false,
 ): boolean =>
-    aPx >= ORBIT_MIN_PX && aPx <= ORBIT_MAX_VIEWPORTS * Math.max(width, height);
+    aPx >= ORBIT_MIN_PX &&
+    (picked || aPx <= ORBIT_MAX_VIEWPORTS * Math.max(width, height));
 
 /** Whether the label of a body with an orbit of `aPx` shows. Bodies with no orbit always show. */
 export const labelShownForOrbit = (
