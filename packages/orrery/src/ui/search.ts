@@ -1,7 +1,7 @@
 import type { Body } from "@cpluspatch/orbit";
 import { formatDistance } from "../format.ts";
 import { readouts } from "../readouts.ts";
-import { found, marked } from "../search.ts";
+import { found, marked, treeOrder } from "../search.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 import { showBodyMarker } from "./body-marker.ts";
@@ -183,7 +183,7 @@ export const createSearch = (
     const render = () => {
         const query = input.value;
         const trimmed = query.trim();
-        hits = found(world.order, query);
+        hits = found(treeOrder(world.scenario.bodies), query);
 
         const label =
             hits.length > 0 || !trimmed ? "Add a body…" : `Add “${trimmed}”`;
@@ -253,8 +253,9 @@ export const createSearch = (
 
         input.value = "";
         active =
-            world.order.findIndex((body) => body.id === world.selected) + 1 ||
-            1;
+            treeOrder(world.scenario.bodies).findIndex(
+                (body) => body.id === world.selected,
+            ) + 1 || 1;
         render();
         timer = setInterval(patchRanges, RANGE_MS);
         toggle.setAttribute("aria-expanded", "true");

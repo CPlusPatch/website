@@ -1,7 +1,7 @@
 /// <reference types="deno" />
 import { solarSystem } from "@cpluspatch/orbit";
 import { assertEquals } from "@std/assert";
-import { found, marked } from "./search.ts";
+import { found, marked, treeOrder } from "./search.ts";
 
 const names = (query: string) =>
     found(solarSystem.bodies, query).map((body) => body.name);
@@ -39,4 +39,13 @@ Deno.test("the match in a name is split out with its own case", () => {
 Deno.test("a name with no match, or a blank query, is left whole", () => {
     assertEquals(marked("Mars", "x"), ["Mars", "", ""]);
     assertEquals(marked("Mars", " "), ["Mars", "", ""]);
+});
+
+Deno.test("each body is followed by its children, before the next sibling", () => {
+    const order = treeOrder(solarSystem.bodies).map((body) => body.name);
+    const earth = order.indexOf("Earth");
+
+    assertEquals(order.length, solarSystem.bodies.length);
+    assertEquals(order.slice(earth + 1, earth + 3).sort(), ["ISS", "Moon"]);
+    assertEquals(order.indexOf("Mars"), earth + 3);
 });
