@@ -3,7 +3,12 @@
  * The surface maps of the bodies, fetched when a body is first shown as a sphere.
  */
 
-import { SRGBColorSpace, type Texture, TextureLoader } from "three";
+import {
+    NoColorSpace,
+    SRGBColorSpace,
+    type Texture,
+    TextureLoader,
+} from "three";
 
 /** Vite only bundles an asset whose `new URL` is a literal, so each map is spelt out. */
 const MAPS: Record<string, string> = {
@@ -18,7 +23,14 @@ const MAPS: Record<string, string> = {
     uranus: new URL("../assets/maps/uranus.webp", import.meta.url).href,
     neptune: new URL("../assets/maps/neptune.webp", import.meta.url).href,
     pluto: new URL("../assets/maps/pluto.webp", import.meta.url).href,
+    "earth-night": new URL("../assets/maps/earth-night.webp", import.meta.url)
+        .href,
+    "earth-clouds": new URL("../assets/maps/earth-clouds.webp", import.meta.url)
+        .href,
 };
+
+/** Maps that hold data, not colour. */
+const LINEAR = new Set(["earth-clouds"]);
 
 /** The maps of the bodies that have one. */
 export type Maps = {
@@ -48,7 +60,9 @@ export const createMaps = (anisotropy: number): Maps => {
                         return;
                     }
 
-                    texture.colorSpace = SRGBColorSpace;
+                    texture.colorSpace = LINEAR.has(id)
+                        ? NoColorSpace
+                        : SRGBColorSpace;
                     texture.anisotropy = anisotropy;
                     loaded.push(texture);
                     onLoad(texture);

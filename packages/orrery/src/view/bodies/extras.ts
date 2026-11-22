@@ -5,7 +5,9 @@ import {
     MeshStandardMaterial,
     type SphereGeometry,
 } from "three";
+import { cloudsExtra } from "./clouds.ts";
 import { limbPatch } from "./limb.ts";
+import { nightExtra } from "./night.ts";
 import { applyPatches, type Extra } from "./patches.ts";
 
 /** Everything a body's sphere gets on top of its map: its limb, and for Earth and Saturn more. */
@@ -14,6 +16,7 @@ export const createExtras = (
     sphere: Mesh<SphereGeometry, MeshBasicMaterial | MeshStandardMaterial>,
 ): Extra => {
     const extras: Extra[] = [];
+    if (body.id === "earth") extras.push(nightExtra(), cloudsExtra(sphere));
 
     const limb = limbPatch(body.id);
     const patches = extras.flatMap((extra) => extra.patches);
