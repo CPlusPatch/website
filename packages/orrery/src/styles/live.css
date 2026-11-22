@@ -1,0 +1,91 @@
+.orrery {
+    .orrery__live {
+        grid-area: live;
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        block-size: var(--orrery-clock-control);
+        font-size: var(--orrery-size-sm);
+        white-space: nowrap;
+    }
+
+    .orrery__live-state {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--orrery-muted);
+        font-family: var(--orrery-font-data);
+    }
+
+    .orrery__live-word {
+        font-family: var(--orrery-font-ui);
+    }
+
+    .orrery__live-dot,
+    .orrery__live-on,
+    .orrery__live-short {
+        display: none;
+    }
+
+    .orrery__live-dot {
+        inline-size: 8px;
+        block-size: 8px;
+        border-radius: 50%;
+        background-color: currentColor;
+    }
+
+    .orrery__live--on {
+        .orrery__live-state {
+            color: var(--orrery-go);
+            font-family: var(--orrery-font-ui);
+            font-weight: 600;
+        }
+
+        .orrery__live-dot {
+            display: block;
+        }
+
+        .orrery__live-on {
+            display: inline;
+        }
+
+        .orrery__live-offset {
+            display: none;
+        }
+    }
+
+    .orrery__live:not(.orrery__live--on) .orrery__live-state::after {
+        content: "·" / "";
+    }
+
+    /* With no offset to show, there's no separator either. */
+    .orrery__live--bare .orrery__live-state {
+        display: none;
+    }
+
+    .orrery__go-live {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--orrery-text);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration-thickness: 2px;
+        }
+    }
+
+    /* Under 1000px the right column is too narrow for the whole offset. */
+    @media (min-width: 721px) and (max-width: 999px) {
+        .orrery__live-full {
+            display: none;
+        }
+
+        .orrery__live-short {
+            display: inline;
+        }
+    }
+}

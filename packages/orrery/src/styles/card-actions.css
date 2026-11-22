@@ -1,0 +1,112 @@
+.orrery {
+    .orrery__orbit-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        margin-block-start: var(--space-md);
+    }
+
+    .orrery__orbit-buttons {
+        display: flex;
+        gap: var(--space-sm);
+    }
+
+    .orrery__orbit-button {
+        flex: 1;
+        min-inline-size: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm);
+        block-size: var(--orrery-control-lg);
+        padding: 0 var(--space-sm);
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-panel-raised);
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--orrery-text);
+        }
+
+        &[aria-pressed="true"] {
+            border-color: var(--orrery-go);
+            background-color: var(--orrery-go);
+            color: var(--orrery-go-ink);
+        }
+
+        svg {
+            flex: none;
+            inline-size: 15px;
+            block-size: 15px;
+        }
+
+        &.orrery__orbit-button--danger {
+            border-color: var(--orrery-abort);
+            background-color: var(--orrery-panel);
+            color: var(--orrery-abort);
+        }
+    }
+
+    .orrery__orbit-quiet {
+        flex: none;
+        padding: 0 var(--space-xs);
+        border: 0;
+        background: none;
+        color: var(--orrery-muted);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--orrery-text);
+        }
+    }
+
+    /* Remove sits under the buttons, at the end. */
+    .orrery__orbit-actions .orrery__orbit-quiet {
+        align-self: flex-end;
+    }
+
+    .orrery__orbit-confirm {
+        flex: 1;
+        min-inline-size: 0;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .orrery__orbit-confirm-title {
+        font-size: var(--orrery-size-md);
+        font-weight: 600;
+    }
+
+    .orrery__orbit-confirm-note {
+        margin-block-start: var(--space-xs);
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__orbit-row {
+        display: flex;
+        gap: var(--space-sm);
+        margin-block-start: var(--space-sm);
+    }
+
+    @media (max-width: 720px) {
+        .orrery__inspector[data-peek] .orrery__orbit-actions {
+            display: none;
+        }
+
+        /* Touch targets. */
+        .orrery__orbit-button,
+        .orrery__orbit-quiet {
+            min-block-size: var(--control-height-md);
+        }
+    }
+}
