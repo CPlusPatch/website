@@ -179,6 +179,9 @@
     .orrery__grip {
         /* The hit area, with the drawn square at its centre. */
         --grip-size: 28px;
+        /* `SQUARE_PX` in view/grips.ts keeps labels clear of this square. */
+        --grip-square: 9px;
+        --grip-border: 2px;
         position: absolute;
         inset: 0 auto auto 0;
         inline-size: var(--grip-size);
@@ -207,10 +210,11 @@
             z-index: 1;
             inset: 50% auto auto 50%;
             box-sizing: border-box;
-            inline-size: 9px;
-            block-size: 9px;
-            margin: -4.5px 0 0 -4.5px;
-            border: 2px solid var(--orrery-signal);
+            inline-size: var(--grip-square);
+            block-size: var(--grip-square);
+            margin: calc(var(--grip-square) / -2) 0 0
+                calc(var(--grip-square) / -2);
+            border: var(--grip-border) solid var(--orrery-signal);
             background: var(--orrery-ground);
 
             @media (forced-colors: active) {

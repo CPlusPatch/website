@@ -70,7 +70,7 @@ type Drag = {
 
 const FLAG_PAD_PX = 10;
 
-/** The size of the square drawn on a grip's point. */
+/** The size of the square drawn on a grip's point, `--grip-square` in styles/scene.css. */
 const SQUARE_PX = 9;
 
 const move = (element: HTMLElement, x: number, y: number) => {
