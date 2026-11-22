@@ -6,10 +6,10 @@
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import { wrapAngle } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
-import { dragApsis, type GripTarget } from "../editing.ts";
-import { formatApsisChange, formatNodeChange } from "../format.ts";
-import { h, setText } from "../ui/dom.ts";
-import type { Units } from "../units.ts";
+import { dragApsis, type GripTarget } from "../../editing.ts";
+import { formatApsisChange, formatNodeChange } from "../../format.ts";
+import { h, setText } from "../../ui/dom.ts";
+import type { Units } from "../../units.ts";
 import {
     axisPosition,
     GRIPS_MIN_ORBIT_PX,
@@ -17,11 +17,11 @@ import {
     nodeAnomaly,
     planeAngle,
     pointAtAnomaly,
-} from "./geometry/grips.ts";
-import type { Rect } from "./geometry/labels.ts";
-import { type Clearance, firstClear } from "./geometry/notes.ts";
-import { projectedRadiusPx } from "./geometry/visibility.ts";
-import { createMeasure } from "./measure.ts";
+} from "../geometry/grips.ts";
+import type { Rect } from "../geometry/labels.ts";
+import { type Clearance, firstClear } from "../geometry/notes.ts";
+import { projectedRadiusPx } from "../geometry/visibility.ts";
+import { createMeasure } from "../measure.ts";
 
 /** What the grips need each frame. */
 export type GripsFrame = {

@@ -1,29 +1,20 @@
 import {
     type Body,
-    type BodyKind,
     bodyOrientation,
     type State,
     type Vec3,
 } from "@cpluspatch/orbit";
 import {
     AmbientLight,
-    CanvasTexture,
+    type CanvasTexture,
     type Color,
-    Group,
     Matrix4,
-    Mesh,
-    MeshBasicMaterial,
-    MeshStandardMaterial,
     type PerspectiveCamera,
     PointLight,
     type Scene,
     SphereGeometry,
-    Sprite,
-    SpriteMaterial,
-    SRGBColorSpace,
     Vector3,
 } from "three";
-import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import {
     type Dot,
     LABEL_ANCHOR_GAP_PX,
@@ -33,7 +24,7 @@ import {
     type Placement,
     placeLabels,
     type Rect,
-} from "./geometry/labels.ts";
+} from "../geometry/labels.ts";
 import {
     type Anchor,
     foldOrbits,
@@ -44,10 +35,13 @@ import {
     type MarkerPoint,
     projectedRadiusPx,
     type Sphere,
-} from "./geometry/visibility.ts";
-import { createMaps } from "./maps.ts";
-import { type LabelRect, type PickPoint, pickLabel } from "./picking.ts";
-import { spinMatrix } from "./spin.ts";
+} from "../geometry/visibility.ts";
+import { createMaps } from "../maps.ts";
+import { type LabelRect, type PickPoint, pickLabel } from "../picking.ts";
+import { spinMatrix } from "../spin.ts";
+import { createEntry, type Entry } from "./entry.ts";
+import { CENTERS, createLabels } from "./labels.ts";
+import { HALO_SCALE, markerPx, markerTexture, type Shape } from "./markers.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
@@ -73,132 +67,7 @@ export type Bodies = {
     dispose: () => void;
 };
 
-type Entry = {
-    body: Body;
-    group: Group;
-    sphere: Mesh<SphereGeometry, MeshBasicMaterial | MeshStandardMaterial>;
-    marker: Sprite;
-    /** The root's glow, drawn with its marker. */
-    halo: Sprite | null;
-    label: CSS2DObject;
-    /** The label's name and the "+N" count of the bodies folded into it. */
-    name: HTMLElement;
-    count: HTMLElement;
-    /** What the label is drawn and measured with, as a key. Empty until the first update. */
-    style: string;
-    /** The label's width and height in px, without its offset. */
-    text: { width: number; height: number };
-    /** The px from the label's anchor to its box, which clears the sphere. */
-    offset: number;
-    /** Where the label sits, as a class modifier. */
-    side: Placement;
-    /** Whether the body's map has been asked for. */
-    mapped: boolean;
-};
-
-type LabelStyle = {
-    selected: boolean;
-    big: boolean;
-    hover: boolean;
-    count: string;
-};
-
-const labelModifiers = ({ selected, big, hover }: LabelStyle): string[] =>
-    [
-        selected && "orrery__label--selected",
-        big && "orrery__label--big",
-        hover && "orrery__label--hover",
-    ].filter((name) => name !== false);
-
-const labelKey = (style: LabelStyle): string =>
-    `${labelModifiers(style).join(" ")}|${style.count}`;
-
-/** The label's anchor, as a CSS2D `center`, for each placement. */
-const CENTERS: Record<Placement, [number, number]> = {
-    right: [0, 0.5],
-    left: [1, 0.5],
-    above: [0.5, 1],
-    below: [0.5, 0],
-    hidden: [0, 0.5],
-};
-
-const HALO_SCALE = 2.5;
-const HALO_OPACITY = 0.22;
 const SPHERE_MIN_PX = 4;
-
-type Shape = "disc" | "ring" | "diamond" | "square";
-
-/** Each kind has its own shape, so colour isn't the only signal. */
-const SHAPES: Record<BodyKind, Shape> = {
-    star: "disc",
-    planet: "disc",
-    dwarf: "ring",
-    moon: "diamond",
-    spacecraft: "square",
-};
-
-/** The on-screen size of each kind's marker, in px. */
-const MARKER_PX: Record<BodyKind, number> = {
-    star: 12,
-    planet: 8,
-    dwarf: 7,
-    moon: 9,
-    spacecraft: 6,
-};
-
-const markerPx = (body: Body): number => MARKER_PX[body.kind];
-
-const TEXTURE_PX = 64;
-// Only dwarfs are rings, and the stroke shows as 1.75px at their size.
-const RING_STROKE = (1.75 * TEXTURE_PX) / MARKER_PX.dwarf;
-// Keeps the edge antialiasing inside the texture.
-const EDGE_PX = 1;
-
-const markerTexture = (shape: Shape | "halo"): CanvasTexture => {
-    const canvas = document.createElement("canvas");
-    canvas.width = TEXTURE_PX;
-    canvas.height = TEXTURE_PX;
-
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("A 2D canvas is needed to draw markers.");
-
-    const mid = TEXTURE_PX / 2;
-    const reach = mid - EDGE_PX;
-    context.fillStyle = "white";
-    context.strokeStyle = "white";
-
-    if (shape === "halo") {
-        const glow = context.createRadialGradient(mid, mid, 0, mid, mid, mid);
-        glow.addColorStop(0, "white");
-        glow.addColorStop(1, "rgba(255, 255, 255, 0)");
-        context.fillStyle = glow;
-        context.fillRect(0, 0, TEXTURE_PX, TEXTURE_PX);
-    } else if (shape === "disc") {
-        context.beginPath();
-        context.arc(mid, mid, reach, 0, 2 * Math.PI);
-        context.fill();
-    } else if (shape === "ring") {
-        context.lineWidth = RING_STROKE;
-        context.beginPath();
-        context.arc(mid, mid, reach - RING_STROKE / 2, 0, 2 * Math.PI);
-        context.stroke();
-    } else if (shape === "diamond") {
-        context.beginPath();
-        context.moveTo(mid, mid - reach);
-        context.lineTo(mid + reach, mid);
-        context.lineTo(mid, mid + reach);
-        context.lineTo(mid - reach, mid);
-        context.closePath();
-        context.fill();
-    } else {
-        context.fillRect(EDGE_PX, EDGE_PX, 2 * reach, 2 * reach);
-    }
-
-    const texture = new CanvasTexture(canvas);
-    texture.colorSpace = SRGBColorSpace;
-
-    return texture;
-};
 
 /** How the spheres are textured. */
 export type BodyOptions = {
@@ -230,82 +99,18 @@ export const createBodies = (
     const entries: Entry[] = [];
     const maps = createMaps(options.anisotropy);
     const spin = new Matrix4();
-    // Measures labels here, since a label has no layout until it's drawn.
-    const probe = document.createElement("div");
-    const probeName = document.createElement("span");
-    probeName.className = "orrery__label-name";
-    const probeCount = document.createElement("span");
-    probeCount.className = "orrery__label-count";
-    probe.append(probeName, probeCount);
-    host.append(probe);
+    const styling = createLabels(host, entries);
 
     for (const body of bodies) {
-        const group = new Group();
-
-        const sphere = new Mesh(
-            sphereGeometry,
-            body.kind === "star"
-                ? new MeshBasicMaterial({ color: color(body) })
-                : new MeshStandardMaterial({
-                      color: color(body),
-                      roughness: 1,
-                  }),
-        );
-        sphere.scale.setScalar(body.radius / 1000);
-
-        const marker = new Sprite(
-            new SpriteMaterial({
-                sizeAttenuation: false,
-                map: textures[SHAPES[body.kind]],
-                color: color(body),
-                // Markers draw in `renderOrder`, so they mustn't hide each other.
-                depthWrite: false,
-            }),
-        );
-        const halo =
-            body.parent === null
-                ? new Sprite(
-                      new SpriteMaterial({
-                          sizeAttenuation: false,
-                          map: haloTexture,
-                          color: color(body),
-                          opacity: HALO_OPACITY,
-                          depthWrite: false,
-                      }),
-                  )
-                : null;
-
-        const text = document.createElement("div");
-        text.className = "orrery__label";
-        const name = document.createElement("span");
-        name.className = "orrery__label-name";
-        name.textContent = body.name;
-        const count = document.createElement("span");
-        count.className = "orrery__label-count";
-        text.append(name, count);
-        const label = new CSS2DObject(text);
-        // Its left edge sits on the body.
-        label.center.set(...CENTERS.right);
-
-        group.add(sphere, marker, label);
-        if (halo) group.add(halo);
-        scene.add(group);
-        entries.push({
+        const entry = createEntry(
             body,
-            group,
-            sphere,
-            marker,
-            halo,
-            label,
-            name,
-            count,
-            style: "",
-            text: { width: 0, height: 0 },
-            // Unset, so the first update writes it.
-            offset: -1,
-            side: "right",
-            mapped: false,
-        });
+            color,
+            sphereGeometry,
+            textures,
+            haloTexture,
+        );
+        scene.add(entry.group);
+        entries.push(entry);
     }
 
     // Bigger bodies draw later, and the root last.
@@ -320,44 +125,10 @@ export const createBodies = (
     let hoverId: string | null = null;
     let placements = new Map<string, Placement>();
     const placed = new Map<string, Rect>();
-    // What each label is drawn as, and its text.
-    const styles = new Map<string, LabelStyle>();
-
-    const measure = (entry: Entry, style: LabelStyle) => {
-        probe.className = [
-            "orrery__label",
-            "orrery__label--probe",
-            ...labelModifiers(style),
-        ].join(" ");
-        probeName.textContent = entry.body.name;
-        probeCount.textContent = style.count;
-        entry.text = { width: probe.offsetWidth, height: probe.offsetHeight };
-    };
-    const measureAll = () => {
-        for (const entry of entries) {
-            const style = styles.get(entry.body.id);
-            if (style) measure(entry, style);
-        }
-    };
-
-    // The label's classes and text change its width, so it's measured again with them.
-    const restyle = (entry: Entry, style: LabelStyle) => {
-        const key = labelKey(style);
-        if (key === entry.style) return;
-
-        entry.style = key;
-        styles.set(entry.body.id, style);
-        const { element } = entry.label;
-        element.classList.toggle("orrery__label--selected", style.selected);
-        element.classList.toggle("orrery__label--big", style.big);
-        element.classList.toggle("orrery__label--hover", style.hover);
-        entry.count.textContent = style.count;
-        measure(entry, style);
-    };
 
     let disposed = false;
     document.fonts.ready.then(() => {
-        if (!disposed) measureAll();
+        if (!disposed) styling.measureAll();
     });
 
     const rootGroup = entries.find(({ body }) => body.parent === null)?.group;
@@ -434,7 +205,7 @@ export const createBodies = (
                     body.kind === "star" ||
                     body.kind === "planet" ||
                     body.id === focus;
-                restyle(entry, {
+                styling.restyle(entry, {
                     selected: body.id === selected,
                     big: major,
                     hover: hovered,
@@ -626,7 +397,7 @@ export const createBodies = (
                 );
             }
 
-            measureAll();
+            styling.measureAll();
         },
         dispose: () => {
             disposed = true;
@@ -637,7 +408,7 @@ export const createBodies = (
                 marker.material.dispose();
                 halo?.material.dispose();
             }
-            probe.remove();
+            styling.dispose();
             sun.removeFromParent();
             ambient.removeFromParent();
             sphereGeometry.dispose();
