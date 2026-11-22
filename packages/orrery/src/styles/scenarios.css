@@ -1,5 +1,7 @@
 .orrery {
     .orrery__scenarios {
+        /* One width for Save, Copy, Load and Delete, so their columns line up. */
+        --scenarios-button-size: 4.5rem;
         inline-size: min(460px, 100% - 32px);
         max-block-size: min(640px, 100% - 32px);
         margin: auto;
@@ -46,7 +48,7 @@
         /* The same width, so the Save and Copy rows line up. */
         .orrery__stepper > .button {
             block-size: auto;
-            min-inline-size: 4.5rem;
+            min-inline-size: var(--scenarios-button-size);
             border-width: 0 0 0 1px;
             border-color: var(--orrery-frame);
         }
@@ -92,6 +94,11 @@
             overflow-wrap: anywhere;
         }
 
+        > .button {
+            flex: none;
+            min-inline-size: var(--scenarios-button-size);
+        }
+
         small {
             color: var(--orrery-muted);
             font: 400 var(--orrery-size-sm) var(--orrery-font-ui);
@@ -101,7 +108,7 @@
     /* A fixed width keeps the Load buttons in line when one row shows Confirm. */
     .orrery__scenarios-quiet {
         flex: none;
-        inline-size: 4.5rem;
+        inline-size: var(--scenarios-button-size);
     }
 
     .orrery__scenarios-actions {
