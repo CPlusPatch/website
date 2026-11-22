@@ -3,7 +3,7 @@
  * Camera and screen math for the view, with no three.js and no DOM.
  */
 
-import type { Body, Scenario, Vec3 } from "@cpluspatch/orbit";
+import type { Body, BodyKind, Scenario, Vec3 } from "@cpluspatch/orbit";
 import { AU } from "@cpluspatch/orbit";
 
 /** A camera distance in km and the floating origin it orbits, in metres. */
@@ -27,6 +27,9 @@ export const projectedRadiusPx = (
 /** An orbit whose semi-major axis shows under this many px is left out, as its parent's rings. */
 export const ORBIT_MIN_PX = 16;
 
+/** A body whose orbit shows under this many px has no label, unless it's picked or hovered. */
+export const LABEL_MIN_ORBIT_PX = 28;
+
 /** An orbit whose semi-major axis shows over this many times the viewport's longer side is left out. */
 export const ORBIT_MAX_VIEWPORTS = 4;
 
@@ -37,6 +40,42 @@ export const orbitShown = (
     height: number,
 ): boolean =>
     aPx >= ORBIT_MIN_PX && aPx <= ORBIT_MAX_VIEWPORTS * Math.max(width, height);
+
+/** Whether the label of a body with an orbit of `aPx` shows. Bodies with no orbit always show. */
+export const labelShownForOrbit = (
+    aPx: number | undefined,
+    keep: boolean,
+): boolean => keep || aPx === undefined || aPx >= LABEL_MIN_ORBIT_PX;
+
+/** An orbit's body and parent, and the px its semi-major axis shows as. */
+export type OrbitPx = { id: string; parent: string; aPx: number };
+
+/**
+ * The bodies folded into their parents, by parent id, in input order.
+ * An orbit under `ORBIT_MIN_PX` folds, unless its body is in `keep`.
+ */
+export const foldOrbits = (
+    orbits: readonly OrbitPx[],
+    keep: ReadonlySet<string>,
+): Map<string, string[]> => {
+    const folded = new Map<string, string[]>();
+
+    for (const { id, parent, aPx } of orbits) {
+        if (aPx >= ORBIT_MIN_PX || keep.has(id)) continue;
+
+        folded.set(parent, [...(folded.get(parent) ?? []), id]);
+    }
+
+    return folded;
+};
+
+/** Where labels sort: the star, then planets, then the rest, each by `mu`. */
+export const labelRank = (kind: BodyKind, mu: number): number => {
+    const tier = kind === "star" ? 2 : kind === "planet" ? 1 : 0;
+
+    // The log of any real mu is under 100, so tiers never mix.
+    return tier + Math.log10(1 + mu) / 100;
+};
 
 /** The first of the `count` xyz points that is nearest to (x, y, z). */
 export const nearestPoint = (
@@ -135,17 +174,17 @@ export const fitDistanceKm = (
     return radiusKm * Math.max(sides, nearAndFar);
 };
 
-/** A rectangle in px that belongs to a body, for hiding the smaller body's. */
+/** A rectangle in px that belongs to a body, for hiding the lower-ranked body's. */
 type Box = {
     id: string;
     left: number;
     top: number;
     right: number;
     bottom: number;
-    radius: number;
+    rank: number;
 };
 
-/** The ids of boxes within `gap` of a larger body's box, except those in `keep`. */
+/** The ids of boxes within `gap` of a higher-ranked box, except those in `keep`. */
 const hiddenByLarger = (
     boxes: Box[],
     keep: ReadonlySet<string>,
@@ -158,7 +197,7 @@ const hiddenByLarger = (
 
         const covered = boxes.some(
             (other) =>
-                other.radius > box.radius &&
+                other.rank > box.rank &&
                 box.left < other.right + gap &&
                 other.left < box.right + gap &&
                 box.top < other.bottom + gap &&
@@ -170,7 +209,7 @@ const hiddenByLarger = (
     return hidden;
 };
 
-/** A label's anchor on screen, its size in px and its body's radius in metres. */
+/** A label's anchor on screen, its size in px and its rank. */
 export type LabelBox = {
     id: string;
     x: number;
@@ -182,7 +221,10 @@ export type LabelBox = {
     offset: number;
     /** Whether the body is drawn as a sphere, so its anchor is its centre. */
     disc: boolean;
-    radius: number;
+    /** Where it sorts, from `labelRank`. */
+    rank: number;
+    /** Whether it may also go above or below its anchor. */
+    big: boolean;
 };
 
 /** A rectangle on screen in px, from the canvas's top left. */
@@ -198,17 +240,20 @@ export const centreShift = (height: number, band: Band): number =>
 /** A body's marker on screen, with its half-width in px. */
 export type Dot = { id: string; x: number; y: number; size: number };
 
-/** Where a label goes: right of its anchor, left of it, or nowhere. */
-export type Placement = "right" | "left" | "hidden";
+/** Where a label goes: beside its anchor, above or below it, or nowhere. */
+export type Placement = "right" | "left" | "above" | "below" | "hidden";
 
 /** The px between a label and its anchor. */
 export const LABEL_ANCHOR_GAP_PX = 6;
 
+/** The px an above or below label sits farther out than a side one. */
+export const LABEL_VERTICAL_GAP_PX = 8;
+
 /**
  * Where each label goes. The focus is placed first, then each of `pinned` (the selection,
- * then the hovered body) in order, then larger bodies before smaller.
- * A label tries the right of its anchor, then the left, and hides if both run
- * off the viewport or touch a larger body's label. It also hides when its anchor
+ * then the hovered body) in order, then by rank.
+ * A label tries the right of its anchor, then the left, then (if `big`) above and below.
+ * It hides if none fits the viewport or avoids a higher-ranked label. It also hides when its anchor
  * is on top of an earlier label's anchor, and never covers another body's dot.
  * The focus is never hidden, and a pinned label only when it's off screen.
  * A label tries the side it had in `previous` first, so it doesn't jump when the selection changes.
@@ -231,11 +276,11 @@ export const placeLabels = (
             ? Infinity
             : pinned.includes(label.id)
               ? Number.MAX_VALUE / (pinned.indexOf(label.id) + 1)
-              : label.radius;
+              : label.rank;
 
     for (const label of [...labels].sort((a, b) => priority(b) - priority(a))) {
         const { id, x, y, width, height, offset } = label;
-        const radius = priority(label);
+        const rank = priority(label);
 
         // A sphere's anchor is its centre, which is far from its edge once it's off screen.
         const margin = label.disc ? 0 : width;
@@ -263,58 +308,100 @@ export const placeLabels = (
         }
         anchors.push({ x, y });
 
-        const right: Box = {
-            id,
-            left: x + offset,
-            top: y - height / 2,
-            right: x + offset + width,
-            bottom: y + height / 2,
-            radius,
+        const vertical = offset + LABEL_VERTICAL_GAP_PX;
+        const spots: Record<Exclude<Placement, "hidden">, Box> = {
+            right: {
+                id,
+                left: x + offset,
+                top: y - height / 2,
+                right: x + offset + width,
+                bottom: y + height / 2,
+                rank,
+            },
+            left: {
+                id,
+                left: x - offset - width,
+                top: y - height / 2,
+                right: x - offset,
+                bottom: y + height / 2,
+                rank,
+            },
+            above: {
+                id,
+                left: x - width / 2,
+                top: y - vertical - height,
+                right: x + width / 2,
+                bottom: y - vertical,
+                rank,
+            },
+            below: {
+                id,
+                left: x - width / 2,
+                top: y + vertical,
+                right: x + width / 2,
+                bottom: y + vertical + height,
+                rank,
+            },
         };
-        const left: Box = {
-            ...right,
-            left: x - offset - width,
-            right: x - offset,
+        const onScreen: Record<Exclude<Placement, "hidden">, boolean> = {
+            right: spots.right.right <= viewport.width,
+            left: spots.left.left >= 0,
+            above:
+                spots.above.left >= 0 &&
+                spots.above.right <= viewport.width &&
+                spots.above.top >= 0,
+            below:
+                spots.below.left >= 0 &&
+                spots.below.right <= viewport.width &&
+                spots.below.bottom <= viewport.height,
         };
-        const free = (box: Box, onScreen: boolean) =>
-            onScreen &&
-            !blocked.some(
-                (rect) =>
-                    box.left < rect.right &&
-                    rect.left < box.right &&
-                    box.top < rect.bottom &&
-                    rect.top < box.bottom,
-            ) &&
-            !placed.some(
-                (other) =>
-                    other.radius > radius &&
-                    box.left < other.right + LABEL_GAP_PX &&
-                    other.left < box.right + LABEL_GAP_PX &&
-                    box.top < other.bottom + LABEL_GAP_PX &&
-                    other.top < box.bottom + LABEL_GAP_PX,
-            ) &&
-            !dots.some(
-                (dot) =>
-                    dot.id !== id &&
-                    box.left < dot.x + dot.size &&
-                    dot.x - dot.size < box.right &&
-                    box.top < dot.y + dot.size &&
-                    dot.y - dot.size < box.bottom,
-            );
+        const free = (spot: Exclude<Placement, "hidden">) => {
+            const box = spots[spot];
 
-        const fitsRight = free(right, right.right <= viewport.width);
-        const fitsLeft = free(left, left.left >= 0);
+            return (
+                onScreen[spot] &&
+                !blocked.some(
+                    (rect) =>
+                        box.left < rect.right &&
+                        rect.left < box.right &&
+                        box.top < rect.bottom &&
+                        rect.top < box.bottom,
+                ) &&
+                !placed.some(
+                    (other) =>
+                        other.rank > rank &&
+                        box.left < other.right + LABEL_GAP_PX &&
+                        other.left < box.right + LABEL_GAP_PX &&
+                        box.top < other.bottom + LABEL_GAP_PX &&
+                        other.top < box.bottom + LABEL_GAP_PX,
+                ) &&
+                !dots.some(
+                    (dot) =>
+                        dot.id !== id &&
+                        box.left < dot.x + dot.size &&
+                        dot.x - dot.size < box.right &&
+                        box.top < dot.y + dot.size &&
+                        dot.y - dot.size < box.bottom,
+                )
+            );
+        };
+
+        const order: Exclude<Placement, "hidden">[] = label.big
+            ? ["right", "left", "above", "below"]
+            : ["right", "left"];
+        const before = previous.get(id);
+        // The side it had comes first, so it doesn't jump.
+        if (before && before !== "hidden" && order.includes(before)) {
+            order.splice(order.indexOf(before), 1);
+            order.unshift(before);
+        }
+
+        const fits = order.find(free);
         const placement: Placement =
-            fitsLeft && (previous.get(id) === "left" || !fitsRight)
-                ? "left"
-                : fitsRight || id === focus || pinned.includes(id)
-                  ? "right"
-                  : "hidden";
+            fits ?? (id === focus || pinned.includes(id) ? "right" : "hidden");
 
         placements.set(id, placement);
-        if (placement !== "hidden") {
-            placed.push(placement === "right" ? right : left);
-        }
+        if (placement !== "hidden") placed.push(spots[placement]);
     }
 
     return placements;
@@ -335,7 +422,7 @@ export const hiddenMarkers = (
             top: y,
             right: x,
             bottom: y,
-            radius,
+            rank: radius,
         })),
         keep,
         MARKER_GAP_PX,

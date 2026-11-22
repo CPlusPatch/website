@@ -20,10 +20,14 @@ import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import {
     type Anchor,
     type Dot,
+    foldOrbits,
     hiddenBehindSpheres,
     hiddenMarkers,
     LABEL_ANCHOR_GAP_PX,
+    LABEL_VERTICAL_GAP_PX,
     type LabelBox,
+    labelRank,
+    labelShownForOrbit,
     type MarkerPoint,
     type Placement,
     placeLabels,
@@ -62,12 +66,43 @@ type Entry = {
     /** The root's glow, drawn with its marker. */
     halo: Sprite | null;
     label: CSS2DObject;
+    /** The label's name and the "+N" count of the bodies folded into it. */
+    name: HTMLElement;
+    count: HTMLElement;
+    /** What the label is drawn and measured with, as a key. Empty until the first update. */
+    style: string;
     /** The label's width and height in px, without its offset. */
     text: { width: number; height: number };
     /** The px from the label's anchor to its box, which clears the sphere. */
     offset: number;
-    /** Whether the label sits left of its anchor. */
-    left: boolean;
+    /** Where the label sits, as a class modifier. */
+    side: Placement;
+};
+
+type LabelStyle = {
+    selected: boolean;
+    big: boolean;
+    hover: boolean;
+    count: string;
+};
+
+const labelModifiers = ({ selected, big, hover }: LabelStyle): string[] =>
+    [
+        selected && "orrery__label--selected",
+        big && "orrery__label--big",
+        hover && "orrery__label--hover",
+    ].filter((name) => name !== false);
+
+const labelKey = (style: LabelStyle): string =>
+    `${labelModifiers(style).join(" ")}|${style.count}`;
+
+/** The label's anchor, as a CSS2D `center`, for each placement. */
+const CENTERS: Record<Placement, [number, number]> = {
+    right: [0, 0.5],
+    left: [1, 0.5],
+    above: [0.5, 1],
+    below: [0.5, 0],
+    hidden: [0, 0.5],
 };
 
 const HALO_SCALE = 2.5;
@@ -169,7 +204,11 @@ export const createBodies = (
     const entries: Entry[] = [];
     // Measures labels here, since a label has no layout until it's drawn.
     const probe = document.createElement("div");
-    probe.className = "orrery__label orrery__label--probe";
+    const probeName = document.createElement("span");
+    probeName.className = "orrery__label-name";
+    const probeCount = document.createElement("span");
+    probeCount.className = "orrery__label-count";
+    probe.append(probeName, probeCount);
     host.append(probe);
 
     for (const body of bodies) {
@@ -210,10 +249,15 @@ export const createBodies = (
 
         const text = document.createElement("div");
         text.className = "orrery__label";
-        text.textContent = body.name;
+        const name = document.createElement("span");
+        name.className = "orrery__label-name";
+        name.textContent = body.name;
+        const count = document.createElement("span");
+        count.className = "orrery__label-count";
+        text.append(name, count);
         const label = new CSS2DObject(text);
         // Its left edge sits on the body.
-        label.center.set(0, 0.5);
+        label.center.set(...CENTERS.right);
 
         group.add(sphere, marker, label);
         if (halo) group.add(halo);
@@ -225,10 +269,13 @@ export const createBodies = (
             marker,
             halo,
             label,
+            name,
+            count,
+            style: "",
             text: { width: 0, height: 0 },
             // Unset, so the first update writes it.
             offset: -1,
-            left: false,
+            side: "right",
         });
     }
 
@@ -241,29 +288,46 @@ export const createBodies = (
             marker.renderOrder = rank + 1;
         });
 
-    // The selected label is bold, so it's wider.
-    let selectedId: string | null = null;
     let hoverId: string | null = null;
     let placements = new Map<string, Placement>();
+    // What each label is drawn as, and its text.
+    const styles = new Map<string, LabelStyle>();
 
-    const measure = () => {
+    const measure = (entry: Entry, style: LabelStyle) => {
+        probe.className = [
+            "orrery__label",
+            "orrery__label--probe",
+            ...labelModifiers(style),
+        ].join(" ");
+        probeName.textContent = entry.body.name;
+        probeCount.textContent = style.count;
+        entry.text = { width: probe.offsetWidth, height: probe.offsetHeight };
+    };
+    const measureAll = () => {
         for (const entry of entries) {
-            probe.textContent = entry.body.name;
-            probe.classList.toggle(
-                "orrery__label--selected",
-                entry.body.id === selectedId,
-            );
-            entry.text = {
-                width: probe.offsetWidth,
-                height: probe.offsetHeight,
-            };
+            const style = styles.get(entry.body.id);
+            if (style) measure(entry, style);
         }
     };
-    measure();
+
+    // The label's classes and text change its width, so it's measured again with them.
+    const restyle = (entry: Entry, style: LabelStyle) => {
+        const key = labelKey(style);
+        if (key === entry.style) return;
+
+        entry.style = key;
+        styles.set(entry.body.id, style);
+        const { element } = entry.label;
+        element.classList.toggle("orrery__label--selected", style.selected);
+        element.classList.toggle("orrery__label--big", style.big);
+        element.classList.toggle("orrery__label--hover", style.hover);
+        entry.count.textContent = style.count;
+        measure(entry, style);
+    };
 
     let disposed = false;
     document.fonts.ready.then(() => {
-        if (!disposed) measure();
+        if (!disposed) measureAll();
     });
 
     const rootGroup = entries.find(({ body }) => body.parent === null)?.group;
@@ -276,18 +340,45 @@ export const createBodies = (
 
     return {
         update: (camera, origin, focus, selected, states, blocked) => {
-            if (selected !== selectedId) {
-                selectedId = selected;
-                for (const { body, label } of entries) {
-                    label.element.classList.toggle(
-                        "orrery__label--selected",
-                        body.id === selected,
-                    );
-                }
-                measure();
-            }
-
             const fov = (camera.fov * Math.PI) / 180;
+            const keep = new Set([focus]);
+            if (selected) keep.add(selected);
+
+            // An orbit's size on screen sets what folds and which labels show.
+            const orbitPx = new Map<string, number>();
+            for (const { body } of entries) {
+                const parentR = body.parent && states.get(body.parent)?.r;
+                if (!body.elements || !body.parent || !parentR) continue;
+
+                view.set(
+                    (parentR.x - origin.x) / 1000,
+                    (parentR.y - origin.y) / 1000,
+                    (parentR.z - origin.z) / 1000,
+                );
+                orbitPx.set(
+                    body.id,
+                    projectedRadiusPx(
+                        body.elements.a / 1000,
+                        camera.position.distanceTo(view),
+                        fov,
+                        size.height,
+                    ),
+                );
+            }
+            const folds = foldOrbits(
+                entries.flatMap(({ body }) => {
+                    const aPx = orbitPx.get(body.id);
+
+                    return body.parent && aPx !== undefined
+                        ? [{ id: body.id, parent: body.parent, aPx }]
+                        : [];
+                }),
+                keep,
+            );
+            const folded = new Set([...folds.values()].flat());
+            const names = new Map(
+                entries.map(({ body }) => [body.id, body.name]),
+            );
             const anchors: Anchor[] = [];
             const spheres: Sphere[] = [];
             const labels: LabelBox[] = [];
@@ -299,6 +390,30 @@ export const createBodies = (
                 const { body, group, sphere, marker, halo, label } = entry;
                 const r = states.get(body.id)?.r;
                 if (!r) continue;
+
+                if (folded.has(body.id)) {
+                    sphere.visible = false;
+                    marker.visible = false;
+                    if (halo) halo.visible = false;
+                    continue;
+                }
+
+                const hovered = body.id === hoverId;
+                const children = folds.get(body.id) ?? [];
+                const major =
+                    body.kind === "star" ||
+                    body.kind === "planet" ||
+                    body.id === focus;
+                restyle(entry, {
+                    selected: body.id === selected,
+                    big: major,
+                    hover: hovered,
+                    count: !children.length
+                        ? ""
+                        : hovered
+                          ? `+ ${children.map((id) => names.get(id)).join(", ")}`
+                          : `+${children.length}`,
+                });
 
                 group.position.set(
                     (r.x - origin.x) / 1000,
@@ -320,14 +435,19 @@ export const createBodies = (
                 marker.visible = !big;
                 if (halo) halo.visible = !big;
 
-                // Pushes the label from the disc's centre to its edge.
+                // Pushes the label from the disc's or marker's centre to its edge.
                 const offset =
-                    LABEL_ANCHOR_GAP_PX + (big ? Math.round(radiusPx) : 0);
+                    LABEL_ANCHOR_GAP_PX +
+                    Math.round(big ? radiusPx : markerPx(body) / 2);
                 if (offset !== entry.offset) {
                     entry.offset = offset;
                     label.element.style.setProperty(
                         "--orrery-label-offset",
                         `${offset}px`,
+                    );
+                    label.element.style.setProperty(
+                        "--orrery-label-offset-y",
+                        `${offset + LABEL_VERTICAL_GAP_PX}px`,
                     );
                 }
 
@@ -350,16 +470,24 @@ export const createBodies = (
                     radius: big ? radiusPx : markerPx(body) / 2,
                 });
                 anchors.push({ id: body.id, pos });
-                labels.push({
-                    id: body.id,
-                    x,
-                    y,
-                    width: entry.text.width,
-                    height: entry.text.height,
-                    offset,
-                    disc: big,
-                    radius: body.radius,
-                });
+                if (
+                    labelShownForOrbit(
+                        orbitPx.get(body.id),
+                        keep.has(body.id) || hovered,
+                    )
+                ) {
+                    labels.push({
+                        id: body.id,
+                        x,
+                        y,
+                        width: entry.text.width,
+                        height: entry.text.height,
+                        offset,
+                        disc: big,
+                        rank: labelRank(body.kind, body.mu),
+                        big: major,
+                    });
+                }
                 if (big) {
                     spheres.push({
                         id: body.id,
@@ -372,8 +500,6 @@ export const createBodies = (
                 }
             }
 
-            const keep = new Set([focus]);
-            if (selected) keep.add(selected);
             const behind = hiddenBehindSpheres(anchors, spheres, keep);
             const covered = hiddenMarkers(markers, keep);
             placements = placeLabels(
@@ -389,12 +515,14 @@ export const createBodies = (
             for (const entry of entries) {
                 const { body, marker, halo, label } = entry;
                 const placement = placements.get(body.id) ?? "hidden";
-                const left = placement === "left";
                 label.visible = placement !== "hidden";
-                if (left !== entry.left) {
-                    entry.left = left;
-                    label.center.set(left ? 1 : 0, 0.5);
-                    label.element.classList.toggle("orrery__label--left", left);
+                // A hidden label isn't drawn, so its side can wait.
+                if (placement !== "hidden" && placement !== entry.side) {
+                    const { classList } = label.element;
+                    classList.remove(`orrery__label--${entry.side}`);
+                    classList.add(`orrery__label--${placement}`);
+                    label.center.set(...CENTERS[placement]);
+                    entry.side = placement;
                 }
 
                 if (covered.has(body.id)) {
@@ -430,12 +558,6 @@ export const createBodies = (
             if (id === hoverId) return;
 
             hoverId = id;
-            for (const { body, label } of entries) {
-                label.element.classList.toggle(
-                    "orrery__label--hover",
-                    body.id === id,
-                );
-            }
         },
         resize: (camera, width, height) => {
             size = { width, height };
@@ -451,7 +573,7 @@ export const createBodies = (
                 );
             }
 
-            measure();
+            measureAll();
         },
         dispose: () => {
             disposed = true;

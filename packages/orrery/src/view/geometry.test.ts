@@ -7,8 +7,12 @@ import {
     fitDistanceKm,
     focusDistanceKm,
     focusTween,
+    foldOrbits,
     hiddenBehindSpheres,
     hiddenMarkers,
+    LABEL_MIN_ORBIT_PX,
+    labelRank,
+    labelShownForOrbit,
     minDistanceKm,
     nearestPoint,
     ORBIT_MAX_VIEWPORTS,
@@ -16,6 +20,7 @@ import {
     orbitShown,
     placeLabels,
     projectedRadiusPx,
+    type Rect,
     reachKm,
     trailAlpha,
     trailBack,
@@ -148,7 +153,7 @@ Deno.test("a tall viewport needs the camera farther away than a wide one", () =>
 
 const view = { width: 800, height: 600 };
 
-const box = (id: string, x: number, y: number, radius: number) => ({
+const box = (id: string, x: number, y: number, rank: number) => ({
     id,
     x,
     y,
@@ -156,7 +161,8 @@ const box = (id: string, x: number, y: number, radius: number) => ({
     height: 14,
     offset: 6,
     disc: false,
-    radius,
+    rank,
+    big: false,
 });
 
 Deno.test("a label sits right of its body when nothing is in the way", () => {
@@ -186,7 +192,7 @@ Deno.test("a label that fits neither side of the viewport is hidden", () => {
     assertEquals(placements.get("a"), "hidden");
 });
 
-Deno.test("the focus's label hides any label it touches, whatever the radius", () => {
+Deno.test("the focus's label hides any label it touches, whatever the rank", () => {
     const labels = [box("sun", 100, 100, 1e9), box("iss", 108, 101, 0.05)];
 
     assertEquals(placeLabels(labels, view, "iss").get("iss"), "right");
@@ -558,4 +564,150 @@ Deno.test("the trail runs back against the motion, wrapping round the loop", () 
     assertEquals(trailBack(12, 10, 100, 1), 98);
     assertEquals(trailBack(12, 10, 100, -1), 2);
     assertEquals(trailBack(7, 10, 100, -1), 97);
+});
+
+// Block the right and left boxes of a label at (100, 100) that is 50 wide and 14 tall.
+const sides = [
+    { left: 106, top: 90, right: 400, bottom: 110 },
+    { left: 0, top: 90, right: 94, bottom: 110 },
+];
+
+Deno.test("a big label that fits neither side goes above, then below", () => {
+    const labels = [{ ...box("a", 100, 100, 1), big: true }];
+    // The above box spans y 72 to 86.
+    const aboveTaken = { left: 90, top: 75, right: 110, bottom: 80 };
+
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map(), sides).get("a"),
+        "above",
+    );
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map(), [
+            ...sides,
+            aboveTaken,
+        ]).get("a"),
+        "below",
+    );
+});
+
+Deno.test("a label that isn't big never goes above or below", () => {
+    const labels = [box("a", 100, 100, 1)];
+
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map(), sides).get("a"),
+        "hidden",
+    );
+});
+
+Deno.test("an above label is centred and sits offset plus 8 px over its anchor", () => {
+    const labels = [{ ...box("a", 100, 100, 1), big: true, offset: 10 }];
+    // The box spans x 75 to 125 and y 68 to 82.
+    const place = (rect: Rect) =>
+        placeLabels(labels, view, "x", [], [], new Map(), [...sides, rect]).get(
+            "a",
+        );
+
+    assertEquals(place({ left: 80, top: 82, right: 120, bottom: 90 }), "above");
+    assertEquals(place({ left: 80, top: 81, right: 120, bottom: 90 }), "below");
+    assertEquals(
+        place({ left: 125, top: 60, right: 130, bottom: 90 }),
+        "above",
+    );
+    assertEquals(
+        place({ left: 124, top: 60, right: 130, bottom: 90 }),
+        "below",
+    );
+    assertEquals(place({ left: 70, top: 60, right: 75, bottom: 90 }), "above");
+    assertEquals(place({ left: 70, top: 60, right: 76, bottom: 90 }), "below");
+});
+
+Deno.test("a big label above the viewport's top goes below", () => {
+    const labels = [{ ...box("a", 100, 10, 1), big: true }];
+    const blocked = [
+        { left: 106, top: 0, right: 400, bottom: 20 },
+        { left: 0, top: 0, right: 94, bottom: 20 },
+    ];
+
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map(), blocked).get("a"),
+        "below",
+    );
+});
+
+Deno.test("a big label keeps its above or below spot when it still fits", () => {
+    const labels = [{ ...box("a", 100, 100, 1), big: true }];
+
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map([["a", "below"]])).get(
+            "a",
+        ),
+        "below",
+    );
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], new Map([["a", "above"]])).get(
+            "a",
+        ),
+        "above",
+    );
+});
+
+Deno.test("a label that isn't big ignores an above spot it had", () => {
+    const labels = [box("a", 100, 100, 1)];
+    const previous = new Map([["a", "above" as const]]);
+
+    assertEquals(
+        placeLabels(labels, view, "x", [], [], previous).get("a"),
+        "right",
+    );
+});
+
+Deno.test("a label ranks the star over planets over the rest, then by mu", () => {
+    assert(labelRank("star", 1) > labelRank("planet", 1e30));
+    assert(labelRank("planet", 1) > labelRank("dwarf", 1e30));
+    assert(labelRank("planet", 1e17) > labelRank("planet", 1e14));
+    assertEquals(labelRank("moon", 5), labelRank("spacecraft", 5));
+});
+
+Deno.test("a lower-ranked label loses a spot to a higher-ranked one, whatever its radius", () => {
+    const labels = [
+        box("moon", 100, 100, labelRank("moon", 4.9e12)),
+        box("mars", 108, 101, labelRank("planet", 4.3e13)),
+    ];
+
+    assertEquals(placeLabels(labels, view, "x").get("mars"), "right");
+    assertEquals(placeLabels(labels, view, "x").get("moon"), "left");
+});
+
+Deno.test("an orbit under the minimum folds into its parent, in input order", () => {
+    const folded = foldOrbits(
+        [
+            { id: "mars", parent: "sun", aPx: 400 },
+            { id: "moon", parent: "earth", aPx: ORBIT_MIN_PX - 1 },
+            { id: "iss", parent: "earth", aPx: 2 },
+            { id: "phobos", parent: "mars", aPx: ORBIT_MIN_PX },
+        ],
+        new Set(),
+    );
+
+    assertEquals([...folded], [["earth", ["moon", "iss"]]]);
+});
+
+Deno.test("the focus and the selection don't fold", () => {
+    const orbits = [
+        { id: "moon", parent: "earth", aPx: 3 },
+        { id: "iss", parent: "earth", aPx: 2 },
+    ];
+
+    assertEquals(
+        [...foldOrbits(orbits, new Set(["moon"]))],
+        [["earth", ["iss"]]],
+    );
+    assertEquals(foldOrbits(orbits, new Set(["moon", "iss"])).size, 0);
+});
+
+Deno.test("a label of a small orbit shows only when kept, and a body without an orbit always does", () => {
+    assertEquals(labelShownForOrbit(LABEL_MIN_ORBIT_PX - 1, false), false);
+    assertEquals(labelShownForOrbit(LABEL_MIN_ORBIT_PX - 1, true), true);
+    assertEquals(labelShownForOrbit(LABEL_MIN_ORBIT_PX, false), true);
+    assertEquals(labelShownForOrbit(undefined, false), true);
 });

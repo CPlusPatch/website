@@ -35,12 +35,15 @@
     --orrery-signal-ink: #2a2100;
     --orrery-hold: #ff9f2e;
     --orrery-pick: #ff6fb5;
+    /* For text on a pick fill, like the selection's label. */
+    --orrery-pick-ink: #2a0716;
     --orrery-abort: #ff6b5e;
 
     --orrery-font-ui: var(--font-plex-sans-condensed);
     --orrery-font-data: var(--font-plex-mono);
 
     --orrery-size-xs: 0.6875rem;
+    --orrery-size-label: 0.75rem;
     --orrery-size-sm: 0.8125rem;
     --orrery-size-md: 0.9375rem;
     --orrery-size-xl: 1.75rem;

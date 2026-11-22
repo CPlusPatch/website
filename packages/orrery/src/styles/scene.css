@@ -36,35 +36,83 @@
     .orrery__label {
         /* The offset is the gap to the anchor plus the radius of a sphere. CSS2D sets `transform`. */
         margin-left: var(--orrery-label-offset, 6px);
-        padding: 0 var(--space-xs);
-        color: var(--color-text);
+        display: flex;
+        align-items: center;
+        color: var(--orrery-muted);
         /* A halo instead of a box, so orbit lines stay whole up to the letters. */
         paint-order: stroke fill;
         -webkit-text-stroke: 3px var(--orrery-ground);
         font-family: var(--orrery-font-ui);
-        font-size: var(--orrery-size-sm);
+        font-size: var(--orrery-size-xs);
+        font-weight: 500;
         white-space: nowrap;
+    }
+
+    .orrery__label-name {
+        padding: 0 var(--space-xs);
+    }
+
+    .orrery__label-count {
+        margin-inline-start: 6px;
+        color: var(--orrery-muted);
+        font-family: var(--orrery-font-data);
+        font-size: var(--orrery-size-xs);
+        font-weight: 500;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .orrery__label--big {
+        color: var(--orrery-text);
+        font-size: var(--orrery-size-label);
     }
 
     /*
      * A background line, since the halo paints over text-decoration, and an inset shadow
      * shows faint side edges as the label moves by fractions of a pixel.
      */
-    .orrery__label--hover,
-    .orrery__label--selected {
-        background:
-            linear-gradient(currentColor, currentColor) bottom / 100% 1px
-            no-repeat content-box;
+    .orrery__label--hover {
+        color: var(--orrery-text);
+        font-size: var(--orrery-size-label);
+
+        .orrery__label-name {
+            background:
+                linear-gradient(currentColor, currentColor) bottom / 100% 1px
+                no-repeat content-box;
+        }
     }
 
-    /* Bold and underlined, so it doesn't rely on colour. */
-    .orrery__label--selected {
+    /* A tag, so it doesn't rely on colour. The count keeps the halo. */
+    .orrery__label--selected .orrery__label-name {
+        padding: 0 5px;
+        background: var(--orrery-pick);
+        color: var(--orrery-pick-ink);
+        -webkit-text-stroke: 0;
+        font-size: var(--orrery-size-sm);
         font-weight: 600;
+        line-height: 20px;
+
+        /* Backgrounds are dropped in forced colours. */
+        @media (forced-colors: active) {
+            outline: 1px solid CanvasText;
+        }
     }
 
     /* The box is moved by its right edge, so the margin pulls it back. */
     .orrery__label--left {
         margin-left: calc(-1 * var(--orrery-label-offset, 6px));
+    }
+
+    .orrery__label--above {
+        margin-left: 0;
+        margin-top: calc(-1 * var(--orrery-label-offset-y, 14px));
+    }
+
+    .orrery__label--below {
+        margin-left: 0;
+        margin-top: var(--orrery-label-offset-y, 14px);
     }
 
     .orrery__label--probe {
