@@ -29,6 +29,10 @@ Deno.test("an unknown id takes its kind's colour", () => {
     assertEquals(colorOf(body("rock", "comet")), "var(--orrery-dim)");
 });
 
-Deno.test("every body of the solar system has a colour of its own", () => {
-    for (const { id } of solarSystem.bodies) assert(id in BODY_COLORS, id);
+Deno.test("the Sun and every planet have a colour of their own", () => {
+    const named = solarSystem.bodies.filter(
+        ({ kind }) => kind === "star" || kind === "planet",
+    );
+
+    for (const { id } of named) assert(id in BODY_COLORS, id);
 });

@@ -4,6 +4,8 @@ import type { Elements } from "../kepler.ts";
 import { wrapAngle } from "../kepler.ts";
 import type { Body, Scenario } from "../scenario.ts";
 import { unixMsToJ2000s } from "../time.ts";
+import { moonBodies } from "./moons.ts";
+import { smallBodies } from "./small-bodies.ts";
 
 const deg = (x: number): number => (x * Math.PI) / 180;
 const au = (x: number): number => x * AU;
@@ -202,7 +204,15 @@ const ISS_TLE = [
     "2 25544  51.6319 243.0636 0007384  49.3258 310.8372 15.49527370596090",
 ] as const;
 
-/** The Sun, the planets, Pluto, the Moon and the ISS. */
+/** The gravitational parameter of each planet and Pluto, for the moons' orbits. */
+const PARENT_MU = Object.fromEntries(
+    Object.entries(PHYSICAL).map(([id, { mass }]) => [id, G * mass * 1e24]),
+);
+
+/**
+ * The Sun, the planets, Pluto, four more dwarf planets, Vesta, Halley, 21 moons
+ * (including ours) and the ISS.
+ */
 export const solarSystem: Scenario = {
     version: 1,
     name: "Solar System",
@@ -226,6 +236,7 @@ export const solarSystem: Scenario = {
         planet("uranus", "Uranus", "planet"),
         planet("neptune", "Neptune", "planet"),
         planet("pluto", "Pluto", "dwarf"),
+        ...smallBodies,
         {
             id: "moon",
             name: "Moon",
@@ -245,5 +256,6 @@ export const solarSystem: Scenario = {
             radius: km(0.05),
             elements: fromTle(ISS_TLE[0], ISS_TLE[1], EARTH_MU + ISS_MU),
         },
+        ...moonBodies(PARENT_MU),
     ],
 };

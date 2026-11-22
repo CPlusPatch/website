@@ -18,13 +18,7 @@ Deno.test("a query ignores case and the spaces around it", () => {
 });
 
 Deno.test("name prefixes come before other substrings", () => {
-    assertEquals(names("e"), [
-        "Earth",
-        "Mercury",
-        "Venus",
-        "Jupiter",
-        "Neptune",
-    ]);
+    assertEquals(names("ar"), ["Ariel", "Earth", "Mars", "Charon"]);
 });
 
 Deno.test("a query that matches no name finds nothing", () => {
