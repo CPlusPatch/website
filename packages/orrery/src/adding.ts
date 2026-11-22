@@ -1,5 +1,6 @@
 import type { Body, BodyKind, Scenario } from "@cpluspatch/orbit";
 import { G } from "@cpluspatch/orbit";
+import { type AUnit, aMin, DEGREES, fieldError } from "./editing.ts";
 
 /** What the Add body form collects, in the units it shows. */
 export type NewBodyInput = {
@@ -79,4 +80,62 @@ export const removalNote = (scenario: Scenario, id: string): string => {
     }
 
     return `Its ${below.length} ${moons ? "moons" : "bodies"} go with it.`;
+};
+
+/** A field of the Add body form that can fail. */
+export type AddField = "name" | "radius" | "mass" | "a" | "e" | "i";
+
+/** What the Add body form holds. The semi-major axis is in metres, the rest as in `NewBodyInput`. */
+export type AddInput = {
+    name: string;
+    parent: Body;
+    radiusKm: number;
+    massKg: number;
+    aMetres: number;
+    e: number;
+    iDeg: number;
+    /** The unit the limits of the semi-major axis are shown in. */
+    unit: AUnit;
+};
+
+/** The message for each field of `input` that fails. Edit's `fieldError` words the orbit's. */
+export const addErrors = (
+    input: AddInput,
+    scenario: Scenario,
+): Partial<Record<AddField, string>> => {
+    const errors: Partial<Record<AddField, string>> = {};
+    const { parent } = input;
+    const name = input.name.trim();
+
+    if (name === "") {
+        errors.name = "Enter a name.";
+    } else {
+        const taken = scenario.bodies.find(
+            (body) => body.name.toLowerCase() === name.toLowerCase(),
+        );
+        if (taken) errors.name = `A body named ${taken.name} already exists.`;
+    }
+
+    if (!Number.isFinite(input.radiusKm)) errors.radius = "Enter a number.";
+    else if (input.radiusKm <= 0) errors.radius = "Radius must be above 0 km.";
+
+    if (!Number.isFinite(input.massKg)) errors.mass = "Enter a number.";
+    else if (input.massKg <= 0) errors.mass = "Mass must be above 0 kg.";
+
+    const a = fieldError("a", input.aMetres, aMin(parent.radius), input.unit);
+    const e = fieldError("e", input.e, aMin(parent.radius));
+    const i = fieldError("i", input.iDeg / DEGREES, aMin(parent.radius));
+    if (a !== null) errors.a = a;
+    if (e !== null) errors.e = e;
+    if (i !== null) errors.i = i;
+
+    if (
+        !errors.a &&
+        !errors.e &&
+        input.aMetres * (1 - input.e) <= parent.radius
+    ) {
+        errors.e = `Periapsis would be inside ${parent.name}.`;
+    }
+
+    return errors;
 };

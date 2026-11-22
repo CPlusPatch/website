@@ -13,7 +13,6 @@ import {
     writeList,
 } from "../persistence.ts";
 import type { World } from "../world.ts";
-import type { BodyDialogs } from "./body-dialogs.ts";
 import { h } from "./dom.ts";
 
 /** The Scenarios dialog, the top bar button that opens it and how to remove them. */
@@ -87,13 +86,14 @@ type Armed = { button: HTMLButtonElement; label: string; aria: string | null };
 
 /**
  * Builds the Scenarios dialog in `root`, and the button that opens it.
- * The caller puts the button in the top bar. Its Add a body button opens `dialogs`.
+ * The caller puts the button in the top bar. Its Add a body button calls `openAdd`.
  */
 export const createScenarios = (
     root: HTMLElement,
     world: World,
     storage: SavedStorage,
-    dialogs: BodyDialogs,
+    /** Opens the Add body form. */
+    openAdd: () => void,
 ): Scenarios => {
     const abort = new AbortController();
     const { signal } = abort;
@@ -496,7 +496,7 @@ export const createScenarios = (
                     }
                 } else if (action === "add") {
                     close();
-                    dialogs.openAdd();
+                    openAdd();
                 }
             }
         },

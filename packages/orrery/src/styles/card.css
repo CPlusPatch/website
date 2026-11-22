@@ -38,6 +38,10 @@
         inline-size: 1.375rem;
         block-size: 1.375rem;
 
+        &[hidden] {
+            display: none;
+        }
+
         svg {
             inline-size: 100%;
             block-size: 100%;

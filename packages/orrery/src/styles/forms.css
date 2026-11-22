@@ -101,6 +101,55 @@
                 margin: 0;
             }
         }
+
+        &.orrery__stepper--text input,
+        &.orrery__stepper--select select {
+            text-align: start;
+            font: 500 var(--orrery-size-md) var(--orrery-font-ui);
+        }
+
+        &.orrery__stepper--select {
+            position: relative;
+
+            /* The caret is drawn here, so the select keeps its native menu. */
+            &::after {
+                content: "";
+                position: absolute;
+                inset-block-start: calc(50% - 0.1875rem);
+                inset-inline-end: var(--space-sm);
+                inline-size: 0.4375rem;
+                block-size: 0.4375rem;
+                border: solid var(--orrery-muted);
+                border-width: 0 1.5px 1.5px 0;
+                transform: rotate(45deg) scale(0.8);
+                pointer-events: none;
+            }
+
+            select {
+                flex: 1;
+                inline-size: 100%;
+                min-inline-size: 0;
+                padding: 0 calc(var(--space-sm) * 2 + 0.4375rem) 0
+                    var(--space-sm);
+                border: 0;
+                outline: none;
+                background: none;
+                color: var(--orrery-text);
+                appearance: none;
+                cursor: pointer;
+
+                option {
+                    background-color: var(--orrery-panel-solid);
+                    color: var(--orrery-text);
+                }
+            }
+
+            @media (forced-colors: active) {
+                &::after {
+                    border-color: ButtonText;
+                }
+            }
+        }
     }
 
     /* The same width for every unit, wide enough for "m/s", so the numbers line up. */
@@ -178,35 +227,6 @@
         .button {
             flex: 1;
         }
-    }
-
-    .orrery__form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-        gap: var(--space-md);
-    }
-
-    .orrery__field {
-        display: grid;
-        gap: var(--space-xs);
-        align-content: start;
-
-        label {
-            font: var(--type-label);
-        }
-
-        .field,
-        .select {
-            inline-size: 100%;
-        }
-    }
-
-    .orrery__field--wide {
-        grid-column: 1 / -1;
-    }
-
-    .orrery__form-error[hidden] {
-        display: none;
     }
 
     @media (max-width: 720px) {

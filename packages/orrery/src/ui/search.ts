@@ -4,7 +4,6 @@ import { readouts } from "../readouts.ts";
 import { found, marked } from "../search.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
-import type { BodyDialogs } from "./body-dialogs.ts";
 import { showBodyMarker } from "./body-marker.ts";
 import { h, setText } from "./dom.ts";
 
@@ -39,13 +38,14 @@ const icon = (className: string, svg: string): HTMLElement => {
 
 /**
  * A button for the top bar, and under it a combobox that lists every body, grouped by parent.
- * Picking a body selects it, and Shift focuses it. The first row adds a body with `dialogs`.
+ * Picking a body selects it, and Shift focuses it. The first row adds a body with `openAdd`.
  */
 export const createSearch = (
     root: HTMLElement,
     world: World,
     units: Units,
-    dialogs: BodyDialogs,
+    /** Opens the Add body form, with `name` in its Name field. */
+    openAdd: (name: string) => void,
 ): Search => {
     const abort = new AbortController();
     const { signal } = abort;
@@ -275,7 +275,7 @@ export const createSearch = (
         const name = input.value.trim();
 
         close(false);
-        dialogs.openAdd(name);
+        openAdd(name);
     };
 
     // Pressing the button or a row would blur the input, and close the panel.

@@ -24,8 +24,10 @@ export type StepperOptions = {
     onUnit?: () => void;
     /** The text the field starts with. */
     value: string;
-    /** How far − and + move the value. */
-    step: () => number;
+    /** How far − and + move the value. 1 by default. */
+    step?: () => number;
+    /** Moves the value one step up (`1`) or down (`-1`), in place of adding or subtracting `step`. */
+    move?: (value: number, sign: 1 | -1) => number;
     /** The text of a value after − or +. */
     format?: (value: number) => string;
     /** Ids of other elements that describe the field, after its error. */
@@ -44,7 +46,8 @@ export const createStepper = ({
     unit,
     onUnit,
     value,
-    step,
+    step = () => 1,
+    move: stepBy,
     format = String,
     describedBy = [],
     onInput,
@@ -63,13 +66,19 @@ export const createStepper = ({
     const error = h("p", { class: "orrery__stepper-error", id: errorId });
     error.hidden = true;
 
-    const move = (delta: number) => {
+    const move = (sign: 1 | -1) => {
         // Stepping from a blank or half-typed value would replace it with the step.
         if (Number.isNaN(input.valueAsNumber)) {
             return;
         }
 
-        input.value = format(nudge(input.valueAsNumber, delta));
+        const { valueAsNumber } = input;
+
+        input.value = format(
+            stepBy
+                ? stepBy(valueAsNumber, sign)
+                : nudge(valueAsNumber, sign * step()),
+        );
         onInput();
         onChange?.();
     };
@@ -83,7 +92,7 @@ export const createStepper = ({
             },
             sign === 1 ? "+" : "−",
         );
-        control.addEventListener("click", () => move(sign * step()));
+        control.addEventListener("click", () => move(sign));
 
         return control;
     };
@@ -95,7 +104,7 @@ export const createStepper = ({
         if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
 
         event.preventDefault();
-        move(event.key === "ArrowUp" ? step() : -step());
+        move(event.key === "ArrowUp" ? 1 : -1);
     });
 
     const unitText = onUnit
@@ -164,6 +173,8 @@ export const createForm = (
     onApply: () => void,
     /** Called on Cancel and Esc. */
     onCancel: () => void,
+    /** The text of the submit button. */
+    applyLabel = "Apply",
 ): Form => {
     const cancel = h(
         "button",
@@ -178,7 +189,7 @@ export const createForm = (
     const apply = h(
         "button",
         { type: "submit", class: buttonClasses().join(" ") },
-        "Apply",
+        applyLabel,
     );
     const element = h(
         "form",

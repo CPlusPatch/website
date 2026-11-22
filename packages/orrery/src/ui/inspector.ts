@@ -15,6 +15,7 @@ import {
 import { type Readouts, readouts } from "../readouts.ts";
 import { otherUnit, type Units } from "../units.ts";
 import type { World } from "../world.ts";
+import { type BodyAdder, createBodyAdder } from "./body-adder.ts";
 import { showBodyMarker } from "./body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "./burn-editor.ts";
 import { h, setText } from "./dom.ts";
@@ -23,11 +24,13 @@ import { createElementEditor, type ElementEditor } from "./element-editor.ts";
 /** The inspector's element and how to remove it. */
 export type Inspector = {
     element: HTMLElement;
+    /** Shows the Add body form, with `name` in its Name field if one is given. */
+    openAdd: (name?: string) => void;
     destroy: () => void;
 };
 
 /** What the card shows: the readouts, or a form that replaces them. */
-type Mode = "card" | "edit" | "burn";
+type Mode = "card" | "edit" | "burn" | "add";
 
 /** How often the readouts refresh while the clock runs, in ms. */
 const REFRESH_MS = 250;
@@ -90,7 +93,17 @@ export const createInspector = (
         "aria-label": "Clear selection",
     });
     close.innerHTML = iconSvg("x");
-    close.addEventListener("click", () => world.select(null));
+    close.addEventListener("click", () => {
+        if (mode === "add") cancelAdd();
+        else world.select(null);
+    });
+    // The form's Esc doesn't reach the head, and the shortcuts would clear the selection instead.
+    close.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || mode !== "add") return;
+
+        event.preventDefault();
+        cancelAdd();
+    });
 
     const marker = h("span", { class: "orrery__orbit-marker" });
     const title = h("h2", {
@@ -120,6 +133,7 @@ export const createInspector = (
     let mode: Mode = "card";
     let editor: ElementEditor | null = null;
     let burn: BurnEditor | null = null;
+    let adder: BodyAdder | null = null;
     let editButton: HTMLButtonElement | null = null;
     let burnButton: HTMLButtonElement | null = null;
 
@@ -196,6 +210,29 @@ export const createInspector = (
         control.addEventListener("click", onClick);
 
         return control;
+    };
+
+    let addName = "";
+
+    // Back to the card, or nothing, with the focus on the search button.
+    const cancelAdd = () => {
+        mode = "card";
+        render();
+        restoreFocus(world.selected ?? world.focused);
+    };
+
+    const openAdd = (name = "") => {
+        if (mode === "add" && adder) {
+            if (name !== "") adder.setName(name);
+            adder.focus();
+
+            return;
+        }
+
+        addName = name;
+        mode = "add";
+        render();
+        adder?.focus();
     };
 
     // Back to the card, with focus on the button that opened the form.
@@ -339,11 +376,18 @@ export const createInspector = (
     const render = () => {
         const id = world.selected;
         const body = world.scenario.bodies.find((b) => b.id === id);
+        const adding = mode === "add";
         const hadFocus = element.contains(document.activeElement);
         // Hiding the focused close button would drop focus to <body>.
-        if (!body && shown && hadFocus) restoreFocus(shown);
+        if (!body && !adding && shown && hadFocus) restoreFocus(shown);
         shown = body?.id ?? null;
-        element.hidden = !body;
+        element.hidden = !body && !adding;
+        marker.hidden = adding;
+        close.setAttribute("aria-label", adding ? "Cancel" : "Clear selection");
+        element.setAttribute(
+            "aria-label",
+            adding ? "Add a body" : "Selected body",
+        );
         values = [];
         switches = [];
         line = [];
@@ -354,6 +398,15 @@ export const createInspector = (
         editor = null;
         burn?.destroy();
         burn = null;
+        adder?.destroy();
+        adder = null;
+        if (adding) {
+            title.textContent = "Add a body";
+            adder = createBodyAdder(world, units, addName, cancelAdd);
+            content.append(adder.element);
+
+            return;
+        }
         if (!body) return;
 
         const parent = world.scenario.bodies.find(
@@ -481,12 +534,14 @@ export const createInspector = (
 
     return {
         element,
+        openAdd,
         destroy: () => {
             off();
             offUnits();
             clearInterval(interval);
             editor?.destroy();
             burn?.destroy();
+            adder?.destroy();
             element.remove();
         },
     };

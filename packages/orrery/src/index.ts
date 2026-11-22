@@ -15,10 +15,9 @@ import {
     startTime,
     writeSaved,
 } from "./persistence.ts";
-import { createBodyDialogs } from "./ui/body-dialogs.ts";
 import { createCrumbs } from "./ui/crumbs.ts";
 import { h } from "./ui/dom.ts";
-import { createInspector } from "./ui/inspector.ts";
+import { createInspector, type Inspector } from "./ui/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
 import { createNotices } from "./ui/notices.ts";
 import { createScenarios } from "./ui/scenario-menu.ts";
@@ -153,22 +152,26 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     // Set once the top bar is filled, after the first build.
     let search: Search | null = null;
+    // Replaced with the view on each scenario.
+    let inspector: Inspector | null = null;
 
     // The view and the panels that depend on the scenario.
     const build = (): (() => void) | null => {
         const view = createView(container, world, blocked, band);
         if (!view) return null;
 
-        const inspector = createInspector(
+        const current = createInspector(
             world,
             units,
             () => search?.toggle.focus(),
             view.ghost,
         );
-        root.querySelector(".orrery__panel--right")?.append(inspector.element);
+        inspector = current;
+        root.querySelector(".orrery__panel--right")?.append(current.element);
 
         return () => {
-            inspector.destroy();
+            if (inspector === current) inspector = null;
+            current.destroy();
             view.destroy();
         };
     };
@@ -206,11 +209,15 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     // The page has the spacer between them. The notices come last.
     const crumbs = createCrumbs(world);
     const keys = createKeys();
-    const dialogs = createBodyDialogs(root, world);
+    const openAdd = (name?: string) => {
+        // The keys card hides the orbit card, so the form wouldn't show.
+        keys.close();
+        inspector?.openAdd(name);
+    };
     // The search panel isn't in a .orrery__panel, so it covers the scene without moving the labels.
-    search = createSearch(root, world, units, dialogs);
+    search = createSearch(root, world, units, openAdd);
     top?.prepend(crumbs.element, search.toggle);
-    const scenarios = createScenarios(root, world, storage, dialogs);
+    const scenarios = createScenarios(root, world, storage, () => openAdd());
     top?.append(scenarios.toggle, keys.toggle, notices.element);
     root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
@@ -329,7 +336,6 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             unbind();
             scenarios.destroy();
             search?.destroy();
-            dialogs.destroy();
             timeBar.destroy();
             crumbs.destroy();
             keys.destroy();
