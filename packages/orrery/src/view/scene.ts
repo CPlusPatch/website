@@ -1,6 +1,7 @@
 import type { Elements } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
+import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 import { createBodies } from "./bodies.ts";
 import { createRig } from "./camera.ts";
@@ -8,6 +9,7 @@ import { type Band, centreShift, type Rect } from "./geometry.ts";
 import { createOrbits } from "./orbits.ts";
 import { type PickPoint, pickBody } from "./picking.ts";
 import { bindPointer } from "./pointer.ts";
+import { createReadouts } from "./readouts.ts";
 import { createTheme } from "./theme.ts";
 
 /** The 3D view drawn into a container. */
@@ -21,12 +23,14 @@ export type View = {
  * The 3D view of `world` in `container`, or `null` if WebGL isn't available.
  * `blocked` gives the rects, in px from the container's top left, that labels keep out of.
  * `band` gives the rows the panels leave free, where the focus is centred.
+ * `units` sets the unit of the distances in the notes.
  */
 export const createView = (
     container: HTMLElement,
     world: World,
     blocked: () => Rect[],
     band: () => Band,
+    units: Units,
 ): View | null => {
     let renderer: WebGLRenderer;
     try {
@@ -70,8 +74,11 @@ export const createView = (
         theme.color,
     );
 
+    const readouts = createReadouts(container, labels.domElement, world, units);
+
     let size = { width: 0, height: 0 };
     let shift = 0;
+    let ghostShown = false;
     // Moves the picture, so the focus sits in the free band rather than under a panel.
     const offset = (free: Band) => {
         const next = centreShift(size.height, free);
@@ -163,6 +170,15 @@ export const createView = (
             states,
             keepOut,
         );
+        readouts.update({
+            camera,
+            origin: rig.origin(),
+            states,
+            viewport: size,
+            ghost: ghostShown,
+            labels: bodies.placed(),
+            blocked: keepOut,
+        });
 
         renderer.render(scene, camera);
         labels.render(scene, camera);
@@ -189,6 +205,7 @@ export const createView = (
         ghost: (id, elements) => {
             const body = world.order.find((candidate) => candidate.id === id);
             if (body) orbits.ghost(body, elements);
+            ghostShown = body !== undefined && elements !== null;
         },
         destroy: () => {
             unsubscribe();
@@ -199,6 +216,7 @@ export const createView = (
             rig.dispose();
             orbits.dispose();
             bodies.dispose();
+            readouts.dispose();
             renderer.forceContextLoss();
             renderer.dispose();
             canvas.remove();

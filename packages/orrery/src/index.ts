@@ -157,7 +157,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     // The view and the panels that depend on the scenario.
     const build = (): (() => void) | null => {
-        const view = createView(container, world, blocked, band);
+        const view = createView(container, world, blocked, band, units);
         if (!view) return null;
 
         const current = createInspector(

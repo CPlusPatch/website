@@ -98,6 +98,11 @@
         }
     }
 
+    /* The scene draws these numbers on the orbit while it's big on screen. */
+    &:has(.orrery__canvas[data-readouts]) .orrery__orbit-line {
+        display: none;
+    }
+
     .orrery__orbit-around {
         margin-block-start: var(--orrery-pad);
 

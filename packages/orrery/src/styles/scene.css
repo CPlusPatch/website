@@ -42,6 +42,12 @@
         /* A halo instead of a box, so orbit lines stay whole up to the letters. */
         paint-order: stroke fill;
         -webkit-text-stroke: 3px var(--orrery-ground);
+
+        /* Forced colours paint the stroke in the text colour, which blots the letters. */
+        @media (forced-colors: active) {
+            -webkit-text-stroke: 0;
+        }
+
         font-family: var(--orrery-font-ui);
         font-size: var(--orrery-size-xs);
         font-weight: 500;
@@ -118,6 +124,84 @@
     .orrery__label--probe {
         position: absolute;
         visibility: hidden;
+    }
+
+    .orrery__flag {
+        position: absolute;
+        inset: 0 auto auto 0;
+        /* The box sits 12px above its point, which is the element's origin. */
+        translate: -50% -28px;
+        padding: 0 5px;
+        background: var(--orrery-signal);
+        color: var(--orrery-signal-ink);
+        font-family: var(--orrery-font-ui);
+        font-size: var(--orrery-size-xs);
+        font-weight: 700;
+        line-height: 16px;
+        white-space: nowrap;
+
+        &[hidden] {
+            display: none;
+        }
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 100% auto auto 50%;
+            inline-size: 1.5px;
+            block-size: 12px;
+            margin-inline-start: -0.75px;
+            background: var(--orrery-signal);
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: calc(100% + 12px) auto auto 50%;
+            inline-size: 4px;
+            block-size: 4px;
+            margin: -2px 0 0 -2px;
+            border-radius: 50%;
+            background: var(--orrery-signal);
+        }
+
+        @media (forced-colors: active) {
+            border: 1px solid CanvasText;
+            line-height: 14px;
+
+            &::before,
+            &::after {
+                background: CanvasText;
+            }
+        }
+    }
+
+    .orrery__note {
+        position: absolute;
+        inset: 0 auto auto 0;
+        box-sizing: border-box;
+        block-size: 14px;
+        padding: 0 2px;
+        /* A backing, so the orbit under the numbers doesn't show. */
+        background: var(--orrery-ground);
+        color: var(--orrery-muted);
+        paint-order: stroke fill;
+        -webkit-text-stroke: 3px var(--orrery-ground);
+
+        /* Forced colours paint the stroke in the text colour, which blots the letters. */
+        @media (forced-colors: active) {
+            -webkit-text-stroke: 0;
+        }
+
+        font-family: var(--orrery-font-data);
+        font-size: var(--orrery-size-xs);
+        font-weight: 400;
+        line-height: 14px;
+        white-space: nowrap;
+
+        &[hidden] {
+            display: none;
+        }
     }
 
     .orrery__notice {

@@ -249,6 +249,59 @@ export const LABEL_ANCHOR_GAP_PX = 6;
 /** The px an above or below label sits farther out than a side one. */
 export const LABEL_VERTICAL_GAP_PX = 8;
 
+/** A label's box on each side of its anchor. */
+const labelSpots = (
+    { id, x, y, width, height, offset }: LabelBox,
+    rank: number,
+): Record<Exclude<Placement, "hidden">, Box> => {
+    const vertical = offset + LABEL_VERTICAL_GAP_PX;
+
+    return {
+        right: {
+            id,
+            left: x + offset,
+            top: y - height / 2,
+            right: x + offset + width,
+            bottom: y + height / 2,
+            rank,
+        },
+        left: {
+            id,
+            left: x - offset - width,
+            top: y - height / 2,
+            right: x - offset,
+            bottom: y + height / 2,
+            rank,
+        },
+        above: {
+            id,
+            left: x - width / 2,
+            top: y - vertical - height,
+            right: x + width / 2,
+            bottom: y - vertical,
+            rank,
+        },
+        below: {
+            id,
+            left: x - width / 2,
+            top: y + vertical,
+            right: x + width / 2,
+            bottom: y + vertical + height,
+            rank,
+        },
+    };
+};
+
+/** The box of a label that `placeLabels` put at `placement`. */
+export const labelRect = (
+    label: LabelBox,
+    placement: Exclude<Placement, "hidden">,
+): Rect => {
+    const { left, top, right, bottom } = labelSpots(label, 0)[placement];
+
+    return { left, top, right, bottom };
+};
+
 /**
  * Where each label goes. The focus is placed first, then each of `pinned` (the selection,
  * then the hovered body) in order, then by rank.
@@ -279,7 +332,7 @@ export const placeLabels = (
               : label.rank;
 
     for (const label of [...labels].sort((a, b) => priority(b) - priority(a))) {
-        const { id, x, y, width, height, offset } = label;
+        const { id, x, y, width, offset } = label;
         const rank = priority(label);
 
         // A sphere's anchor is its centre, which is far from its edge once it's off screen.
@@ -308,41 +361,7 @@ export const placeLabels = (
         }
         anchors.push({ x, y });
 
-        const vertical = offset + LABEL_VERTICAL_GAP_PX;
-        const spots: Record<Exclude<Placement, "hidden">, Box> = {
-            right: {
-                id,
-                left: x + offset,
-                top: y - height / 2,
-                right: x + offset + width,
-                bottom: y + height / 2,
-                rank,
-            },
-            left: {
-                id,
-                left: x - offset - width,
-                top: y - height / 2,
-                right: x - offset,
-                bottom: y + height / 2,
-                rank,
-            },
-            above: {
-                id,
-                left: x - width / 2,
-                top: y - vertical - height,
-                right: x + width / 2,
-                bottom: y - vertical,
-                rank,
-            },
-            below: {
-                id,
-                left: x - width / 2,
-                top: y + vertical,
-                right: x + width / 2,
-                bottom: y + vertical + height,
-                rank,
-            },
-        };
+        const spots = labelSpots(label, rank);
         const onScreen: Record<Exclude<Placement, "hidden">, boolean> = {
             right: spots.right.right <= viewport.width,
             left: spots.left.left >= 0,
@@ -498,3 +517,200 @@ export const focusTween = (from: Pose, to: Pose, s: number): Pose => {
         },
     };
 };
+
+/** A picked orbit shows its apsides and numbers when its semi-major axis is over this many px. */
+export const READOUTS_MIN_ORBIT_PX = 120;
+
+/** The px a note's backing extends past its text on each side. */
+export const NOTE_PAD_PX = 2;
+
+/** The height of a note's box in px. */
+export const NOTE_HEIGHT_PX = 14;
+
+/** The px between a note beside an apsis and the apsis. */
+const NOTE_APSIS_GAP_PX = 9;
+
+/** The px between a tag's edge and the first line of a note block. */
+const NOTE_BLOCK_GAP_PX = 9;
+
+/** The note's box when its text is `width` px wide and centred on (`x`, `y`). */
+const noteBox = (x: number, y: number, width: number): Rect => ({
+    left: x - width / 2 - NOTE_PAD_PX,
+    top: y - NOTE_HEIGHT_PX / 2,
+    right: x + width / 2 + NOTE_PAD_PX,
+    bottom: y + NOTE_HEIGHT_PX / 2,
+});
+
+const TURNS = [0, 0.6, -0.6, 1.2, -1.2];
+
+/**
+ * Where a note of text `width` px wide goes beside the point (`x`, `y`) of an orbit centred on
+ * (`cx`, `cy`). It tries the outward direction, then turned each way, then inward.
+ */
+export const noteSpots = (
+    x: number,
+    y: number,
+    cx: number,
+    cy: number,
+    width: number,
+): Rect[] => {
+    const length = Math.hypot(x - cx, y - cy);
+    // A point on the centre has no outward side.
+    const ux = length < 1 ? 0 : (x - cx) / length;
+    const uy = length < 1 ? -1 : (y - cy) / length;
+    const beyond = (nx: number, ny: number): Rect => {
+        const t =
+            NOTE_APSIS_GAP_PX +
+            (Math.abs(nx) * (width + 2 * NOTE_PAD_PX)) / 2 +
+            Math.abs(ny) * (NOTE_HEIGHT_PX / 2);
+
+        return noteBox(x + nx * t, y + ny * t, width);
+    };
+
+    return [
+        ...TURNS.map((angle) =>
+            beyond(
+                ux * Math.cos(angle) - uy * Math.sin(angle),
+                ux * Math.sin(angle) + uy * Math.cos(angle),
+            ),
+        ),
+        beyond(-ux, -uy),
+    ];
+};
+
+/**
+ * Where lines of text `widths` px wide stack against a tag, nearest line first: below it flush
+ * left, below flush right, above flush left, above flush right. All the lines are tried at each
+ * spot, then the first alone.
+ */
+export const blockSpots = (
+    tag: Rect,
+    widths: readonly number[],
+    lineHeight: number,
+): Rect[][] => {
+    const counts = [...new Set([widths.length, 1])];
+    const sides = [
+        [1, true],
+        [1, false],
+        [-1, true],
+        [-1, false],
+    ] as const;
+
+    return counts.flatMap((count) =>
+        sides.map(([direction, left]) =>
+            widths.slice(0, count).map((width, row) => {
+                const x = left ? tag.left + width / 2 : tag.right - width / 2;
+                const y =
+                    direction > 0
+                        ? tag.bottom + NOTE_BLOCK_GAP_PX + row * lineHeight
+                        : tag.top - NOTE_BLOCK_GAP_PX - row * lineHeight;
+
+                return noteBox(x, y, width);
+            }),
+        ),
+    );
+};
+
+/** Whether the segment from (ax, ay) to (bx, by) touches the rect (Liang-Barsky). */
+const segmentTouches = (
+    ax: number,
+    ay: number,
+    bx: number,
+    by: number,
+    rect: Rect,
+): boolean => {
+    const dx = bx - ax;
+    const dy = by - ay;
+    let t0 = 0;
+    let t1 = 1;
+
+    for (let side = 0; side < 4; side++) {
+        const d = side === 0 ? -dx : side === 1 ? dx : side === 2 ? -dy : dy;
+        const q =
+            side === 0
+                ? ax - rect.left
+                : side === 1
+                  ? rect.right - ax
+                  : side === 2
+                    ? ay - rect.top
+                    : rect.bottom - ay;
+        if (d === 0) {
+            if (q < 0) return false;
+        } else if (d < 0) {
+            if (q / d > t1) return false;
+            t0 = Math.max(t0, q / d);
+        } else {
+            if (q / d < t0) return false;
+            t1 = Math.min(t1, q / d);
+        }
+    }
+
+    return t0 <= t1;
+};
+
+/**
+ * Whether a polyline of x, y pairs passes within `gap` px of `rect`.
+ * A segment with a NaN end is a break in the line and is skipped.
+ */
+export const nearPolyline = (
+    rect: Rect,
+    points: ArrayLike<number>,
+    gap: number,
+): boolean => {
+    const grown = {
+        left: rect.left - gap,
+        top: rect.top - gap,
+        right: rect.right + gap,
+        bottom: rect.bottom + gap,
+    };
+
+    for (let k = 2; k + 1 < points.length; k += 2) {
+        const ax = points[k - 2] ?? Number.NaN;
+        const ay = points[k - 1] ?? Number.NaN;
+        const bx = points[k] ?? Number.NaN;
+        const by = points[k + 1] ?? Number.NaN;
+        if (Number.isNaN(ax + ay + bx + by)) continue;
+
+        if (segmentTouches(ax, ay, bx, by, grown)) return true;
+    }
+
+    return false;
+};
+
+/** Whether `a` and `b` overlap. Boxes that only touch don't. */
+const overlaps = (a: Rect, b: Rect): boolean =>
+    a.left < b.right &&
+    a.right > b.left &&
+    a.top < b.bottom &&
+    a.bottom > b.top;
+
+/** What a note must keep clear of: the viewport, `taken` boxes and, by `gap` px, a polyline. */
+export type Clearance = {
+    viewport: { width: number; height: number };
+    taken: readonly Rect[];
+    line: ArrayLike<number>;
+    gap: number;
+};
+
+/** Whether `rect` is inside the viewport, off every taken box and `gap` px from the line. */
+const isClear = (rect: Rect, { viewport, taken, line, gap }: Clearance) =>
+    rect.left >= 0 &&
+    rect.top >= 0 &&
+    rect.right <= viewport.width &&
+    rect.bottom <= viewport.height &&
+    !taken.some((box) => overlaps(rect, box)) &&
+    !nearPolyline(rect, line, gap);
+
+/** The first of `spots` that is clear, or `null`. */
+export const firstClear = (
+    spots: readonly Rect[],
+    clearance: Clearance,
+): Rect | null => spots.find((spot) => isClear(spot, clearance)) ?? null;
+
+/** The first of `stacks` whose every box is clear, or `null`. */
+export const firstClearStack = (
+    stacks: readonly (readonly Rect[])[],
+    clearance: Clearance,
+): readonly Rect[] | null =>
+    stacks.find((stack) => stack.every((spot) => isClear(spot, clearance))) ??
+    null;

@@ -27,6 +27,7 @@ import {
     LABEL_VERTICAL_GAP_PX,
     type LabelBox,
     labelRank,
+    labelRect,
     labelShownForOrbit,
     type MarkerPoint,
     type Placement,
@@ -48,6 +49,8 @@ export type Bodies = {
         states: Map<string, State>,
         blocked: Rect[],
     ) => PickPoint[];
+    /** The boxes the shown labels took in the last update, by body id, in px from the canvas's top left. */
+    placed: () => ReadonlyMap<string, Rect>;
     /** The body whose shown label holds a point, in px from the canvas's top left. */
     labelAt: (x: number, y: number, canvas: DOMRect) => string | null;
     /** Marks the label of the hovered body, or clears it. */
@@ -290,6 +293,7 @@ export const createBodies = (
 
     let hoverId: string | null = null;
     let placements = new Map<string, Placement>();
+    const placed = new Map<string, Rect>();
     // What each label is drawn as, and its text.
     const styles = new Map<string, LabelStyle>();
 
@@ -512,9 +516,15 @@ export const createBodies = (
                 blocked,
             );
 
+            const boxes = new Map(labels.map((box) => [box.id, box]));
+            placed.clear();
             for (const entry of entries) {
                 const { body, marker, halo, label } = entry;
                 const placement = placements.get(body.id) ?? "hidden";
+                const box = boxes.get(body.id);
+                if (box && placement !== "hidden") {
+                    placed.set(body.id, labelRect(box, placement));
+                }
                 label.visible = placement !== "hidden";
                 // A hidden label isn't drawn, so its side can wait.
                 if (placement !== "hidden" && placement !== entry.side) {
@@ -537,6 +547,7 @@ export const createBodies = (
                 ({ id }) => !behind.has(id) && !covered.has(id),
             );
         },
+        placed: () => placed,
         labelAt: (x, y, canvas) => {
             const rects: LabelRect[] = [];
             for (const { body, label } of entries) {
