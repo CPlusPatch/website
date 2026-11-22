@@ -1,0 +1,327 @@
+.orrery {
+    .orrery__clock {
+        --orrery-clock-control: var(--orrery-control);
+
+        position: relative;
+        flex: none;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        grid-template-areas: "split date live";
+        align-items: center;
+        margin-inline: auto;
+        /* The 130px each side keep it clear of the corners. It can't get too narrow for its three columns. */
+        inline-size: max(
+            min(680px, 100% - 2 * (var(--space-sm) + 130px)),
+            min(29rem, 100%)
+        );
+        padding: var(--space-sm);
+    }
+
+    .orrery__split {
+        grid-area: split;
+        justify-self: start;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .orrery__run {
+        display: grid;
+        place-items: center;
+        inline-size: var(--orrery-clock-control);
+        block-size: var(--orrery-clock-control);
+        padding: 0;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--orrery-go);
+        cursor: pointer;
+
+        /* The stroked icons read as outlines at 12px. */
+        svg {
+            inline-size: 12px;
+            block-size: 12px;
+        }
+
+        svg * {
+            fill: currentColor;
+        }
+
+        &:not(.orrery__run--held):hover {
+            background-color: var(--orrery-panel-raised);
+        }
+
+        /* The pause glyph and the outline mark the held state. */
+        &.orrery__run--held {
+            border-color: var(--orrery-hold);
+            color: var(--orrery-hold);
+        }
+    }
+
+    .orrery__rate {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        block-size: var(--orrery-clock-control);
+        padding: 0 8px;
+        border: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-data);
+        white-space: nowrap;
+        cursor: pointer;
+
+        /* The divider is shorter than the button. */
+        &::before {
+            content: "";
+            position: absolute;
+            inset-inline-start: 0;
+            inset-block-start: 7px;
+            block-size: 16px;
+            border-inline-start: 1px solid var(--orrery-rule);
+        }
+
+        &:hover,
+        &[aria-expanded="true"] {
+            background-color: var(--orrery-panel-raised);
+        }
+
+        svg {
+            flex: none;
+            inline-size: 12px;
+            block-size: 12px;
+            color: var(--orrery-muted);
+        }
+    }
+
+    /* The minimum keeps the button's width from changing with the rate. */
+    .orrery__rate-label {
+        min-inline-size: 8ch;
+        text-align: start;
+    }
+
+    .orrery__clock--reverse .orrery__rate-label {
+        color: var(--orrery-hold);
+    }
+
+    .orrery__rate-menu {
+        position: absolute;
+        z-index: 4;
+        inset-inline-start: var(--orrery-clock-control);
+        /* Above the capsule: its padding and frame, and 8px. */
+        inset-block-end: calc(100% + var(--space-sm) + 1px + 8px);
+        min-inline-size: 170px;
+        padding: 4px 0;
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-panel-solid);
+    }
+
+    .orrery__rate-item {
+        display: grid;
+        grid-template-columns: 12px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        inline-size: 100%;
+        block-size: var(--orrery-clock-control);
+        padding: 0 var(--orrery-pad);
+        border: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-data);
+        text-align: start;
+        cursor: pointer;
+
+        svg {
+            inline-size: 12px;
+            block-size: 12px;
+            visibility: hidden;
+        }
+
+        &[aria-checked="true"] svg {
+            visibility: visible;
+        }
+
+        &:hover,
+        &:focus-visible {
+            background-color: var(--orrery-panel-raised);
+        }
+
+        &:focus-visible {
+            outline: 1px solid var(--orrery-muted);
+            outline-offset: -1px;
+        }
+    }
+
+    /* A word in the menu is sans, and only the rates are figures. */
+    .orrery__rate-word {
+        font-family: var(--orrery-font-ui);
+    }
+
+    .orrery__rate-key {
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-xs) var(--orrery-font-data);
+    }
+
+    .orrery__rate-rule {
+        margin-block: 4px;
+        border-block-start: 1px solid var(--orrery-rule);
+    }
+
+    .orrery__date {
+        grid-area: date;
+        justify-self: center;
+        display: flex;
+        align-items: center;
+        block-size: var(--orrery-clock-control);
+        padding: 0 8px;
+        border: 0;
+        background: none;
+        color: var(--orrery-text);
+        cursor: pointer;
+
+        &:hover,
+        &[aria-expanded="true"] {
+            background-color: var(--orrery-panel-raised);
+        }
+
+        time {
+            font: 500 var(--orrery-size-md) / 1 var(--orrery-font-data);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+    }
+
+    .orrery__secs {
+        color: var(--orrery-muted);
+        font-size: 0.75em;
+    }
+
+    .orrery__utc {
+        margin-inline-start: 6px;
+        color: var(--orrery-muted);
+        font: 600 var(--orrery-size-xs) var(--orrery-font-ui);
+        vertical-align: 0.15em;
+    }
+
+    /* Digits changing faster than twice a second are faded, but legible, so the clock doesn't look off. */
+    .orrery__fast {
+        color: color-mix(
+            in oklab,
+            var(--orrery-text) 55%,
+            var(--orrery-ground)
+        );
+    }
+
+    .orrery__secs .orrery__fast {
+        color: inherit;
+        opacity: 0.7;
+    }
+
+    .orrery__live {
+        grid-area: live;
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        block-size: var(--orrery-clock-control);
+        font-size: var(--orrery-size-sm);
+        white-space: nowrap;
+    }
+
+    .orrery__live-state {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--orrery-muted);
+        font-family: var(--orrery-font-data);
+    }
+
+    .orrery__live-word {
+        font-family: var(--orrery-font-ui);
+    }
+
+    .orrery__live-dot,
+    .orrery__live-on,
+    .orrery__live-short {
+        display: none;
+    }
+
+    .orrery__live-dot {
+        inline-size: 8px;
+        block-size: 8px;
+        border-radius: 50%;
+        background-color: currentColor;
+    }
+
+    .orrery__live--on {
+        .orrery__live-state {
+            color: var(--orrery-go);
+            font-family: var(--orrery-font-ui);
+            font-weight: 600;
+        }
+
+        .orrery__live-dot {
+            display: block;
+        }
+
+        .orrery__live-on {
+            display: inline;
+        }
+
+        .orrery__live-offset {
+            display: none;
+        }
+    }
+
+    .orrery__live:not(.orrery__live--on) .orrery__live-state::after {
+        content: "·" / "";
+    }
+
+    /* With no offset to show, there's no separator either. */
+    .orrery__live--bare .orrery__live-state {
+        display: none;
+    }
+
+    /* Under 1000px the right column is too narrow for the whole offset. */
+    @media (min-width: 721px) and (max-width: 999px) {
+        .orrery__live-full {
+            display: none;
+        }
+
+        .orrery__live-short {
+            display: inline;
+        }
+    }
+
+    .orrery__go-live {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--orrery-text);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration-thickness: 2px;
+        }
+    }
+
+    @media (max-width: 720px) {
+        /* Row one is the run and rate controls and the live status, row two the date. */
+        .orrery__clock {
+            --orrery-clock-control: var(--control-height-md);
+
+            inline-size: 100%;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                "split live"
+                "date date";
+        }
+
+        .orrery__secs,
+        .orrery__utc {
+            display: none;
+        }
+    }
+}

@@ -1,0 +1,53 @@
+.orrery {
+    /* The keys card takes the orbit card's place while it's open. */
+    .orrery__panel--right:has(.orrery__keys:not([hidden]))
+        > .orrery__inspector {
+        display: none;
+    }
+
+    .orrery__keys {
+        align-items: stretch;
+        gap: 0;
+        max-block-size: 100%;
+        overflow: hidden;
+        padding: 0;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .orrery__keys-list {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 10px;
+        margin: 0;
+        padding: var(--space-sm) var(--orrery-pad) var(--orrery-pad);
+        overflow: auto;
+        font-size: var(--orrery-size-sm);
+
+        dt {
+            display: flex;
+            gap: 3px;
+        }
+
+        dd {
+            margin: 0;
+            color: var(--orrery-muted);
+        }
+
+        kbd {
+            padding: 0 5px;
+            border: 1px solid var(--orrery-frame);
+            background-color: var(--orrery-panel-raised);
+            font: 400 var(--orrery-size-xs) / 1.5 var(--orrery-font-data);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .orrery__keys {
+            inline-size: 100%;
+            max-block-size: min(60dvh, 100%);
+        }
+    }
+}

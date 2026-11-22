@@ -1,0 +1,89 @@
+.orrery {
+    .orrery__crumbs {
+        min-inline-size: 0;
+    }
+
+    .orrery__crumb-list {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 2px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        li + li::before {
+            content: "";
+            inline-size: 7px;
+            block-size: 7px;
+            margin-inline: 6px;
+            border-inline-end: 1.5px solid var(--orrery-dim);
+            border-block-end: 1.5px solid var(--orrery-dim);
+            transform: rotate(-45deg);
+        }
+    }
+
+    .orrery__crumb {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        block-size: var(--orrery-control);
+        padding: 0 8px;
+        border: 1px solid transparent;
+        border-radius: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) / 1 var(--orrery-font-ui);
+        letter-spacing: 0.04em;
+        cursor: pointer;
+
+        &:hover,
+        &[aria-current] {
+            border-color: var(--orrery-frame);
+        }
+    }
+
+    .orrery__crumb-marker {
+        display: flex;
+        inline-size: 14px;
+        block-size: 14px;
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
+    }
+
+    .orrery__keys-toggle {
+        display: grid;
+        place-items: center;
+        inline-size: 2rem;
+        min-block-size: var(--orrery-control);
+        align-self: stretch;
+        padding: 0;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) / 1 var(--orrery-font-ui);
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orrery-panel-raised);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .orrery__crumbs {
+            flex: 1 0 100%;
+        }
+
+        .orrery__keys-toggle {
+            inline-size: var(--control-height-md);
+            margin-inline-start: auto;
+        }
+    }
+}

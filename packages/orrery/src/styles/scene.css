@@ -1,0 +1,83 @@
+.orrery {
+    .orrery__canvas {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+
+        canvas {
+            position: absolute;
+            inset: 0;
+            display: block;
+            inline-size: 100%;
+            block-size: 100%;
+
+            /* Inside, since the root clips anything outside its edge. */
+            &:focus-visible {
+                outline-offset: -2px;
+            }
+        }
+
+        .alert {
+            position: relative;
+            margin: var(--space-md);
+        }
+    }
+
+    .orrery__labels {
+        position: absolute;
+        /* CSS2DRenderer sets a z-index on each label; keep them below the panels. */
+        z-index: 0;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .orrery__label {
+        /* The offset is the gap to the anchor plus the radius of a sphere. CSS2D sets `transform`. */
+        margin-left: var(--orrery-label-offset, 6px);
+        padding: 0 var(--space-xs);
+        color: var(--color-text);
+        /* A halo instead of a box, so orbit lines stay whole up to the letters. */
+        paint-order: stroke fill;
+        -webkit-text-stroke: 3px var(--orrery-ground);
+        font-family: var(--orrery-font-ui);
+        font-size: var(--orrery-size-sm);
+        white-space: nowrap;
+    }
+
+    /*
+     * A background line, since the halo paints over text-decoration, and an inset shadow
+     * shows faint side edges as the label moves by fractions of a pixel.
+     */
+    .orrery__label--hover,
+    .orrery__label--selected {
+        background:
+            linear-gradient(currentColor, currentColor) bottom / 100% 1px
+            no-repeat content-box;
+    }
+
+    /* Bold and underlined, so it doesn't rely on colour. */
+    .orrery__label--selected {
+        font-weight: 600;
+    }
+
+    /* The box is moved by its right edge, so the margin pulls it back. */
+    .orrery__label--left {
+        margin-left: calc(-1 * var(--orrery-label-offset, 6px));
+    }
+
+    .orrery__label--probe {
+        position: absolute;
+        visibility: hidden;
+    }
+
+    .orrery__notice {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        padding: var(--space-md);
+        text-align: center;
+    }
+}

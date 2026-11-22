@@ -1,0 +1,226 @@
+.orrery {
+    /* Equal columns, so buttons that wrap still line up. */
+    .orrery__burn-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        margin-block-start: var(--space-md);
+        gap: var(--space-xs);
+
+        /* A wrapped label spills out of the fixed-height button. */
+        .button {
+            white-space: nowrap;
+        }
+    }
+
+    .orrery__burn-dv {
+        display: grid;
+        gap: 0.625rem;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-inline-size: 0;
+    }
+
+    .orrery__burn-step {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-block-end: var(--space-md);
+        color: var(--color-text-muted);
+        font: var(--type-ui);
+    }
+
+    .orrery__burn-heading {
+        margin: 0;
+        color: var(--color-text-muted);
+        font: var(--type-label);
+    }
+
+    .orrery__form {
+        display: grid;
+        gap: 0.625rem;
+        min-inline-size: 0;
+    }
+
+    .orrery__form-hint {
+        margin: 0;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__form-row {
+        display: grid;
+        gap: 0.3125rem;
+        grid-template-columns: minmax(0, 1fr);
+
+        label {
+            color: var(--orrery-muted);
+            font-size: var(--orrery-size-sm);
+        }
+    }
+
+    .orrery__stepper-hint {
+        margin: 0;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-xs);
+    }
+
+    .orrery__stepper {
+        display: flex;
+        align-items: stretch;
+        block-size: var(--orrery-control-lg);
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-ground);
+
+        &:focus-within {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 1px;
+        }
+
+        &:has([aria-invalid="true"]) {
+            border-color: var(--orrery-abort);
+        }
+
+        input {
+            flex: 1;
+            inline-size: 100%;
+            min-inline-size: 0;
+            padding: 0 var(--space-sm);
+            border: 0;
+            outline: none;
+            background: none;
+            color: var(--orrery-text);
+            font: 400 var(--orrery-size-sm) var(--orrery-font-data);
+            font-variant-numeric: tabular-nums;
+            text-align: end;
+            appearance: textfield;
+
+            &::-webkit-inner-spin-button,
+            &::-webkit-outer-spin-button {
+                appearance: none;
+                margin: 0;
+            }
+        }
+    }
+
+    /* The same width for every unit, wide enough for "m/s", so the numbers line up. */
+    .orrery__stepper-unit {
+        display: grid;
+        flex: none;
+        place-items: center start;
+        inline-size: 3ch;
+        padding-inline-end: 0.375rem;
+        white-space: nowrap;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-xs);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .orrery__stepper-step {
+        flex: none;
+        inline-size: 1.875rem;
+        padding: 0;
+        border: solid var(--orrery-frame);
+        border-width: 0 1px 0 0;
+        background-color: var(--orrery-panel-raised);
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-md);
+        cursor: pointer;
+
+        .orrery__stepper-unit + & {
+            border-width: 0 0 0 1px;
+        }
+
+        &:hover {
+            color: var(--orrery-text);
+        }
+    }
+
+    .orrery__stepper-error {
+        display: flex;
+        gap: 0.375rem;
+        margin: 0;
+        color: var(--orrery-abort);
+        font-size: var(--orrery-size-sm);
+
+        &[hidden] {
+            display: none;
+        }
+
+        &::before {
+            content: "!";
+            flex: none;
+            display: grid;
+            place-items: center;
+            inline-size: 1rem;
+            block-size: 1rem;
+            margin-block-start: 1px;
+            background-color: var(--orrery-abort);
+            color: var(--orrery-ground);
+            font-size: var(--orrery-size-xs);
+            font-weight: 700;
+        }
+    }
+
+    .orrery__form-actions {
+        display: flex;
+        gap: var(--space-sm);
+        /* On top of the form's gap, to make 14px. */
+        margin-block-start: 0.25rem;
+
+        .button {
+            flex: 1;
+        }
+    }
+
+    .orrery__form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: var(--space-md);
+    }
+
+    .orrery__field {
+        display: grid;
+        gap: var(--space-xs);
+        align-content: start;
+
+        label {
+            font: var(--type-label);
+        }
+
+        .field,
+        .select {
+            inline-size: 100%;
+        }
+    }
+
+    .orrery__field--wide {
+        grid-column: 1 / -1;
+    }
+
+    .orrery__form-error[hidden] {
+        display: none;
+    }
+
+    @media (max-width: 720px) {
+        /* The actions need the room, so the hint and the time bar give way. */
+        .orrery__form-hint {
+            display: none;
+        }
+
+        &:has(.orrery__form) .orrery__panel--bottom {
+            display: none;
+        }
+
+        /* Sticks to the bottom of the scrolling body, reaching over its padding to the frame. */
+        .orrery__form-actions {
+            position: sticky;
+            inset-block-end: calc(-1 * var(--orrery-pad));
+            margin: var(--orrery-pad) calc(-1 * var(--orrery-pad))
+                calc(-1 * var(--orrery-pad));
+            padding: 0.625rem var(--orrery-pad);
+            border-block-start: 1px solid var(--orrery-rule);
+            background-color: var(--orrery-panel-solid);
+        }
+    }
+}

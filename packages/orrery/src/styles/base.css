@@ -1,0 +1,153 @@
+.orrery {
+    color-scheme: dark;
+
+    /* The room the top and bottom panels leave for the side panels. */
+    --orrery-top-space: 3rem;
+    --orrery-bottom-space: 6rem;
+    --orrery-side-width: 19rem;
+
+    /* Neutral graphite. */
+    --orrery-ground: #09090a;
+    /* For menus and tips that float over other panels. */
+    --orrery-panel-solid: rgb(21 21 23);
+    --orrery-panel: color-mix(
+        in srgb,
+        var(--orrery-panel-solid) 94%,
+        transparent
+    );
+    --orrery-panel-raised: #222225;
+    --orrery-frame: #46464b;
+    --orrery-rule: #303034;
+    --orrery-scanline: rgb(255 255 255 / 0.035);
+    --orrery-backdrop: rgb(0 0 0 / 0.7);
+    /* Behind the Scenarios dialog. */
+    --orrery-scrim: rgb(0 0 0 / 0.62);
+    --orrery-text: #eeece6;
+    --orrery-muted: #b3b0a7;
+    /* For marks that carry no text, like the crumbs' chevrons. */
+    --orrery-dim: #8d8a82;
+
+    /* State colours, always paired with a word, shape or pattern. */
+    --orrery-go: #4fe079;
+    --orrery-go-ink: #04210d;
+    --orrery-signal: #f4d24a;
+    --orrery-hold: #ff9f2e;
+    --orrery-pick: #ff6fb5;
+    --orrery-abort: #ff6b5e;
+
+    --orrery-font-ui: var(--font-plex-sans-condensed);
+    --orrery-font-data: var(--font-plex-mono);
+
+    --orrery-size-xs: 0.6875rem;
+    --orrery-size-sm: 0.8125rem;
+    --orrery-size-md: 0.9375rem;
+    --orrery-size-xl: 1.75rem;
+
+    /* A card's side padding, and its compact and full control heights. */
+    --orrery-pad: 0.75rem;
+    --orrery-control: 1.875rem;
+    --orrery-control-lg: 2.125rem;
+
+    /*
+     * The site's tokens, for the ui components. A theme sets them on `:root`, so
+     * setting them on this element wins over any theme and style, whatever its
+     * selector. Only a rule that targets `.orrery` itself could beat these.
+     */
+    --color-bg: var(--orrery-ground);
+    --color-bg-alt: var(--orrery-panel-solid);
+    --color-surface: var(--orrery-panel-solid);
+    --color-surface-raised: var(--orrery-panel-raised);
+    --color-text: var(--orrery-text);
+    --color-text-muted: var(--orrery-muted);
+    --color-border: var(--orrery-rule);
+    --color-border-strong: var(--orrery-frame);
+    --color-scanline: var(--orrery-scanline);
+    /* The darkest ink of the state colours, so it reads on every fill. */
+    --color-on-accent: var(--orrery-go-ink);
+    --color-primary: var(--orrery-go);
+    --color-primary-hover: color-mix(
+        in oklab,
+        var(--orrery-go) 80%,
+        var(--orrery-text)
+    );
+    --color-primary-accent: var(--orrery-go);
+    --color-secondary: var(--orrery-pick);
+    --color-secondary-hover: color-mix(
+        in oklab,
+        var(--orrery-pick) 80%,
+        var(--orrery-text)
+    );
+    --color-secondary-accent: var(--orrery-pick);
+    --color-destructive: var(--orrery-abort);
+    --color-destructive-hover: color-mix(
+        in oklab,
+        var(--orrery-abort) 80%,
+        var(--orrery-text)
+    );
+    --color-destructive-accent: var(--orrery-abort);
+    --color-warning: var(--orrery-hold);
+    --color-warning-hover: color-mix(
+        in oklab,
+        var(--orrery-hold) 80%,
+        var(--orrery-text)
+    );
+    --color-warning-accent: var(--orrery-hold);
+    --color-success: var(--orrery-go);
+    --color-success-hover: color-mix(
+        in oklab,
+        var(--orrery-go) 80%,
+        var(--orrery-text)
+    );
+    --color-success-accent: var(--orrery-go);
+    --color-backdrop: var(--orrery-backdrop);
+
+    /* Tokens the library derives on `:root`, which would keep the site's colours here. */
+    --border-color: var(--color-border);
+    --hover-fill: color-mix(in oklab, var(--color-text) 10%, transparent);
+    --radius: 0;
+    --border-width: 1px;
+
+    --font-base: var(--orrery-font-ui);
+    --font-mono: var(--orrery-font-data);
+    --font-size-xs: var(--orrery-size-xs);
+    --font-size-sm: var(--orrery-size-sm);
+    --font-size-base: var(--orrery-size-md);
+    --font-size-lg: var(--orrery-size-md);
+
+    /* Declared on `:root` in the library, with its font families fixed there. */
+    --type-heading:
+        700 var(--font-size-xl) / var(--leading-tight) var(--font-base);
+    --type-subheading:
+        600 var(--font-size-lg) / var(--leading-snug) var(--font-base);
+    --type-body:
+        400 var(--font-size-base) / var(--line-height) var(--font-base);
+    --type-body-strong:
+        600 var(--font-size-base) / var(--leading-snug) var(--font-base);
+    --type-body-sm:
+        400 var(--font-size-sm) / var(--leading-normal) var(--font-base);
+    --type-label:
+        600 var(--font-size-sm) / var(--leading-snug) var(--font-base);
+    --type-ui: 400 var(--font-size-sm) / var(--leading-snug) var(--font-base);
+    --type-caption:
+        400 var(--font-size-xs) / var(--leading-snug) var(--font-base);
+    --type-meta: 400 var(--font-size-xs) / var(--leading-snug) var(--font-mono);
+    --type-code:
+        400 var(--font-size-code-block) / var(--leading-code) var(--font-mono);
+
+    position: relative;
+    isolation: isolate;
+    block-size: 100dvh;
+    overflow: hidden;
+    background-color: var(--orrery-ground);
+    color: var(--orrery-text);
+    font: 500 var(--orrery-size-md) / 1.35 var(--orrery-font-ui);
+
+    @media (max-width: 720px) {
+        --orrery-scrim: rgb(0 0 0 / 0.72);
+
+        /* The same sizes as a coarse pointer gets, since a narrow screen is touched. */
+        --control-height-sm: 2.5rem;
+        --control-height-md: 2.75rem;
+        --control-height-lg: 3rem;
+    }
+}

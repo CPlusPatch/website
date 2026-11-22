@@ -40,7 +40,10 @@ export type Orrery = {
 /** How long the autosave waits for more changes, in ms. */
 const SAVE_DELAY_MS = 500;
 
-/** The width in px at and below which the narrow layout applies. Keep in step with styles.css. */
+/**
+ * The width in px at and below which the narrow layout applies. Keep in step with the narrow
+ * queries under `styles/`.
+ */
 const NARROW_QUERY = "(max-width: 720px)";
 
 /** The browser's `localStorage`, which can throw on any access. */
