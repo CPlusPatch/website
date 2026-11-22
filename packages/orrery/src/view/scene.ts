@@ -61,6 +61,7 @@ export const createView = (
         world.order,
         theme.color,
         theme.background(),
+        theme.pick(),
     );
     const bodies = createBodies(
         scene,
@@ -153,7 +154,7 @@ export const createView = (
         offset(free);
         rig.update(dt, states);
         camera.updateMatrixWorld();
-        orbits.update(rig.origin(), states);
+        orbits.update(rig.origin(), states, camera, world.clock.rate);
         points = bodies.update(
             camera,
             rig.origin(),

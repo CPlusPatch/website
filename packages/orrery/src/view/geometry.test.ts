@@ -10,9 +10,15 @@ import {
     hiddenBehindSpheres,
     hiddenMarkers,
     minDistanceKm,
+    nearestPoint,
+    ORBIT_MAX_VIEWPORTS,
+    ORBIT_MIN_PX,
+    orbitShown,
     placeLabels,
     projectedRadiusPx,
     reachKm,
+    trailAlpha,
+    trailBack,
 } from "./geometry.ts";
 
 const body = (id: string): Body => {
@@ -513,4 +519,43 @@ Deno.test("the view shifts by the gap between its centre and the free band's, an
     assertEquals(centreShift(740, { top: 48, bottom: 100 }), 296);
     assertEquals(centreShift(800, { top: 60, bottom: 740 }), 0);
     assertEquals(centreShift(800, { top: 0, bottom: 700 }), 50);
+});
+
+Deno.test("an orbit is drawn from 16px up to four times the viewport's longer side", () => {
+    assertEquals(ORBIT_MIN_PX, 16);
+    assertEquals(ORBIT_MAX_VIEWPORTS, 4);
+    assertEquals(orbitShown(15.9, 800, 600), false);
+    assertEquals(orbitShown(16, 800, 600), true);
+    assertEquals(orbitShown(3200, 800, 600), true);
+    assertEquals(orbitShown(3200.1, 800, 600), false);
+});
+
+Deno.test("the largest orbit allowed follows the longer side of a tall viewport", () => {
+    assertEquals(orbitShown(3000, 600, 800), true);
+    assertEquals(orbitShown(3300, 600, 800), false);
+});
+
+Deno.test("the nearest point is the one closest to the position, among the first count", () => {
+    const points = [0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 0, 0];
+
+    assertEquals(nearestPoint(points, 3, 9, 1, 0), 1);
+    assertEquals(nearestPoint(points, 3, 8, 12, 0), 2);
+    assertEquals(nearestPoint(points, 3, 0, 0, 1), 0);
+    assertEquals(nearestPoint([5, 5, 5, 5, 5, 6], 2, 5, 5, 7), 1);
+});
+
+Deno.test("an orbit line is brightest at its body and fades along the trail", () => {
+    assertAlmostEquals(trailAlpha(0, 100, false), 0.57);
+    assertAlmostEquals(trailAlpha(100, 100, false), 0.12);
+    assertAlmostEquals(trailAlpha(0, 100, true), 1);
+    assertAlmostEquals(trailAlpha(50, 100, true), 0.65);
+    assertAlmostEquals(trailAlpha(100, 100, true), 0.3);
+});
+
+Deno.test("the trail runs back against the motion, wrapping round the loop", () => {
+    assertEquals(trailBack(10, 10, 100, 1), 0);
+    assertEquals(trailBack(7, 10, 100, 1), 3);
+    assertEquals(trailBack(12, 10, 100, 1), 98);
+    assertEquals(trailBack(12, 10, 100, -1), 2);
+    assertEquals(trailBack(7, 10, 100, -1), 97);
 });

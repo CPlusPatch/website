@@ -24,6 +24,63 @@ export const projectedRadiusPx = (
 ): number =>
     (radius / (distance * Math.tan(fovRad / 2))) * (viewportHeightPx / 2);
 
+/** An orbit whose semi-major axis shows under this many px is left out, as its parent's rings. */
+export const ORBIT_MIN_PX = 16;
+
+/** An orbit whose semi-major axis shows over this many times the viewport's longer side is left out. */
+export const ORBIT_MAX_VIEWPORTS = 4;
+
+/** Whether an orbit with a semi-major axis of `aPx` is drawn in a viewport of this size. */
+export const orbitShown = (
+    aPx: number,
+    width: number,
+    height: number,
+): boolean =>
+    aPx >= ORBIT_MIN_PX && aPx <= ORBIT_MAX_VIEWPORTS * Math.max(width, height);
+
+/** The first of the `count` xyz points that is nearest to (x, y, z). */
+export const nearestPoint = (
+    points: ArrayLike<number>,
+    count: number,
+    x: number,
+    y: number,
+    z: number,
+): number => {
+    let best = 0;
+    let bestSq = Infinity;
+    for (let k = 0; k < count; k++) {
+        const dx = (points[k * 3] ?? 0) - x;
+        const dy = (points[k * 3 + 1] ?? 0) - y;
+        const dz = (points[k * 3 + 2] ?? 0) - z;
+        const sq = dx * dx + dy * dy + dz * dz;
+        if (sq < bestSq) {
+            bestSq = sq;
+            best = k;
+        }
+    }
+
+    return best;
+};
+
+/** The opacity of an orbit line `back` of `count` steps behind its body, which fades along the trail. */
+export const trailAlpha = (
+    back: number,
+    count: number,
+    picked: boolean,
+): number => (picked ? 0.3 : 0.12) + (picked ? 0.7 : 0.45) * (1 - back / count);
+
+/** How many samples behind the body a sample is, along the path it came by. */
+export const trailBack = (
+    sample: number,
+    index: number,
+    count: number,
+    direction: number,
+): number =>
+    // Samples run with the motion, so the trail is behind the body's index.
+    direction > 0
+        ? (index - sample + count) % count
+        : (sample - index + count) % count;
+
 /** The camera distance in km a body is focused at. */
 export const focusDistanceKm = (body: Body): number =>
     Math.max(body.radius * 6, 0.05 * (body.elements?.a ?? 50 * AU)) / 1000;

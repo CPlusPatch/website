@@ -12,6 +12,8 @@ export type Theme = {
     color: (body: Body) => Color;
     /** The colour of the page behind the scene. */
     background: () => Color;
+    /** The colour of the selected body's orbit and of an orbit being edited. */
+    pick: () => Color;
     /** Removes the probe. */
     stop: () => void;
 };
@@ -88,6 +90,7 @@ export const createTheme = (container: HTMLElement): Theme => {
 
     return {
         background: () => resolve("var(--orrery-ground)"),
+        pick: () => resolve("var(--orrery-pick)"),
         color: (body) => resolve(colorOf(body)),
         stop: () => probe.remove(),
     };

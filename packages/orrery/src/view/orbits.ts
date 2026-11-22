@@ -1,15 +1,36 @@
 import type { Body, Elements, State, Vec3 } from "@cpluspatch/orbit";
 import { orbitPoints } from "@cpluspatch/orbit";
-import type { Color, Scene } from "three";
+import {
+    Color,
+    InterleavedBufferAttribute,
+    type PerspectiveCamera,
+    type Scene,
+    SRGBColorSpace,
+} from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import {
+    nearestPoint,
+    orbitShown,
+    projectedRadiusPx,
+    trailAlpha,
+    trailBack,
+} from "./geometry.ts";
 
 /** The orbit lines of a scene. */
 export type Orbits = {
-    /** Moves each line to its parent's position relative to `origin`. */
-    update: (origin: Vec3, states: Map<string, State>) => void;
-    /** Draws the orbit of a body, or of none, thicker. */
+    /**
+     * Moves each line to its parent's position relative to `origin`, fades it back from its body
+     * against the clock's `rate`, and hides it if it shows too small or too big.
+     */
+    update: (
+        origin: Vec3,
+        states: Map<string, State>,
+        camera: PerspectiveCamera,
+        rate: number,
+    ) => void;
+    /** Draws the orbit of a body, or of none, in the pick colour and thicker. */
     highlight: (id: string | null) => void;
     /** Draws the line of `body` again from its new elements. */
     rebuild: (body: Body) => void;
@@ -21,14 +42,33 @@ export type Orbits = {
     dispose: () => void;
 };
 
-type Orbit = { body: Body; parent: string; line: Line2; casing: Line2 };
+type Paint = { index: number; direction: number; picked: boolean; dim: number };
+
+type Orbit = {
+    body: Body;
+    parent: string;
+    line: Line2;
+    casing: Line2;
+    /** The loop's points, in km. */
+    positions: Float32Array;
+    /** The line's vertex colours, which are rewritten as the body moves. */
+    colors: InterleavedBufferAttribute["data"];
+    /** What the colours show now, or `null` if they're stale. */
+    paint: Paint | null;
+    /** The linear colour at each step back along the trail. */
+    ramp: Float32Array;
+};
 
 /** Few samples bow the chords of a big orbit off a spacecraft's path. */
 const SAMPLES = 2048;
 
-const LINE_PX = 1.5;
-const SELECTED_LINE_PX = 2.5;
+const LINE_PX = 1.1;
+const SELECTED_LINE_PX = 2.25;
+const GHOST_LINE_PX = 2;
 const CASING_PX = 4;
+
+/** How much a picked orbit's trail dims while a ghost shows. */
+const GHOST_DIM = 0.4;
 
 /** The casing is the line plus a margin, so it grows with the line. */
 const casingPx = (linePx: number): number => CASING_PX + (linePx - LINE_PX);
@@ -46,12 +86,21 @@ const orbitPositions = (elements: Elements): Float32Array => {
     return positions;
 };
 
-/** The line geometry of an orbit, in km. */
-const orbitGeometry = (elements: Elements): LineGeometry => {
+/** The line geometry of an orbit, in km, with room for vertex colours. */
+const orbitGeometry = (
+    elements: Elements,
+): Pick<Orbit, "positions" | "colors"> & { geometry: LineGeometry } => {
+    const positions = orbitPositions(elements);
     const geometry = new LineGeometry();
-    geometry.setPositions(orbitPositions(elements));
+    geometry.setPositions(positions);
+    geometry.setColors(new Float32Array(positions.length));
 
-    return geometry;
+    const attribute = geometry.getAttribute("instanceColorStart");
+    if (!(attribute instanceof InterleavedBufferAttribute)) {
+        throw new Error("The orbit's colours aren't interleaved.");
+    }
+
+    return { geometry, positions, colors: attribute.data };
 };
 
 /** The length of a polyline of x, y, z triples. */
@@ -77,21 +126,80 @@ export const createOrbits = (
     bodies: Body[],
     color: (body: Body) => Color,
     background: Color,
+    pick: Color,
 ): Orbits => {
     const orbits: Orbit[] = [];
     let ghost: { body: Body; parent: string; line: Line2 } | null = null;
     // The ghost may be made after the last resize.
     let size = { width: 0, height: 0 };
+    let pickedId: string | null = null;
+
+    const mixed = new Color();
+    const paintRamp = (orbit: Orbit, picked: boolean, dim: number) => {
+        // Mixed in sRGB, like a canvas alpha blend, so faint lines don't wash out.
+        const from = background.getRGB({ r: 0, g: 0, b: 0 }, SRGBColorSpace);
+        const to = (picked ? pick : color(orbit.body)).getRGB(
+            { r: 0, g: 0, b: 0 },
+            SRGBColorSpace,
+        );
+        for (let back = 0; back < SAMPLES; back++) {
+            const alpha = trailAlpha(back, SAMPLES, picked) * dim;
+            mixed.setRGB(
+                from.r + (to.r - from.r) * alpha,
+                from.g + (to.g - from.g) * alpha,
+                from.b + (to.b - from.b) * alpha,
+                SRGBColorSpace,
+            );
+            mixed.toArray(orbit.ramp, 3 * back);
+        }
+    };
+
+    const paint = (orbit: Orbit, next: Paint) => {
+        const dim = next.picked ? next.dim : 1;
+        const now = orbit.paint;
+        if (!now || now.picked !== next.picked || now.dim !== next.dim) {
+            paintRamp(orbit, next.picked, dim);
+        }
+
+        const array = orbit.colors.array;
+        const ramp = orbit.ramp;
+        for (let vertex = 0; vertex <= SAMPLES; vertex++) {
+            const back =
+                3 *
+                trailBack(
+                    vertex % SAMPLES,
+                    next.index,
+                    SAMPLES,
+                    next.direction,
+                );
+
+            // Each segment holds the colours of both its ends.
+            if (vertex > 0) {
+                array[6 * (vertex - 1) + 3] = ramp[back];
+                array[6 * (vertex - 1) + 4] = ramp[back + 1];
+                array[6 * (vertex - 1) + 5] = ramp[back + 2];
+            }
+            if (vertex < SAMPLES) {
+                array[6 * vertex] = ramp[back];
+                array[6 * vertex + 1] = ramp[back + 1];
+                array[6 * vertex + 2] = ramp[back + 2];
+            }
+        }
+        orbit.colors.needsUpdate = true;
+        orbit.paint = next;
+    };
 
     for (const body of bodies) {
         if (body.parent === null || body.elements === null) continue;
 
-        const geometry = orbitGeometry(body.elements);
+        const { geometry, positions, colors } = orbitGeometry(body.elements);
         const material = new LineMaterial({
             linewidth: LINE_PX,
             transparent: true,
             opacity: 1,
-            color: color(body),
+            // The vertex colours carry the fade, so the line's own colour mustn't tint them.
+            color: 0xffffff,
+            vertexColors: true,
         });
         const line = new Line2(geometry, material);
         // Keeps the line readable where it crosses a sphere.
@@ -107,7 +215,16 @@ export const createOrbits = (
         casing.renderOrder = -1;
 
         scene.add(casing, line);
-        orbits.push({ body, parent: body.parent, line, casing });
+        orbits.push({
+            body,
+            parent: body.parent,
+            line,
+            casing,
+            positions,
+            colors,
+            paint: null,
+            ramp: new Float32Array(3 * SAMPLES),
+        });
     }
 
     return {
@@ -124,7 +241,7 @@ export const createOrbits = (
 
             if (!ghost) {
                 const material = new LineMaterial({
-                    linewidth: SELECTED_LINE_PX,
+                    linewidth: GHOST_LINE_PX,
                     dashed: true,
                     transparent: true,
                 });
@@ -140,7 +257,7 @@ export const createOrbits = (
             ghost.parent = body.parent;
             ghost.line.material.dashSize = dash;
             ghost.line.material.gapSize = dash;
-            ghost.line.material.color.copy(color(body));
+            ghost.line.material.color.copy(pick);
             ghost.line.computeLineDistances();
             ghost.line.visible = true;
         },
@@ -150,23 +267,69 @@ export const createOrbits = (
             );
             if (!orbit || !body.elements) return;
 
-            const geometry = orbitGeometry(body.elements);
+            const { geometry, positions, colors } = orbitGeometry(
+                body.elements,
+            );
             orbit.line.geometry.dispose();
             orbit.line.geometry = geometry;
             orbit.casing.geometry = geometry;
             orbit.body = body;
+            orbit.positions = positions;
+            orbit.colors = colors;
+            orbit.paint = null;
         },
-        update: (origin, states) => {
-            for (const { parent, line, casing } of orbits) {
-                const r = states.get(parent)?.r;
-                if (!r) continue;
+        update: (origin, states, camera, rate) => {
+            const fov = (camera.fov * Math.PI) / 180;
+            const direction = rate < 0 ? -1 : 1;
+            const dim = ghost?.line.visible ? GHOST_DIM : 1;
+
+            for (const orbit of orbits) {
+                const { body, parent, line, casing } = orbit;
+                const parentR = states.get(parent)?.r;
+                if (!parentR || !body.elements) continue;
 
                 line.position.set(
-                    (r.x - origin.x) / 1000,
-                    (r.y - origin.y) / 1000,
-                    (r.z - origin.z) / 1000,
+                    (parentR.x - origin.x) / 1000,
+                    (parentR.y - origin.y) / 1000,
+                    (parentR.z - origin.z) / 1000,
                 );
                 casing.position.copy(line.position);
+
+                const aPx = projectedRadiusPx(
+                    body.elements.a / 1000,
+                    camera.position.distanceTo(line.position),
+                    fov,
+                    size.height,
+                );
+                const shown = orbitShown(aPx, size.width, size.height);
+                line.visible = shown;
+                casing.visible = shown;
+
+                const r = states.get(body.id)?.r;
+                if (!shown || !r) continue;
+
+                const next: Paint = {
+                    index: nearestPoint(
+                        orbit.positions,
+                        SAMPLES,
+                        (r.x - parentR.x) / 1000,
+                        (r.y - parentR.y) / 1000,
+                        (r.z - parentR.z) / 1000,
+                    ),
+                    direction,
+                    picked: body.id === pickedId,
+                    dim,
+                };
+                const now = orbit.paint;
+                if (
+                    !now ||
+                    now.index !== next.index ||
+                    now.direction !== next.direction ||
+                    now.picked !== next.picked ||
+                    now.dim !== next.dim
+                ) {
+                    paint(orbit, next);
+                }
             }
 
             if (ghost) {
@@ -181,10 +344,12 @@ export const createOrbits = (
             }
         },
         highlight: (id) => {
-            for (const { body, line, casing } of orbits) {
-                const px = body.id === id ? SELECTED_LINE_PX : LINE_PX;
-                line.material.linewidth = px;
-                casing.material.linewidth = casingPx(px);
+            pickedId = id;
+            for (const orbit of orbits) {
+                const px = orbit.body.id === id ? SELECTED_LINE_PX : LINE_PX;
+                orbit.line.material.linewidth = px;
+                orbit.casing.material.linewidth = casingPx(px);
+                orbit.paint = null;
             }
         },
         resize: (width, height) => {
