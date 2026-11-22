@@ -31,6 +31,15 @@ const PLUTO_WIDTH = 24888;
 // Pluto's theme colour, #c8a593, scaled so its largest channel is 1.
 const PLUTO_TINT: [number, number, number] = [200 / 200, 165 / 200, 147 / 200];
 
+// Jupiter's and Saturn's sources are pale and flat; this brings out their bands. Saturn keeps
+// its whites, which clipped flat at white=0.95.
+const LIVELIER = ["--saturate", "1.4", "--contrast:black=0.08:white=0.95"];
+const LIVELIER_SATURN = [
+    "--saturate",
+    "1.4",
+    "--contrast:black=0.08:white=1.0",
+];
+
 // Output name, source file and extra oiiotool steps. The ring keeps its alpha channel.
 const MAPS: { out: string; source: string; alpha?: true; steps?: string[] }[] =
     [
@@ -42,9 +51,10 @@ const MAPS: { out: string; source: string; alpha?: true; steps?: string[] }[] =
         { out: "earth-night", source: "2k_earth_nightmap.jpg" },
         { out: "earth-clouds", source: "2k_earth_clouds.jpg" },
         { out: "moon", source: "2k_moon.jpg" },
-        { out: "mars", source: "2k_mars.jpg" },
-        { out: "jupiter", source: "2k_jupiter.jpg" },
-        { out: "saturn", source: "2k_saturn.jpg" },
+        // The source reads tomato-red once tone mapped.
+        { out: "mars", source: "2k_mars.jpg", steps: ["--saturate", "0.85"] },
+        { out: "jupiter", source: "2k_jupiter.jpg", steps: LIVELIER },
+        { out: "saturn", source: "2k_saturn.jpg", steps: LIVELIER_SATURN },
         { out: "saturn-ring", source: "2k_saturn_ring_alpha.png", alpha: true },
         { out: "uranus", source: "2k_uranus.jpg" },
         { out: "neptune", source: "2k_neptune.jpg" },
