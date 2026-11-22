@@ -103,7 +103,7 @@ export const createEntry = (
 
     group.add(sphere, marker, label);
     if (halo) group.add(halo);
-    const extras = createExtras(body, sphere);
+    const extras = createExtras(body, group, sphere);
 
     return {
         body,

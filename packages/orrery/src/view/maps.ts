@@ -27,6 +27,8 @@ const MAPS: Record<string, string> = {
         .href,
     "earth-clouds": new URL("../assets/maps/earth-clouds.webp", import.meta.url)
         .href,
+    "saturn-ring": new URL("../assets/maps/saturn-ring.webp", import.meta.url)
+        .href,
 };
 
 /** Maps that hold data, not colour. */
