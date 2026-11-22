@@ -27,6 +27,7 @@ import {
     labelRect,
     labelShownForOrbit,
     minDistanceKm,
+    nearAnomalies,
     nearestPoint,
     nearPolyline,
     nodeAnomaly,
@@ -950,4 +951,22 @@ Deno.test("a drag note goes right of its grip, then left, then below", () => {
     assertEquals(left?.right, 86);
     assertEquals(below?.top, 63);
     assertEquals((right?.right ?? 0) - (right?.left ?? 0), 64);
+});
+
+Deno.test("near anomalies run once round the orbit, growing from the body", () => {
+    const count = 2048;
+    const center = 1.3;
+    const first = 0.004;
+    const anomalies = nearAnomalies(center, first, count);
+
+    assertEquals(anomalies.length, count + 1);
+    assertAlmostEquals(anomalies[0] ?? 0, center - Math.PI, 1e-12);
+    assertAlmostEquals(anomalies[count] ?? 0, center + Math.PI, 1e-12);
+    assertEquals(anomalies[count / 2], center);
+    assertAlmostEquals((anomalies[count / 2 + 1] ?? 0) - center, first, 1e-12);
+    assertAlmostEquals(center - (anomalies[count / 2 - 1] ?? 0), first, 1e-12);
+
+    for (let k = 1; k <= count; k++) {
+        assert((anomalies[k] ?? 0) > (anomalies[k - 1] ?? 0));
+    }
 });

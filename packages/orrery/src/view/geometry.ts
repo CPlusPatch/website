@@ -107,6 +107,39 @@ export const nearestPoint = (
     return best;
 };
 
+/** An orbit closer to the camera than this fraction of its semi-major axis is drawn in the near layout. */
+export const NEAR_FRACTION = 0.02;
+
+/** Whether the camera, `distanceKm` from a body, is near enough to its orbit of semi-major axis `aKm`. */
+export const orbitNear = (distanceKm: number, aKm: number): boolean =>
+    distanceKm < NEAR_FRACTION * aKm;
+
+/**
+ * The `count + 1` eccentric anomalies of a near layout, from `center - π` to `center + π`.
+ * The offsets from `center` grow geometrically from `first` to π, so samples crowd round the body.
+ * `count` is even.
+ */
+export const nearAnomalies = (
+    center: number,
+    first: number,
+    count: number,
+): Float64Array => {
+    const half = count / 2;
+    const start = Math.min(first, Math.PI);
+    const growth = half > 1 ? (Math.PI / start) ** (1 / (half - 1)) : 1;
+    const out = new Float64Array(count + 1);
+
+    out[half] = center;
+    for (let k = 0; k < half; k++) {
+        // The last offset is set outright so rounding can't leave a gap in the loop.
+        const offset = k === half - 1 ? Math.PI : start * growth ** k;
+        out[half + 1 + k] = center + offset;
+        out[half - 1 - k] = center - offset;
+    }
+
+    return out;
+};
+
 /** The opacity of an orbit line `back` of `count` steps behind its body, which fades along the trail. */
 export const trailAlpha = (
     back: number,

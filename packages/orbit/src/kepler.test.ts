@@ -4,9 +4,11 @@ import { assertVecClose, MU, mulberry32, randomElements } from "./fixture.ts";
 import type { Elements } from "./kepler.ts";
 import {
     apoapsis,
+    eccentricAnomalyOf,
     meanAnomalyAt,
     meanMotion,
     orbitPoints,
+    orbitPointsAt,
     periapsis,
     period,
     solveKepler,
@@ -179,4 +181,39 @@ Deno.test("the true anomaly is the angle from the periapsis direction to the rad
         assert(nu >= 0 && nu < 2 * Math.PI);
         assertAlmostEquals(Math.min(nu, 2 * Math.PI - nu), angle, 1e-6);
     }
+});
+
+Deno.test("orbitPointsAt at uniform anomalies gives the points of orbitPoints", () => {
+    const el = { ...base, e: 0.4 };
+    const anomalies = Array.from(
+        { length: 32 },
+        (_, k) => (2 * Math.PI * k) / 32,
+    );
+
+    assertEquals(orbitPointsAt(el, anomalies), orbitPoints(el, 32));
+});
+
+Deno.test("eccentricAnomalyOf recovers the anomaly of a body's position on an inclined eccentric orbit", () => {
+    const el = { ...base, a: 5.9e9, e: 0.25, i: 0.3, m0: 0 };
+    const rand = mulberry32(7);
+
+    for (let n = 0; n < 50; n++) {
+        const t = rand() * 2 * period(el, MU);
+        const expected = solveKepler(meanAnomalyAt(el, MU, t), el.e);
+        const actual = eccentricAnomalyOf(el, stateAt(el, MU, t).r);
+        const diff = wrapAngle(actual - expected + Math.PI) - Math.PI;
+
+        assertAlmostEquals(diff, 0, 1e-9);
+    }
+
+    const point = orbitPointsAt(el, [2.5]);
+    assertAlmostEquals(
+        eccentricAnomalyOf(el, {
+            x: point[0] ?? 0,
+            y: point[1] ?? 0,
+            z: point[2] ?? 0,
+        }),
+        2.5,
+        1e-9,
+    );
 });

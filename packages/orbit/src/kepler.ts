@@ -127,14 +127,17 @@ export const stateAt = (el: Elements, mu: number, t: number): State => {
     };
 };
 
-/** `count` positions around the orbit, uniform in eccentric anomaly, as xyz triples. */
-export const orbitPoints = (el: Elements, count = 256): Float64Array => {
-    const out = new Float64Array(count * 3);
+/** The positions at these eccentric anomalies, relative to the parent in metres, as xyz triples. */
+export const orbitPointsAt = (
+    el: Elements,
+    anomalies: ArrayLike<number>,
+): Float64Array => {
+    const out = new Float64Array(anomalies.length * 3);
     const b = el.a * Math.sqrt(1 - el.e * el.e);
     const { p, q } = axes(el);
 
-    for (let k = 0; k < count; k++) {
-        const ea = (TAU * k) / count;
+    for (let k = 0; k < anomalies.length; k++) {
+        const ea = anomalies[k] ?? 0;
         const x = el.a * (Math.cos(ea) - el.e);
         const y = b * Math.sin(ea);
 
@@ -144,4 +147,21 @@ export const orbitPoints = (el: Elements, count = 256): Float64Array => {
     }
 
     return out;
+};
+
+/** `count` positions around the orbit, uniform in eccentric anomaly, as xyz triples. */
+export const orbitPoints = (el: Elements, count = 256): Float64Array =>
+    orbitPointsAt(
+        el,
+        Array.from({ length: count }, (_, k) => (TAU * k) / count),
+    );
+
+/** The eccentric anomaly in (-π, π] of a point on the orbit, from its position relative to the parent. */
+export const eccentricAnomalyOf = (el: Elements, r: Vec3): number => {
+    const { p, q } = axes(el);
+    const b = el.a * Math.sqrt(1 - el.e * el.e);
+    const x = r.x * p.x + r.y * p.y + r.z * p.z;
+    const y = r.x * q.x + r.y * q.y + r.z * q.z;
+
+    return Math.atan2(y / b, x / el.a + el.e);
 };

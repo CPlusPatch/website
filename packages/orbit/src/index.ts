@@ -13,9 +13,11 @@ export { equatorialToEcliptic, rotateEquatorialToEcliptic } from "./frames.ts";
 export type { Elements, State } from "./kepler.ts";
 export {
     apoapsis,
+    eccentricAnomalyOf,
     meanAnomalyAt,
     meanMotion,
     orbitPoints,
+    orbitPointsAt,
     periapsis,
     period,
     solveKepler,

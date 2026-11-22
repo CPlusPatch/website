@@ -1,17 +1,25 @@
 import type { Body, Elements, State, Vec3 } from "@cpluspatch/orbit";
-import { orbitPoints } from "@cpluspatch/orbit";
+import {
+    eccentricAnomalyOf,
+    orbitPoints,
+    orbitPointsAt,
+    wrapAngle,
+} from "@cpluspatch/orbit";
 import {
     Color,
     InterleavedBufferAttribute,
     type PerspectiveCamera,
     type Scene,
     SRGBColorSpace,
+    Vector3,
 } from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import {
+    nearAnomalies,
     nearestPoint,
+    orbitNear,
     orbitShown,
     projectedRadiusPx,
     trailAlpha,
@@ -53,6 +61,10 @@ type Orbit = {
     positions: Float32Array;
     /** The line's vertex colours, which are rewritten as the body moves. */
     colors: InterleavedBufferAttribute["data"];
+    /** The line's segments, as start and end xyz triples. */
+    segments: InterleavedBufferAttribute["data"];
+    /** Whether the segments hold the near layout. */
+    near: boolean;
     /** What the colours show now, or `null` if they're stale. */
     paint: Paint | null;
     /** The linear colour at each step back along the trail. */
@@ -86,21 +98,52 @@ const orbitPositions = (elements: Elements): Float32Array => {
     return positions;
 };
 
+/** Writes a vertex into the segment that ends there and the one that starts there. */
+const setVertex = (
+    array: InterleavedBufferAttribute["data"]["array"],
+    vertex: number,
+    x: number,
+    y: number,
+    z: number,
+): void => {
+    if (vertex > 0) {
+        array[6 * (vertex - 1) + 3] = x;
+        array[6 * (vertex - 1) + 4] = y;
+        array[6 * (vertex - 1) + 5] = z;
+    }
+    if (vertex < SAMPLES) {
+        array[6 * vertex] = x;
+        array[6 * vertex + 1] = y;
+        array[6 * vertex + 2] = z;
+    }
+};
+
 /** The line geometry of an orbit, in km, with room for vertex colours. */
 const orbitGeometry = (
     elements: Elements,
-): Pick<Orbit, "positions" | "colors"> & { geometry: LineGeometry } => {
+): Pick<Orbit, "positions" | "colors" | "segments"> & {
+    geometry: LineGeometry;
+} => {
     const positions = orbitPositions(elements);
     const geometry = new LineGeometry();
     geometry.setPositions(positions);
     geometry.setColors(new Float32Array(positions.length));
 
-    const attribute = geometry.getAttribute("instanceColorStart");
-    if (!(attribute instanceof InterleavedBufferAttribute)) {
-        throw new Error("The orbit's colours aren't interleaved.");
+    const colors = geometry.getAttribute("instanceColorStart");
+    const segments = geometry.getAttribute("instanceStart");
+    if (
+        !(colors instanceof InterleavedBufferAttribute) ||
+        !(segments instanceof InterleavedBufferAttribute)
+    ) {
+        throw new Error("The orbit's attributes aren't interleaved.");
     }
 
-    return { geometry, positions, colors: attribute.data };
+    return {
+        geometry,
+        positions,
+        colors: colors.data,
+        segments: segments.data,
+    };
 };
 
 /** The length of a polyline of x, y, z triples. */
@@ -161,38 +204,119 @@ export const createOrbits = (
             paintRamp(orbit, next.picked, dim);
         }
 
-        const array = orbit.colors.array;
-        const ramp = orbit.ramp;
         for (let vertex = 0; vertex <= SAMPLES; vertex++) {
-            const back =
-                3 *
-                trailBack(
-                    vertex % SAMPLES,
-                    next.index,
-                    SAMPLES,
-                    next.direction,
-                );
-
-            // Each segment holds the colours of both its ends.
-            if (vertex > 0) {
-                array[6 * (vertex - 1) + 3] = ramp[back];
-                array[6 * (vertex - 1) + 4] = ramp[back + 1];
-                array[6 * (vertex - 1) + 5] = ramp[back + 2];
-            }
-            if (vertex < SAMPLES) {
-                array[6 * vertex] = ramp[back];
-                array[6 * vertex + 1] = ramp[back + 1];
-                array[6 * vertex + 2] = ramp[back + 2];
-            }
+            const back = trailBack(
+                vertex % SAMPLES,
+                next.index,
+                SAMPLES,
+                next.direction,
+            );
+            setVertex(
+                orbit.colors.array,
+                vertex,
+                orbit.ramp[3 * back] ?? 0,
+                orbit.ramp[3 * back + 1] ?? 0,
+                orbit.ramp[3 * back + 2] ?? 0,
+            );
         }
         orbit.colors.needsUpdate = true;
         orbit.paint = next;
     };
 
+    const target = new Vector3();
+    const parentAt = new Vector3();
+
+    // The static points sag off the ellipse and round badly at float32, so near the camera the
+    // loop is resampled around the body, in float64 relative to the origin.
+    const rebuildNear = (
+        orbit: Orbit,
+        parentR: Vec3,
+        r: Vec3,
+        origin: Vec3,
+        distance: number,
+        next: Paint,
+    ) => {
+        const elements = orbit.body.elements;
+        if (!elements) return;
+
+        const center = eccentricAnomalyOf(elements, {
+            x: r.x - parentR.x,
+            y: r.y - parentR.y,
+            z: r.z - parentR.z,
+        });
+        const anomalies = nearAnomalies(
+            center,
+            distance / (4 * (elements.a / 1000)),
+            SAMPLES,
+        );
+        const points = orbitPointsAt(elements, anomalies);
+        const dim = next.picked ? next.dim : 1;
+        const now = orbit.paint;
+        if (!now || now.picked !== next.picked || now.dim !== next.dim) {
+            paintRamp(orbit, next.picked, dim);
+        }
+
+        const index = (anomaly: number): number =>
+            Math.round((wrapAngle(anomaly) / (2 * Math.PI)) * SAMPLES) %
+            SAMPLES;
+        const bodyIndex = index(center);
+        for (let vertex = 0; vertex <= SAMPLES; vertex++) {
+            const back =
+                3 *
+                trailBack(
+                    index(anomalies[vertex] ?? 0),
+                    bodyIndex,
+                    SAMPLES,
+                    next.direction,
+                );
+            setVertex(
+                orbit.segments.array,
+                vertex,
+                (parentR.x - origin.x + (points[3 * vertex] ?? 0)) / 1000,
+                (parentR.y - origin.y + (points[3 * vertex + 1] ?? 0)) / 1000,
+                (parentR.z - origin.z + (points[3 * vertex + 2] ?? 0)) / 1000,
+            );
+            setVertex(
+                orbit.colors.array,
+                vertex,
+                orbit.ramp[back] ?? 0,
+                orbit.ramp[back + 1] ?? 0,
+                orbit.ramp[back + 2] ?? 0,
+            );
+        }
+        orbit.segments.needsUpdate = true;
+        orbit.colors.needsUpdate = true;
+        orbit.paint = next;
+        orbit.near = true;
+        for (const line of [orbit.line, orbit.casing]) {
+            line.position.set(0, 0, 0);
+            line.frustumCulled = false;
+        }
+    };
+
+    const restoreStatic = (orbit: Orbit) => {
+        for (let vertex = 0; vertex <= SAMPLES; vertex++) {
+            setVertex(
+                orbit.segments.array,
+                vertex,
+                orbit.positions[3 * vertex] ?? 0,
+                orbit.positions[3 * vertex + 1] ?? 0,
+                orbit.positions[3 * vertex + 2] ?? 0,
+            );
+        }
+        orbit.segments.needsUpdate = true;
+        orbit.near = false;
+        orbit.line.frustumCulled = true;
+        orbit.casing.frustumCulled = true;
+        orbit.paint = null;
+    };
+
     for (const body of bodies) {
         if (body.parent === null || body.elements === null) continue;
 
-        const { geometry, positions, colors } = orbitGeometry(body.elements);
+        const { geometry, positions, colors, segments } = orbitGeometry(
+            body.elements,
+        );
         const material = new LineMaterial({
             linewidth: LINE_PX,
             transparent: true,
@@ -222,6 +346,8 @@ export const createOrbits = (
             casing,
             positions,
             colors,
+            segments,
+            near: false,
             paint: null,
             ramp: new Float32Array(3 * SAMPLES),
         });
@@ -267,7 +393,7 @@ export const createOrbits = (
             );
             if (!orbit || !body.elements) return;
 
-            const { geometry, positions, colors } = orbitGeometry(
+            const { geometry, positions, colors, segments } = orbitGeometry(
                 body.elements,
             );
             orbit.line.geometry.dispose();
@@ -276,7 +402,10 @@ export const createOrbits = (
             orbit.body = body;
             orbit.positions = positions;
             orbit.colors = colors;
+            orbit.segments = segments;
             orbit.paint = null;
+            // The new geometry has the static layout.
+            if (orbit.near) restoreStatic(orbit);
         },
         update: (origin, states, camera, rate) => {
             const fov = (camera.fov * Math.PI) / 180;
@@ -288,16 +417,15 @@ export const createOrbits = (
                 const parentR = states.get(parent)?.r;
                 if (!parentR || !body.elements) continue;
 
-                line.position.set(
+                parentAt.set(
                     (parentR.x - origin.x) / 1000,
                     (parentR.y - origin.y) / 1000,
                     (parentR.z - origin.z) / 1000,
                 );
-                casing.position.copy(line.position);
 
                 const aPx = projectedRadiusPx(
                     body.elements.a / 1000,
-                    camera.position.distanceTo(line.position),
+                    camera.position.distanceTo(parentAt),
                     fov,
                     size.height,
                 );
@@ -306,7 +434,33 @@ export const createOrbits = (
                 casing.visible = shown;
 
                 const r = states.get(body.id)?.r;
+                const distance = r
+                    ? camera.position.distanceTo(
+                          target.set(
+                              (r.x - origin.x) / 1000,
+                              (r.y - origin.y) / 1000,
+                              (r.z - origin.z) / 1000,
+                          ),
+                      )
+                    : Infinity;
+                const near = orbitNear(distance, body.elements.a / 1000);
+                if (orbit.near && !near) restoreStatic(orbit);
+                if (!near) {
+                    line.position.copy(parentAt);
+                    casing.position.copy(parentAt);
+                }
                 if (!shown || !r) continue;
+
+                const picked = body.id === pickedId;
+                if (near) {
+                    rebuildNear(orbit, parentR, r, origin, distance, {
+                        index: 0,
+                        direction,
+                        picked,
+                        dim,
+                    });
+                    continue;
+                }
 
                 const next: Paint = {
                     index: nearestPoint(
@@ -317,7 +471,7 @@ export const createOrbits = (
                         (r.z - parentR.z) / 1000,
                     ),
                     direction,
-                    picked: body.id === pickedId,
+                    picked,
                     dim,
                 };
                 const now = orbit.paint;
