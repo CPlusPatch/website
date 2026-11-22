@@ -19,6 +19,7 @@ const KEYS: [keys: string[], what: string][] = [
     [["R"], "Reverse"],
     [["L"], "Go live"],
     [["T"], "Set the date"],
+    [["U"], "Switch km and AU"],
     [["←", "→"], "Scrub the focused timeline"],
     [["F"], "Focus the picked body"],
     [["Arrows"], "Turn the view"],

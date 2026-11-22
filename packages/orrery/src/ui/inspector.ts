@@ -3,7 +3,9 @@ import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { removalNote } from "../adding.ts";
+import type { AUnit } from "../editing.ts";
 import {
+    distanceParts,
     formatAngle,
     formatDistance,
     formatDuration,
@@ -11,6 +13,7 @@ import {
     formatSpeed,
 } from "../format.ts";
 import { type Readouts, readouts } from "../readouts.ts";
+import { otherUnit, type Units } from "../units.ts";
 import type { World } from "../world.ts";
 import { showBodyMarker } from "./body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "./burn-editor.ts";
@@ -29,16 +32,22 @@ type Mode = "card" | "edit" | "burn";
 /** How often the readouts refresh while the clock runs, in ms. */
 const REFRESH_MS = 250;
 
-const FIELDS: [
-    label: (parent: string) => string,
-    value: (r: Readouts) => string,
-][] = [
-    [(parent) => `Distance to ${parent}`, (r) => formatDistance(r.distance)],
-    [() => "Speed", (r) => formatSpeed(r.speed)],
-    [() => "Period", (r) => formatDuration(r.period)],
-    [() => "Periapsis altitude", (r) => formatDistance(r.periapsisAltitude)],
-    [() => "Apoapsis altitude", (r) => formatDistance(r.apoapsisAltitude)],
-    [() => "True anomaly", (r) => formatAngle(r.trueAnomaly)],
+/** A readout row: a distance in metres, which gets a unit switch, or finished text. */
+type Row = { label: (parent: string) => string } & (
+    | { metres: (r: Readouts) => number }
+    | { text: (r: Readouts) => string }
+);
+
+const FIELDS: Row[] = [
+    { label: (parent) => `Distance to ${parent}`, metres: (r) => r.distance },
+    { label: () => "Speed", text: (r) => formatSpeed(r.speed) },
+    { label: () => "Period", text: (r) => formatDuration(r.period) },
+    {
+        label: () => "Periapsis altitude",
+        metres: (r) => r.periapsisAltitude,
+    },
+    { label: () => "Apoapsis altitude", metres: (r) => r.apoapsisAltitude },
+    { label: () => "True anomaly", text: (r) => formatAngle(r.trueAnomaly) },
 ];
 
 const KINDS: Record<BodyKind, string> = {
@@ -50,18 +59,22 @@ const KINDS: Record<BodyKind, string> = {
 };
 
 /** The apsides line, as `Ap 408 km in 41d`, and the sentence for a screen reader. */
-const apsides = (r: Readouts): { parts: string[]; spoken: string } => ({
+const apsides = (
+    r: Readouts,
+    unit: AUnit | null,
+): { parts: string[]; spoken: string } => ({
     parts: [
-        `Ap ${formatDistance(r.apoapsisAltitude)} in ${formatSoon(r.timeToApoapsis)}`,
-        `Pe ${formatDistance(r.periapsisAltitude)} in ${formatSoon(r.timeToPeriapsis)}`,
+        `Ap ${formatDistance(r.apoapsisAltitude, unit)} in ${formatSoon(r.timeToApoapsis)}`,
+        `Pe ${formatDistance(r.periapsisAltitude, unit)} in ${formatSoon(r.timeToPeriapsis)}`,
         formatSpeed(r.speed),
     ],
-    spoken: `Apoapsis ${formatDistance(r.apoapsisAltitude)} up, in ${formatDuration(r.timeToApoapsis)}. Periapsis ${formatDistance(r.periapsisAltitude)} up, in ${formatDuration(r.timeToPeriapsis)}. Speed ${formatSpeed(r.speed)}. Period ${formatDuration(r.period)}.`,
+    spoken: `Apoapsis ${formatDistance(r.apoapsisAltitude, unit)} up, in ${formatDuration(r.timeToApoapsis)}. Periapsis ${formatDistance(r.periapsisAltitude, unit)} up, in ${formatDuration(r.timeToPeriapsis)}. Speed ${formatSpeed(r.speed)}. Period ${formatDuration(r.period)}.`,
 });
 
 /** A card with the selected body's name, kind and live orbit readouts. */
 export const createInspector = (
     world: World,
+    units: Units,
     /** Takes keyboard focus when the inspector hides while it holds it. */
     restoreFocus: (id: string) => void,
     /** Draws an orbit for a body, or none with `null`. */
@@ -98,6 +111,8 @@ export const createInspector = (
     element.hidden = true;
 
     let values: HTMLElement[] = [];
+    // The switch of each distance row, or none for the rows that aren't distances.
+    let switches: (HTMLButtonElement | null)[] = [];
     let line: HTMLElement[] = [];
     let spoken: HTMLElement | null = null;
     let focusButton: HTMLButtonElement | null = null;
@@ -130,12 +145,33 @@ export const createInspector = (
         );
         if (!current) return;
 
-        FIELDS.forEach(([, value], k) => {
+        const chosen = units.get();
+        FIELDS.forEach((row, k) => {
             const cell = values[k];
-            if (cell) setText(cell, value(current));
+            if (!cell) return;
+
+            if (!("metres" in row)) {
+                setText(cell, row.text(current));
+                return;
+            }
+
+            const [number, unit] = distanceParts(row.metres(current), chosen);
+            setText(cell, number);
+
+            // Rewritten only when the unit changes, so a pressed switch keeps its focus.
+            const control = switches[k];
+            if (control && control.textContent !== unit) {
+                const other = otherUnit(unit);
+                control.textContent = unit;
+                control.setAttribute(
+                    "aria-label",
+                    `${unit}. Show distances in ${other}`,
+                );
+                control.title = `Show in ${other} (U)`;
+            }
         });
 
-        const text = apsides(current);
+        const text = apsides(current, chosen);
         text.parts.forEach((part, k) => {
             const span = line[k];
             if (span) setText(span, part);
@@ -309,6 +345,7 @@ export const createInspector = (
         shown = body?.id ?? null;
         element.hidden = !body;
         values = [];
+        switches = [];
         line = [];
         spoken = null;
         focusButton = null;
@@ -326,12 +363,12 @@ export const createInspector = (
 
         let form: HTMLFormElement | null = null;
         if (mode === "edit") {
-            editor = createElementEditor(world, body.id, ghost, () =>
+            editor = createElementEditor(world, units, body.id, ghost, () =>
                 closeForm("edit"),
             );
             form = editor?.element ?? null;
         } else if (mode === "burn") {
-            burn = createBurnEditor(world, body.id, ghost, () =>
+            burn = createBurnEditor(world, units, body.id, ghost, () =>
                 closeForm("burn"),
             );
             form = burn?.element ?? null;
@@ -368,10 +405,31 @@ export const createInspector = (
             line = [ap, pe, speed];
             spoken = h("p", { class: "visually-hidden", "aria-live": "off" });
             const list = h("dl", { class: "orrery__readouts" });
-            for (const [label] of FIELDS) {
-                const value = h("dd", { class: "orrery__readout" });
-                values.push(value);
-                list.append(h("dt", {}, label(parent.name)), value);
+            for (const row of FIELDS) {
+                const dd = h("dd", { class: "orrery__readout" });
+
+                if ("metres" in row) {
+                    // The text is filled in by `refresh`, which knows the unit.
+                    const number = h("span");
+                    const control = h("button", {
+                        type: "button",
+                        class: "orrery__unit-switch",
+                    });
+                    control.addEventListener("click", () =>
+                        units.set(
+                            otherUnit(
+                                control.textContent === "km" ? "km" : "AU",
+                            ),
+                        ),
+                    );
+                    dd.append(number, " ", control);
+                    values.push(number);
+                    switches.push(control);
+                } else {
+                    values.push(dd);
+                    switches.push(null);
+                }
+                list.append(h("dt", {}, row.label(parent.name)), dd);
             }
             content.append(
                 h(
@@ -400,6 +458,7 @@ export const createInspector = (
     };
     render();
 
+    const offUnits = units.subscribe(refresh);
     const off = world.on((event) => {
         if (event.type === "selection") {
             mode = "card";
@@ -424,6 +483,7 @@ export const createInspector = (
         element,
         destroy: () => {
             off();
+            offUnits();
             clearInterval(interval);
             editor?.destroy();
             burn?.destroy();

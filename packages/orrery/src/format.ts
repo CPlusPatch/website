@@ -1,4 +1,5 @@
 import { AU } from "@cpluspatch/orbit";
+import { type AUnit, aUnit } from "./editing.ts";
 
 // A fixed locale keeps every reader's text, and the readouts' widths, the same.
 const unit = (
@@ -14,7 +15,10 @@ const unit = (
         maximumFractionDigits: digits,
     });
 
-const KM = unit("kilometer", 0);
+const KM = new Intl.NumberFormat("en", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+});
 const AU_VALUE = new Intl.NumberFormat("en", {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
@@ -22,12 +26,32 @@ const AU_VALUE = new Intl.NumberFormat("en", {
 const KM_PER_S = unit("kilometer-per-second", 2);
 const DEGREES = unit("degree", 1, "narrow");
 
-/** A distance in metres, as `6,790 km` or, from 0.1 AU, `1.000 AU`, with a true minus sign. */
-export const formatDistance = (m: number): string =>
-    (m < 0.1 * AU
-        ? KM.format(m / 1000)
-        : `${AU_VALUE.format(m / AU)} AU`
-    ).replace(/^-/, "\u2212");
+/**
+ * A distance in metres as its number and its unit, like `["6,790", "km"]`, with a true minus sign.
+ * `chosen` is the unit the reader picked. Without it, km shows under 0.1 AU and AU from there.
+ */
+export const distanceParts = (
+    m: number,
+    chosen: AUnit | null = null,
+): [number: string, unit: AUnit] => {
+    const shown = chosen ?? aUnit(m);
+    const au = m / AU;
+    // Three decimals would show a small distance in AU as zero.
+    const number =
+        shown === "km"
+            ? KM.format(m / 1000)
+            : au !== 0 && Math.abs(au) < 0.001
+              ? au.toExponential(2)
+              : AU_VALUE.format(au);
+
+    return [number.replace(/^-/, "\u2212"), shown];
+};
+
+/** A distance in metres, as `6,790 km` or `1.000 AU`. See `distanceParts` for the unit. */
+export const formatDistance = (
+    m: number,
+    chosen: AUnit | null = null,
+): string => distanceParts(m, chosen).join(" ");
 
 /** A speed in m/s, as `7.66 km/s`. */
 export const formatSpeed = (mps: number): string => KM_PER_S.format(mps / 1000);

@@ -24,6 +24,7 @@ import { createNotices } from "./ui/notices.ts";
 import { createScenarios } from "./ui/scenario-menu.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
+import { createUnits } from "./units.ts";
 import type { Band, Rect } from "./view/geometry.ts";
 import { createView } from "./view/scene.ts";
 import { World } from "./world.ts";
@@ -83,6 +84,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         reducedMotion(),
     );
     const world = new World(opened.scenario, clock);
+    const units = createUnits();
 
     const panels = root.querySelectorAll<HTMLElement>(".orrery__panel");
     const top = root.querySelector<HTMLElement>(".orrery__panel--top");
@@ -188,6 +190,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         placeBodyList();
         const inspector = createInspector(
             world,
+            units,
             (id) => list.focusRow(id),
             view.ghost,
         );
@@ -256,7 +259,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     });
     for (const panel of [top, bottom]) if (panel) measure.observe(panel);
 
-    const unbind = bindShortcuts(world, {
+    const unbind = bindShortcuts(world, units, {
         closeKeys: keys.close,
         goLive: timeBar.goLive,
         toggleDate: timeBar.toggleDate,

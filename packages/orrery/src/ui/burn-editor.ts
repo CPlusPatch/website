@@ -10,7 +10,9 @@ import {
     STEPS,
     sameElements,
 } from "../burning.ts";
+import type { AUnit } from "../editing.ts";
 import { formatDistance, formatDuration } from "../format.ts";
+import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 import { h } from "./dom.ts";
 import { createForm, createStepper } from "./form.ts";
@@ -38,15 +40,20 @@ const AXES: [axis: Axis, name: string, hint?: string][] = [
 
 const DEFAULT_STEP = 10;
 
-const PREDICTED: [label: string, value: (p: Prediction) => string][] = [
-    ["Periapsis altitude", (p) => formatDistance(p.periapsisAltitude)],
-    ["Apoapsis altitude", (p) => formatDistance(p.apoapsisAltitude)],
+const PREDICTED: [
+    label: string,
+    value: (p: Prediction, unit: AUnit | null) => string,
+][] = [
+    ["Periapsis altitude", (p, u) => formatDistance(p.periapsisAltitude, u)],
+    ["Apoapsis altitude", (p, u) => formatDistance(p.apoapsisAltitude, u)],
     ["Period", (p) => formatDuration(p.period)],
 ];
 
 /** The burn form for body `id`, or `null` if it has no orbit to burn on. */
 export const createBurnEditor = (
     world: World,
+    /** The distance unit the previews follow. The card calls `refresh` when it changes. */
+    units: Units,
     id: string,
     /** Draws the orbit after the burn, or none with `null`. */
     ghost: (id: string, elements: Elements | null) => void,
@@ -216,7 +223,7 @@ export const createBurnEditor = (
         if (result?.ok) {
             const prediction = predict(result.elements, c.parent.radius, c.mu);
             PREDICTED.forEach(([, value], k) => {
-                const text = value(prediction);
+                const text = value(prediction, units.get());
                 const cell = values[k];
                 if (cell && cell.textContent !== text) cell.textContent = text;
             });

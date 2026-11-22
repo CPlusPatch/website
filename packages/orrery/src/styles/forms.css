@@ -114,6 +114,13 @@
         color: var(--orrery-muted);
         font-size: var(--orrery-size-xs);
         font-variant-numeric: tabular-nums;
+
+        /* This rule comes after card.css, so the switch's forced colour is set again here. */
+        &.orrery__unit-switch {
+            @media (forced-colors: active) {
+                color: ButtonText;
+            }
+        }
     }
 
     .orrery__stepper-step {

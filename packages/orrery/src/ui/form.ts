@@ -1,5 +1,7 @@
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { nudge } from "../burning.ts";
+import type { AUnit } from "../editing.ts";
+import { otherUnit } from "../units.ts";
 import { h } from "./dom.ts";
 
 /** A number field with − and + buttons, a unit and a line for an error. */
@@ -8,6 +10,8 @@ export type Stepper = {
     input: HTMLInputElement;
     /** Shows `message` under the field, or clears it with `null`. */
     setError: (message: string | null) => void;
+    /** Writes `unit` as the text of the unit, and as what its switch offers, if it is one. */
+    setUnit: (unit: AUnit) => void;
 };
 
 export type StepperOptions = {
@@ -16,6 +20,8 @@ export type StepperOptions = {
     name: string;
     label: string;
     unit: string;
+    /** Makes the unit a button that calls this, to switch between km and AU. */
+    onUnit?: () => void;
     /** The text the field starts with. */
     value: string;
     /** How far − and + move the value. */
@@ -36,6 +42,7 @@ export const createStepper = ({
     name,
     label,
     unit,
+    onUnit,
     value,
     step,
     format = String,
@@ -91,6 +98,30 @@ export const createStepper = ({
         move(event.key === "ArrowUp" ? step() : -step());
     });
 
+    const unitText = onUnit
+        ? h("button", {
+              type: "button",
+              class: "orrery__stepper-unit orrery__unit-switch",
+          })
+        : h("span", { class: "orrery__stepper-unit" });
+    const setUnit = (next: AUnit) => {
+        unitText.textContent = next;
+        if (!onUnit) return;
+
+        const other = otherUnit(next);
+        unitText.setAttribute(
+            "aria-label",
+            `${next}. Show ${label.toLowerCase()} in ${other}`,
+        );
+        unitText.title = `Show in ${other} (U)`;
+    };
+    unitText.textContent = unit;
+    if (onUnit) {
+        // A switch's unit is km or AU.
+        setUnit(unit === "km" ? "km" : "AU");
+        unitText.addEventListener("click", onUnit);
+    }
+
     const element = h(
         "div",
         { class: "orrery__form-row" },
@@ -100,7 +131,7 @@ export const createStepper = ({
             { class: "orrery__stepper" },
             button(-1),
             input,
-            h("span", { class: "orrery__stepper-unit" }, unit),
+            unitText,
             button(1),
         ),
         error,
@@ -114,6 +145,7 @@ export const createStepper = ({
             error.hidden = message === null;
             input.setAttribute("aria-invalid", String(message !== null));
         },
+        setUnit,
     };
 };
 

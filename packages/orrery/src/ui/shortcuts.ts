@@ -1,4 +1,7 @@
 import { stepRate } from "../clock.ts";
+import { type AUnit, aUnit } from "../editing.ts";
+import { readouts } from "../readouts.ts";
+import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 
 const TEXT = "input, select, textarea, [contenteditable], dialog";
@@ -11,12 +14,25 @@ export type ShortcutActions = {
     toggleDate: () => void;
 };
 
+/** The unit the card shows for the selected body, or AU when it shows none. */
+const shownUnit = (world: World): AUnit => {
+    const id = world.selected;
+    const current = id
+        ? readouts(world.scenario, id, world.states(), world.clock.t)
+        : null;
+
+    // From AU, so the first U picks km.
+    return current ? aUnit(current.periapsisAltitude) : "AU";
+};
+
 /**
  * Binds Space, `[`, `]`, R, L and T to the clock of `world`, and F and Escape to its selection.
+ * U switches the distance `units`.
  * Escape closes the keys card first. Returns a function that unbinds them.
  */
 export const bindShortcuts = (
     world: World,
+    units: Units,
     { closeKeys, goLive, toggleDate }: ShortcutActions,
 ): (() => void) => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -67,6 +83,8 @@ export const bindShortcuts = (
             goLive();
         } else if (event.key === "t" || event.key === "T") {
             toggleDate();
+        } else if (event.key === "u" || event.key === "U") {
+            units.toggle(shownUnit(world));
         } else {
             return;
         }

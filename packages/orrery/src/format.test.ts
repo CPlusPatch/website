@@ -2,6 +2,7 @@
 import { AU } from "@cpluspatch/orbit";
 import { assertEquals } from "@std/assert";
 import {
+    distanceParts,
     formatAngle,
     formatDistance,
     formatDuration,
@@ -24,6 +25,24 @@ Deno.test("formatDistance switches to AU at 0.1 AU", () => {
     assertEquals(formatDistance(0.1 * AU), "0.100 AU");
     assertEquals(formatDistance(AU), "1.000 AU");
     assertEquals(formatDistance(39.48 * AU), "39.480 AU");
+});
+
+Deno.test("formatDistance follows the chosen unit at any size", () => {
+    assertEquals(formatDistance(AU, "km"), "149,597,871 km");
+    assertEquals(formatDistance(6_790_000, "AU"), "4.54e-5 AU");
+    assertEquals(formatDistance(0.5 * AU, "AU"), "0.500 AU");
+    assertEquals(formatDistance(0.00099 * AU, "AU"), "9.90e-4 AU");
+    assertEquals(formatDistance(0.001 * AU, "AU"), "0.001 AU");
+    assertEquals(formatDistance(0, "AU"), "0.000 AU");
+    assertEquals(formatDistance(-2_527_000, "km"), "\u22122,527 km");
+    assertEquals(formatDistance(AU, null), "1.000 AU");
+});
+
+Deno.test("distanceParts splits the number from the unit", () => {
+    assertEquals(distanceParts(6_790_000), ["6,790", "km"]);
+    assertEquals(distanceParts(AU), ["1.000", "AU"]);
+    assertEquals(distanceParts(AU, "km"), ["149,597,871", "km"]);
+    assertEquals(distanceParts(6_790_000, "AU"), ["4.54e-5", "AU"]);
 });
 
 Deno.test("formatSpeed writes km/s with two decimals", () => {

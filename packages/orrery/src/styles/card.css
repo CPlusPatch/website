@@ -246,6 +246,33 @@
         white-space: nowrap;
     }
 
+    /* A distance's unit, which switches every distance between km and AU. */
+    .orrery__unit-switch {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--orrery-muted);
+        font: inherit;
+        text-decoration: underline dotted 1px var(--orrery-dim);
+        text-underline-offset: 3px;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--orrery-text);
+            text-decoration-color: var(--orrery-text);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 2px;
+        }
+
+        @media (forced-colors: active) {
+            color: ButtonText;
+            text-decoration-color: ButtonText;
+        }
+    }
+
     .orrery__warning {
         margin-block-start: var(--space-md);
         /* Compact, since it holds one sentence. */
