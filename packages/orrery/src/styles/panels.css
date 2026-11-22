@@ -17,7 +17,12 @@
             pointer-events: auto;
         }
 
-        > :not(.orrery__notices, .orrery__crumbs, .orrery__spacer),
+        > :not(
+                .orrery__notices,
+                .orrery__crumbs,
+                .orrery__spacer,
+                .orrery__hud-scale
+            ),
         .orrery__notices > * {
             border: 1px solid var(--orrery-frame);
             border-radius: 0;
@@ -53,6 +58,23 @@
         align-items: flex-end;
     }
 
+    /* Over the scene's bottom left, beside the time bar, which keeps 130px clear of the corners. */
+    .orrery__panel--hud {
+        inset-block-end: 0;
+        inset-inline-start: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+        padding-block-end: max(
+            var(--space-sm),
+            env(safe-area-inset-bottom, 0px)
+        );
+        padding-inline-start: max(
+            var(--space-sm),
+            env(safe-area-inset-left, 0px)
+        );
+    }
+
     .orrery__spacer {
         flex: 1;
         pointer-events: none;
@@ -74,6 +96,16 @@
             justify-content: flex-end;
             align-items: stretch;
             inline-size: auto;
+        }
+
+        /* A row under the top bar. */
+        .orrery__panel--hud {
+            inset-block: var(--orrery-top-space) auto;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.875rem;
+            padding-block-end: var(--space-sm);
         }
 
         /* The crumbs get the first row, and the buttons the next. */

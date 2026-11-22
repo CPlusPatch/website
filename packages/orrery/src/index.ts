@@ -17,6 +17,7 @@ import {
 } from "./persistence.ts";
 import { createCrumbs } from "./ui/crumbs.ts";
 import { h } from "./ui/dom.ts";
+import { createHud } from "./ui/hud.ts";
 import { createInspector, type Inspector } from "./ui/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
 import { createNotices } from "./ui/notices.ts";
@@ -169,8 +170,14 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         inspector = current;
         root.querySelector(".orrery__panel--right")?.append(current.element);
 
+        const hudSlot = root.querySelector<HTMLElement>(".orrery__panel--hud");
+        const removeHud = hudSlot
+            ? createHud(hudSlot, view, units, narrow)
+            : () => {};
+
         return () => {
             if (inspector === current) inspector = null;
+            removeHud();
             current.destroy();
             view.destroy();
         };

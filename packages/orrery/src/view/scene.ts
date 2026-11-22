@@ -15,6 +15,12 @@ import { createTheme } from "./theme.ts";
 
 /** The 3D view drawn into a container. */
 export type View = EditScene & {
+    /** Dollies in for a positive `steps`, out for a negative one. */
+    zoom: (steps: number) => void;
+    /** Moves the camera to the focus's framing distance. */
+    fitFocus: () => void;
+    /** The km one CSS pixel spans at the focus, or 0 before the view has a size. */
+    kmPerPx: () => number;
     destroy: () => void;
 };
 
@@ -139,7 +145,7 @@ export const createView = (
             "aria-label",
             `The solar system, centred on ${names.get(
                 rig.focusId(),
-            )}. Arrow keys rotate, plus and minus zoom.`,
+            )}. Arrow keys rotate, plus and minus zoom, 0 fits the focus.`,
         );
     describe();
 
@@ -217,6 +223,9 @@ export const createView = (
             ghostShown = body !== undefined && elements !== null;
         },
         grips: grips.target,
+        zoom: rig.zoom,
+        fitFocus: rig.fitFocus,
+        kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
         destroy: () => {
             unsubscribe();
             unbindPointer();

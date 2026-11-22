@@ -25,6 +25,7 @@ const KEYS: [keys: string[], what: string][] = [
     [["F"], "Focus the picked body"],
     [["Arrows"], "Turn the view"],
     [["+", "−"], "Zoom in, out"],
+    [["0"], "Fit the focus"],
     [["Esc"], "Close, or clear the pick"],
 ];
 

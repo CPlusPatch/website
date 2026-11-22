@@ -2,6 +2,7 @@ import type { Body, Scenario, State, Vec3 } from "@cpluspatch/orbit";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import type { PerspectiveCamera } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { kmPerPx } from "../scale.ts";
 import {
     fitDistanceKm,
     focusDistanceKm,
@@ -25,6 +26,12 @@ export type Rig = {
     rescale: () => void;
     /** Moves the view to a body, keeping the view direction. */
     focus: (id: string) => void;
+    /** Dollies in for a positive `steps`, out for a negative one, by the factor of the zoom keys. */
+    zoom: (steps: number) => void;
+    /** Moves the camera to the focus's framing distance, keeping the view direction. */
+    fitFocus: () => void;
+    /** The km one CSS pixel spans at the focus, in a viewport `viewportHeightPx` tall. */
+    kmPerPx: (viewportHeightPx: number) => number;
     /** Advances a focus move by `dt` seconds, follows the focus and updates the controls. */
     update: (dt: number, states: Map<string, State>) => void;
     /** Removes the controls' and the keys' listeners. */
@@ -104,6 +111,55 @@ export const createRig = (
     };
     fit();
 
+    const settle = (id: string) => {
+        controls.minDistance = minDistanceKm(bodyOf(id), fovRad);
+    };
+
+    const zoom = (steps: number) => {
+        for (let i = 0; i < Math.abs(steps); i++) {
+            if (steps > 0) controls.dollyIn(KEY_ZOOM);
+            else controls.dollyOut(KEY_ZOOM);
+        }
+        touched = true;
+    };
+
+    // Eases the camera to `distance` from `id`, or jumps there under reduced motion.
+    const glide = (id: string, distance: number) => {
+        if (reducedMotion()) {
+            move = null;
+            Object.assign(origin, positionOf(id));
+            camera.position.setLength(distance);
+            settle(id);
+
+            return;
+        }
+
+        move = {
+            from: {
+                distance: camera.position.length(),
+                position: { ...origin },
+            },
+            id,
+            distance,
+            elapsed: 0,
+        };
+        // The old minimum must not stop the camera on its way in.
+        controls.minDistance = Math.min(
+            controls.minDistance,
+            minDistanceKm(bodyOf(id), fovRad),
+        );
+    };
+
+    const fitFocus = () => {
+        touched = true;
+        glide(
+            focused,
+            focused === root.id
+                ? fitDistance()
+                : focusDistanceKm(bodyOf(focused)),
+        );
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.ctrlKey || event.altKey || event.metaKey) return;
 
@@ -123,11 +179,14 @@ export const createRig = (
             case "+":
             case "=":
             case "PageUp":
-                controls.dollyIn(KEY_ZOOM);
+                zoom(1);
                 break;
             case "-":
             case "PageDown":
-                controls.dollyOut(KEY_ZOOM);
+                zoom(-1);
+                break;
+            case "0":
+                fitFocus();
                 break;
             default:
                 return;
@@ -139,10 +198,6 @@ export const createRig = (
     };
     canvas.addEventListener("keydown", onKeyDown);
 
-    const settle = (id: string) => {
-        controls.minDistance = minDistanceKm(bodyOf(id), fovRad);
-    };
-
     return {
         origin: () => origin,
         focusId: () => focused,
@@ -152,35 +207,19 @@ export const createRig = (
             controls.maxDistance = fitDistance() * MAX_DISTANCE_FACTOR;
             if (!touched) fit();
         },
+        zoom,
+        fitFocus,
+        kmPerPx: (viewportHeightPx) =>
+            kmPerPx(
+                camera.position.distanceTo(controls.target),
+                fovRad,
+                viewportHeightPx,
+            ),
         focus: (id) => {
             const body = bodyOf(id);
             touched = true;
-            const target = focusDistanceKm(body);
             focused = id;
-
-            if (reducedMotion()) {
-                move = null;
-                Object.assign(origin, positionOf(id));
-                camera.position.setLength(target);
-                settle(id);
-
-                return;
-            }
-
-            move = {
-                from: {
-                    distance: camera.position.length(),
-                    position: { ...origin },
-                },
-                id,
-                distance: target,
-                elapsed: 0,
-            };
-            // The old minimum must not stop the camera on its way in.
-            controls.minDistance = Math.min(
-                controls.minDistance,
-                minDistanceKm(body, fovRad),
-            );
+            glide(id, focusDistanceKm(body));
         },
         update: (dt, latest) => {
             states = latest;
