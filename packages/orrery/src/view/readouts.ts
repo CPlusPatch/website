@@ -27,6 +27,7 @@ import {
     READOUTS_MIN_ORBIT_PX,
     type Rect,
 } from "./geometry.ts";
+import { createMeasure } from "./measure.ts";
 
 /** What the readouts need each frame. */
 export type ReadoutsFrame = {
@@ -35,8 +36,8 @@ export type ReadoutsFrame = {
     origin: Vec3;
     states: Map<string, State>;
     viewport: { width: number; height: number };
-    /** Whether a ghost orbit shows. */
-    ghost: boolean;
+    /** Whether a ghost or the grips show. */
+    hidden: boolean;
     /** The boxes the scene's labels took, by body id. */
     labels: ReadonlyMap<string, Rect>;
     /** Rects that notes keep out of. */
@@ -45,7 +46,7 @@ export type ReadoutsFrame = {
 
 /** The picked orbit's flags and notes. */
 export type SceneReadouts = {
-    /** Moves the flags and notes, or hides them when the picked orbit is small or a ghost shows. */
+    /** Moves the flags and notes, or hides them when the orbit is small or `hidden` is set. */
     update: (frame: ReadoutsFrame) => void;
     /** Removes the flags and notes. */
     dispose: () => void;
@@ -73,28 +74,6 @@ const samplesOf = (elements: Elements): Float64Array => {
     }
 
     return points;
-};
-
-/** Measures text in the font of `element`, without touching the layout. */
-const createMeasure = (element: HTMLElement) => {
-    const context = document.createElement("canvas").getContext("2d");
-    let font = "";
-    const refresh = () => {
-        const style = getComputedStyle(element);
-        font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-    };
-    refresh();
-
-    return {
-        refresh,
-        width: (text: string): number => {
-            if (!context) return text.length * 7;
-
-            context.font = font;
-
-            return context.measureText(text).width;
-        },
-    };
 };
 
 type Apsis = {
@@ -198,7 +177,7 @@ export const createReadouts = (
             origin,
             states,
             viewport: size,
-            ghost,
+            hidden,
             labels,
             blocked,
         }) => {
@@ -211,7 +190,7 @@ export const createReadouts = (
             const parentR = body?.parent
                 ? states.get(body.parent)?.r
                 : undefined;
-            if (ghost || !body || !elements || !parentR) {
+            if (hidden || !body || !elements || !parentR) {
                 setShown(false);
                 return;
             }

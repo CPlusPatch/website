@@ -127,3 +127,55 @@ export const fieldError = (
 
     return null;
 };
+
+/** An orbit the scene draws grips on while it's edited. */
+export type GripTarget = {
+    id: string;
+    /** The orbit before the edit, for the change shown while dragging. */
+    original: Elements;
+    /** The orbit the grips sit on: the draft if it's valid, else `null`, which hides them. */
+    elements: () => Elements | null;
+    /** The lowest periapsis a drag allows, in metres. */
+    minPeriapsis: number;
+    /** Writes dragged values into the fields and redraws the ghost. */
+    set: (change: { a: number; e: number } | { raan: number }) => void;
+};
+
+/** What an editor draws in the scene. */
+export type EditScene = {
+    /** Draws an orbit for a body, or none with `null`. */
+    ghost: (id: string, elements: Elements | null) => void;
+    /** Shows grips on an orbit, or none with `null`. */
+    grips: (target: GripTarget | null) => void;
+};
+
+/** The farthest apsis is at most this many times the nearest, which keeps `e` to 0.99. */
+const APSIS_RATIO = 199;
+
+/** The semi-major axis and eccentricity after dragging an apsis of `el0` by `delta` metres. */
+export const dragApsis = (
+    kind: "pe" | "ap",
+    el0: Elements,
+    delta: number,
+    minPeriapsis: number,
+): { a: number; e: number } => {
+    let pe = el0.a * (1 - el0.e);
+    let ap = el0.a * (1 + el0.e);
+
+    if (kind === "pe") {
+        pe = Math.min(
+            ap,
+            2 * A_MAX - ap,
+            Math.max(minPeriapsis, ap / APSIS_RATIO, pe + delta),
+        );
+    } else {
+        // The axis points to the periapsis, so moving towards the apoapsis is negative.
+        ap = Math.min(
+            APSIS_RATIO * pe,
+            2 * A_MAX - pe,
+            Math.max(pe, ap - delta),
+        );
+    }
+
+    return { a: (pe + ap) / 2, e: (ap - pe) / (ap + pe) };
+};

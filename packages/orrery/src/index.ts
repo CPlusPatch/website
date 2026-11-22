@@ -164,7 +164,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             world,
             units,
             () => search?.toggle.focus(),
-            view.ghost,
+            view,
         );
         inspector = current;
         root.querySelector(".orrery__panel--right")?.append(current.element);

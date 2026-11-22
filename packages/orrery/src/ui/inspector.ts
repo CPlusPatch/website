@@ -1,9 +1,9 @@
-import type { BodyKind, Elements } from "@cpluspatch/orbit";
+import type { BodyKind } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { removalNote } from "../adding.ts";
-import type { AUnit } from "../editing.ts";
+import type { AUnit, EditScene } from "../editing.ts";
 import {
     distanceParts,
     formatAngle,
@@ -80,8 +80,8 @@ export const createInspector = (
     units: Units,
     /** Takes keyboard focus when the inspector hides while it holds it. */
     restoreFocus: (id: string) => void,
-    /** Draws an orbit for a body, or none with `null`. */
-    ghost: (id: string, elements: Elements | null) => void,
+    /** What the editors draw in the scene. */
+    scene: EditScene,
 ): Inspector => {
     const close = h("button", {
         type: "button",
@@ -416,12 +416,12 @@ export const createInspector = (
 
         let form: HTMLFormElement | null = null;
         if (mode === "edit") {
-            editor = createElementEditor(world, units, body.id, ghost, () =>
+            editor = createElementEditor(world, units, body.id, scene, () =>
                 closeForm("edit"),
             );
             form = editor?.element ?? null;
         } else if (mode === "burn") {
-            burn = createBurnEditor(world, units, body.id, ghost, () =>
+            burn = createBurnEditor(world, units, body.id, scene.ghost, () =>
                 closeForm("burn"),
             );
             form = burn?.element ?? null;

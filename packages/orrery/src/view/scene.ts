@@ -1,11 +1,12 @@
-import type { Elements } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
+import type { EditScene } from "../editing.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 import { createBodies } from "./bodies.ts";
 import { createRig } from "./camera.ts";
 import { type Band, centreShift, type Rect } from "./geometry.ts";
+import { createGrips } from "./grips.ts";
 import { createOrbits } from "./orbits.ts";
 import { type PickPoint, pickBody } from "./picking.ts";
 import { bindPointer } from "./pointer.ts";
@@ -13,9 +14,7 @@ import { createReadouts } from "./readouts.ts";
 import { createTheme } from "./theme.ts";
 
 /** The 3D view drawn into a container. */
-export type View = {
-    /** Draws a dashed orbit for body `id`, or none with `null`. */
-    ghost: (id: string, elements: Elements | null) => void;
+export type View = EditScene & {
     destroy: () => void;
 };
 
@@ -74,6 +73,7 @@ export const createView = (
         theme.color,
     );
 
+    const grips = createGrips(labels.domElement, units);
     const readouts = createReadouts(container, labels.domElement, world, units);
 
     let size = { width: 0, height: 0 };
@@ -162,20 +162,29 @@ export const createView = (
         rig.update(dt, states);
         camera.updateMatrixWorld();
         orbits.update(rig.origin(), states, camera, world.clock.rate);
+        const rooms = grips.update({
+            camera,
+            origin: rig.origin(),
+            states,
+            viewport: size,
+            parentOf: (id) =>
+                world.scenario.bodies.find((body) => body.id === id)?.parent,
+        });
         points = bodies.update(
             camera,
             rig.origin(),
             rig.focusId(),
             world.selected,
             states,
-            keepOut,
+            [...keepOut, ...rooms],
         );
+        grips.placeNote(bodies.placed());
         readouts.update({
             camera,
             origin: rig.origin(),
             states,
             viewport: size,
-            ghost: ghostShown,
+            hidden: ghostShown || grips.shown(),
             labels: bodies.placed(),
             blocked: keepOut,
         });
@@ -207,6 +216,7 @@ export const createView = (
             if (body) orbits.ghost(body, elements);
             ghostShown = body !== undefined && elements !== null;
         },
+        grips: grips.target,
         destroy: () => {
             unsubscribe();
             unbindPointer();
@@ -217,6 +227,7 @@ export const createView = (
             orbits.dispose();
             bodies.dispose();
             readouts.dispose();
+            grips.dispose();
             renderer.forceContextLoss();
             renderer.dispose();
             canvas.remove();

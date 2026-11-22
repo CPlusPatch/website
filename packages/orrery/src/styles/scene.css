@@ -176,6 +176,67 @@
         }
     }
 
+    .orrery__grip {
+        /* The hit area, with the drawn square at its centre. */
+        --grip-size: 28px;
+        position: absolute;
+        inset: 0 auto auto 0;
+        inline-size: var(--grip-size);
+        block-size: var(--grip-size);
+        margin: calc(var(--grip-size) / -2) 0 0 calc(var(--grip-size) / -2);
+        pointer-events: auto;
+        touch-action: none;
+        cursor: grab;
+
+        @media (pointer: coarse) {
+            --grip-size: 48px;
+        }
+
+        &[hidden] {
+            display: none;
+        }
+
+        &.orrery__grip--drag {
+            cursor: grabbing;
+        }
+
+        &::before {
+            content: "";
+            position: absolute;
+            /* Over the flag's stem. */
+            z-index: 1;
+            inset: 50% auto auto 50%;
+            box-sizing: border-box;
+            inline-size: 9px;
+            block-size: 9px;
+            margin: -4.5px 0 0 -4.5px;
+            border: 2px solid var(--orrery-signal);
+            background: var(--orrery-ground);
+
+            @media (forced-colors: active) {
+                border-color: CanvasText;
+                background: Canvas;
+            }
+        }
+
+        &.orrery__grip--lit::before {
+            background: var(--orrery-signal);
+
+            @media (forced-colors: active) {
+                background: Highlight;
+            }
+        }
+
+        /* The flag is measured from the grip's centre, and the square marks the point. */
+        .orrery__flag {
+            inset: 50% auto auto 50%;
+
+            &::after {
+                display: none;
+            }
+        }
+    }
+
     .orrery__note {
         position: absolute;
         inset: 0 auto auto 0;

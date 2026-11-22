@@ -8,6 +8,7 @@ import {
     aUnit,
     DEGREES,
     draftElements,
+    dragApsis,
     editElements,
     fieldError,
     fieldValue,
@@ -174,4 +175,65 @@ Deno.test("the node, the periapsis and the mean anomaly take any number", () => 
         assertEquals(fieldError(field, -50, 7e6), null);
         assertEquals(fieldError(field, 50, 7e6), null);
     }
+});
+
+// A 1 AU orbit with an apsis 10% either side of it.
+const SHAPE: Elements = { ...EL, a: AU, e: 0.1 };
+const PE = 0.9 * AU;
+const AP = 1.1 * AU;
+const FLOOR = 6e6;
+
+Deno.test("dragging the periapsis moves it and keeps the apoapsis", () => {
+    const { a, e } = dragApsis("pe", SHAPE, -0.2 * AU, FLOOR);
+
+    assertAlmostEquals(a * (1 - e), 0.7 * AU, 1);
+    assertAlmostEquals(a * (1 + e), AP, 1);
+});
+
+Deno.test("dragging the apoapsis moves it and keeps the periapsis", () => {
+    const { a, e } = dragApsis("ap", SHAPE, -0.5 * AU, FLOOR);
+
+    assertAlmostEquals(a * (1 - e), PE, 1);
+    assertAlmostEquals(a * (1 + e), 1.6 * AU, 1);
+});
+
+Deno.test("the periapsis stops at the apoapsis", () => {
+    const { a, e } = dragApsis("pe", SHAPE, 5 * AU, FLOOR);
+
+    assertAlmostEquals(a, AP);
+    assertEquals(e, 0);
+});
+
+Deno.test("the periapsis stops at the minimum", () => {
+    const { a, e } = dragApsis("pe", SHAPE, -5 * AU, 0.5 * AU);
+
+    assertAlmostEquals(a * (1 - e), 0.5 * AU, 1);
+});
+
+Deno.test("the periapsis stops at a 199th of the apoapsis, which keeps e to 0.99", () => {
+    const { a, e } = dragApsis("pe", SHAPE, -5 * AU, FLOOR);
+
+    assertAlmostEquals(a * (1 - e), AP / 199, 1);
+    assertAlmostEquals(e, 0.99);
+});
+
+Deno.test("the apoapsis stops at the periapsis", () => {
+    const { a, e } = dragApsis("ap", SHAPE, 5 * AU, FLOOR);
+
+    assertAlmostEquals(a, PE);
+    assertEquals(e, 0);
+});
+
+Deno.test("the apoapsis stops at 199 times the periapsis", () => {
+    const { a, e } = dragApsis("ap", SHAPE, -500 * AU, FLOOR);
+
+    assertAlmostEquals(a * (1 + e), 199 * PE, 1e3);
+    assertAlmostEquals(e, 0.99);
+});
+
+Deno.test("an apsis stops where the semi-major axis reaches the most the form allows", () => {
+    const wide: Elements = { ...EL, a: 90 * AU, e: 0.2 };
+
+    assertAlmostEquals(dragApsis("ap", wide, -50 * AU, FLOOR).a, A_MAX, 1e3);
+    assertAlmostEquals(dragApsis("pe", wide, 50 * AU, FLOOR).a, A_MAX, 1e3);
 });

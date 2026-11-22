@@ -5,6 +5,7 @@ import {
     aUnit,
     DEGREES,
     draftElements,
+    type EditScene,
     type Field,
     fieldError,
     fieldValue,
@@ -75,8 +76,8 @@ export const createElementEditor = (
     /** The distance unit of the semi-major axis, which its switch changes. */
     units: Units,
     id: string,
-    /** Draws an orbit for a body, or none with `null`. */
-    ghost: (id: string, elements: Elements | null) => void,
+    /** What the form draws in the scene: the ghost orbit and the grips. */
+    scene: EditScene,
     /** Called when the form is done, with whether it changed the orbit. */
     done: (applied: boolean) => void,
 ): ElementEditor | null => {
@@ -167,10 +168,14 @@ export const createElementEditor = (
               )
             : null;
 
+    // Kept for the grips, which read it every frame.
+    let current = draft();
+
     const preview = () => {
         const next = draft();
+        current = next;
 
-        ghost(id, changes().length > 0 ? next : null);
+        scene.ghost(id, changes().length > 0 ? next : null);
         alert.text.textContent = `This orbit passes through ${parent.name}.`;
         alert.element.hidden =
             next === null || !passesThroughParent(next, parent.radius);
@@ -200,6 +205,40 @@ export const createElementEditor = (
         steppers.set(spec.field, stepper);
         starts.set(spec.field, start);
     }
+
+    // A drag writes the fields, so they stay the source of truth.
+    const setFromDrag = (
+        change: { a: number; e: number } | { raan: number },
+    ) => {
+        if ("raan" in change) {
+            const stepper = steppers.get("raan");
+            if (stepper) {
+                stepper.input.value = (change.raan * DEGREES).toFixed(2);
+            }
+        } else {
+            const a = steppers.get("a");
+            const e = steppers.get("e");
+            if (a && e) {
+                const text = fromMetres(change.a, unit).toFixed(
+                    aScale(unit, original.a).decimals,
+                );
+                a.input.value = text;
+                exact = { metres: change.a, text };
+                e.input.value = change.e.toFixed(4);
+            }
+        }
+
+        preview();
+        check(true);
+    };
+
+    scene.grips({
+        id,
+        original,
+        elements: () => current,
+        minPeriapsis: min,
+        set: setFromDrag,
+    });
 
     // The units can change under the form only through the switch of this field.
     const offUnits = units.subscribe(() => {
@@ -245,7 +284,8 @@ export const createElementEditor = (
         const next = draft();
         if (next && changes().length > 0) world.setElements(id, next);
 
-        ghost(id, null);
+        scene.ghost(id, null);
+        scene.grips(null);
         done(true);
     };
 
@@ -255,14 +295,15 @@ export const createElementEditor = (
             h(
                 "p",
                 { class: "orrery__form-hint" },
-                "Type values, or use − and +.",
+                "Type values, use − and +, or drag Pe, Ap and Node in the view.",
             ),
             ...[...steppers.values()].map((stepper) => stepper.element),
             alert.element,
         ],
         submit,
         () => {
-            ghost(id, null);
+            scene.ghost(id, null);
+            scene.grips(null);
             done(false);
         },
     );
@@ -271,7 +312,8 @@ export const createElementEditor = (
         element: form.element,
         destroy: () => {
             offUnits();
-            ghost(id, null);
+            scene.ghost(id, null);
+            scene.grips(null);
         },
     };
 };
