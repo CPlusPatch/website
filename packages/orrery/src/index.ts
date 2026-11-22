@@ -26,7 +26,8 @@ import { createSearch, type Search } from "./ui/search.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
 import { createUnits } from "./units.ts";
-import type { Band, Rect } from "./view/geometry.ts";
+import type { Band } from "./view/geometry/framing.ts";
+import type { Rect } from "./view/geometry/labels.ts";
 import { createView } from "./view/scene.ts";
 import { World } from "./world.ts";
 

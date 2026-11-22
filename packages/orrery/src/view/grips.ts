@@ -12,16 +12,15 @@ import { h, setText } from "../ui/dom.ts";
 import type { Units } from "../units.ts";
 import {
     axisPosition,
-    type Clearance,
-    firstClear,
     GRIPS_MIN_ORBIT_PX,
     gripNoteSpots,
     nodeAnomaly,
     planeAngle,
     pointAtAnomaly,
-    projectedRadiusPx,
-    type Rect,
-} from "./geometry.ts";
+} from "./geometry/grips.ts";
+import type { Rect } from "./geometry/labels.ts";
+import { type Clearance, firstClear } from "./geometry/notes.ts";
+import { projectedRadiusPx } from "./geometry/visibility.ts";
 import { createMeasure } from "./measure.ts";
 
 /** What the grips need each frame. */

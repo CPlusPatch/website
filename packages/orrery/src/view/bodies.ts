@@ -25,24 +25,26 @@ import {
 } from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import {
-    type Anchor,
     type Dot,
-    foldOrbits,
-    hiddenBehindSpheres,
-    hiddenMarkers,
     LABEL_ANCHOR_GAP_PX,
     LABEL_VERTICAL_GAP_PX,
     type LabelBox,
-    labelRank,
     labelRect,
-    labelShownForOrbit,
-    type MarkerPoint,
     type Placement,
     placeLabels,
-    projectedRadiusPx,
     type Rect,
+} from "./geometry/labels.ts";
+import {
+    type Anchor,
+    foldOrbits,
+    hiddenBehindSpheres,
+    hiddenMarkers,
+    labelRank,
+    labelShownForOrbit,
+    type MarkerPoint,
+    projectedRadiusPx,
     type Sphere,
-} from "./geometry.ts";
+} from "./geometry/visibility.ts";
 import { createMaps } from "./maps.ts";
 import { type LabelRect, type PickPoint, pickLabel } from "./picking.ts";
 import { spinMatrix } from "./spin.ts";

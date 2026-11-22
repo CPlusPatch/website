@@ -10,7 +10,7 @@ import {
     minDistanceKm,
     type Pose,
     reachKm,
-} from "./geometry.ts";
+} from "./geometry/framing.ts";
 
 /** The camera and its controls, which orbit the focused body. */
 export type Rig = {

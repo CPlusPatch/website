@@ -16,17 +16,16 @@ import { readouts } from "../readouts.ts";
 import { h, setText } from "../ui/dom.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
+import type { Rect } from "./geometry/labels.ts";
 import {
     blockSpots,
     type Clearance,
     firstClear,
     firstClearStack,
     noteSpots,
-    orbitShown,
-    projectedRadiusPx,
     READOUTS_MIN_ORBIT_PX,
-    type Rect,
-} from "./geometry.ts";
+} from "./geometry/notes.ts";
+import { orbitShown, projectedRadiusPx } from "./geometry/visibility.ts";
 import { createMeasure } from "./measure.ts";
 
 /** What the readouts need each frame. */

@@ -24,11 +24,10 @@ import {
     nearAnomalies,
     nearestPoint,
     orbitNear,
-    orbitShown,
-    projectedRadiusPx,
     trailAlpha,
     trailBack,
-} from "./geometry.ts";
+} from "./geometry/along-orbit.ts";
+import { orbitShown, projectedRadiusPx } from "./geometry/visibility.ts";
 
 /** The orbit lines of a scene. */
 export type Orbits = {
