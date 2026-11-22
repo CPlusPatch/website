@@ -92,7 +92,7 @@ const wrapperProps = form ? { method: "dialog", class: "dialog__form" } : {};
     </div>
     <Wrapper {...wrapperProps}>
         {scrollable ? (
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: a keyboard has to reach a body that scrolls (axe scrollable-region-focusable).
+            // A keyboard has to reach a body that scrolls (axe scrollable-region-focusable).
             <section
                 class="dialog__body"
                 tabindex="0"
