@@ -248,7 +248,7 @@ export const createInspector = (
                 control.textContent = unit;
                 control.setAttribute(
                     "aria-label",
-                    `${unit}. Show distances in ${other}`,
+                    `${control.dataset.row} in ${unit}. Show distances in ${other}`,
                 );
                 control.title = `Show in ${other} (U)`;
             }
@@ -570,6 +570,8 @@ export const createInspector = (
                     const control = h("button", {
                         type: "button",
                         class: "orrery__unit-switch",
+                        // The row's label, so the switches don't all read the same.
+                        "data-row": row.label(parent.name),
                     });
                     control.addEventListener("click", () =>
                         units.set(
