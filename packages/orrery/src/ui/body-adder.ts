@@ -24,6 +24,8 @@ const KINDS: [BodyKind, string][] = [
     ["planet", "Planet"],
     ["dwarf", "Dwarf planet"],
     ["moon", "Moon"],
+    ["asteroid", "Asteroid"],
+    ["comet", "Comet"],
     ["spacecraft", "Spacecraft"],
 ];
 
@@ -35,8 +37,9 @@ const kindOf = (value: string): BodyKind => {
     return found[0];
 };
 
+// Asteroids can have moons, like Didymos.
 const canParent = (body: Body): boolean =>
-    body.kind !== "moon" && body.kind !== "spacecraft";
+    body.kind !== "moon" && body.kind !== "comet" && body.kind !== "spacecraft";
 
 /** A new body's kind around `parent`: a planet around the root, else a moon. */
 const defaultKind = (parent: Body): BodyKind =>

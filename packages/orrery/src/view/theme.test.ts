@@ -25,6 +25,8 @@ Deno.test("a known id wins over the kind", () => {
 Deno.test("an unknown id takes its kind's colour", () => {
     assertEquals(colorOf(body("comet", "dwarf")), "var(--orrery-muted)");
     assertEquals(colorOf(body("comet", "star")), "var(--orrery-signal)");
+    assertEquals(colorOf(body("rock", "asteroid")), "var(--orrery-dim)");
+    assertEquals(colorOf(body("rock", "comet")), "var(--orrery-dim)");
 });
 
 Deno.test("every body of the solar system has a colour of its own", () => {

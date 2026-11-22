@@ -4,7 +4,14 @@ import type { Precession } from "./precession.ts";
 import { length } from "./vec.ts";
 
 /** What a body is. The view colours bodies by kind. */
-export type BodyKind = "star" | "planet" | "dwarf" | "moon" | "spacecraft";
+export type BodyKind =
+    | "star"
+    | "planet"
+    | "dwarf"
+    | "moon"
+    | "asteroid"
+    | "comet"
+    | "spacecraft";
 
 /** One body in a scenario. */
 export type Body = {
@@ -50,6 +57,8 @@ const KINDS: readonly BodyKind[] = [
     "planet",
     "dwarf",
     "moon",
+    "asteroid",
+    "comet",
     "spacecraft",
 ];
 

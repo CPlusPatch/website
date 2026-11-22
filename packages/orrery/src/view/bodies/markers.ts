@@ -4,7 +4,13 @@ import { CanvasTexture, SRGBColorSpace } from "three";
 export const HALO_SCALE = 2.5;
 export const HALO_OPACITY = 0.22;
 
-export type Shape = "disc" | "ring" | "diamond" | "square";
+export type Shape =
+    | "disc"
+    | "ring"
+    | "diamond"
+    | "triangle"
+    | "teardrop"
+    | "square";
 
 /** Each kind has its own shape, so colour isn't the only signal. */
 export const SHAPES: Record<BodyKind, Shape> = {
@@ -12,6 +18,8 @@ export const SHAPES: Record<BodyKind, Shape> = {
     planet: "disc",
     dwarf: "ring",
     moon: "diamond",
+    asteroid: "triangle",
+    comet: "teardrop",
     spacecraft: "square",
 };
 
@@ -21,6 +29,8 @@ const MARKER_PX: Record<BodyKind, number> = {
     planet: 8,
     dwarf: 7,
     moon: 9,
+    asteroid: 7,
+    comet: 9,
     spacecraft: 6,
 };
 
@@ -31,6 +41,36 @@ const TEXTURE_PX = 64;
 const RING_STROKE = (1.75 * TEXTURE_PX) / MARKER_PX.dwarf;
 // Keeps the edge antialiasing inside the texture.
 const EDGE_PX = 1;
+
+// A head in the lower left and a fainter tail to the upper right corner.
+const teardrop = (context: CanvasRenderingContext2D, reach: number): void => {
+    const head = 0.7 * reach;
+    const cx = EDGE_PX + head;
+    const cy = TEXTURE_PX - EDGE_PX - head;
+    const tip = TEXTURE_PX - EDGE_PX;
+    const toTip = Math.atan2(EDGE_PX - cy, tip - cx);
+    // The tail's sides are tangent to the head.
+    const spread = Math.acos(head / Math.hypot(tip - cx, EDGE_PX - cy));
+
+    context.globalAlpha = 0.6;
+    context.beginPath();
+    context.moveTo(tip, EDGE_PX);
+    context.lineTo(
+        cx + head * Math.cos(toTip + spread),
+        cy + head * Math.sin(toTip + spread),
+    );
+    context.lineTo(
+        cx + head * Math.cos(toTip - spread),
+        cy + head * Math.sin(toTip - spread),
+    );
+    context.closePath();
+    context.fill();
+
+    context.globalAlpha = 1;
+    context.beginPath();
+    context.arc(cx, cy, head, 0, 2 * Math.PI);
+    context.fill();
+};
 
 export const markerTexture = (shape: Shape | "halo"): CanvasTexture => {
     const canvas = document.createElement("canvas");
@@ -68,6 +108,17 @@ export const markerTexture = (shape: Shape | "halo"): CanvasTexture => {
         context.lineTo(mid - reach, mid);
         context.closePath();
         context.fill();
+    } else if (shape === "triangle") {
+        // Centred on its height, so the body sits mid-marker.
+        const half = (reach * Math.sqrt(3)) / 2;
+        context.beginPath();
+        context.moveTo(mid, mid - half);
+        context.lineTo(mid + reach, mid + half);
+        context.lineTo(mid - reach, mid + half);
+        context.closePath();
+        context.fill();
+    } else if (shape === "teardrop") {
+        teardrop(context, reach);
     } else {
         context.fillRect(EDGE_PX, EDGE_PX, 2 * reach, 2 * reach);
     }

@@ -98,12 +98,12 @@ Deno.test("a duplicate id is rejected", () => {
 
 Deno.test("an unknown kind is rejected", () => {
     const errors = errorsAfter((s) => {
-        (planet(s) as { kind: string }).kind = "comet";
+        (planet(s) as { kind: string }).kind = "rock";
     });
 
     assert(
         errors.includes(
-            'earth.kind: must be one of star, planet, dwarf, moon, spacecraft (got "comet")',
+            'earth.kind: must be one of star, planet, dwarf, moon, asteroid, comet, spacecraft (got "rock")',
         ),
     );
 });

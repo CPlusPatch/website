@@ -39,6 +39,8 @@ const KIND_COLORS: Record<BodyKind, string> = {
     planet: "var(--orrery-text)",
     dwarf: "var(--orrery-muted)",
     moon: "var(--orrery-muted)",
+    asteroid: "var(--orrery-dim)",
+    comet: "var(--orrery-dim)",
     spacecraft: "var(--orrery-text)",
 };
 

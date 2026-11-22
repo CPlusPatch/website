@@ -93,6 +93,8 @@ export const createBodies = (
         disc: markerTexture("disc"),
         ring: markerTexture("ring"),
         diamond: markerTexture("diamond"),
+        triangle: markerTexture("triangle"),
+        teardrop: markerTexture("teardrop"),
         square: markerTexture("square"),
     };
     const haloTexture = markerTexture("halo");

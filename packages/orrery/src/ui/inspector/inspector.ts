@@ -38,6 +38,8 @@ const KINDS: Record<BodyKind, string> = {
     planet: "Planet",
     dwarf: "Dwarf planet",
     moon: "Moon",
+    asteroid: "Asteroid",
+    comet: "Comet",
     spacecraft: "Spacecraft",
 };
 
