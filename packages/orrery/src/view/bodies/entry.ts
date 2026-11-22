@@ -13,6 +13,7 @@ import {
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Placement } from "../geometry/labels.ts";
 import { CENTERS } from "./labels.ts";
+import { addLimb } from "./limb.ts";
 import { HALO_OPACITY, SHAPES, type Shape } from "./markers.ts";
 
 export type Entry = {
@@ -51,13 +52,17 @@ export const createEntry = (
     const sphere = new Mesh(
         geometry,
         body.kind === "star"
-            ? new MeshBasicMaterial({ color: color(body) })
+            ? new MeshBasicMaterial({ color: color(body), toneMapped: false })
             : new MeshStandardMaterial({
                   color: color(body),
                   roughness: 1,
+                  // Turned on with the map, so a flat colour stays the theme's.
+                  toneMapped: false,
               }),
     );
     sphere.scale.setScalar(body.radius / 1000);
+    if (sphere.material instanceof MeshStandardMaterial)
+        addLimb(sphere.material, body.id);
 
     const marker = new Sprite(
         new SpriteMaterial({
@@ -66,6 +71,7 @@ export const createEntry = (
             color: color(body),
             // Markers draw in `renderOrder`, so they mustn't hide each other.
             depthWrite: false,
+            toneMapped: false,
         }),
     );
     const halo =
@@ -77,6 +83,7 @@ export const createEntry = (
                       color: color(body),
                       opacity: HALO_OPACITY,
                       depthWrite: false,
+                      toneMapped: false,
                   }),
               )
             : null;

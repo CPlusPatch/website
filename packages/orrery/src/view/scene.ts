@@ -14,6 +14,10 @@ import { bindPointer } from "./pointer.ts";
 import { createReadouts } from "./readouts.ts";
 import { createSky } from "./sky.ts";
 import { createTheme } from "./theme.ts";
+import { neutralNoToe } from "./tone-mapping.ts";
+
+/** How much brighter the mapped spheres are drawn, before tone mapping. */
+const EXPOSURE = 2.0;
 
 /** The 3D view drawn into a container. */
 export type View = EditScene & {
@@ -49,6 +53,10 @@ export const createView = (
     } catch {
         return null;
     }
+    // Only the mapped spheres are tone mapped; every flat colour sets `toneMapped: false`.
+    // Neutral, not AgX: AgX shifts the hue of dark night sides.
+    renderer.toneMapping = neutralNoToe();
+    renderer.toneMappingExposure = EXPOSURE;
 
     const names = new Map(
         world.scenario.bodies.map((body) => [body.id, body.name]),

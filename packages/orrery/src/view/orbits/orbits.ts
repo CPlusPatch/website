@@ -148,6 +148,7 @@ export const createOrbits = (
             // The vertex colours carry the fade, so the line's own colour mustn't tint them.
             color: 0xffffff,
             vertexColors: true,
+            toneMapped: false,
         });
         const line = new Line2(geometry, material);
         // Keeps the line readable where it crosses a sphere.
@@ -158,6 +159,7 @@ export const createOrbits = (
                 transparent: true,
                 depthWrite: false,
                 color: background,
+                toneMapped: false,
             }),
         );
         casing.renderOrder = -1;

@@ -133,7 +133,7 @@ export const createBodies = (
 
     const rootGroup = entries.find(({ body }) => body.parent === null)?.group;
     const sun = new PointLight(undefined, 3, 0, 0);
-    const ambient = new AmbientLight(undefined, 0.08);
+    const ambient = new AmbientLight(undefined, 0.04);
     scene.add(sun, ambient);
 
     const view = new Vector3();
@@ -237,6 +237,8 @@ export const createBodies = (
                         maps.load(body.id, (map) => {
                             sphere.material.map = map;
                             sphere.material.color.set(0xffffff);
+                            // The Sun is its own light, so it keeps its colours.
+                            sphere.material.toneMapped = body.kind !== "star";
                             sphere.material.needsUpdate = true;
                         });
                     }

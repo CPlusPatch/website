@@ -147,6 +147,7 @@ export const createGhost = (
             linewidth: GHOST_LINE_PX,
             dashed: true,
             transparent: true,
+            toneMapped: false,
         });
         material.resolution.set(size.width, size.height);
         line = new Line2(geometry, material);
