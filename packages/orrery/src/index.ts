@@ -21,7 +21,7 @@ import { h } from "./ui/dom.ts";
 import { createInspector } from "./ui/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
 import { createNotices } from "./ui/notices.ts";
-import { bindScenarioMenu } from "./ui/scenario-menu.ts";
+import { createScenarios } from "./ui/scenario-menu.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
 import type { Band, Rect } from "./view/geometry.ts";
@@ -233,7 +233,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const crumbs = createCrumbs(world);
     const keys = createKeys();
     top?.prepend(crumbs.element);
-    top?.append(keys.toggle, notices.element);
+    const scenarios = createScenarios(root, world, storage);
+    top?.append(scenarios.toggle, keys.toggle, notices.element);
     root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
     const measure = new ResizeObserver(() => {
@@ -253,7 +254,6 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     for (const panel of [top, bottom]) if (panel) measure.observe(panel);
 
     const unbind = bindShortcuts(world, keys.close);
-    const unbindMenu = bindScenarioMenu(root, world, notices);
 
     const save = () => {
         writeSaved(storage, { ...world.scenario, time: world.clock.t });
@@ -346,7 +346,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             narrow.removeEventListener("change", placeBodyList);
             live.remove();
             unbind();
-            unbindMenu();
+            scenarios.destroy();
             timeBar.destroy();
             crumbs.destroy();
             keys.destroy();

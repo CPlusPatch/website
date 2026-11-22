@@ -20,6 +20,8 @@
     --orrery-rule: #303034;
     --orrery-scanline: rgb(255 255 255 / 0.035);
     --orrery-backdrop: rgb(0 0 0 / 0.7);
+    /* Behind the Scenarios dialog. */
+    --orrery-scrim: rgb(0 0 0 / 0.62);
     --orrery-text: #eeece6;
     --orrery-muted: #b3b0a7;
     /* For marks that carry no text, like the crumbs' chevrons. */
@@ -253,7 +255,8 @@
 
     /* Over other panels, so no blur. */
     .dropdown__panel,
-    .dialog {
+    .dialog,
+    .orrery__scenarios {
         border: 1px solid var(--orrery-frame);
         border-radius: 0;
         background-color: var(--orrery-panel-solid);
@@ -894,16 +897,6 @@
         }
     }
 
-    .orrery__menu {
-        display: grid;
-        gap: var(--space-xs);
-    }
-
-    .orrery__menu-item {
-        justify-content: flex-start;
-        inline-size: 100%;
-    }
-
     /* Equal columns, so buttons that wrap still line up. */
     .orrery__burn-actions {
         display: grid;
@@ -1107,7 +1100,138 @@
         display: none;
     }
 
+    .orrery__scenarios-toggle {
+        align-self: stretch;
+        min-block-size: var(--orrery-control);
+        padding: 0 0.625rem;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) / 1 var(--orrery-font-ui);
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orrery-panel-raised);
+        }
+    }
+
+    .orrery__scenarios {
+        inline-size: min(460px, 100% - 32px);
+        max-block-size: min(640px, 100% - 32px);
+        margin: auto;
+        padding: 0;
+        color: var(--orrery-text);
+
+        &[open] {
+            display: flex;
+            flex-direction: column;
+        }
+
+        &::backdrop {
+            background-color: var(--orrery-scrim);
+        }
+
+        /* The title sits 16px above the first row, as in the other cards. */
+        .orrery__inspector-head {
+            flex: none;
+            border-block-end: 0;
+            padding-block-end: 0;
+        }
+
+        /* The text fields here are left-aligned, unlike the number steppers. */
+        .orrery__stepper input {
+            text-align: start;
+            font: 500 var(--orrery-size-md) var(--orrery-font-ui);
+
+            &::placeholder {
+                color: var(--orrery-dim);
+            }
+        }
+
+        /* The link is long, so it's one muted line cut with an ellipsis. */
+        .orrery__stepper input.orrery__scenarios-link {
+            color: var(--orrery-muted);
+            font: 400 var(--orrery-size-sm) var(--orrery-font-data);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .orrery__stepper > .button {
+            block-size: auto;
+            border-width: 0 0 0 1px;
+            border-color: var(--orrery-frame);
+        }
+    }
+
+    .orrery__scenarios-body {
+        display: grid;
+        gap: 0.625rem;
+        min-block-size: 0;
+        padding: var(--space-md) var(--orrery-pad) var(--orrery-pad);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .orrery__scenarios-list {
+        margin: 0 0 var(--space-sm);
+        padding: 0;
+        border-block-start: 1px solid var(--orrery-rule);
+        list-style: none;
+    }
+
+    .orrery__scenarios-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: 0.625rem 0;
+        border-block-end: 1px solid var(--orrery-rule);
+
+        > div {
+            flex: 1;
+            min-inline-size: 0;
+        }
+
+        strong {
+            display: block;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        small {
+            color: var(--orrery-muted);
+            font: 400 var(--orrery-size-sm) var(--orrery-font-ui);
+        }
+    }
+
+    /* A fixed width keeps the Load buttons in line when one row shows Confirm. */
+    .orrery__scenarios-quiet {
+        flex: none;
+        inline-size: 4.5rem;
+    }
+
+    .orrery__scenarios-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+
+    /* Not display: none, so the live region still announces. */
+    .orrery__scenarios-status {
+        p {
+            margin: 0;
+        }
+
+        ul {
+            margin: var(--space-xs) 0 0;
+            padding-inline-start: var(--space-md);
+        }
+
+        &:empty {
+            margin-block-start: -0.625rem;
+        }
+    }
+
     @media (max-width: 720px) {
+        --orrery-scrim: rgb(0 0 0 / 0.72);
+
         /* The same sizes as a coarse pointer gets, since a narrow screen is touched. */
         --control-height-sm: 2.5rem;
         --control-height-md: 2.75rem;
@@ -1168,6 +1292,10 @@
         .orrery__keys-toggle {
             inline-size: var(--control-height-md);
             margin-inline-start: auto;
+        }
+
+        .orrery__scenarios-toggle {
+            padding-inline: 0.5rem;
         }
 
         /* Every menu spans the bar, rather than lining up with its own button. */

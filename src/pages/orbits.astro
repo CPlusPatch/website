@@ -2,19 +2,9 @@
 /** The Orrery: a 3D model of the solar system, the Moon and the ISS. */
 
 import { Font } from "astro:assets";
-import Icon from "@cpluspatch/ui/astro/icon.astro";
-import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import Dropdown from "@cpluspatch/ui/astro/ui/dropdown.astro";
 import "@cpluspatch/orrery/styles.css";
 import Layout from "../layouts/desktop.astro";
-
-const actions = [
-    { action: "add-body", label: "Add body", icon: "lucide:plus" },
-    { action: "reset", label: "Reset", icon: "lucide:rotate-ccw" },
-    { action: "import", label: "Import JSON", icon: "lucide:upload" },
-    { action: "export", label: "Export JSON", icon: "lucide:download" },
-    { action: "copy-link", label: "Copy share link", icon: "lucide:link" },
-];
 ---
 
 <Layout
@@ -40,33 +30,6 @@ const actions = [
             </noscript>
             <div class="orrery__panel orrery__panel--top" hidden>
                 <span class="orrery__spacer"></span>
-                <Dropdown
-                    id="scenario"
-                    label="Scenario"
-                    icon="lucide:orbit"
-                    title="Scenario"
-                    size="sm"
-                >
-                    <div class="orrery__menu">
-                        {actions.map(({ action, label, icon }) => (
-                            <Button
-                                class="orrery__menu-item"
-                                variant="ghost"
-                                tone="neutral"
-                                data-orrery-action={action}
-                            >
-                                <Icon name={icon} aria-hidden="true" />
-                                {label}
-                            </Button>
-                        ))}
-                    </div>
-                    <input
-                        type="file"
-                        accept=".json,application/json"
-                        data-orrery-file
-                        hidden
-                    >
-                </Dropdown>
                 <Dropdown
                     class="orrery__bodies-menu"
                     id="bodies"

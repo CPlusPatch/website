@@ -6,12 +6,16 @@ import {
     encodeScenario,
     hashPayload,
     MAX_PAYLOAD_CHARS,
+    nameProblem,
     openScenario,
     parseScenarioJson,
+    readList,
     readSaved,
+    SAVED_LIST_KEY,
     STORAGE_KEY,
     startTime,
     toBase64Url,
+    writeList,
     writeSaved,
 } from "./persistence.ts";
 
@@ -211,4 +215,91 @@ Deno.test("a bad link and a bad saved copy both get named", async () => {
 Deno.test("a scenario starts at its own time, else now", () => {
     assertEquals(startTime(scenario, 0), 123456);
     assertEquals(startTime(solarSystem, 946728000000), 0);
+});
+
+const entry = (name: string, savedAt = 1) => ({
+    savedAt,
+    scenario: { ...scenario, name },
+});
+
+Deno.test("a saved list reads back as it was written", () => {
+    const storage = memory();
+    const list = [entry("One", 1), entry("Two", 2)];
+
+    const written = writeList(storage, list);
+
+    assert(written);
+    assertEquals(readList(storage), list);
+});
+
+Deno.test("an empty storage reads as an empty list", () => {
+    assertEquals(readList(memory()), []);
+});
+
+Deno.test("a blocked storage reads as an empty list", () => {
+    assertEquals(readList(throwing), []);
+});
+
+Deno.test("a list that isn't JSON or an array reads as empty", () => {
+    const storage = memory();
+
+    storage.setItem(SAVED_LIST_KEY, "{nope");
+    assertEquals(readList(storage), []);
+
+    storage.setItem(SAVED_LIST_KEY, JSON.stringify({ not: "a list" }));
+    assertEquals(readList(storage), []);
+});
+
+Deno.test("entries that aren't valid scenarios are dropped from the list", () => {
+    const storage = memory();
+    storage.setItem(
+        SAVED_LIST_KEY,
+        JSON.stringify([
+            entry("Good"),
+            { savedAt: 2, scenario: { version: 2, bodies: [] } },
+            { savedAt: "later", scenario },
+            null,
+            "text",
+        ]),
+    );
+
+    const list = readList(storage);
+
+    assertEquals(
+        list.map((saved) => saved.scenario.name),
+        ["Good"],
+    );
+});
+
+Deno.test("writing a list reports a storage that refuses it", () => {
+    assertEquals(writeList(throwing, [entry("One")]), false);
+});
+
+Deno.test("the saved list and the autosave use different keys", () => {
+    const storage = memory();
+
+    writeSaved(storage, scenario);
+    writeList(storage, [entry("One")]);
+
+    assert(storage.data.has(STORAGE_KEY));
+    assert(storage.data.has(SAVED_LIST_KEY));
+    assert(readSaved(storage)?.ok);
+});
+
+Deno.test("a blank name is a problem", () => {
+    assertEquals(nameProblem([], "   "), "Enter a name.");
+    assertEquals(nameProblem([], ""), "Enter a name.");
+});
+
+Deno.test("a name that's taken is a problem, ignoring case and padding", () => {
+    const list = [entry("Earth and Moon")];
+
+    assertEquals(
+        nameProblem(list, "  earth AND moon "),
+        "A scenario called earth AND moon already exists.",
+    );
+});
+
+Deno.test("a new name is fine", () => {
+    assertEquals(nameProblem([entry("One")], "Two"), null);
 });

@@ -8,6 +8,9 @@ import {
 /** The `localStorage` key of the saved scenario. */
 export const STORAGE_KEY = "orrery:v1";
 
+/** The `localStorage` key of the named scenarios. */
+export const SAVED_LIST_KEY = "orrery:saved:v1";
+
 /** What a share link's hash starts with. */
 export const HASH_PREFIX = "#s=";
 
@@ -144,6 +147,72 @@ export const writeSaved = (storage: SavedStorage, s: Scenario): void => {
     } catch {
         // A full or blocked storage only costs the autosave.
     }
+};
+
+/** A scenario the user saved under a name. */
+export type SavedScenario = {
+    /** When it was saved, in Unix ms. */
+    savedAt: number;
+    scenario: Scenario;
+};
+
+/** The named scenarios, in the order they were saved. Bad entries are dropped. */
+export const readList = (storage: SavedStorage): SavedScenario[] => {
+    let parsed: unknown;
+
+    try {
+        const text = storage.getItem(SAVED_LIST_KEY);
+        if (text === null) return [];
+
+        parsed = JSON.parse(text);
+    } catch {
+        // Blocked storage and bad JSON both read as nothing saved.
+        return [];
+    }
+    if (!Array.isArray(parsed)) return [];
+
+    const list: SavedScenario[] = [];
+    for (const entry of parsed as unknown[]) {
+        if (typeof entry !== "object" || entry === null) continue;
+
+        const { savedAt, scenario } = entry as Record<string, unknown>;
+        if (typeof savedAt !== "number" || !Number.isFinite(savedAt)) continue;
+
+        const result = validateScenario(scenario);
+        if (result.ok) list.push({ savedAt, scenario: result.scenario });
+    }
+
+    return list;
+};
+
+/** Saves the named scenarios. Returns `false` when the storage refuses them. */
+export const writeList = (
+    storage: SavedStorage,
+    list: SavedScenario[],
+): boolean => {
+    try {
+        storage.setItem(SAVED_LIST_KEY, JSON.stringify(list));
+
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+/** Why `name` can't be saved next to the scenarios in `list`, or `null`. */
+export const nameProblem = (
+    list: SavedScenario[],
+    name: string,
+): string | null => {
+    const trimmed = name.trim();
+    if (trimmed === "") return "Enter a name.";
+
+    const taken = list.some(
+        ({ scenario }) =>
+            scenario.name.trim().toLowerCase() === trimmed.toLowerCase(),
+    );
+
+    return taken ? `A scenario called ${trimmed} already exists.` : null;
 };
 
 /** The payload of a share link's hash, or `null` if it isn't one. */
