@@ -16,8 +16,10 @@ import {
     writeSaved,
 } from "./persistence.ts";
 import { type BodyList, createBodyList } from "./ui/body-list.ts";
+import { createCrumbs } from "./ui/crumbs.ts";
 import { h } from "./ui/dom.ts";
 import { createInspector } from "./ui/inspector.ts";
+import { createKeys } from "./ui/keys.ts";
 import { createNotices } from "./ui/notices.ts";
 import { bindScenarioMenu } from "./ui/scenario-menu.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
@@ -227,7 +229,12 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     const timeBar = createTimeBar(world);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
-    top?.append(notices.element);
+    // The page has the spacer and the dropdowns between them. The notices come last.
+    const crumbs = createCrumbs(world);
+    const keys = createKeys();
+    top?.prepend(crumbs.element);
+    top?.append(keys.toggle, notices.element);
+    root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
     const measure = new ResizeObserver(() => {
         if (top) {
@@ -245,7 +252,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     });
     for (const panel of [top, bottom]) if (panel) measure.observe(panel);
 
-    const unbind = bindShortcuts(world);
+    const unbind = bindShortcuts(world, keys.close);
     const unbindMenu = bindScenarioMenu(root, world, notices);
 
     const save = () => {
@@ -281,6 +288,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 notices.show("destructive", "The model can't be drawn.");
             }
         }
+        // The keys card hides the orbit card, so a new pick would show nothing.
+        if (event.type === "selection" && event.id !== null) keys.close();
 
         // A rebuilt scenario isn't announced, as its view is new.
         const message = announcement(event, world.scenario.bodies);
@@ -339,6 +348,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             unbind();
             unbindMenu();
             timeBar.destroy();
+            crumbs.destroy();
+            keys.destroy();
             notices.destroy();
             destroyParts?.();
             for (const panel of panels) panel.hidden = true;

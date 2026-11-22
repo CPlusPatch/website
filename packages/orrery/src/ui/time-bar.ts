@@ -21,14 +21,6 @@ export type TimeBar = {
 /** How often the shown time refreshes while the clock runs, in ms. */
 const REFRESH_MS = 250;
 
-const key = (name: string, label: string): HTMLElement =>
-    h(
-        "span",
-        { class: "kbd" },
-        h("kbd", { class: "kbd__key" }, name),
-        ` ${label}`,
-    );
-
 /** The play, speed and date controls of a world's clock. */
 export const createTimeBar = (world: World): TimeBar => {
     const { clock } = world;
@@ -102,17 +94,6 @@ export const createTimeBar = (world: World): TimeBar => {
             h("label", { for: "orrery-jump" }, "Jump to"),
             jump,
             now,
-        ),
-        h(
-            "span",
-            { class: "orrery__time-keys" },
-            key("Space", "play/pause"),
-            key("[ ]", "speed"),
-            key("R", "reverse"),
-            key("F", "focus"),
-            key("Arrows", "rotate"),
-            key("+ −", "zoom"),
-            key("Esc", "deselect"),
         ),
     );
 

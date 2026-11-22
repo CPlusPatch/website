@@ -11,9 +11,8 @@ import {
     formatSpeed,
 } from "../format.ts";
 import { type Readouts, readouts } from "../readouts.ts";
-import { colorOf } from "../view/theme.ts";
 import type { World } from "../world.ts";
-import { bodyMarker } from "./body-marker.ts";
+import { showBodyMarker } from "./body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "./burn-editor.ts";
 import { h } from "./dom.ts";
 import { createElementEditor, type ElementEditor } from "./element-editor.ts";
@@ -203,8 +202,7 @@ export const createInspector = (
                     const icon = h("span", {
                         class: "orrery__orbit-chip-marker",
                     });
-                    icon.innerHTML = bodyMarker(child.kind);
-                    icon.style.color = colorOf(child);
+                    showBodyMarker(icon, child);
                     chip.prepend(icon);
 
                     return h("li", {}, chip);
@@ -344,8 +342,7 @@ export const createInspector = (
         }
         if (!form) mode = "card";
 
-        marker.innerHTML = bodyMarker(body.kind);
-        marker.style.color = colorOf(body);
+        showBodyMarker(marker, body);
         title.textContent =
             mode === "card"
                 ? body.name

@@ -5,9 +5,12 @@ const TEXT = "input, select, textarea, [contenteditable], dialog";
 
 /**
  * Binds Space, `[`, `]` and R to the clock of `world`, and F and Escape to its selection.
- * Returns a function that unbinds them.
+ * Escape closes the keys card first, through `closeKeys`. Returns a function that unbinds them.
  */
-export const bindShortcuts = (world: World): (() => void) => {
+export const bindShortcuts = (
+    world: World,
+    closeKeys: () => boolean,
+): (() => void) => {
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.defaultPrevented || event.isComposing) return;
         if (event.ctrlKey || event.altKey || event.metaKey) return;
@@ -28,7 +31,6 @@ export const bindShortcuts = (world: World): (() => void) => {
             // Esc closes an open menu first. Manual popovers, like the
             // scanlines layer, stay open and don't count.
             if (
-                world.selected === null ||
                 document.querySelector(
                     '[popover]:not([popover="manual"]):popover-open',
                 )
@@ -36,7 +38,11 @@ export const bindShortcuts = (world: World): (() => void) => {
                 return;
             }
 
-            world.select(null);
+            if (!closeKeys()) {
+                if (world.selected === null) return;
+
+                world.select(null);
+            }
         } else if (event.key === "f" || event.key === "F") {
             if (world.selected === null) return;
 

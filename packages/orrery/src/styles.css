@@ -22,6 +22,8 @@
     --orrery-backdrop: rgb(0 0 0 / 0.7);
     --orrery-text: #eeece6;
     --orrery-muted: #b3b0a7;
+    /* For marks that carry no text, like the crumbs' chevrons. */
+    --orrery-dim: #8d8a82;
 
     /* State colours, always paired with a word, shape or pattern. */
     --orrery-go: #4fe079;
@@ -239,7 +241,7 @@
         }
 
         /* The dropdowns' triggers have their own frame. */
-        > :not(.dropdown, .orrery__notices),
+        > :not(.dropdown, .orrery__notices, .orrery__crumbs, .orrery__spacer),
         .orrery__notices > * {
             border: 1px solid var(--orrery-frame);
             border-radius: 0;
@@ -278,6 +280,88 @@
     /* A dropdown of the body list, for the narrow layout. */
     .orrery__bodies-menu {
         display: none;
+    }
+
+    .orrery__spacer {
+        flex: 1;
+        pointer-events: none;
+    }
+
+    .orrery__crumbs {
+        min-inline-size: 0;
+    }
+
+    .orrery__crumb-list {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 2px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        li + li::before {
+            content: "";
+            inline-size: 7px;
+            block-size: 7px;
+            margin-inline: 6px;
+            border-inline-end: 1.5px solid var(--orrery-dim);
+            border-block-end: 1.5px solid var(--orrery-dim);
+            transform: rotate(-45deg);
+        }
+    }
+
+    .orrery__crumb {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        block-size: var(--orrery-control);
+        padding: 0 8px;
+        border: 1px solid transparent;
+        border-radius: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) / 1 var(--orrery-font-ui);
+        letter-spacing: 0.04em;
+        cursor: pointer;
+
+        &:hover,
+        &[aria-current] {
+            border-color: var(--orrery-frame);
+        }
+    }
+
+    .orrery__crumb-marker {
+        display: flex;
+        inline-size: 14px;
+        block-size: 14px;
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
+    }
+
+    .orrery__keys-toggle {
+        display: grid;
+        place-items: center;
+        inline-size: 2rem;
+        min-block-size: var(--orrery-control);
+        align-self: stretch;
+        padding: 0;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) / 1 var(--orrery-font-ui);
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orrery-panel-raised);
+        }
     }
 
     .orrery__panel--top .dropdown__trigger {
@@ -360,17 +444,6 @@
             /* Chrome sizes the field by its text, so the bar would shift as the date changes. */
             font-family: var(--orrery-font-data);
             font-variant-numeric: tabular-nums;
-        }
-    }
-
-    .orrery__time-keys {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-xs) var(--space-md);
-
-        /* Touch screens have no keyboard. */
-        @media (hover: none), (max-width: 720px) {
-            display: none;
         }
     }
 
@@ -503,6 +576,51 @@
 
         &[hidden] {
             display: none;
+        }
+    }
+
+    /* The keys card takes the orbit card's place while it's open. */
+    .orrery__panel--right:has(.orrery__keys:not([hidden]))
+        > .orrery__inspector {
+        display: none;
+    }
+
+    .orrery__keys {
+        align-items: stretch;
+        gap: 0;
+        max-block-size: 100%;
+        overflow: hidden;
+        padding: 0;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .orrery__keys-list {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 10px;
+        margin: 0;
+        padding: var(--space-sm) var(--orrery-pad) var(--orrery-pad);
+        overflow: auto;
+        font-size: var(--orrery-size-sm);
+
+        dt {
+            display: flex;
+            gap: 3px;
+        }
+
+        dd {
+            margin: 0;
+            color: var(--orrery-muted);
+        }
+
+        kbd {
+            padding: 0 5px;
+            border: 1px solid var(--orrery-frame);
+            background-color: var(--orrery-panel-raised);
+            font: 400 var(--orrery-size-xs) / 1.5 var(--orrery-font-data);
         }
     }
 
@@ -1032,9 +1150,24 @@
             inline-size: auto;
         }
 
-        .orrery__inspector {
+        .orrery__inspector,
+        .orrery__keys {
             inline-size: 100%;
             max-block-size: min(60dvh, 100%);
+        }
+
+        /* The crumbs get the first row, and the buttons the next. */
+        .orrery__spacer {
+            display: none;
+        }
+
+        .orrery__crumbs {
+            flex: 1 0 100%;
+        }
+
+        .orrery__keys-toggle {
+            inline-size: var(--control-height-md);
+            margin-inline-start: auto;
         }
 
         /* Every menu spans the bar, rather than lining up with its own button. */
