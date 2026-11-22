@@ -172,17 +172,25 @@
 
     .orrery__orbit-actions {
         display: flex;
+        flex-direction: column;
         gap: var(--space-sm);
         margin-block-start: var(--space-md);
     }
 
+    .orrery__orbit-buttons {
+        display: flex;
+        gap: var(--space-sm);
+    }
+
     .orrery__orbit-button {
         flex: 1;
+        min-inline-size: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: var(--space-sm);
         block-size: var(--orrery-control-lg);
-        padding: 0 var(--space-md);
+        padding: 0 var(--space-sm);
         border: 1px solid var(--orrery-frame);
         background-color: var(--orrery-panel-raised);
         color: var(--orrery-text);
@@ -199,6 +207,12 @@
             border-color: var(--orrery-go);
             background-color: var(--orrery-go);
             color: var(--orrery-go-ink);
+        }
+
+        svg {
+            flex: none;
+            inline-size: 15px;
+            block-size: 15px;
         }
 
         &.orrery__orbit-button--danger {
@@ -222,6 +236,11 @@
         &:hover {
             color: var(--orrery-text);
         }
+    }
+
+    /* Remove sits under the buttons, at the end. */
+    .orrery__orbit-actions .orrery__orbit-quiet {
+        align-self: flex-end;
     }
 
     .orrery__orbit-confirm {
@@ -315,10 +334,60 @@
         }
     }
 
+    /* The handle that opens and closes the card on a phone. */
+    .orrery__orbit-grip {
+        display: none;
+    }
+
     @media (max-width: 720px) {
         .orrery__inspector {
             inline-size: 100%;
             max-block-size: min(60dvh, 100%);
+        }
+
+        .orrery__orbit-grip {
+            display: block;
+            flex: none;
+            block-size: 20px;
+            padding: 0;
+            border: 0;
+            background: none;
+            cursor: grab;
+            touch-action: none;
+
+            &[hidden] {
+                display: none;
+            }
+
+            &::before {
+                content: "";
+                display: block;
+                inline-size: 40px;
+                block-size: 4px;
+                margin: 0 auto;
+                background: var(--orrery-frame);
+            }
+
+            &:hover::before {
+                background: var(--orrery-muted);
+            }
+
+            &:focus-visible {
+                outline-offset: -2px;
+            }
+
+            &:not([hidden]) + .orrery__inspector-head {
+                padding-block-start: 0;
+            }
+        }
+
+        /* Peeked: the name, the line and the chips stay. */
+        .orrery__inspector[data-peek] {
+            .orrery__orbit-meta,
+            .orrery__readouts,
+            .orrery__orbit-actions {
+                display: none;
+            }
         }
 
         /* Touch targets. */

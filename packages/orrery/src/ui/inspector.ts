@@ -20,6 +20,7 @@ import { showBodyMarker } from "./body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "./burn-editor.ts";
 import { h, setText } from "./dom.ts";
 import { createElementEditor, type ElementEditor } from "./element-editor.ts";
+import { sheetAfterDrag } from "./sheet.ts";
 
 /** The inspector's element and how to remove it. */
 export type Inspector = {
@@ -52,6 +53,19 @@ const FIELDS: Row[] = [
     { label: () => "Apoapsis altitude", metres: (r) => r.apoapsisAltitude },
     { label: () => "True anomaly", text: (r) => formatAngle(r.trueAnomaly) },
 ];
+
+const SVG = (body: string) =>
+    `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">${body}</svg>`;
+
+const FOCUS_ICON = SVG(
+    '<g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="4"/><path d="M8 0.5V3.5M8 12.5V15.5M0.5 8H3.5M12.5 8H15.5"/></g>',
+);
+const EDIT_ICON = SVG(
+    '<path d="M10.5 2.5l3 3-8 8H2.5v-3z" fill="none" stroke="currentColor" stroke-width="1.5"/>',
+);
+const BURN_ICON = SVG(
+    '<path d="M8 13V3M4 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+);
 
 const KINDS: Record<BodyKind, string> = {
     star: "Star",
@@ -127,6 +141,49 @@ export const createInspector = (
     );
     element.hidden = true;
 
+    // On a phone the card is a sheet. It starts peeked and keeps its state across bodies.
+    let open = false;
+    let pressedAt: number | null = null;
+    const grip = h("button", {
+        type: "button",
+        class: "orrery__orbit-grip",
+        "aria-label": "All readouts",
+        "aria-expanded": "false",
+    });
+    element.prepend(grip);
+
+    const setSheet = (next: boolean) => {
+        open = next;
+        element.toggleAttribute("data-peek", !open && mode === "card");
+        grip.setAttribute("aria-expanded", String(open));
+
+        // The actions are about to be hidden, which would drop the focus.
+        const held = document.activeElement?.closest(
+            ".orrery__orbit-meta, .orrery__orbit-actions",
+        );
+        if (!open && held && element.contains(held)) grip.focus();
+    };
+    grip.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0 || !event.isPrimary) return;
+
+        pressedAt = event.clientY;
+        grip.setPointerCapture(event.pointerId);
+    });
+    grip.addEventListener("pointerup", (event) => {
+        if (pressedAt === null) return;
+
+        const dy = event.clientY - pressedAt;
+        pressedAt = null;
+        setSheet(sheetAfterDrag(dy, open));
+    });
+    grip.addEventListener("pointercancel", () => {
+        pressedAt = null;
+    });
+    // A pointer tap is handled on pointerup, so only a keyboard click gets here.
+    grip.addEventListener("click", (event) => {
+        if (event.detail === 0) setSheet(!open);
+    });
+
     // Only the card shows the body's name big, with a rule under it.
     const setHead = (small: boolean) => {
         title.className = small ? "orrery__panel-title" : "orrery__orbit-title";
@@ -153,7 +210,8 @@ export const createInspector = (
 
         const on = world.focused === shown;
         focusButton.setAttribute("aria-pressed", String(on));
-        setText(focusButton, on ? "Focused" : "Focus");
+        const label = focusButton.querySelector(".orrery__orbit-button-label");
+        if (label) setText(label, on ? "Focused" : "Focus");
     };
 
     const refresh = () => {
@@ -219,6 +277,22 @@ export const createInspector = (
             label,
         );
         control.addEventListener("click", onClick);
+
+        return control;
+    };
+
+    // The label is its own span, so changing it leaves the icon alone.
+    const iconButton = (
+        label: string,
+        className: string,
+        svg: string,
+        onClick: () => void,
+    ) => {
+        const control = button("", className, onClick);
+        control.innerHTML = svg;
+        control.append(
+            h("span", { class: "orrery__orbit-button-label" }, label),
+        );
 
         return control;
     };
@@ -298,20 +372,30 @@ export const createInspector = (
         hasOrbit: boolean,
     ) => {
         const row = h("div", { class: "orrery__orbit-actions" });
+        // Remove goes under this row, so the three buttons keep the card's width.
+        const buttons = h("div", { class: "orrery__orbit-buttons" });
         const base = "orrery__orbit-button";
 
         const showRow = () => {
-            focusButton = button("Focus", `${base} orrery__orbit-focus`, () =>
-                world.focus(id),
+            focusButton = iconButton(
+                "Focus",
+                `${base} orrery__orbit-focus`,
+                FOCUS_ICON,
+                () => world.focus(id),
             );
             syncFocus();
-            row.replaceChildren(focusButton);
+            buttons.replaceChildren(focusButton);
+            row.replaceChildren(buttons);
             editButton = null;
             burnButton = null;
             if (hasOrbit) {
-                editButton = button("Edit", base, () => openForm("edit"));
-                burnButton = button("Burn", base, () => openForm("burn"));
-                row.append(editButton, burnButton);
+                editButton = iconButton("Edit", base, EDIT_ICON, () =>
+                    openForm("edit"),
+                );
+                burnButton = iconButton("Burn", base, BURN_ICON, () =>
+                    openForm("burn"),
+                );
+                buttons.append(editButton, burnButton);
             }
             if (hasParent) {
                 row.append(
@@ -411,7 +495,10 @@ export const createInspector = (
         burn = null;
         adder?.destroy();
         adder = null;
+        // The forms need the room, so they never peek.
+        grip.hidden = adding;
         if (adding) {
+            element.removeAttribute("data-peek");
             setHead(true);
             title.textContent = "Add a body";
             adder = createBodyAdder(world, units, addName, cancelAdd);
@@ -442,6 +529,8 @@ export const createInspector = (
 
         showBodyMarker(marker, body);
         setHead(mode !== "card");
+        grip.hidden = mode !== "card";
+        element.toggleAttribute("data-peek", !open && mode === "card");
         title.textContent =
             mode === "card"
                 ? body.name
