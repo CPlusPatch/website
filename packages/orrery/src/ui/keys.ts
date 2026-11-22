@@ -14,6 +14,7 @@ export type Keys = {
 
 /** The keys that work, as the keys to press and what they do. */
 const KEYS: [keys: string[], what: string][] = [
+    [["/"], "Search bodies"],
     [["Space"], "Run or hold"],
     [["[", "]"], "Slower, faster"],
     [["R"], "Reverse"],

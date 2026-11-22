@@ -11,6 +11,7 @@ export type ShortcutActions = {
     /** Closes the keys card. Returns whether it was open. */
     closeKeys: () => boolean;
     goLive: () => void;
+    openSearch: () => void;
     toggleDate: () => void;
 };
 
@@ -27,13 +28,13 @@ const shownUnit = (world: World): AUnit => {
 
 /**
  * Binds Space, `[`, `]`, R, L and T to the clock of `world`, and F and Escape to its selection.
- * U switches the distance `units`.
+ * U switches the distance `units`, and `/` opens the search.
  * Escape closes the keys card first. Returns a function that unbinds them.
  */
 export const bindShortcuts = (
     world: World,
     units: Units,
-    { closeKeys, goLive, toggleDate }: ShortcutActions,
+    { closeKeys, goLive, openSearch, toggleDate }: ShortcutActions,
 ): (() => void) => {
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.defaultPrevented || event.isComposing) return;
@@ -85,6 +86,8 @@ export const bindShortcuts = (
             toggleDate();
         } else if (event.key === "u" || event.key === "U") {
             units.toggle(shownUnit(world));
+        } else if (event.key === "/") {
+            openSearch();
         } else {
             return;
         }

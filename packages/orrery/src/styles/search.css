@@ -1,0 +1,187 @@
+.orrery {
+    /* Above the side panels and the top bar, and below the dialogs, which sit in the top layer. */
+    .orrery__search {
+        position: absolute;
+        z-index: 3;
+        inset-block-start: var(--orrery-search-top, 3rem);
+        inset-inline-start: var(--orrery-search-left, var(--space-sm));
+        inline-size: 320px;
+        max-inline-size: calc(100% - 2 * var(--space-sm));
+        border: 1px solid var(--orrery-frame);
+        border-radius: 0;
+        background-color: var(--orrery-panel-solid);
+        color: var(--orrery-text);
+        box-shadow: none;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .orrery__search-field {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        block-size: 2.375rem;
+        padding: 0 var(--orrery-pad);
+        border-block-end: 1px solid var(--orrery-rule);
+
+        &:focus-within {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: -2px;
+        }
+
+        input {
+            flex: 1;
+            min-inline-size: 0;
+            padding: 0;
+            border: 0;
+            background: none;
+            color: var(--orrery-text);
+            font: 500 var(--orrery-size-md) var(--orrery-font-ui);
+            outline: none;
+
+            &::placeholder {
+                color: var(--orrery-dim);
+            }
+        }
+    }
+
+    .orrery__search-icon {
+        display: flex;
+        flex: none;
+        inline-size: 14px;
+        block-size: 14px;
+        color: var(--orrery-muted);
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
+    }
+
+    .orrery__search-marker {
+        display: flex;
+        inline-size: 16px;
+        block-size: 16px;
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
+    }
+
+    .orrery__search-list {
+        max-block-size: min(52vh, 420px);
+        margin: 0;
+        padding: 4px 0;
+        list-style: none;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+
+        li {
+            display: grid;
+            grid-template-columns: 16px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: var(--space-sm);
+            min-block-size: var(--orrery-control);
+            padding: 0 var(--orrery-pad);
+            cursor: pointer;
+
+            &[aria-selected="true"] {
+                background-color: var(--orrery-panel-raised);
+            }
+
+            b {
+                font-weight: 700;
+            }
+        }
+
+        /* The picked body, so the active row's fill isn't the only mark. */
+        li[data-picked] .orrery__search-name::after {
+            content: "";
+            display: inline-block;
+            inline-size: 6px;
+            block-size: 6px;
+            margin-inline-start: 6px;
+            border-radius: 50%;
+            background-color: var(--orrery-pick);
+            vertical-align: 0.1em;
+        }
+
+        li[data-add] .orrery__search-marker {
+            color: var(--orrery-muted);
+        }
+    }
+
+    /* A parent that doesn't fit beside the name wraps, and the fixed height clips it whole. */
+    .orrery__search-text {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 0.4em;
+        min-inline-size: 0;
+        block-size: 1.35em;
+        overflow: hidden;
+        line-height: 1.35;
+    }
+
+    .orrery__search-name {
+        max-inline-size: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .orrery__search-parent {
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+        white-space: nowrap;
+    }
+
+    .orrery__search-range {
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-xs) var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+        text-align: end;
+    }
+
+    .orrery__search-empty {
+        margin: 0;
+        padding: 10px var(--orrery-pad);
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__search-hint {
+        margin: 0;
+        padding: 6px var(--orrery-pad) var(--orrery-pad);
+        border-block-start: 1px solid var(--orrery-rule);
+        color: var(--orrery-dim);
+        font-size: var(--orrery-size-xs);
+    }
+
+    @media (forced-colors: active) {
+        .orrery__search-list li {
+            &[aria-selected="true"] {
+                outline: 2px solid Highlight;
+                outline-offset: -2px;
+            }
+
+            &[data-picked] .orrery__search-name::after {
+                background-color: CanvasText;
+            }
+        }
+    }
+
+    @media (max-width: 720px) {
+        .orrery__search {
+            inset-inline: var(--space-sm);
+            inline-size: auto;
+            max-inline-size: none;
+        }
+
+        .orrery__search-hint {
+            display: none;
+        }
+    }
+}

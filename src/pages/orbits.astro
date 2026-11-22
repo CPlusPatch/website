@@ -2,7 +2,6 @@
 /** The Orrery: a 3D model of the solar system, the Moon and the ISS. */
 
 import { Font } from "astro:assets";
-import Dropdown from "@cpluspatch/ui/astro/ui/dropdown.astro";
 import "@cpluspatch/orrery/styles.css";
 import Layout from "../layouts/desktop.astro";
 ---
@@ -30,18 +29,7 @@ import Layout from "../layouts/desktop.astro";
             </noscript>
             <div class="orrery__panel orrery__panel--top" hidden>
                 <span class="orrery__spacer"></span>
-                <Dropdown
-                    class="orrery__bodies-menu"
-                    id="bodies"
-                    label="Bodies"
-                    icon="lucide:list"
-                    title="Bodies"
-                    size="sm"
-                >
-                    <div data-orrery-bodies></div>
-                </Dropdown>
             </div>
-            <div class="orrery__panel orrery__panel--left" hidden></div>
             <div class="orrery__panel orrery__panel--right" hidden></div>
             <div class="orrery__panel orrery__panel--bottom" hidden></div>
         </div>

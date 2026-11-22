@@ -15,13 +15,14 @@ import {
     startTime,
     writeSaved,
 } from "./persistence.ts";
-import { type BodyList, createBodyList } from "./ui/body-list.ts";
+import { createBodyDialogs } from "./ui/body-dialogs.ts";
 import { createCrumbs } from "./ui/crumbs.ts";
 import { h } from "./ui/dom.ts";
 import { createInspector } from "./ui/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
 import { createNotices } from "./ui/notices.ts";
 import { createScenarios } from "./ui/scenario-menu.ts";
+import { createSearch, type Search } from "./ui/search.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
 import { createUnits } from "./units.ts";
@@ -121,7 +122,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         return rects;
     };
 
-    // Below this width the body list moves into the top bar and the inspector into a sheet.
+    // Below this width the inspector becomes a sheet.
     const narrow = matchMedia(NARROW_QUERY);
 
     // Between the top bar and the time bar, or the sheet that sits on it.
@@ -149,56 +150,24 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
         return free;
     };
-    let bodyList: BodyList | null = null;
-    const placeBodyList = () => {
-        if (!bodyList) return;
 
-        // Otherwise widening leaves the Bodies menu open and empty.
-        if (!narrow.matches) {
-            bodyList.element
-                .closest<HTMLElement>("[popover]:popover-open")
-                ?.hidePopover();
-        }
-        // Moving the list, or hiding the Bodies button, would drop focus to <body>.
-        const active = document.activeElement;
-        const inList = bodyList.element.contains(active);
-        const onMenu = !!active?.closest(".orrery__bodies-menu");
-
-        bodyList.embed(narrow.matches);
-        root.querySelector(
-            narrow.matches ? "[data-orrery-bodies]" : ".orrery__panel--left",
-        )?.append(bodyList.element);
-        root.querySelector(".orrery__inspector-body")?.scrollTo(0, 0);
-
-        if (!inList && !onMenu) return;
-        const target = narrow.matches
-            ? root.querySelector(".orrery__bodies-menu .dropdown__trigger")
-            : inList
-              ? active
-              : bodyList.element.querySelector("button");
-        if (target instanceof HTMLElement) target.focus();
-    };
-    narrow.addEventListener("change", placeBodyList);
+    // Set once the top bar is filled, after the first build.
+    let search: Search | null = null;
 
     // The view and the panels that depend on the scenario.
     const build = (): (() => void) | null => {
         const view = createView(container, world, blocked, band);
         if (!view) return null;
 
-        const list = createBodyList(world);
-        bodyList = list;
-        placeBodyList();
         const inspector = createInspector(
             world,
             units,
-            (id) => list.focusRow(id),
+            () => search?.toggle.focus(),
             view.ghost,
         );
         root.querySelector(".orrery__panel--right")?.append(inspector.element);
 
         return () => {
-            list.destroy();
-            bodyList = null;
             inspector.destroy();
             view.destroy();
         };
@@ -225,7 +194,6 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             destroy: () => {
                 alert.remove();
                 live.remove();
-                narrow.removeEventListener("change", placeBodyList);
                 notices.destroy();
             },
         };
@@ -235,11 +203,14 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     const timeBar = createTimeBar(world, storage);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
-    // The page has the spacer and the dropdowns between them. The notices come last.
+    // The page has the spacer between them. The notices come last.
     const crumbs = createCrumbs(world);
     const keys = createKeys();
-    top?.prepend(crumbs.element);
-    const scenarios = createScenarios(root, world, storage);
+    const dialogs = createBodyDialogs(root, world);
+    // The search panel isn't in a .orrery__panel, so it covers the scene without moving the labels.
+    search = createSearch(root, world, units, dialogs);
+    top?.prepend(crumbs.element, search.toggle);
+    const scenarios = createScenarios(root, world, storage, dialogs);
     top?.append(scenarios.toggle, keys.toggle, notices.element);
     root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
@@ -262,6 +233,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const unbind = bindShortcuts(world, units, {
         closeKeys: keys.close,
         goLive: timeBar.goLive,
+        openSearch: search.open,
         toggleDate: timeBar.toggleDate,
     });
 
@@ -353,10 +325,11 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             measure.disconnect();
             root.style.removeProperty("--orrery-top-space");
             root.style.removeProperty("--orrery-bottom-space");
-            narrow.removeEventListener("change", placeBodyList);
             live.remove();
             unbind();
             scenarios.destroy();
+            search?.destroy();
+            dialogs.destroy();
             timeBar.destroy();
             crumbs.destroy();
             keys.destroy();

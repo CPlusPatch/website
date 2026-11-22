@@ -10,7 +10,8 @@ import { h } from "./dom.ts";
 
 /** The Add body dialog and how to open it. */
 export type BodyDialogs = {
-    openAdd: () => void;
+    /** Opens the Add body dialog, with `name` in the Name field. */
+    openAdd: (name?: string) => void;
     destroy: () => void;
 };
 
@@ -277,7 +278,7 @@ export const createBodyDialogs = (
     add.close.addEventListener("click", closeAdd, { signal });
     addCancel.addEventListener("click", closeAdd, { signal });
 
-    const openAdd = () => {
+    const openAdd = (initialName = "") => {
         const initial = world.selected ?? world.focused;
 
         parent.select.replaceChildren(
@@ -286,7 +287,7 @@ export const createBodyDialogs = (
             ),
         );
         parent.select.value = initial;
-        name.input.value = "";
+        name.input.value = initialName;
         kind.select.value = "moon";
         radius.input.value = "100";
         mass.input.value = "0";

@@ -17,8 +17,7 @@
             pointer-events: auto;
         }
 
-        /* The dropdowns' triggers have their own frame. */
-        > :not(.dropdown, .orrery__notices, .orrery__crumbs, .orrery__spacer),
+        > :not(.orrery__notices, .orrery__crumbs, .orrery__spacer),
         .orrery__notices > * {
             border: 1px solid var(--orrery-frame);
             border-radius: 0;
@@ -29,7 +28,6 @@
     }
 
     /* Over other panels, so no blur. */
-    .dropdown__panel,
     .dialog,
     .orrery__scenarios {
         border: 1px solid var(--orrery-frame);
@@ -55,73 +53,21 @@
         align-items: flex-end;
     }
 
-    /* A dropdown of the body list, for the narrow layout. */
-    .orrery__bodies-menu {
-        display: none;
-    }
-
     .orrery__spacer {
         flex: 1;
         pointer-events: none;
     }
 
-    .orrery__panel--top .dropdown__trigger {
-        border: 1px solid var(--orrery-frame);
-        border-radius: 0;
-        backdrop-filter: blur(6px);
-
-        &:not(:hover) {
-            background-color: var(--orrery-panel);
-        }
-
-        /* A tap leaves :hover on, which would keep the light fill. */
-        @media (hover: none) {
-            background-color: var(--orrery-panel);
-        }
-    }
-
-    /* A panel lines up with its button's edge, so it can end up flush with the viewport's. */
-    @supports (position-area: bottom) {
-        .orrery__panel--top .dropdown__panel {
-            margin-inline: var(--space-sm);
-            max-inline-size: calc(100vw - 2 * var(--space-sm));
-        }
-    }
-
-    .orrery__panel--left,
     .orrery__panel--right {
         inset-block: var(--orrery-top-space) var(--orrery-bottom-space);
+        inset-inline-end: 0;
         flex-direction: column;
         justify-content: flex-start;
+        align-items: flex-end;
         inline-size: min(var(--orrery-side-width), 100%);
     }
 
-    .orrery__panel--left {
-        align-items: flex-start;
-    }
-
-    .orrery__panel--right {
-        align-items: flex-end;
-    }
-
-    .orrery__panel--left {
-        inset-inline-start: 0;
-    }
-
-    .orrery__panel--right {
-        inset-inline-end: 0;
-    }
-
     @media (max-width: 720px) {
-        /* The body list is in the top bar. */
-        .orrery__bodies-menu {
-            display: inline-block;
-        }
-
-        .orrery__panel--left {
-            display: none;
-        }
-
         /* A sheet above the time bar, that stops under the top bar on a short screen. */
         .orrery__panel--right {
             inset-inline: 0;
@@ -132,21 +78,6 @@
 
         /* The crumbs get the first row, and the buttons the next. */
         .orrery__spacer {
-            display: none;
-        }
-
-        /* Every menu spans the bar, rather than lining up with its own button. */
-        @supports (position-area: bottom) {
-            .orrery__panel--top .dropdown__panel {
-                position-area: bottom span-all;
-                inline-size: calc(100vw - 2 * var(--space-sm));
-            }
-        }
-    }
-
-    /* The three triggers fit on one row at 320 px without their icons. */
-    @media (max-width: 360px) {
-        .orrery__panel--top .dropdown__trigger svg {
             display: none;
         }
     }

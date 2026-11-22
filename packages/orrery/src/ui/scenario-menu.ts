@@ -13,7 +13,7 @@ import {
     writeList,
 } from "../persistence.ts";
 import type { World } from "../world.ts";
-import { createBodyDialogs } from "./body-dialogs.ts";
+import type { BodyDialogs } from "./body-dialogs.ts";
 import { h } from "./dom.ts";
 
 /** The Scenarios dialog, the top bar button that opens it and how to remove them. */
@@ -87,22 +87,22 @@ type Armed = { button: HTMLButtonElement; label: string; aria: string | null };
 
 /**
  * Builds the Scenarios dialog in `root`, and the button that opens it.
- * The caller puts the button in the top bar.
+ * The caller puts the button in the top bar. Its Add a body button opens `dialogs`.
  */
 export const createScenarios = (
     root: HTMLElement,
     world: World,
     storage: SavedStorage,
+    dialogs: BodyDialogs,
 ): Scenarios => {
     const abort = new AbortController();
     const { signal } = abort;
-    const dialogs = createBodyDialogs(root, world);
 
     const toggle = h(
         "button",
         {
             type: "button",
-            class: "orrery__scenarios-toggle",
+            class: "orrery__tool",
             "aria-haspopup": "dialog",
         },
         "Scenarios",
@@ -532,7 +532,6 @@ export const createScenarios = (
             abort.abort();
             off();
             close();
-            dialogs.destroy();
             dialog.remove();
             toggle.remove();
         },
