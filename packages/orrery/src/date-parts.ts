@@ -31,8 +31,9 @@ const MONTHS = [
     "December",
 ];
 
-const MIN_YEAR = 1;
-const MAX_YEAR = 9999;
+/** The first and last year the date can be set to. */
+export const MIN_YEAR = 1;
+export const MAX_YEAR = 9999;
 
 /** The seconds one step of a part below a month moves the date by. */
 const STEP_SECONDS = { d: 86400, h: 3600, mi: 60, s: 1 } as const;

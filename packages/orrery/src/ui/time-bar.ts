@@ -2,10 +2,12 @@ import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { RATES } from "../clock.ts";
 import { PART_NAMES, type PartName } from "../date-parts.ts";
+import type { SavedStorage } from "../persistence.ts";
 import { isLive, offsetText, rateText, stampParts } from "../time-text.ts";
 import type { World } from "../world.ts";
 import { createDateEditor } from "./date-editor.ts";
 import { h, setText } from "./dom.ts";
+import { createTimeline } from "./timeline.ts";
 
 /** The time bar's element and how to drive it. */
 export type TimeBar = {
@@ -27,8 +29,8 @@ const presetOf = (rate: number): number =>
         0,
     );
 
-/** The run and rate controls, the date and the live status of a world's clock. */
-export const createTimeBar = (world: World): TimeBar => {
+/** The run and rate controls, the date, the live status and the timeline of a world's clock. */
+export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     const { clock } = world;
 
     const run = h("button", { type: "button", class: "orrery__run" });
@@ -166,6 +168,7 @@ export const createTimeBar = (world: World): TimeBar => {
     );
 
     const editor = createDateEditor(world, date);
+    const timeline = createTimeline(world, storage);
 
     const element = h(
         "div",
@@ -173,6 +176,7 @@ export const createTimeBar = (world: World): TimeBar => {
         h("div", { class: "orrery__split" }, run, rateButton, rateMenu),
         date,
         live,
+        timeline.element,
         editor.element,
     );
 
@@ -342,6 +346,7 @@ export const createTimeBar = (world: World): TimeBar => {
             clearInterval(interval);
             document.removeEventListener("pointerdown", onPointerDown);
             editor.destroy();
+            timeline.destroy();
             element.remove();
         },
     };

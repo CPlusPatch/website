@@ -31,6 +31,8 @@
     --orrery-go: #4fe079;
     --orrery-go-ink: #04210d;
     --orrery-signal: #f4d24a;
+    /* For text on a signal fill, like the timeline's flags. */
+    --orrery-signal-ink: #2a2100;
     --orrery-hold: #ff9f2e;
     --orrery-pick: #ff6fb5;
     --orrery-abort: #ff6b5e;

@@ -6,7 +6,9 @@
         flex: none;
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-        grid-template-areas: "split date live";
+        grid-template-areas:
+            "split date live"
+            "timeline timeline timeline";
         align-items: center;
         margin-inline: auto;
         /* The 130px each side keep it clear of the corners. It can't get too narrow for its three columns. */
@@ -15,6 +17,12 @@
             min(29rem, 100%)
         );
         padding: var(--space-sm);
+        /* The frame, the padding and the rows above the timeline. The tip sits over all that. */
+        --orrery-clock-above: calc(
+            1px +
+            var(--space-sm) +
+            var(--orrery-clock-control)
+        );
     }
 
     .orrery__split {
@@ -308,15 +316,22 @@
     }
 
     @media (max-width: 720px) {
-        /* Row one is the run and rate controls and the live status, row two the date. */
+        /* Row one is the run and rate controls and the live status, row two the date, row three the timeline. */
         .orrery__clock {
             --orrery-clock-control: var(--control-height-md);
+            --orrery-clock-above: calc(
+                1px +
+                var(--space-sm) +
+                2 *
+                var(--orrery-clock-control)
+            );
 
             inline-size: 100%;
             grid-template-columns: minmax(0, 1fr) auto;
             grid-template-areas:
                 "split live"
-                "date date";
+                "date date"
+                "timeline timeline";
         }
 
         .orrery__secs,

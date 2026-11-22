@@ -1,0 +1,67 @@
+.orrery {
+    .orrery__timeline {
+        grid-area: timeline;
+        position: relative;
+        min-inline-size: 0;
+        block-size: 26px;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+
+        &.orrery__timeline--flag {
+            cursor: pointer;
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
+
+        /* The mask is on the canvas, so the tip isn't clipped. */
+        canvas {
+            display: block;
+            inline-size: 100%;
+            block-size: 100%;
+            mask-image: linear-gradient(
+                to right,
+                transparent,
+                #000 24px,
+                #000 calc(100% - 24px),
+                transparent
+            );
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 2px;
+        }
+    }
+
+    /* The tip sits above the capsule, not over the date. */
+    .orrery__timeline-tip {
+        position: absolute;
+        z-index: 3;
+        inset-block-end: calc(100% + var(--orrery-clock-above) + 6px);
+        inset-inline-start: 0;
+        padding: 2px 6px;
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-panel-solid);
+        font: 400 var(--orrery-size-xs) var(--orrery-font-ui);
+        white-space: nowrap;
+        pointer-events: none;
+    }
+
+    /* The canvas keeps its size, so the border adds to the strip's. */
+    @media (forced-colors: active) {
+        .orrery__timeline {
+            box-sizing: content-box;
+            border: 1px solid CanvasText;
+        }
+    }
+
+    /* The labels need room under the baseline. */
+    @media (max-width: 720px) {
+        .orrery__timeline {
+            block-size: 30px;
+        }
+    }
+}

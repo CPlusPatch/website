@@ -230,7 +230,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     for (const panel of panels) panel.hidden = false;
 
-    const timeBar = createTimeBar(world);
+    const timeBar = createTimeBar(world, storage);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
     // The page has the spacer and the dropdowns between them. The notices come last.
     const crumbs = createCrumbs(world);
