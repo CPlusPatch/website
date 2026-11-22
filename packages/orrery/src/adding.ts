@@ -63,3 +63,20 @@ export const newBody = (input: NewBodyInput, t: number): Body => ({
         epoch: t,
     },
 });
+
+/** What removing body `id` takes with it, like `Moon goes with it.` or `Its 4 moons go with it.`, or `""` if it's alone. */
+export const removalNote = (scenario: Scenario, id: string): string => {
+    const below = subtreeIds(scenario, id)
+        .slice(1)
+        .flatMap((other) =>
+            scenario.bodies.filter((body) => body.id === other),
+        );
+    const moons = below.every((body) => body.kind === "moon");
+
+    if (below.length === 0) return "";
+    if (below.length === 1) {
+        return `${below[0]?.name} goes with it.`;
+    }
+
+    return `Its ${below.length} ${moons ? "moons" : "bodies"} go with it.`;
+};

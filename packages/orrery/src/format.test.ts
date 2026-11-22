@@ -6,6 +6,7 @@ import {
     formatAngle,
     formatDistance,
     formatDuration,
+    formatSoon,
     formatSpeed,
     formatUtc,
     fromDatetimeLocal,
@@ -117,6 +118,29 @@ Deno.test("formatDuration changes unit at 2 hours, 2 days and 2 years", () => {
     assertEquals(formatDuration(7200), "2.0 hr");
     assertEquals(formatDuration(2 * 86400), "2.0 days");
     assertEquals(formatDuration(2 * 31557600), "2.0 yrs");
+});
+
+Deno.test("formatSoon writes one short unit for years, days, hours or minutes", () => {
+    assertEquals(formatSoon(1.2 * 31557600), "1.2y");
+    assertEquals(formatSoon(41 * 86400), "41d");
+    assertEquals(formatSoon(3 * 3600), "3h");
+    assertEquals(formatSoon(12 * 60), "12m");
+});
+
+Deno.test("formatSoon moves up a unit when rounding reaches it, and reads the past as 0m", () => {
+    assertEquals(formatSoon(3599), "1h");
+    assertEquals(formatSoon(86399), "1d");
+    assertEquals(formatSoon(20), "0m");
+    assertEquals(formatSoon(-90), "0m");
+});
+
+Deno.test("formatSoon changes unit at a year, a day and an hour", () => {
+    assertEquals(formatSoon(31557600), "1.0y");
+    assertEquals(formatSoon(31557600 - 86400 * 2), "363d");
+    assertEquals(formatSoon(86400), "1d");
+    assertEquals(formatSoon(86400 - 3600), "23h");
+    assertEquals(formatSoon(3600), "1h");
+    assertEquals(formatSoon(3540), "59m");
 });
 
 Deno.test("formatAngle writes degrees with one decimal", () => {

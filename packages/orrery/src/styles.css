@@ -37,6 +37,12 @@
     --orrery-size-xs: 0.6875rem;
     --orrery-size-sm: 0.8125rem;
     --orrery-size-md: 0.9375rem;
+    --orrery-size-xl: 1.75rem;
+
+    /* A card's side padding, and its compact and full control heights. */
+    --orrery-pad: 0.75rem;
+    --orrery-control: 1.875rem;
+    --orrery-control-lg: 2.125rem;
 
     /*
      * The site's tokens, for the ui components. A theme sets them on `:root`, so
@@ -509,29 +515,209 @@
     .orrery__inspector-head {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: var(--space-sm);
-        padding: var(--space-sm);
-        /* Marks where the rows scroll under the head. */
-        border-block-end: var(--border-width) solid var(--color-border);
+        padding: var(--space-sm) var(--orrery-pad);
+        /* The body scrolls under this edge, so it reads as a cut and not an overlap. */
+        border-block-end: 1px solid var(--orrery-rule);
     }
 
     .orrery__inspector-body {
         display: flex;
         flex-direction: column;
-        gap: var(--space-sm);
+        gap: 0;
         min-block-size: 0;
+        padding: var(--space-sm) var(--orrery-pad) var(--orrery-pad);
     }
 
-    .orrery__inspector-title {
-        margin: 0;
-        font: var(--type-body-strong);
+    .orrery__orbit-marker {
+        flex: none;
+        display: flex;
+        inline-size: 1.375rem;
+        block-size: 1.375rem;
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
     }
 
-    .orrery__inspector-meta {
+    .orrery__orbit-title {
+        flex: 1;
+        min-inline-size: 0;
         margin: 0;
-        color: var(--color-text-muted);
-        font: var(--type-body-sm);
+        overflow-wrap: anywhere;
+        font: 600 var(--orrery-size-xl) / 1.1 var(--orrery-font-ui);
+        letter-spacing: 0.02em;
+    }
+
+    .orrery__orbit-meta {
+        margin: 0 0 var(--space-md);
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__orbit-link {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: inherit;
+        text-decoration: underline 1px var(--orrery-frame);
+        text-underline-offset: 3px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration-color: var(--orrery-text);
+        }
+    }
+
+    /* The short form of the readouts. The list below has the full set. */
+    .orrery__orbit-line {
+        margin: 0;
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-xs) / 1.5 var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 var(--space-sm);
+
+        /* The dot belongs to its item, so a wrap can't leave one at the end of a line. */
+        span {
+            white-space: nowrap;
+
+            & + span::before {
+                content: "· ";
+            }
+        }
+    }
+
+    .orrery__orbit-around {
+        margin-block-start: var(--orrery-pad);
+
+        h3 {
+            margin: 0 0 var(--space-sm);
+            color: var(--orrery-muted);
+            font-size: var(--orrery-size-sm);
+            font-weight: 500;
+        }
+
+        ul {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+    }
+
+    .orrery__orbit-chip {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        block-size: var(--orrery-control);
+        padding: 0 var(--space-sm);
+        border: 1px solid var(--orrery-frame);
+        background: none;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--orrery-text);
+        }
+    }
+
+    .orrery__orbit-chip-marker {
+        flex: none;
+        display: flex;
+        inline-size: 0.75rem;
+        block-size: 0.75rem;
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
+    }
+
+    .orrery__orbit-actions {
+        display: flex;
+        gap: var(--space-sm);
+        margin-block-start: var(--space-md);
+    }
+
+    .orrery__orbit-button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        block-size: var(--orrery-control-lg);
+        padding: 0 var(--space-md);
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-panel-raised);
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--orrery-text);
+        }
+
+        &[aria-pressed="true"] {
+            border-color: var(--orrery-go);
+            background-color: var(--orrery-go);
+            color: var(--orrery-go-ink);
+        }
+
+        &.orrery__orbit-button--danger {
+            border-color: var(--orrery-abort);
+            background-color: var(--orrery-panel);
+            color: var(--orrery-abort);
+        }
+    }
+
+    .orrery__orbit-quiet {
+        flex: none;
+        padding: 0 var(--space-xs);
+        border: 0;
+        background: none;
+        color: var(--orrery-muted);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--orrery-text);
+        }
+    }
+
+    .orrery__orbit-confirm {
+        flex: 1;
+        min-inline-size: 0;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .orrery__orbit-confirm-title {
+        font-size: var(--orrery-size-md);
+        font-weight: 600;
+    }
+
+    .orrery__orbit-confirm-note {
+        margin-block-start: var(--space-xs);
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__orbit-row {
+        display: flex;
+        gap: var(--space-sm);
+        margin-block-start: var(--space-sm);
     }
 
     .orrery__readouts {
@@ -814,7 +1000,7 @@
 
         .orrery__inspector {
             inline-size: 100%;
-            max-block-size: min(50dvh, 100%);
+            max-block-size: min(60dvh, 100%);
         }
 
         /* Every menu spans the bar, rather than lining up with its own button. */
@@ -826,6 +1012,16 @@
         }
 
         .orrery__editor summary {
+            min-block-size: var(--control-height-sm);
+        }
+
+        /* Touch targets. */
+        .orrery__orbit-button,
+        .orrery__orbit-quiet {
+            min-block-size: var(--control-height-md);
+        }
+
+        .orrery__orbit-chip {
             min-block-size: var(--control-height-sm);
         }
 

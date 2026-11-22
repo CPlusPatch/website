@@ -2,6 +2,7 @@ import type { Scenario, State } from "@cpluspatch/orbit";
 import {
     apoapsis,
     length,
+    nextApsisTime,
     periapsis,
     period,
     sub,
@@ -22,6 +23,10 @@ export type Readouts = {
     apoapsisAltitude: number;
     /** The true anomaly in [0, 2π). */
     trueAnomaly: number;
+    /** The time until the next periapsis in seconds. */
+    timeToPeriapsis: number;
+    /** The time until the next apoapsis in seconds. */
+    timeToApoapsis: number;
 };
 
 /** The readouts of body `id` at time `t`, or `null` for a body with no orbit. */
@@ -51,5 +56,7 @@ export const readouts = (
         periapsisAltitude: periapsis(body.elements) - parent.radius,
         apoapsisAltitude: apoapsis(body.elements) - parent.radius,
         trueAnomaly: trueAnomalyAt(body.elements, mu, t),
+        timeToPeriapsis: nextApsisTime(body.elements, mu, t, "periapsis") - t,
+        timeToApoapsis: nextApsisTime(body.elements, mu, t, "apoapsis") - t,
     };
 };

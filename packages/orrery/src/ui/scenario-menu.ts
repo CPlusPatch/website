@@ -59,25 +59,6 @@ export const bindScenarioMenu = (
     const { signal } = abort;
     const dialogs = createBodyDialogs(root, world);
 
-    const removeItem = menu.querySelector<HTMLButtonElement>(
-        '[data-orrery-action="remove-body"]',
-    );
-    // The root can't be removed.
-    const updateRemove = () => {
-        if (!removeItem) return;
-
-        removeItem.disabled =
-            world.selected === null ||
-            world.scenario.bodies.find((body) => body.id === world.selected)
-                ?.parent === null;
-    };
-    updateRemove();
-    const off = world.on((event) => {
-        if (event.type === "selection" || event.type === "scenario") {
-            updateRemove();
-        }
-    });
-
     const reset = () => {
         world.load(solarSystem, unixMsToJ2000s(Date.now()));
     };
@@ -182,7 +163,6 @@ export const bindScenarioMenu = (
             menu.hidePopover();
 
             if (action === "add-body") dialogs.openAdd();
-            else if (action === "remove-body") dialogs.openRemove();
             else if (action === "reset") reset();
             else if (action === "import") file.click();
             else if (action === "export") exportJson();
@@ -194,7 +174,6 @@ export const bindScenarioMenu = (
 
     return () => {
         abort.abort();
-        off();
         dialogs.destroy();
     };
 };

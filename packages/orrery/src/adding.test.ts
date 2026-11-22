@@ -1,7 +1,7 @@
 /// <reference types="deno" />
 import { G, solarSystem } from "@cpluspatch/orbit";
-import { assertAlmostEquals, assertEquals } from "@std/assert";
-import { newBody, slugId, subtreeIds } from "./adding.ts";
+import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
+import { newBody, removalNote, slugId, subtreeIds } from "./adding.ts";
 
 const none = new Set<string>();
 
@@ -97,4 +97,34 @@ Deno.test("a new body converts km, degrees and kg to SI", () => {
         m0: 0,
         epoch: 42,
     });
+});
+
+Deno.test("a body with nothing around it takes nothing with it", () => {
+    assertEquals(removalNote(solarSystem, "iss"), "");
+});
+
+Deno.test("a planet with a moon and a craft takes both bodies", () => {
+    assertEquals(removalNote(solarSystem, "earth"), "Its 2 bodies go with it.");
+});
+
+Deno.test("one body below goes by name and several are counted", () => {
+    const only = (...ids: string[]) => ({
+        ...solarSystem,
+        bodies: solarSystem.bodies.filter((body) => ids.includes(body.id)),
+    });
+
+    assertEquals(
+        removalNote(only("sun", "earth", "moon"), "earth"),
+        "Moon goes with it.",
+    );
+    assertEquals(
+        removalNote(only("sun", "earth", "iss"), "earth"),
+        "ISS goes with it.",
+    );
+
+    const [moon] = solarSystem.bodies.filter((body) => body.id === "moon");
+    assert(moon);
+    const two = only("sun", "earth", "moon");
+    two.bodies.push({ ...moon, id: "moon-2", name: "Moon 2" });
+    assertEquals(removalNote(two, "earth"), "Its 2 moons go with it.");
 });

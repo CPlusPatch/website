@@ -120,3 +120,23 @@ export const formatAngle = (rad: number): string => {
     // 359.96 rounds up to a full turn.
     return DEGREES.format(degrees % 360);
 };
+
+const SHORT_YEARS = new Intl.NumberFormat("en", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+});
+
+/** A time span in seconds in one short unit, like `41d`, `3h`, `12m` or `1.2y`. */
+export const formatSoon = (s: number): string => {
+    // Each unit rounds first, so 59.5 minutes reads "1h" and not "60m".
+    const minutes = Math.round(Math.max(0, s) / 60);
+    if (minutes < 60) return `${minutes}m`;
+
+    const hours = Math.round(s / 3600);
+    if (hours < 24) return `${hours}h`;
+
+    const days = Math.round(s / 86400);
+    if (days < 365) return `${days}d`;
+
+    return `${SHORT_YEARS.format(s / 31557600)}y`;
+};

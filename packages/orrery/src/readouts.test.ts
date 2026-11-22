@@ -51,6 +51,32 @@ Deno.test("altitudes are measured above the parent's radius", () => {
     assert(iss.apoapsisAltitude < 5e5);
 });
 
+Deno.test("the next apsides come within one period, apoapsis half a period from periapsis", () => {
+    for (const t of [0, 1e4, 1e6, -1e6]) {
+        const iss = at("iss", t);
+
+        assert(iss);
+        assert(iss.timeToPeriapsis > 0 && iss.timeToPeriapsis <= iss.period);
+        assert(iss.timeToApoapsis > 0 && iss.timeToApoapsis <= iss.period);
+        assertAlmostEquals(
+            (iss.timeToApoapsis - iss.timeToPeriapsis + iss.period) %
+                iss.period,
+            iss.period / 2,
+            1,
+        );
+    }
+});
+
+Deno.test("the time to the next apsis matches the body's state a moment later", () => {
+    const before = at("moon", 0);
+    assert(before);
+    // Just after the next periapsis, the body is back near zero anomaly.
+    const after = at("moon", before.timeToPeriapsis + 1);
+
+    assert(after);
+    assert(after.trueAnomaly < 0.01 || after.trueAnomaly > 2 * Math.PI - 0.01);
+});
+
 Deno.test("the true anomaly is in [0, 2π)", () => {
     for (const t of [0, 1e4, 1e6, -1e6]) {
         const moon = at("moon", t);
