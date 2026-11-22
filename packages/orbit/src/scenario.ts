@@ -204,7 +204,11 @@ const validatePrecession = (
                     `${path}.pole: must be a unit vector (got length ${len})`,
                 );
             } else {
-                unit = { x: v.x / len, y: v.y / len, z: v.z / len };
+                // A pole that's already unit to rounding is kept, so a saved scenario loads back unchanged.
+                unit =
+                    Math.abs(len - 1) < 1e-12
+                        ? v
+                        : { x: v.x / len, y: v.y / len, z: v.z / len };
             }
         }
     }
