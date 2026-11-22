@@ -10,29 +10,17 @@ import {
 /** An element the editor changes. */
 export type Field = "a" | "e" | "i" | "raan" | "argp" | "m";
 
-/** The top of the semi-major axis slider, which starts at 0. */
-export const SLIDER_MAX = 1000;
-
 /** The longest semi-major axis the editor allows, in metres. */
 export const A_MAX = 100 * AU;
 
 /** The unit a semi-major axis is shown in. */
 export type AUnit = "km" | "AU";
 
+/** Degrees in a radian. */
+export const DEGREES = 180 / Math.PI;
+
 /** The shortest semi-major axis the editor allows around a parent, in metres. */
 export const aMin = (parentRadius: number): number => 1.01 * parentRadius;
-
-/** `x` limited to the range from `min` to `max`. */
-export const clamp = (x: number, min: number, max: number): number =>
-    Math.min(Math.max(x, min), max);
-
-/** The slider position, from 0 to `SLIDER_MAX`, of `a` on a log scale from `min` to `max`. */
-export const aToSlider = (a: number, min: number, max: number): number =>
-    clamp(Math.log(a / min) / Math.log(max / min), 0, 1) * SLIDER_MAX;
-
-/** The semi-major axis at slider position `x` on a log scale from `min` to `max`. */
-export const sliderToA = (x: number, min: number, max: number): number =>
-    min * (max / min) ** clamp(x / SLIDER_MAX, 0, 1);
 
 /** The unit a semi-major axis of `a` metres is shown in: km under 0.1 AU. */
 export const aUnit = (a: number): AUnit => (a < 0.1 * AU ? "km" : "AU");
@@ -85,3 +73,57 @@ export const passesThroughParent = (
     el: Elements,
     parentRadius: number,
 ): boolean => periapsis(el) < parentRadius;
+
+/** The elements after the edits in `changes` (metres or radians), keeping the mean anomaly at `t`. */
+export const draftElements = (
+    el: Elements,
+    mu: number,
+    t: number,
+    changes: Partial<Record<Field, number>>,
+): Elements => {
+    let draft = el;
+
+    for (const field of ["a", "e", "i", "raan", "argp", "m"] as const) {
+        const value = changes[field];
+        if (value !== undefined) {
+            draft = editElements(draft, mu, t, field, value);
+        }
+    }
+
+    return draft;
+};
+
+const limit = (x: number, decimals: number): string =>
+    new Intl.NumberFormat("en", { maximumFractionDigits: decimals }).format(x);
+
+/**
+ * Why `value` is wrong for `field`, or `null` if it's fine. `value` is in metres or radians.
+ * The limits of `a` are shown in `unit`.
+ */
+export const fieldError = (
+    field: Field,
+    value: number,
+    aMin: number,
+    unit: AUnit = "km",
+): string | null => {
+    if (!Number.isFinite(value)) return "Enter a number.";
+
+    if (field === "a" && (value < aMin || value > A_MAX)) {
+        const decimals = unit === "km" ? 0 : 4;
+        const scale = 10 ** decimals;
+        // Rounded inwards, so the limits shown are values the field accepts.
+        const low = Math.ceil(fromMetres(aMin, unit) * scale) / scale;
+        const high = Math.floor(fromMetres(A_MAX, unit) * scale) / scale;
+
+        return `Must be between ${limit(low, decimals)} and ${limit(high, decimals)} ${unit}.`;
+    }
+    if (field === "e" && (value < 0 || value > 0.99)) {
+        return "Must be at least 0 and at most 0.99.";
+    }
+    // A little slack, since 180° as radians can land a bit over π.
+    if (field === "i" && (value < 0 || value > Math.PI + 1e-9)) {
+        return "Must be between 0° and 180°.";
+    }
+
+    return null;
+};

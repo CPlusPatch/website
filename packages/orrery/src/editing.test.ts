@@ -1,18 +1,18 @@
 /// <reference types="deno" />
 import type { Elements } from "@cpluspatch/orbit";
-import { AU, meanAnomalyAt } from "@cpluspatch/orbit";
+import { AU, meanAnomalyAt, stateAt } from "@cpluspatch/orbit";
 import { assertAlmostEquals, assertEquals } from "@std/assert";
 import {
     A_MAX,
     aMin,
-    aToSlider,
     aUnit,
+    DEGREES,
+    draftElements,
     editElements,
+    fieldError,
     fieldValue,
     fromMetres,
     passesThroughParent,
-    SLIDER_MAX,
-    sliderToA,
     toMetres,
 } from "./editing.ts";
 
@@ -71,36 +71,6 @@ Deno.test("fieldValue reads the mean anomaly at the time and the other elements 
     assertEquals(fieldValue(EL, MU, T, "argp"), EL.argp);
 });
 
-Deno.test("the slider maps the ends of the range to the ends of the log scale", () => {
-    const min = aMin(6.371e6);
-
-    assertEquals(aToSlider(min, min, A_MAX), 0);
-    assertAlmostEquals(aToSlider(A_MAX, min, A_MAX), SLIDER_MAX, 1e-9);
-    assertAlmostEquals(sliderToA(0, min, A_MAX), min, 1e-3);
-    assertAlmostEquals(sliderToA(SLIDER_MAX, min, A_MAX) / A_MAX, 1, 1e-12);
-});
-
-Deno.test("the slider and the semi-major axis round-trip", () => {
-    const min = aMin(6.371e6);
-
-    for (const a of [min, 7e6, 3.844e8, AU, 30 * AU]) {
-        assertAlmostEquals(
-            sliderToA(aToSlider(a, min, A_MAX), min, A_MAX) / a,
-            1,
-            1e-12,
-        );
-    }
-});
-
-Deno.test("values outside the range clamp to its ends", () => {
-    const min = aMin(6.371e6);
-
-    assertEquals(aToSlider(min / 2, min, A_MAX), 0);
-    assertEquals(aToSlider(A_MAX * 2, min, A_MAX), SLIDER_MAX);
-    assertEquals(sliderToA(-5, min, A_MAX), min);
-    assertAlmostEquals(sliderToA(SLIDER_MAX * 2, min, A_MAX) / A_MAX, 1, 1e-12);
-});
-
 Deno.test("a is shown in km under 0.1 AU and in AU from there", () => {
     assertEquals(aUnit(0.099 * AU), "km");
     assertEquals(aUnit(0.1 * AU), "AU");
@@ -122,4 +92,86 @@ Deno.test("an orbit passes through its parent when periapsis is below the radius
         passesThroughParent({ ...EL, a: radius, e: 0 }, radius),
         false,
     );
+});
+
+Deno.test("a draft with no changes keeps the orbit", () => {
+    const draft = draftElements(EL, MU, T, {});
+
+    assertEquals(draft.a, EL.a);
+    assertEquals(draft.e, EL.e);
+    assertEquals(draft.i, EL.i);
+    const now = stateAt(draft, MU, T).r;
+    const before = stateAt(EL, MU, T).r;
+    assertAlmostEquals(now.x, before.x, 1e-3);
+    assertAlmostEquals(now.y, before.y, 1e-3);
+    assertAlmostEquals(now.z, before.z, 1e-3);
+});
+
+Deno.test("a draft that changes only a keeps the mean anomaly at that time", () => {
+    const draft = draftElements(EL, MU, T, { a: 9e6 });
+
+    assertEquals(draft.a, 9e6);
+    assertAlmostEquals(
+        meanAnomalyAt(draft, MU, T),
+        meanAnomalyAt(EL, MU, T),
+        1e-9,
+    );
+});
+
+Deno.test("a draft applies each change it holds and no other", () => {
+    const draft = draftElements(EL, MU, T, { e: 0.3, raan: 4, m: 1.5 });
+
+    assertEquals(draft.e, 0.3);
+    assertEquals(draft.raan, 4);
+    assertEquals(meanAnomalyAt(draft, MU, T), 1.5);
+    assertEquals(draft.a, EL.a);
+    assertEquals(draft.i, EL.i);
+    assertEquals(draft.argp, EL.argp);
+});
+
+Deno.test("a value that isn't a number is an error for every field", () => {
+    for (const field of ["a", "e", "i", "raan", "argp", "m"] as const) {
+        assertEquals(fieldError(field, Number.NaN, 7e6), "Enter a number.");
+        assertEquals(fieldError(field, Infinity, 7e6), "Enter a number.");
+    }
+});
+
+Deno.test("a must be between its limits, which the message gives in the unit", () => {
+    const min = aMin(6.371e6);
+
+    assertEquals(fieldError("a", min, min), null);
+    assertEquals(fieldError("a", A_MAX, min), null);
+    assertEquals(
+        fieldError("a", min - 1, min, "km"),
+        "Must be between 6,435 and 14,959,787,070 km.",
+    );
+    assertEquals(
+        fieldError("a", A_MAX * 2, 0.5 * AU, "AU"),
+        "Must be between 0.5 and 100 AU.",
+    );
+});
+
+Deno.test("e must be from 0 to 0.99", () => {
+    const message = "Must be at least 0 and at most 0.99.";
+
+    assertEquals(fieldError("e", 0, 7e6), null);
+    assertEquals(fieldError("e", 0.99, 7e6), null);
+    assertEquals(fieldError("e", -0.01, 7e6), message);
+    assertEquals(fieldError("e", 0.991, 7e6), message);
+});
+
+Deno.test("i must be from 0 to 180 degrees, given in radians", () => {
+    const message = "Must be between 0° and 180°.";
+
+    assertEquals(fieldError("i", 0, 7e6), null);
+    assertEquals(fieldError("i", 180 / DEGREES, 7e6), null);
+    assertEquals(fieldError("i", -0.1, 7e6), message);
+    assertEquals(fieldError("i", 180.5 / DEGREES, 7e6), message);
+});
+
+Deno.test("the node, the periapsis and the mean anomaly take any number", () => {
+    for (const field of ["raan", "argp", "m"] as const) {
+        assertEquals(fieldError(field, -50, 7e6), null);
+        assertEquals(fieldError(field, 50, 7e6), null);
+    }
 });

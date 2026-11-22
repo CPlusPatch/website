@@ -24,6 +24,9 @@ export type Inspector = {
     destroy: () => void;
 };
 
+/** What the card shows: the readouts, or a form that replaces them. */
+type Mode = "card" | "edit" | "burn";
+
 /** How often the readouts refresh while the clock runs, in ms. */
 const REFRESH_MS = 250;
 
@@ -82,7 +85,10 @@ export const createInspector = (
     close.addEventListener("click", () => world.select(null));
 
     const marker = h("span", { class: "orrery__orbit-marker" });
-    const title = h("h2", { class: "orrery__orbit-title" });
+    const title = h("h2", {
+        class: "orrery__orbit-title",
+        id: "orrery-orbit-title",
+    });
     // Scrolls under the head, as a scrolling card left a blank band in Chromium's canvas.
     const content = h("div", { class: "orrery__inspector-body" });
     const element = h(
@@ -101,8 +107,11 @@ export const createInspector = (
     let spoken: HTMLElement | null = null;
     let focusButton: HTMLButtonElement | null = null;
     let shown: string | null = null;
+    let mode: Mode = "card";
     let editor: ElementEditor | null = null;
     let burn: BurnEditor | null = null;
+    let editButton: HTMLButtonElement | null = null;
+    let burnButton: HTMLButtonElement | null = null;
 
     const syncFocus = () => {
         if (!focusButton) return;
@@ -113,11 +122,10 @@ export const createInspector = (
     };
 
     const refresh = () => {
+        burn?.refresh();
+
         const id = world.selected;
         if (!id || values.length === 0) return;
-
-        editor?.refresh();
-        burn?.refresh();
 
         const current = readouts(
             world.scenario,
@@ -159,13 +167,18 @@ export const createInspector = (
         return control;
     };
 
-    // Opens the section and puts the cursor in its first field.
-    const reveal = (section: HTMLElement | undefined) => {
-        if (!(section instanceof HTMLDetailsElement)) return;
+    // Back to the card, with focus on the button that opened the form.
+    const closeForm = (opener: "edit" | "burn") => {
+        mode = "card";
+        render();
+        (opener === "edit" ? editButton : burnButton)?.focus();
+    };
 
-        section.open = true;
+    const openForm = (next: "edit" | "burn") => {
+        mode = next;
+        render();
         // The Burn step radios are visually hidden, so the first visible field gets the focus.
-        section
+        content
             .querySelector<HTMLElement>("input:not(.visually-hidden)")
             ?.focus();
     };
@@ -200,7 +213,12 @@ export const createInspector = (
         );
     };
 
-    const actions = (id: string, name: string, hasParent: boolean) => {
+    const actions = (
+        id: string,
+        name: string,
+        hasParent: boolean,
+        hasOrbit: boolean,
+    ) => {
         const row = h("div", { class: "orrery__orbit-actions" });
         const base = "orrery__orbit-button";
 
@@ -210,13 +228,12 @@ export const createInspector = (
             );
             syncFocus();
             row.replaceChildren(focusButton);
-            if (editor) {
-                const section = editor.elements[0];
-                row.append(button("Edit", base, () => reveal(section)));
-            }
-            if (burn) {
-                const section = burn.elements[0];
-                row.append(button("Burn", base, () => reveal(section)));
+            editButton = null;
+            burnButton = null;
+            if (hasOrbit) {
+                editButton = button("Edit", base, () => openForm("edit"));
+                burnButton = button("Burn", base, () => openForm("burn"));
+                row.append(editButton, burnButton);
             }
             if (hasParent) {
                 row.append(
@@ -308,13 +325,32 @@ export const createInspector = (
         burn = null;
         if (!body) return;
 
-        marker.innerHTML = bodyMarker(body.kind);
-        marker.style.color = colorOf(body);
-        title.textContent = body.name;
-
         const parent = world.scenario.bodies.find(
             (candidate) => candidate.id === body.parent,
         );
+        const hasOrbit = parent !== undefined && body.elements !== undefined;
+
+        let form: HTMLFormElement | null = null;
+        if (mode === "edit") {
+            editor = createElementEditor(world, body.id, ghost, () =>
+                closeForm("edit"),
+            );
+            form = editor?.element ?? null;
+        } else if (mode === "burn") {
+            burn = createBurnEditor(world, body.id, ghost, () =>
+                closeForm("burn"),
+            );
+            form = burn?.element ?? null;
+        }
+        if (!form) mode = "card";
+
+        marker.innerHTML = bodyMarker(body.kind);
+        marker.style.color = colorOf(body);
+        title.textContent =
+            mode === "card"
+                ? body.name
+                : `${mode === "edit" ? "Edit" : "Burn"} ${body.name}`;
+
         const link = parent
             ? button(parent.name, "orrery__orbit-link", () =>
                   world.select(parent.id),
@@ -328,6 +364,10 @@ export const createInspector = (
                 ...(link ? ["around ", link] : ["at the centre"]),
             ),
         );
+        if (form) {
+            content.append(form);
+            return;
+        }
 
         // A body with no parent has no orbit to read.
         if (parent) {
@@ -351,16 +391,13 @@ export const createInspector = (
                 spoken,
                 list,
             );
-            editor = createElementEditor(world, body.id);
-            burn = createBurnEditor(world, body.id, ghost);
         }
 
         const chips = parent ? around(body.id, body.name) : null;
         if (chips) content.append(chips);
-        content.append(actions(body.id, body.name, parent !== undefined));
-        for (const section of [editor, burn]) {
-            if (section) content.append(...section.elements);
-        }
+        content.append(
+            actions(body.id, body.name, parent !== undefined, hasOrbit),
+        );
         refresh();
 
         // Focus was on something this render replaced.
@@ -371,9 +408,19 @@ export const createInspector = (
     render();
 
     const off = world.on((event) => {
-        // Add and remove change the "Around" chips without changing the selection.
-        if (event.type === "selection" || event.type === "scenario") render();
-        else if (event.type === "focus") syncFocus();
+        if (event.type === "selection") {
+            mode = "card";
+            render();
+        } else if (event.type === "scenario") {
+            const gone = !world.scenario.bodies.some(
+                (candidate) => candidate.id === world.selected,
+            );
+            // Add and remove elsewhere change the "Around" chips, but must not wipe a draft.
+            if (mode === "card" || gone) {
+                mode = "card";
+                render();
+            }
+        } else if (event.type === "focus") syncFocus();
         else if (event.type === "clock") refresh();
         else if (event.type === "body" && event.id === world.selected)
             refresh();

@@ -1,12 +1,10 @@
 import type { Burn, Elements } from "@cpluspatch/orbit";
 import { nextApsisTime } from "@cpluspatch/orbit";
-import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
 import {
     failureMessage,
     isZero,
-    nudge,
     type Prediction,
     predict,
     STEPS,
@@ -15,12 +13,12 @@ import {
 import { formatDistance, formatDuration } from "../format.ts";
 import type { World } from "../world.ts";
 import { h } from "./dom.ts";
+import { createForm, createStepper } from "./form.ts";
 import { createWarning } from "./warning.ts";
 
-/** The Burn section's element and how to update and remove it. */
+/** The burn form's element and how to update and remove it. */
 export type BurnEditor = {
-    /** The Burn section. */
-    elements: HTMLElement[];
+    element: HTMLFormElement;
     /** Predicts the burn again. */
     refresh: () => void;
     destroy: () => void;
@@ -46,12 +44,14 @@ const PREDICTED: [label: string, value: (p: Prediction) => string][] = [
     ["Period", (p) => formatDuration(p.period)],
 ];
 
-/** The Burn section for body `id`, or `null` if it has no orbit to burn on. */
+/** The burn form for body `id`, or `null` if it has no orbit to burn on. */
 export const createBurnEditor = (
     world: World,
     id: string,
     /** Draws the orbit after the burn, or none with `null`. */
     ghost: (id: string, elements: Elements | null) => void,
+    /** Called when the form is done, with whether it burned. */
+    done: (applied: boolean) => void,
 ): BurnEditor | null => {
     // The scenario is replaced on every edit, so read it again each time.
     const context = () => {
@@ -71,97 +71,42 @@ export const createBurnEditor = (
     let step = DEFAULT_STEP;
     let ghosted: Elements | null = null;
     let wasNonzero = false;
-    // Only a pause this editor made is undone after Apply.
+    // Only a pause this editor made is undone when the form closes.
     let pausedHere = false;
     const offClock = world.on((event) => {
         if (event.type === "clock" && !world.clock.paused) pausedHere = false;
     });
 
-    const move = (axis: Axis, delta: number) => {
-        const input = inputs[axis];
-        input.value = String(nudge(input.valueAsNumber, delta));
-        changed();
-    };
-
-    const stepButton = (axis: Axis, name: string, sign: 1 | -1) => {
-        const button = h("button", {
-            type: "button",
-            class: buttonClasses({
-                variant: "outline",
-                tone: "neutral",
-                size: "icon",
-            }).join(" "),
-            "aria-label": `${
-                sign === 1 ? "More" : "Less"
-            } ${name.toLowerCase()}`,
-        });
-        button.textContent = sign === 1 ? "+" : "−";
-        button.addEventListener("click", () => move(axis, sign * step));
-
-        return button;
-    };
-
     // Any Δv is allowed; the step only sets how far − and + move it.
-    const makeInput = (axis: Axis) => {
-        const input = h("input", {
-            id: `orrery-burn-${axis}`,
-            type: "number",
-            class: "field input orrery__editor-number",
+    const steppers = AXES.map(([axis, name, text]) => {
+        const id = `orrery-burn-${axis}`;
+        const hint = text
+            ? h("p", { id: `${id}-hint`, class: "orrery__stepper-hint" }, text)
+            : null;
+        const stepper = createStepper({
+            id,
+            name: axis,
+            label: name,
+            unit: "m/s",
             value: "0",
-            step: "any",
+            step: () => step,
+            describedBy: hint ? [hint.id] : [],
+            onInput: () => changed(),
+            // An empty or half-typed field reads as 0, so it says so on blur.
+            onChange: () => {
+                if (stepper.input.value !== "") return;
+
+                stepper.input.value = "0";
+                changed();
+            },
         });
-        // An empty or half-typed field reads as 0, so it says so on blur.
-        input.addEventListener("change", () => {
-            if (input.value !== "") return;
+        if (hint) stepper.element.append(hint);
 
-            input.value = "0";
-            changed();
-        });
-        input.addEventListener("input", () => changed());
-        // The native arrows would move by 1, whatever the step is.
-        input.addEventListener("keydown", (event) => {
-            if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
-
-            event.preventDefault();
-            move(axis, event.key === "ArrowUp" ? step : -step);
-        });
-
-        return input;
-    };
-
-    const inputs: Record<Axis, HTMLInputElement> = {
-        prograde: makeInput("prograde"),
-        normal: makeInput("normal"),
-        radial: makeInput("radial"),
-    };
-
-    const rows = AXES.map(([axis, name, text]) => {
-        const input = inputs[axis];
-        const label = h("label", { for: input.id }, `${name} (m/s)`);
-        let hint: HTMLElement | null = null;
-        if (text) {
-            hint = h(
-                "p",
-                { id: `${input.id}-hint`, class: "orrery__editor-hint" },
-                text,
-            );
-            input.setAttribute("aria-describedby", hint.id);
-        }
-
-        return h(
-            "div",
-            { class: "orrery__editor-row" },
-            label,
-            h(
-                "div",
-                { class: "orrery__editor-controls" },
-                stepButton(axis, name, -1),
-                input,
-                stepButton(axis, name, 1),
-            ),
-            ...(hint ? [hint] : []),
-        );
+        return [axis, stepper] as const;
     });
+    const inputs = Object.fromEntries(
+        steppers.map(([axis, stepper]) => [axis, stepper.input]),
+    ) as Record<Axis, HTMLInputElement>;
 
     const stepControl = h(
         "fieldset",
@@ -219,15 +164,6 @@ export const createBurnEditor = (
 
     const alert = createWarning();
 
-    const apply = h(
-        "button",
-        {
-            type: "button",
-            class: buttonClasses().join(" "),
-        },
-        "Apply",
-    );
-    apply.disabled = true;
     const goTo = (apsis: "periapsis" | "apoapsis") => {
         const button = h(
             "button",
@@ -295,11 +231,8 @@ export const createBurnEditor = (
             );
         }
 
-        apply.disabled = !result?.ok;
-        pending.hidden = element.open || isZero(dv);
-        footer.hidden = !element.open;
-        // A closed section hides its preview, so it hides the ghost too.
-        showGhost(result?.ok && element.open ? result.elements : null);
+        form.apply.disabled = !result?.ok;
+        showGhost(result?.ok ? result.elements : null);
     };
 
     // The first nudge from zero stops the clock, so the burn is made where it's shown.
@@ -320,99 +253,59 @@ export const createBurnEditor = (
         update();
     };
 
-    apply.addEventListener("click", () => {
-        if (!world.burn(id, read()).ok) return;
-
+    const resume = () => {
         if (pausedHere && world.clock.paused) world.setClock({ paused: false });
         pausedHere = false;
+    };
 
-        // Apply is disabled next, which would drop focus to <body>.
-        inputs.prograde.focus();
-        for (const input of Object.values(inputs)) input.value = "0";
-        changed();
-    });
-
-    const pending = h("span", { class: "orrery__burn-pending" }, "Δv set");
-    pending.hidden = true;
-    const chevron = h("span");
-    chevron.innerHTML = iconSvg("chevron-down");
-    const element = h(
-        "details",
-        { class: "orrery__editor orrery__burn" },
-        h("summary", {}, "Burn", pending, chevron),
-        h(
-            "fieldset",
-            { class: "orrery__burn-dv" },
-            h("legend", { class: "visually-hidden" }, "Δv"),
+    const form = createForm(
+        "orrery-orbit-title",
+        [
+            h(
+                "fieldset",
+                { class: "orrery__burn-dv" },
+                h("legend", { class: "visually-hidden" }, "Δv"),
+                h(
+                    "div",
+                    { class: "orrery__burn-step" },
+                    h("span", { "aria-hidden": "true" }, "Step"),
+                    stepControl,
+                    h("span", { "aria-hidden": "true" }, "m/s"),
+                ),
+                ...steppers.map(([, stepper]) => stepper.element),
+            ),
             h(
                 "div",
-                { class: "orrery__burn-step" },
-                h("span", { "aria-hidden": "true" }, "Step"),
-                stepControl,
-                h("span", { "aria-hidden": "true" }, "m/s"),
+                { class: "orrery__burn-actions" },
+                goTo("periapsis"),
+                goTo("apoapsis"),
             ),
-            ...rows,
-        ),
-        // Here, not in the footer, since they go to the current orbit's apsides.
-        h(
-            "div",
-            { class: "orrery__burn-actions" },
-            goTo("periapsis"),
-            goTo("apoapsis"),
-        ),
-    );
-    // Outside the <details>, so it sticks to the card's bottom even when the section starts below the fold.
-    const footer = h(
-        "div",
-        {
-            class: "orrery__burn-footer",
-            role: "group",
-            "aria-label": "Burn result",
+            predictions,
+            alert.element,
+        ],
+        () => {
+            if (!world.burn(id, read()).ok) return;
+
+            resume();
+            done(true);
         },
-        predictions,
-        alert.element,
-        h("div", { class: "orrery__burn-actions" }, apply),
+        () => {
+            for (const input of Object.values(inputs)) input.value = "0";
+            wasNonzero = false;
+            update();
+            resume();
+            done(false);
+        },
     );
-    footer.hidden = true;
-
-    // Focus scrolling keeps fields clear of the footer that covers the card's bottom.
-    const footerSize = new ResizeObserver(() => {
-        const card = footer.parentElement;
-        card?.style.setProperty(
-            "scroll-padding-block-end",
-            `${footer.offsetHeight}px`,
-        );
-
-        // The footer grows on the first nudge, over the button just pressed.
-        const active = document.activeElement;
-        if (
-            active instanceof HTMLElement &&
-            card?.contains(active) &&
-            !footer.contains(active)
-        ) {
-            active.scrollIntoView({ block: "nearest" });
-        }
-    });
-    footerSize.observe(footer);
-
-    element.addEventListener("toggle", () => {
-        update();
-        // Otherwise the footer that just appeared covers the section.
-        if (element.open) element.scrollIntoView({ block: "start" });
-    });
+    form.apply.disabled = true;
 
     return {
-        elements: [element, footer],
+        element: form.element,
         refresh: update,
         destroy: () => {
             showGhost(null);
+            resume();
             offClock();
-            footerSize.disconnect();
-            footer.parentElement?.style.removeProperty(
-                "scroll-padding-block-end",
-            );
-            element.remove();
-            footer.remove();
         },
     };
 };

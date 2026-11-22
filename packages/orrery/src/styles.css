@@ -387,8 +387,7 @@
         }
     }
 
-    .orrery__body-list summary,
-    .orrery__editor summary {
+    .orrery__body-list summary {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -410,11 +409,6 @@
                 transition: none;
             }
         }
-    }
-
-    /* A group title, below the card's own. */
-    .orrery__editor summary {
-        font: var(--type-label);
     }
 
     /* In a dropdown, which is the frame. Its button is the summary, so the list stays open. */
@@ -747,21 +741,6 @@
         white-space: nowrap;
     }
 
-    /* Margins, since `<details>` ignores `gap` for its content. */
-    .orrery__editor {
-        margin-block-start: var(--space-sm);
-        padding-block-start: var(--space-sm);
-        border-block-start: var(--border-width) solid var(--color-border);
-
-        &[open] > summary {
-            margin-block-end: var(--space-sm);
-
-            [data-icon] {
-                rotate: 180deg;
-            }
-        }
-    }
-
     .orrery__warning {
         margin-block-start: var(--space-md);
         /* Compact, since it holds one sentence. */
@@ -820,79 +799,9 @@
         }
     }
 
-    /* Sticks to the card's bottom, so it shows even when the card needs scrolling. */
-    .orrery__warning--sticky {
-        position: sticky;
-        inset-block-end: 0;
-        background-color: var(--orrery-panel-solid);
-        /* Covers the gap above it, so rows scrolling under don't show cut through. */
-        box-shadow: 0 calc(-1 * var(--space-md)) 0 var(--orrery-panel-solid);
-    }
-
-    .orrery__editor-row {
-        display: grid;
-        gap: var(--space-xs);
-        font: var(--type-ui);
-
-        & + & {
-            margin-block-start: var(--space-md);
-        }
-
-        label {
-            color: var(--color-text-muted);
-        }
-    }
-
-    .orrery__editor-controls {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-
-        .slider {
-            flex: 1;
-        }
-    }
-
-    .orrery__editor-number {
-        flex: none;
-        /* Eight digits (a in km up to 0.1 AU) plus Chrome's spin buttons. */
-        inline-size: 12ch;
-        /* Chrome sizes the field by its text, so the row would shift as the value changes. */
-        font-family: var(--orrery-font-data);
-        font-variant-numeric: tabular-nums;
-    }
-
-    .orrery__editor-hint {
-        margin: 0;
-        color: var(--color-text-muted);
-        font: var(--type-caption);
-    }
-
-    /* The positioned ancestor of the visually hidden text, which would otherwise widen the card's scroll. */
-    .orrery__burn {
-        position: relative;
-
-        /* Without this the row is as wide as the input's own size, so it overflows the card. */
-        .orrery__editor-row {
-            grid-template-columns: minmax(0, 1fr);
-        }
-
-        /* Fill the row, so the three controls span the card. */
-        .orrery__editor-number {
-            flex: 1;
-            inline-size: auto;
-            min-inline-size: 0;
-            appearance: textfield;
-
-            &::-webkit-inner-spin-button,
-            &::-webkit-outer-spin-button {
-                appearance: none;
-                margin: 0;
-            }
-        }
-    }
-
     .orrery__burn-dv {
+        display: grid;
+        gap: 0.625rem;
         margin: 0;
         padding: 0;
         border: 0;
@@ -908,41 +817,146 @@
         font: var(--type-ui);
     }
 
-    .orrery__burn-pending {
-        margin-inline-end: auto;
-        color: var(--color-text-muted);
-        font: var(--type-caption);
-    }
-
     .orrery__burn-heading {
         margin: 0;
         color: var(--color-text-muted);
         font: var(--type-label);
     }
 
-    /* Sticks to the card's bottom, so the result and Apply show while the inputs scroll. */
-    .orrery__burn-footer {
-        position: sticky;
+    .orrery__form {
         display: grid;
-        gap: var(--space-md);
-        margin-block-start: var(--space-md);
-        /* A rule like the summaries', so rows sliced under it read as scrolled. */
-        border-block-start: var(--border-width) solid var(--color-border);
-        padding-block-start: var(--space-md);
-        /* Reaches over the card's bottom padding, so rows scrolling under can't show or take clicks there. */
-        inset-block-end: calc(-1 * var(--space-sm));
-        margin-block-end: calc(-1 * var(--space-sm));
-        padding-block-end: var(--space-sm);
-        background-color: var(--orrery-panel-solid);
+        gap: 0.625rem;
+        min-inline-size: 0;
+    }
+
+    .orrery__form-hint {
+        margin: 0;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__form-row {
+        display: grid;
+        gap: 0.3125rem;
+        grid-template-columns: minmax(0, 1fr);
+
+        label {
+            color: var(--orrery-muted);
+            font-size: var(--orrery-size-sm);
+        }
+    }
+
+    .orrery__stepper-hint {
+        margin: 0;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-xs);
+    }
+
+    .orrery__stepper {
+        display: flex;
+        align-items: stretch;
+        block-size: var(--orrery-control-lg);
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-ground);
+
+        &:focus-within {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 1px;
+        }
+
+        &:has([aria-invalid="true"]) {
+            border-color: var(--orrery-abort);
+        }
+
+        input {
+            flex: 1;
+            inline-size: 100%;
+            min-inline-size: 0;
+            padding: 0 var(--space-sm);
+            border: 0;
+            outline: none;
+            background: none;
+            color: var(--orrery-text);
+            font: 400 var(--orrery-size-sm) var(--orrery-font-data);
+            font-variant-numeric: tabular-nums;
+            text-align: end;
+            appearance: textfield;
+
+            &::-webkit-inner-spin-button,
+            &::-webkit-outer-spin-button {
+                appearance: none;
+                margin: 0;
+            }
+        }
+    }
+
+    /* The same width for every unit, wide enough for "m/s", so the numbers line up. */
+    .orrery__stepper-unit {
+        display: grid;
+        flex: none;
+        place-items: center start;
+        inline-size: 3ch;
+        padding-inline-end: 0.375rem;
+        white-space: nowrap;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-xs);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .orrery__stepper-step {
+        flex: none;
+        inline-size: 1.875rem;
+        padding: 0;
+        border: solid var(--orrery-frame);
+        border-width: 0 1px 0 0;
+        background-color: var(--orrery-panel-raised);
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-md);
+        cursor: pointer;
+
+        .orrery__stepper-unit + & {
+            border-width: 0 0 0 1px;
+        }
+
+        &:hover {
+            color: var(--orrery-text);
+        }
+    }
+
+    .orrery__stepper-error {
+        display: flex;
+        gap: 0.375rem;
+        margin: 0;
+        color: var(--orrery-abort);
+        font-size: var(--orrery-size-sm);
 
         &[hidden] {
             display: none;
         }
 
-        .orrery__warning,
-        .orrery__burn-actions {
-            justify-items: start;
-            margin: 0;
+        &::before {
+            content: "!";
+            flex: none;
+            display: grid;
+            place-items: center;
+            inline-size: 1rem;
+            block-size: 1rem;
+            margin-block-start: 1px;
+            background-color: var(--orrery-abort);
+            color: var(--orrery-ground);
+            font-size: var(--orrery-size-xs);
+            font-weight: 700;
+        }
+    }
+
+    .orrery__form-actions {
+        display: flex;
+        gap: var(--space-sm);
+        /* On top of the form's gap, to make 14px. */
+        margin-block-start: 0.25rem;
+
+        .button {
+            flex: 1;
         }
     }
 
@@ -981,6 +995,26 @@
         --control-height-md: 2.75rem;
         --control-height-lg: 3rem;
 
+        /* The actions need the room, so the hint and the time bar give way. */
+        .orrery__form-hint {
+            display: none;
+        }
+
+        &:has(.orrery__form) .orrery__panel--bottom {
+            display: none;
+        }
+
+        /* Sticks to the bottom of the scrolling body, reaching over its padding to the frame. */
+        .orrery__form-actions {
+            position: sticky;
+            inset-block-end: calc(-1 * var(--orrery-pad));
+            margin: var(--orrery-pad) calc(-1 * var(--orrery-pad))
+                calc(-1 * var(--orrery-pad));
+            padding: 0.625rem var(--orrery-pad);
+            border-block-start: 1px solid var(--orrery-rule);
+            background-color: var(--orrery-panel-solid);
+        }
+
         /* The body list is in the top bar. */
         .orrery__bodies-menu {
             display: inline-block;
@@ -1011,10 +1045,6 @@
             }
         }
 
-        .orrery__editor summary {
-            min-block-size: var(--control-height-sm);
-        }
-
         /* Touch targets. */
         .orrery__orbit-button,
         .orrery__orbit-quiet {
@@ -1023,11 +1053,6 @@
 
         .orrery__orbit-chip {
             min-block-size: var(--control-height-sm);
-        }
-
-        /* The thumb is the touch target. */
-        .slider {
-            --thumb: 1.5rem;
         }
     }
 
