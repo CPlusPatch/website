@@ -73,11 +73,19 @@ export const createView = (
         theme.background(),
         theme.pick(),
     );
+    // Neither the sky nor the body maps are drawn where the user asks for more contrast.
+    const plain =
+        matchMedia("(forced-colors: active)").matches ||
+        matchMedia("(prefers-contrast: more)").matches;
     const bodies = createBodies(
         scene,
         labels.domElement,
         world.order,
         theme.color,
+        {
+            maps: !plain,
+            anisotropy: renderer.capabilities.getMaxAnisotropy(),
+        },
     );
 
     const grips = createGrips(labels.domElement, units);
@@ -150,10 +158,6 @@ export const createView = (
         );
     describe();
 
-    // The sky isn't drawn where the user asks for more contrast.
-    const plain =
-        matchMedia("(forced-colors: active)").matches ||
-        matchMedia("(prefers-contrast: more)").matches;
     const sky = createSky();
     const loading = new AbortController();
     if (!plain) {
@@ -194,6 +198,7 @@ export const createView = (
         });
         points = bodies.update(
             camera,
+            world.clock.t,
             rig.origin(),
             rig.focusId(),
             world.selected,

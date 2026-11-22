@@ -31,22 +31,24 @@ const PLUTO_WIDTH = 24888;
 // Pluto's theme colour, #c8a593, scaled so its largest channel is 1.
 const PLUTO_TINT: [number, number, number] = [200 / 200, 165 / 200, 147 / 200];
 
-// Output name and source file. The ring keeps its alpha channel.
-const MAPS: { out: string; source: string; alpha?: true }[] = [
-    { out: "sun", source: "2k_sun.jpg" },
-    { out: "mercury", source: "2k_mercury.jpg" },
-    { out: "venus", source: "2k_venus_atmosphere.jpg" },
-    { out: "earth", source: "2k_earth_daymap.jpg" },
-    { out: "earth-night", source: "2k_earth_nightmap.jpg" },
-    { out: "earth-clouds", source: "2k_earth_clouds.jpg" },
-    { out: "moon", source: "2k_moon.jpg" },
-    { out: "mars", source: "2k_mars.jpg" },
-    { out: "jupiter", source: "2k_jupiter.jpg" },
-    { out: "saturn", source: "2k_saturn.jpg" },
-    { out: "saturn-ring", source: "2k_saturn_ring_alpha.png", alpha: true },
-    { out: "uranus", source: "2k_uranus.jpg" },
-    { out: "neptune", source: "2k_neptune.jpg" },
-];
+// Output name, source file and extra oiiotool steps. The ring keeps its alpha channel.
+const MAPS: { out: string; source: string; alpha?: true; steps?: string[] }[] =
+    [
+        // The source is a saturated orange; the square root lifts it toward the Sun's theme colour.
+        { out: "sun", source: "2k_sun.jpg", steps: ["--powc", "0.5"] },
+        { out: "mercury", source: "2k_mercury.jpg" },
+        { out: "venus", source: "2k_venus_atmosphere.jpg" },
+        { out: "earth", source: "2k_earth_daymap.jpg" },
+        { out: "earth-night", source: "2k_earth_nightmap.jpg" },
+        { out: "earth-clouds", source: "2k_earth_clouds.jpg" },
+        { out: "moon", source: "2k_moon.jpg" },
+        { out: "mars", source: "2k_mars.jpg" },
+        { out: "jupiter", source: "2k_jupiter.jpg" },
+        { out: "saturn", source: "2k_saturn.jpg" },
+        { out: "saturn-ring", source: "2k_saturn_ring_alpha.png", alpha: true },
+        { out: "uranus", source: "2k_uranus.jpg" },
+        { out: "neptune", source: "2k_neptune.jpg" },
+    ];
 
 const [directory] = Deno.args;
 if (!directory) {
@@ -69,9 +71,15 @@ const oiio = async (args: string[]): Promise<void> => {
         );
 };
 
-const encode = (input: string, channels: string, out: string): Promise<void> =>
+const encode = (
+    input: string,
+    channels: string,
+    out: string,
+    steps: string[] = [],
+): Promise<void> =>
     oiio([
         input,
+        ...steps,
         "--ch",
         channels,
         "-d",
@@ -88,12 +96,13 @@ const report = async (name: string): Promise<void> => {
     console.log(`${name}, ${size} bytes`);
 };
 
-for (const { out, source, alpha } of MAPS) {
+for (const { out, source, alpha, steps } of MAPS) {
     const name = `${out}.webp`;
     await encode(
         `${directory}/${source}`,
         alpha ? "R,G,B,A" : "R,G,B",
         fileURLToPath(new URL(name, maps)),
+        steps,
     );
     await report(name);
 }

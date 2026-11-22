@@ -1,9 +1,16 @@
-import type { Body, BodyKind, State, Vec3 } from "@cpluspatch/orbit";
+import {
+    type Body,
+    type BodyKind,
+    bodyOrientation,
+    type State,
+    type Vec3,
+} from "@cpluspatch/orbit";
 import {
     AmbientLight,
     CanvasTexture,
     type Color,
     Group,
+    Matrix4,
     Mesh,
     MeshBasicMaterial,
     MeshStandardMaterial,
@@ -36,13 +43,16 @@ import {
     type Rect,
     type Sphere,
 } from "./geometry.ts";
+import { createMaps } from "./maps.ts";
 import { type LabelRect, type PickPoint, pickLabel } from "./picking.ts";
+import { spinMatrix } from "./spin.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
-    /** Places every body relative to `origin` and picks what to show. Labels keep out of `blocked`. Returns where the shown bodies are on screen. */
+    /** Places every body relative to `origin` at clock time `t` and picks what to show. Labels keep out of `blocked`. Returns where the shown bodies are on screen. */
     update: (
         camera: PerspectiveCamera,
+        t: number,
         origin: Vec3,
         focus: string,
         selected: string | null,
@@ -80,6 +90,8 @@ type Entry = {
     offset: number;
     /** Where the label sits, as a class modifier. */
     side: Placement;
+    /** Whether the body's map has been asked for. */
+    mapped: boolean;
 };
 
 type LabelStyle = {
@@ -186,12 +198,21 @@ const markerTexture = (shape: Shape | "halo"): CanvasTexture => {
     return texture;
 };
 
+/** How the spheres are textured. */
+export type BodyOptions = {
+    /** Whether to load the maps. */
+    maps: boolean;
+    /** The anisotropy of each map. */
+    anisotropy: number;
+};
+
 /** The bodies of a scenario, in km, with their labels measured in `host`. */
 export const createBodies = (
     scene: Scene,
     host: HTMLElement,
     bodies: Body[],
     color: (body: Body) => Color,
+    options: BodyOptions,
 ): Bodies => {
     const sphereGeometry = new SphereGeometry(1, 128, 64);
     // Up close, as from the ISS, 128 segments show as facets on Earth's limb.
@@ -205,6 +226,8 @@ export const createBodies = (
     };
     const haloTexture = markerTexture("halo");
     const entries: Entry[] = [];
+    const maps = createMaps(options.anisotropy);
+    const spin = new Matrix4();
     // Measures labels here, since a label has no layout until it's drawn.
     const probe = document.createElement("div");
     const probeName = document.createElement("span");
@@ -279,6 +302,7 @@ export const createBodies = (
             // Unset, so the first update writes it.
             offset: -1,
             side: "right",
+            mapped: false,
         });
     }
 
@@ -343,7 +367,7 @@ export const createBodies = (
     let size = { width: 1, height: 1 };
 
     return {
-        update: (camera, origin, focus, selected, states, blocked) => {
+        update: (camera, t, origin, focus, selected, states, blocked) => {
             const fov = (camera.fov * Math.PI) / 180;
             const keep = new Set([focus]);
             if (selected) keep.add(selected);
@@ -434,6 +458,22 @@ export const createBodies = (
                 );
                 const big = radiusPx >= SPHERE_MIN_PX;
                 sphere.visible = big;
+                if (big) {
+                    if (options.maps && !entry.mapped) {
+                        entry.mapped = true;
+                        maps.load(body.id, (map) => {
+                            sphere.material.map = map;
+                            sphere.material.color.set(0xffffff);
+                            sphere.material.needsUpdate = true;
+                        });
+                    }
+
+                    const orientation = bodyOrientation(body.id, t);
+                    if (orientation) {
+                        spin.fromArray(spinMatrix(orientation));
+                        sphere.quaternion.setFromRotationMatrix(spin);
+                    }
+                }
                 sphere.geometry =
                     radiusPx > size.height ? fineGeometry : sphereGeometry;
                 marker.visible = !big;
@@ -602,6 +642,7 @@ export const createBodies = (
             fineGeometry.dispose();
             for (const texture of Object.values(textures)) texture.dispose();
             haloTexture.dispose();
+            maps.dispose();
         },
     };
 };

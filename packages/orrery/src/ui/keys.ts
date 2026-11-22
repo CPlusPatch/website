@@ -82,7 +82,20 @@ export const createKeys = (): Keys => {
         h(
             "p",
             { class: "orrery__credits" },
-            "Sky: NASA/Goddard Space Flight Center Scientific Visualization Studio, with Gaia data from ESA/Gaia/DPAC. Stars: Yale Bright Star Catalogue.",
+            // No-break spaces keep each label on the line of what it labels.
+            "Sky: NASA/Goddard Space Flight Center Scientific Visualization Studio, with Gaia data from ESA/Gaia/DPAC. Stars: Yale Bright Star Catalogue. Maps:\u00a0",
+            h(
+                "a",
+                { href: "https://www.solarsystemscope.com/textures/" },
+                "Solar System Scope",
+            ),
+            ", ",
+            h(
+                "a",
+                { href: "https://creativecommons.org/licenses/by/4.0/" },
+                "CC BY 4.0",
+            ),
+            ". Pluto:\u00a0NASA/JHUAPL/SwRI.",
         ),
     );
     card.hidden = true;
