@@ -18,10 +18,10 @@ import {
 import { createCrumbs } from "./ui/crumbs.ts";
 import { h } from "./ui/dom.ts";
 import { createHud } from "./ui/hud.ts";
-import { createInspector, type Inspector } from "./ui/inspector.ts";
+import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
 import { createNotices } from "./ui/notices.ts";
-import { createScenarios } from "./ui/scenario-menu.ts";
+import { createScenarios } from "./ui/scenario-menu/scenario-menu.ts";
 import { createSearch, type Search } from "./ui/search.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createTimeBar } from "./ui/time-bar.ts";

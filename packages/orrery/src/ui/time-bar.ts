@@ -7,7 +7,7 @@ import { isLive, offsetText, rateText, stampParts } from "../time-text.ts";
 import type { World } from "../world.ts";
 import { createDateEditor } from "./date-editor.ts";
 import { h, setText } from "./dom.ts";
-import { createTimeline } from "./timeline.ts";
+import { createTimeline } from "./timeline/timeline.ts";
 
 /** The time bar's element and how to drive it. */
 export type TimeBar = {

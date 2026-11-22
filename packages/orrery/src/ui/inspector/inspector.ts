@@ -2,25 +2,22 @@ import type { BodyKind } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
-import { removalNote } from "../adding.ts";
-import type { AUnit, EditScene } from "../editing.ts";
+import type { EditScene } from "../../editing.ts";
+import { readouts } from "../../readouts.ts";
+import type { Units } from "../../units.ts";
+import type { World } from "../../world.ts";
+import { type BodyAdder, createBodyAdder } from "../body-adder.ts";
+import { showBodyMarker } from "../body-marker.ts";
+import { type BurnEditor, createBurnEditor } from "../burn-editor.ts";
+import { h, setText } from "../dom.ts";
+import { createElementEditor, type ElementEditor } from "../element-editor.ts";
+import { sheetAfterDrag } from "../sheet.ts";
+import { type ActionButtons, button, createActions } from "./actions.ts";
 import {
-    distanceParts,
-    formatAngle,
-    formatDistance,
-    formatDuration,
-    formatSoon,
-    formatSpeed,
-} from "../format.ts";
-import { type Readouts, readouts } from "../readouts.ts";
-import { otherUnit, type Units } from "../units.ts";
-import type { World } from "../world.ts";
-import { type BodyAdder, createBodyAdder } from "./body-adder.ts";
-import { showBodyMarker } from "./body-marker.ts";
-import { type BurnEditor, createBurnEditor } from "./burn-editor.ts";
-import { h, setText } from "./dom.ts";
-import { createElementEditor, type ElementEditor } from "./element-editor.ts";
-import { sheetAfterDrag } from "./sheet.ts";
+    createReadoutRows,
+    type ReadoutRows,
+    refreshReadoutRows,
+} from "./readouts.ts";
 
 /** The inspector's element and how to remove it. */
 export type Inspector = {
@@ -36,37 +33,6 @@ type Mode = "card" | "edit" | "burn" | "add";
 /** How often the readouts refresh while the clock runs, in ms. */
 const REFRESH_MS = 250;
 
-/** A readout row: a distance in metres, which gets a unit switch, or finished text. */
-type Row = { label: (parent: string) => string } & (
-    | { metres: (r: Readouts) => number }
-    | { text: (r: Readouts) => string }
-);
-
-const FIELDS: Row[] = [
-    { label: (parent) => `Distance to ${parent}`, metres: (r) => r.distance },
-    { label: () => "Speed", text: (r) => formatSpeed(r.speed) },
-    { label: () => "Period", text: (r) => formatDuration(r.period) },
-    {
-        label: () => "Periapsis altitude",
-        metres: (r) => r.periapsisAltitude,
-    },
-    { label: () => "Apoapsis altitude", metres: (r) => r.apoapsisAltitude },
-    { label: () => "True anomaly", text: (r) => formatAngle(r.trueAnomaly) },
-];
-
-const SVG = (body: string) =>
-    `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">${body}</svg>`;
-
-const FOCUS_ICON = SVG(
-    '<g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="4"/><path d="M8 0.5V3.5M8 12.5V15.5M0.5 8H3.5M12.5 8H15.5"/></g>',
-);
-const EDIT_ICON = SVG(
-    '<path d="M10.5 2.5l3 3-8 8H2.5v-3z" fill="none" stroke="currentColor" stroke-width="1.5"/>',
-);
-const BURN_ICON = SVG(
-    '<path d="M8 13V3M4 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6"/>',
-);
-
 const KINDS: Record<BodyKind, string> = {
     star: "Star",
     planet: "Planet",
@@ -74,19 +40,6 @@ const KINDS: Record<BodyKind, string> = {
     moon: "Moon",
     spacecraft: "Spacecraft",
 };
-
-/** The apsides line, as `Ap 408 km in 41d`, and the sentence for a screen reader. */
-const apsides = (
-    r: Readouts,
-    unit: AUnit | null,
-): { parts: string[]; spoken: string } => ({
-    parts: [
-        `Ap ${formatDistance(r.apoapsisAltitude, unit)} in ${formatSoon(r.timeToApoapsis)}`,
-        `Pe ${formatDistance(r.periapsisAltitude, unit)} in ${formatSoon(r.timeToPeriapsis)}`,
-        formatSpeed(r.speed),
-    ],
-    spoken: `Apoapsis ${formatDistance(r.apoapsisAltitude, unit)} up, in ${formatDuration(r.timeToApoapsis)}. Periapsis ${formatDistance(r.periapsisAltitude, unit)} up, in ${formatDuration(r.timeToPeriapsis)}. Speed ${formatSpeed(r.speed)}. Period ${formatDuration(r.period)}.`,
-});
 
 /** A card with the selected body's name, kind and live orbit readouts. */
 export const createInspector = (
@@ -191,26 +144,22 @@ export const createInspector = (
     };
     setHead(false);
 
-    let values: HTMLElement[] = [];
-    // The switch of each distance row, or none for the rows that aren't distances.
-    let switches: (HTMLButtonElement | null)[] = [];
-    let line: HTMLElement[] = [];
-    let spoken: HTMLElement | null = null;
-    let focusButton: HTMLButtonElement | null = null;
+    let rows: ReadoutRows | null = null;
     let shown: string | null = null;
     let mode: Mode = "card";
     let editor: ElementEditor | null = null;
     let burn: BurnEditor | null = null;
     let adder: BodyAdder | null = null;
-    let editButton: HTMLButtonElement | null = null;
-    let burnButton: HTMLButtonElement | null = null;
+    const buttons: ActionButtons = { focus: null, edit: null, burn: null };
 
     const syncFocus = () => {
-        if (!focusButton) return;
+        if (!buttons.focus) return;
 
         const on = world.focused === shown;
-        focusButton.setAttribute("aria-pressed", String(on));
-        const label = focusButton.querySelector(".orrery__orbit-button-label");
+        buttons.focus.setAttribute("aria-pressed", String(on));
+        const label = buttons.focus.querySelector(
+            ".orrery__orbit-button-label",
+        );
         if (label) setText(label, on ? "Focused" : "Focus");
     };
 
@@ -218,7 +167,7 @@ export const createInspector = (
         burn?.refresh();
 
         const id = world.selected;
-        if (!id || values.length === 0) return;
+        if (!id || !rows) return;
 
         const current = readouts(
             world.scenario,
@@ -228,38 +177,7 @@ export const createInspector = (
         );
         if (!current) return;
 
-        const chosen = units.get();
-        FIELDS.forEach((row, k) => {
-            const cell = values[k];
-            if (!cell) return;
-
-            if (!("metres" in row)) {
-                setText(cell, row.text(current));
-                return;
-            }
-
-            const [number, unit] = distanceParts(row.metres(current), chosen);
-            setText(cell, number);
-
-            // Rewritten only when the unit changes, so a pressed switch keeps its focus.
-            const control = switches[k];
-            if (control && control.textContent !== unit) {
-                const other = otherUnit(unit);
-                control.textContent = unit;
-                control.setAttribute(
-                    "aria-label",
-                    `${control.dataset.row} in ${unit}. Show distances in ${other}`,
-                );
-                control.title = `Show in ${other} (U)`;
-            }
-        });
-
-        const text = apsides(current, chosen);
-        text.parts.forEach((part, k) => {
-            const span = line[k];
-            if (span) setText(span, part);
-        });
-        if (spoken) setText(spoken, text.spoken);
+        refreshReadoutRows(rows, current, units.get());
     };
 
     // The card re-renders, so what had focus moves to the first thing a reader can pick next.
@@ -268,33 +186,6 @@ export const createInspector = (
             element.querySelector<HTMLElement>(".orrery__orbit-chip") ??
             element.querySelector<HTMLElement>(".orrery__orbit-link");
         (next ?? close).focus();
-    };
-
-    const button = (label: string, className: string, onClick: () => void) => {
-        const control = h(
-            "button",
-            { type: "button", class: className },
-            label,
-        );
-        control.addEventListener("click", onClick);
-
-        return control;
-    };
-
-    // The label is its own span, so changing it leaves the icon alone.
-    const iconButton = (
-        label: string,
-        className: string,
-        svg: string,
-        onClick: () => void,
-    ) => {
-        const control = button("", className, onClick);
-        control.innerHTML = svg;
-        control.append(
-            h("span", { class: "orrery__orbit-button-label" }, label),
-        );
-
-        return control;
     };
 
     let addName = "";
@@ -324,7 +215,7 @@ export const createInspector = (
     const closeForm = (opener: "edit" | "burn") => {
         mode = "card";
         render();
-        (opener === "edit" ? editButton : burnButton)?.focus();
+        (opener === "edit" ? buttons.edit : buttons.burn)?.focus();
     };
 
     const openForm = (next: "edit" | "burn") => {
@@ -365,109 +256,6 @@ export const createInspector = (
         );
     };
 
-    const actions = (
-        id: string,
-        name: string,
-        hasParent: boolean,
-        hasOrbit: boolean,
-    ) => {
-        const row = h("div", { class: "orrery__orbit-actions" });
-        // Remove goes under this row, so the three buttons keep the card's width.
-        const buttons = h("div", { class: "orrery__orbit-buttons" });
-        const base = "orrery__orbit-button";
-
-        const showRow = () => {
-            focusButton = iconButton(
-                "Focus",
-                `${base} orrery__orbit-focus`,
-                FOCUS_ICON,
-                () => world.focus(id),
-            );
-            syncFocus();
-            buttons.replaceChildren(focusButton);
-            row.replaceChildren(buttons);
-            editButton = null;
-            burnButton = null;
-            if (hasOrbit) {
-                editButton = iconButton("Edit", base, EDIT_ICON, () =>
-                    openForm("edit"),
-                );
-                burnButton = iconButton("Burn", base, BURN_ICON, () =>
-                    openForm("burn"),
-                );
-                buttons.append(editButton, burnButton);
-            }
-            if (hasParent) {
-                row.append(
-                    button("Remove", "orrery__orbit-quiet", showConfirm),
-                );
-            }
-        };
-
-        const back = () => {
-            showRow();
-            row.querySelector<HTMLElement>(".orrery__orbit-quiet")?.focus();
-        };
-
-        const showConfirm = () => {
-            const note = removalNote(world.scenario, id);
-            const cancel = button("Cancel", base, back);
-            const remove = button(
-                "Remove",
-                `${base} orrery__orbit-button--danger`,
-                () => {
-                    const root = element.closest<HTMLElement>(".orrery");
-                    const parent = world.scenario.bodies.find(
-                        (candidate) => candidate.id === id,
-                    )?.parent;
-
-                    // The parent stays selected, so its card is the one that replaces this.
-                    if (parent) world.select(parent);
-                    world.removeBody(id);
-                    // This card is gone, so the new one takes focus.
-                    root?.querySelector<HTMLElement>(
-                        ".orrery__orbit-focus",
-                    )?.focus();
-                },
-            );
-            const group = h(
-                "div",
-                {
-                    class: "orrery__orbit-confirm",
-                    role: "group",
-                    "aria-labelledby": "orrery-orbit-confirm-title",
-                },
-                h(
-                    "p",
-                    {
-                        class: "orrery__orbit-confirm-title",
-                        id: "orrery-orbit-confirm-title",
-                    },
-                    `Remove ${name}?`,
-                ),
-                ...(note
-                    ? [h("p", { class: "orrery__orbit-confirm-note" }, note)]
-                    : []),
-                h("div", { class: "orrery__orbit-row" }, cancel, remove),
-            );
-            group.addEventListener("keydown", (event) => {
-                if (event.key !== "Escape") return;
-
-                // The shortcut that clears the selection skips a handled key.
-                event.preventDefault();
-                event.stopPropagation();
-                back();
-            });
-            focusButton = null;
-            row.replaceChildren(group);
-            cancel.focus();
-        };
-
-        showRow();
-
-        return row;
-    };
-
     const render = () => {
         const id = world.selected;
         const body = world.scenario.bodies.find((b) => b.id === id);
@@ -483,11 +271,8 @@ export const createInspector = (
             "aria-label",
             adding ? "Add a body" : "Selected body",
         );
-        values = [];
-        switches = [];
-        line = [];
-        spoken = null;
-        focusButton = null;
+        rows = null;
+        buttons.focus = null;
         content.replaceChildren();
         editor?.destroy();
         editor = null;
@@ -557,55 +342,20 @@ export const createInspector = (
 
         // A body with no parent has no orbit to read.
         if (parent) {
-            const [ap, pe, speed] = [h("span"), h("span"), h("span")];
-            line = [ap, pe, speed];
-            spoken = h("p", { class: "visually-hidden", "aria-live": "off" });
-            const list = h("dl", { class: "orrery__readouts" });
-            for (const row of FIELDS) {
-                const dd = h("dd", { class: "orrery__readout" });
-
-                if ("metres" in row) {
-                    // The text is filled in by `refresh`, which knows the unit.
-                    const number = h("span");
-                    const control = h("button", {
-                        type: "button",
-                        class: "orrery__unit-switch",
-                        // The row's label, so the switches don't all read the same.
-                        "data-row": row.label(parent.name),
-                    });
-                    control.addEventListener("click", () =>
-                        units.set(
-                            otherUnit(
-                                control.textContent === "km" ? "km" : "AU",
-                            ),
-                        ),
-                    );
-                    dd.append(number, " ", control);
-                    values.push(number);
-                    switches.push(control);
-                } else {
-                    values.push(dd);
-                    switches.push(null);
-                }
-                list.append(h("dt", {}, row.label(parent.name)), dd);
-            }
-            content.append(
-                h(
-                    "p",
-                    { class: "orrery__orbit-line", "aria-hidden": "true" },
-                    ap,
-                    pe,
-                    speed,
-                ),
-                spoken,
-                list,
-            );
+            rows = createReadoutRows(parent.name, units);
+            content.append(...rows.elements);
         }
 
         const chips = parent ? around(body.id, body.name) : null;
         if (chips) content.append(chips);
         content.append(
-            actions(body.id, body.name, parent !== undefined, hasOrbit),
+            createActions(
+                { world, element, buttons, syncFocus, openForm },
+                body.id,
+                body.name,
+                parent !== undefined,
+                hasOrbit,
+            ),
         );
         refresh();
 
