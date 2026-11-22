@@ -80,7 +80,7 @@ export const trueAnomalyAt = (el: Elements, mu: number, t: number): number => {
 };
 
 /** The perifocal x and y axes in the parent frame. */
-const axes = (el: Elements): { p: Vec3; q: Vec3 } => {
+export const axes = (el: Elements): { p: Vec3; q: Vec3 } => {
     const cO = Math.cos(el.raan);
     const sO = Math.sin(el.raan);
     const cw = Math.cos(el.argp);

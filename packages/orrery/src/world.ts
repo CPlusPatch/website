@@ -8,6 +8,7 @@ import type {
 } from "@cpluspatch/orbit";
 import {
     applyBurn,
+    elementsAt,
     sortByDepth,
     validateScenario,
     worldStates,
@@ -149,7 +150,7 @@ export class World {
         this.#emit({ type: "scenario" });
     }
 
-    /** Replaces the orbit of body `id`. */
+    /** Replaces the orbit of body `id` with a fixed Kepler orbit, dropping any precession. */
     setElements(id: string, el: Elements): void {
         const body = this.#scenario.bodies.find(
             (candidate) => candidate.id === id,
@@ -160,9 +161,13 @@ export class World {
 
         this.#scenario = {
             ...this.#scenario,
-            bodies: this.#scenario.bodies.map((candidate) =>
-                candidate === body ? { ...body, elements: el } : candidate,
-            ),
+            bodies: this.#scenario.bodies.map((candidate) => {
+                if (candidate !== body) return candidate;
+
+                const { precession: _dropped, ...fixed } = body;
+
+                return { ...fixed, elements: el };
+            }),
         };
         this.#order = sortByDepth(this.#scenario);
         this.#cache = null;
@@ -178,10 +183,11 @@ export class World {
             (candidate) => candidate.id === body?.parent,
         );
         if (!body) throw new Error(`There is no body "${id}".`);
-        if (!body.elements || !parent)
+        const elements = elementsAt(body, this.clock.t);
+        if (!elements || !parent)
             throw new Error(`"${id}" has no orbit to burn on.`);
 
-        return applyBurn(body.elements, parent.mu + body.mu, this.clock.t, dv);
+        return applyBurn(elements, parent.mu + body.mu, this.clock.t, dv);
     }
 
     /** Burns `dv` on body `id` now, or says why it can't and changes nothing. */

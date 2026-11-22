@@ -3,9 +3,10 @@ import { assert, assertEquals } from "@std/assert";
 import { solarSystem } from "./data/solar-system.ts";
 import { assertVecClose } from "./fixture.ts";
 import { stateAt } from "./kepler.ts";
+import type { Body } from "./scenario.ts";
 import { sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
-import { add } from "./vec.ts";
+import { add, length, sub } from "./vec.ts";
 
 const order = sortByDepth(solarSystem);
 const t = 7.5e8;
@@ -43,4 +44,25 @@ Deno.test("every body gets a state", () => {
         worldStates(solarSystem, order, t).size,
         solarSystem.bodies.length,
     );
+});
+
+Deno.test("a precessing body's state follows its precessed orbit", () => {
+    const moon = find("moon");
+    const precessing: Body = {
+        ...moon,
+        precession: {
+            pole: { x: 0, y: 0, z: 1 },
+            nodeRate: -1e-6,
+            argpRate: 0,
+        },
+    };
+    const scenario = {
+        ...solarSystem,
+        bodies: solarSystem.bodies.map((b) => (b === moon ? precessing : b)),
+    };
+    const plain = worldStates(solarSystem, order, t).get("moon");
+    const turned = worldStates(scenario, sortByDepth(scenario), t).get("moon");
+
+    assert(plain && turned);
+    assert(length(sub(plain.r, turned.r)) > 1e6);
 });

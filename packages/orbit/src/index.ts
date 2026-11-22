@@ -27,6 +27,8 @@ export {
 } from "./kepler.ts";
 export type { Orientation, RotationModel } from "./orientation.ts";
 export { bodyOrientation, orientationFromPole } from "./orientation.ts";
+export type { Precession } from "./precession.ts";
+export { elementsAt, precess } from "./precession.ts";
 export type { Body, BodyKind, Scenario, ScenarioResult } from "./scenario.ts";
 export { sortByDepth, validateScenario } from "./scenario.ts";
 export { worldStates } from "./system.ts";

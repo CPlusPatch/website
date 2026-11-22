@@ -1,5 +1,7 @@
 import type { Elements } from "./kepler.ts";
 import { wrapAngle } from "./kepler.ts";
+import type { Precession } from "./precession.ts";
+import { length } from "./vec.ts";
 
 /** What a body is. The view colours bodies by kind. */
 export type BodyKind = "star" | "planet" | "dwarf" | "moon" | "spacecraft";
@@ -20,6 +22,8 @@ export type Body = {
     radius: number;
     /** The orbit around the parent in the ecliptic J2000 frame, or null for the root. */
     elements: Elements | null;
+    /** Precession of the orbit, or none for a fixed orbit. */
+    precession?: Precession;
     /** An optional CSS colour. */
     color?: string;
 };
@@ -157,6 +161,59 @@ const validateElements = (
     };
 };
 
+const validatePrecession = (
+    path: string,
+    input: unknown,
+    errors: string[],
+): Precession | null => {
+    if (!isRecord(input)) {
+        errors.push(`${path}: must be an object (got ${show(input)})`);
+
+        return null;
+    }
+
+    const before = errors.length;
+    const { pole, nodeRate, argpRate } = input;
+    let unit: Precession["pole"] | null = null;
+
+    if (!isRecord(pole)) {
+        errors.push(`${path}.pole: must be an object (got ${show(pole)})`);
+    } else {
+        const { x, y, z } = pole;
+        const ok = [
+            finite(`${path}.pole.x`, x, errors),
+            finite(`${path}.pole.y`, y, errors),
+            finite(`${path}.pole.z`, z, errors),
+        ];
+
+        if (ok.every(Boolean)) {
+            const v = { x: x as number, y: y as number, z: z as number };
+            const len = length(v);
+
+            if (Math.abs(len - 1) > 1e-6) {
+                errors.push(
+                    `${path}.pole: must be a unit vector (got length ${len})`,
+                );
+            } else {
+                unit = { x: v.x / len, y: v.y / len, z: v.z / len };
+            }
+        }
+    }
+
+    finite(`${path}.nodeRate`, nodeRate, errors);
+    finite(`${path}.argpRate`, argpRate, errors);
+
+    if (errors.length > before || unit === null) {
+        return null;
+    }
+
+    return {
+        pole: unit,
+        nodeRate: nodeRate as number,
+        argpRate: argpRate as number,
+    };
+};
+
 /** Checks a body's own fields. Links between bodies are checked later. */
 const validateBody = (
     index: number,
@@ -171,7 +228,8 @@ const validateBody = (
     }
 
     const before = errors.length;
-    const { id, name, kind, parent, mu, radius, elements, color } = input;
+    const { id, name, kind, parent, mu, radius, elements, precession, color } =
+        input;
     const validId = typeof id === "string" && SLUG.test(id);
     const label = validId ? id : `bodies[${index}]`;
 
@@ -223,6 +281,22 @@ const validateBody = (
         parsed = validateElements(`${label}.elements`, elements, errors);
     }
 
+    let parsedPrecession: Precession | null = null;
+
+    if (precession !== undefined) {
+        if (parent === null) {
+            errors.push(
+                `${label}.precession: must be absent when parent is null`,
+            );
+        } else {
+            parsedPrecession = validatePrecession(
+                `${label}.precession`,
+                precession,
+                errors,
+            );
+        }
+    }
+
     if (errors.length > before) {
         return null;
     }
@@ -235,6 +309,7 @@ const validateBody = (
         mu: mu as number,
         radius: radius as number,
         elements: parsed,
+        ...(parsedPrecession ? { precession: parsedPrecession } : {}),
         ...(color === undefined ? {} : { color: color as string }),
     };
 };

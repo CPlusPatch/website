@@ -1,7 +1,8 @@
 /// <reference types="deno" />
-import { type Body, solarSystem } from "@cpluspatch/orbit";
+import { type Body, elementsAt, solarSystem, stateAt } from "@cpluspatch/orbit";
 import {
     assert,
+    assertAlmostEquals,
     assertEquals,
     assertNotEquals,
     assertThrows,
@@ -351,4 +352,60 @@ Deno.test("removing the root or an unknown body throws and emits nothing", () =>
 
     assert(world.scenario === before);
     assertEquals(count, 0);
+});
+
+/** A world whose Moon precesses about the ecliptic pole. */
+const makePrecessing = (): World => {
+    const bodies = solarSystem.bodies.map((body) =>
+        body.id === "moon"
+            ? {
+                  ...body,
+                  precession: {
+                      pole: { x: 0, y: 0, z: 1 },
+                      nodeRate: -1e-6,
+                      argpRate: 1e-6,
+                  },
+              }
+            : body,
+    );
+
+    return new World({ ...solarSystem, bodies }, new Clock(1e7, 1, false));
+};
+
+Deno.test("setElements turns a precessing body into a fixed orbit", () => {
+    const world = makePrecessing();
+    const moon = world.scenario.bodies.find((body) => body.id === "moon");
+
+    if (!moon?.elements) throw new Error("The scenario has no Moon.");
+    assert(moon.precession);
+
+    world.setElements("moon", moon.elements);
+
+    const after = world.scenario.bodies.find((body) => body.id === "moon");
+    assert(after && !("precession" in after));
+});
+
+Deno.test("a zero burn on a precessing body keeps its position", () => {
+    const world = makePrecessing();
+    const t = world.clock.t;
+    const before = world.states().get("moon");
+    const earth = world.scenario.bodies.find((body) => body.id === "earth");
+    const moon = world.scenario.bodies.find((body) => body.id === "moon");
+
+    assert(before && earth && moon);
+
+    const result = world.burn("moon", { prograde: 0, normal: 0, radial: 0 });
+    assert(result.ok);
+
+    const fixed = world.scenario.bodies.find((body) => body.id === "moon");
+    assert(fixed?.elements);
+
+    const local = stateAt(fixed.elements, earth.mu + moon.mu, t);
+    const parent = world.states().get("earth");
+    assert(parent);
+
+    assertEquals(elementsAt(fixed, t), fixed.elements);
+    assertAlmostEquals(parent.r.x + local.r.x, before.r.x, 1e-3);
+    assertAlmostEquals(parent.r.y + local.r.y, before.r.y, 1e-3);
+    assertAlmostEquals(parent.r.z + local.r.z, before.r.z, 1e-3);
 });

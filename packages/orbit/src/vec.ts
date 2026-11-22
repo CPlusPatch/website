@@ -38,3 +38,14 @@ export const length = (a: Vec3): number => Math.hypot(a.x, a.y, a.z);
 
 /** The vector scaled to unit length. */
 export const normalize = (a: Vec3): Vec3 => scale(a, 1 / length(a));
+
+/** The vector `v` turned by `angle` radians about the unit vector `axis` (Rodrigues). */
+export const rotate = (v: Vec3, axis: Vec3, angle: number): Vec3 => {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+
+    return add(
+        add(scale(v, c), scale(cross(axis, v), s)),
+        scale(axis, dot(axis, v) * (1 - c)),
+    );
+};

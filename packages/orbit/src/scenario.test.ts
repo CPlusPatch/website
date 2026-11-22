@@ -311,3 +311,70 @@ Deno.test("sorting puts every body after its parent", () => {
         }
     }
 });
+
+const withPrecession = (precession: unknown) => {
+    const scenario = structuredClone(valid) as Record<string, unknown>;
+    const bodies = scenario.bodies as Record<string, unknown>[];
+
+    bodies[1].precession = precession;
+
+    return scenario;
+};
+
+const precession = {
+    pole: { x: 0, y: 0, z: 1 },
+    nodeRate: 1e-8,
+    argpRate: 2e-8,
+};
+
+Deno.test("a valid precession is accepted and its pole normalised", () => {
+    const result = validateScenario(
+        withPrecession({ ...precession, pole: { x: 0, y: 0, z: 1 + 5e-7 } }),
+    );
+
+    assert(result.ok);
+    assertEquals(result.scenario.bodies[1].precession, precession);
+});
+
+Deno.test("a precession with a pole that isn't a unit vector is rejected", () => {
+    const result = validateScenario(
+        withPrecession({ ...precession, pole: { x: 0, y: 0, z: 1.01 } }),
+    );
+
+    assert(!result.ok);
+    assert(result.errors[0].startsWith("earth.precession.pole: must be"));
+});
+
+Deno.test("a precession with a rate that isn't finite is rejected", () => {
+    const result = validateScenario(
+        withPrecession({ ...precession, nodeRate: Number.NaN }),
+    );
+
+    assert(!result.ok);
+    assert(result.errors[0].startsWith("earth.precession.nodeRate: must be"));
+});
+
+Deno.test("a precession that isn't an object is rejected", () => {
+    const result = validateScenario(withPrecession(3));
+
+    assert(!result.ok);
+    assert(result.errors[0].startsWith("earth.precession: must be an object"));
+});
+
+Deno.test("a precession on the root is rejected", () => {
+    const scenario = withPrecession(precession);
+
+    (scenario.bodies as Record<string, unknown>[])[0].precession = precession;
+
+    const result = validateScenario(scenario);
+
+    assert(!result.ok);
+    assert(result.errors.some((e) => e.startsWith("sun.precession: must be")));
+});
+
+Deno.test("a body without precession has no precession key", () => {
+    const result = validateScenario(valid);
+
+    assert(result.ok);
+    assert(!("precession" in result.scenario.bodies[1]));
+});
