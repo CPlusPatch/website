@@ -19,6 +19,12 @@ const SHADOW = 0.8;
 /** How bright the face of the rings away from the sun is, against the face towards it. */
 const BACKLIT = 0.4;
 
+/**
+ * Sunlight the rings get at any sun angle. Each ring particle is lit like a small moon, so the
+ * rings don't go dark when the sun lies in their plane, as a flat sheet would.
+ */
+const FILL = 0.12;
+
 /** How much of the sky shows through the rings where Saturn's shadow falls on them. */
 const SHADOW_SEE_THROUGH = 0.6;
 
@@ -69,8 +75,9 @@ export const ringsExtra = (body: Body, group: Group, sphere: Mesh): Extra => {
             // The rings are translucent, so the face away from the sun keeps some light.
             vec3 back = diffuseColor.rgb * RECIPROCAL_PI * pointLights[0].color
                 * saturate(-dot(geometryNormal, toSun)) * ${BACKLIT.toFixed(2)};
-            vec3 direct = reflectedLight.directDiffuse + reflectedLight.directSpecular + back;
-            outgoingLight += back - direct * shadow;`,
+            vec3 fill = diffuseColor.rgb * RECIPROCAL_PI * pointLights[0].color * ${FILL.toFixed(2)};
+            vec3 direct = reflectedLight.directDiffuse + reflectedLight.directSpecular + back + fill;
+            outgoingLight += back + fill - direct * shadow;`,
         },
     ]);
     const mesh = new Mesh(geometry, material);
