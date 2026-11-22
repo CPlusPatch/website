@@ -6,8 +6,8 @@
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import { wrapAngle } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
-import { type AUnit, dragApsis, type GripTarget } from "../editing.ts";
-import { distanceParts, formatAngle } from "../format.ts";
+import { dragApsis, type GripTarget } from "../editing.ts";
+import { formatApsisChange, formatNodeChange } from "../format.ts";
 import { h, setText } from "../ui/dom.ts";
 import type { Units } from "../units.ts";
 import {
@@ -75,28 +75,6 @@ const SQUARE_PX = 9;
 
 const move = (element: HTMLElement, x: number, y: number) => {
     element.style.transform = `translate(${x}px, ${y}px)`;
-};
-
-/** The distance of an apsis and its change, in one unit, like `Pe 1.023 AU (+0.050 AU)`. */
-const apsisText = (
-    name: string,
-    metres: number,
-    before: number,
-    chosen: AUnit | null,
-): string => {
-    const [number, unit] = distanceParts(metres, chosen);
-    const delta = metres - before;
-    const [change] = distanceParts(delta, unit);
-
-    return `${name} ${number} ${unit} (${delta >= 0 ? "+" : ""}${change} ${unit})`;
-};
-
-/** The ascending node and its change, like `Node 120.0° (+5.0°)`. */
-const nodeText = (raan: number, before: number): string => {
-    let delta = wrapAngle(raan - before);
-    if (delta > Math.PI) delta -= 2 * Math.PI;
-
-    return `Node ${formatAngle(raan)} (${delta >= 0 ? "+" : "−"}${formatAngle(Math.abs(delta))})`;
 };
 
 /** The grips of the orbit being edited, in `host`, the labels layer. */
@@ -418,15 +396,15 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
                 const { original } = current;
                 const text =
                     dragged.kind === "node"
-                        ? nodeText(elements.raan, original.raan)
+                        ? formatNodeChange(elements.raan, original.raan)
                         : dragged.kind === "pe"
-                          ? apsisText(
+                          ? formatApsisChange(
                                 "Pe",
                                 elements.a * (1 - elements.e),
                                 original.a * (1 - original.e),
                                 units.get(),
                             )
-                          : apsisText(
+                          : formatApsisChange(
                                 "Ap",
                                 elements.a * (1 + elements.e),
                                 original.a * (1 + original.e),

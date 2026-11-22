@@ -4,8 +4,10 @@ import { assertEquals } from "@std/assert";
 import {
     distanceParts,
     formatAngle,
+    formatApsisChange,
     formatDistance,
     formatDuration,
+    formatNodeChange,
     formatSoon,
     formatSpeed,
 } from "./format.ts";
@@ -96,4 +98,27 @@ Deno.test("formatAngle writes degrees with one decimal", () => {
 
 Deno.test("formatAngle never writes a full turn", () => {
     assertEquals(formatAngle(2 * Math.PI - 1e-5), "0.0°");
+});
+
+Deno.test("formatApsisChange writes the distance and its signed change in one unit", () => {
+    assertEquals(
+        formatApsisChange("Pe", 1.05 * AU, AU, "AU"),
+        "Pe 1.050 AU (+0.050 AU)",
+    );
+    assertEquals(
+        formatApsisChange("Ap", 0.95 * AU, AU, "AU"),
+        "Ap 0.950 AU (−0.050 AU)",
+    );
+    assertEquals(
+        formatApsisChange("Pe", 7_000_000, 6_800_000, null),
+        "Pe 7,000 km (+200 km)",
+    );
+});
+
+Deno.test("formatNodeChange writes the node and the shorter way round to it", () => {
+    const deg = Math.PI / 180;
+
+    assertEquals(formatNodeChange(125 * deg, 120 * deg), "Node 125.0° (+5.0°)");
+    assertEquals(formatNodeChange(355 * deg, 5 * deg), "Node 355.0° (−10.0°)");
+    assertEquals(formatNodeChange(5 * deg, 355 * deg), "Node 5.0° (+10.0°)");
 });

@@ -1,4 +1,4 @@
-import { AU } from "@cpluspatch/orbit";
+import { AU, wrapAngle } from "@cpluspatch/orbit";
 import { type AUnit, aUnit } from "./editing.ts";
 
 // A fixed locale keeps every reader's text, and the readouts' widths, the same.
@@ -97,4 +97,26 @@ export const formatSoon = (s: number): string => {
     if (days < 365) return `${days}d`;
 
     return `${SHORT_YEARS.format(s / 31557600)}y`;
+};
+
+/** The distance of an apsis and its change, in one unit, like `Pe 1.023 AU (+0.050 AU)`. */
+export const formatApsisChange = (
+    name: string,
+    metres: number,
+    before: number,
+    chosen: AUnit | null,
+): string => {
+    const [number, unit] = distanceParts(metres, chosen);
+    const delta = metres - before;
+    const [change] = distanceParts(delta, unit);
+
+    return `${name} ${number} ${unit} (${delta >= 0 ? "+" : ""}${change} ${unit})`;
+};
+
+/** The ascending node and its change, like `Node 120.0° (+5.0°)`. */
+export const formatNodeChange = (raan: number, before: number): string => {
+    let delta = wrapAngle(raan - before);
+    if (delta > Math.PI) delta -= 2 * Math.PI;
+
+    return `Node ${formatAngle(raan)} (${delta >= 0 ? "+" : "−"}${formatAngle(Math.abs(delta))})`;
 };
