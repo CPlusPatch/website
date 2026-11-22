@@ -1,50 +1,4 @@
-import { AU, j2000sToUnixMs, unixMsToJ2000s } from "@cpluspatch/orbit";
-
-/** `YYYY-MM-DDTHH:MM` in UTC, or `null` if `t` isn't a date. */
-const parts = (t: number): string | null => {
-    const date = new Date(j2000sToUnixMs(t));
-    if (Number.isNaN(date.getTime())) return null;
-
-    return date.toISOString().slice(0, -8);
-};
-
-/** A time as `2026-11-21 14:30 UTC`. */
-export const formatUtc = (t: number): string =>
-    `${(parts(t) ?? "Invalid date").replace("T", " ")} UTC`;
-
-/** A time as the value of a `datetime-local` input, in UTC. */
-export const toDatetimeLocal = (t: number): string => {
-    const value = parts(t) ?? "";
-
-    // The input only takes four-digit years.
-    return /^\d{4}-/.test(value) ? value : "";
-};
-
-/** The time of a `datetime-local` value read as UTC, or `null` if it's empty or invalid. */
-export const fromDatetimeLocal = (value: string): number | null => {
-    const match =
-        /^(\d{4,})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value);
-    if (!match) return null;
-
-    const [year, month, day, hour, minute, second] = match
-        .slice(1)
-        .map((part) => Number(part ?? 0));
-    const date = new Date(0);
-    date.setUTCFullYear(year ?? 0, (month ?? 1) - 1, day);
-    date.setUTCHours(hour ?? 0, minute ?? 0, second ?? 0, 0);
-
-    // Month 13 or day 32 roll over, so check they didn't.
-    if (
-        date.getUTCMonth() !== (month ?? 1) - 1 ||
-        date.getUTCDate() !== day ||
-        date.getUTCHours() !== hour ||
-        date.getUTCMinutes() !== minute
-    ) {
-        return null;
-    }
-
-    return unixMsToJ2000s(date.getTime());
-};
+import { AU } from "@cpluspatch/orbit";
 
 // A fixed locale keeps every reader's text, and the readouts' widths, the same.
 const unit = (
@@ -59,26 +13,6 @@ const unit = (
         minimumFractionDigits: digits,
         maximumFractionDigits: digits,
     });
-
-const UNITS: [seconds: number, label: string][] = (
-    [
-        [31557600, "year"],
-        [2629800, "month"],
-        [604800, "week"],
-        [86400, "day"],
-        [3600, "hour"],
-        [60, "minute"],
-        [1, "second"],
-    ] as const
-).map(([seconds, name]) => [seconds, unit(name, 0, "long").format(1)]);
-
-/** The preset's unit by magnitude, like `1 day`. */
-export const rateLabel = (rate: number): string => {
-    const speed = Math.abs(rate);
-    const found = UNITS.find(([seconds]) => speed >= seconds);
-
-    return found ? found[1] : "1 second";
-};
 
 const KM = unit("kilometer", 0);
 const AU_VALUE = new Intl.NumberFormat("en", {

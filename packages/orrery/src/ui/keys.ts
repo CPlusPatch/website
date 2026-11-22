@@ -17,6 +17,8 @@ const KEYS: [keys: string[], what: string][] = [
     [["Space"], "Run or hold"],
     [["[", "]"], "Slower, faster"],
     [["R"], "Reverse"],
+    [["L"], "Go live"],
+    [["T"], "Set the date"],
     [["F"], "Focus the picked body"],
     [["Arrows"], "Turn the view"],
     [["+", "−"], "Zoom in, out"],

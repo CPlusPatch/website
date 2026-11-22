@@ -14,7 +14,7 @@ import { type Readouts, readouts } from "../readouts.ts";
 import type { World } from "../world.ts";
 import { showBodyMarker } from "./body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "./burn-editor.ts";
-import { h } from "./dom.ts";
+import { h, setText } from "./dom.ts";
 import { createElementEditor, type ElementEditor } from "./element-editor.ts";
 
 /** The inspector's element and how to remove it. */
@@ -58,10 +58,6 @@ const apsides = (r: Readouts): { parts: string[]; spoken: string } => ({
     ],
     spoken: `Apoapsis ${formatDistance(r.apoapsisAltitude)} up, in ${formatDuration(r.timeToApoapsis)}. Periapsis ${formatDistance(r.periapsisAltitude)} up, in ${formatDuration(r.timeToPeriapsis)}. Speed ${formatSpeed(r.speed)}. Period ${formatDuration(r.period)}.`,
 });
-
-const setText = (node: Node, text: string) => {
-    if (node.textContent !== text) node.textContent = text;
-};
 
 /** A card with the selected body's name, kind and live orbit readouts. */
 export const createInspector = (

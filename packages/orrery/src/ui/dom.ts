@@ -11,3 +11,8 @@ export const h = <K extends keyof HTMLElementTagNameMap>(
     element.append(...children);
     return element;
 };
+
+/** Sets the text of `node` if it differs, so focus and selection in it survive. */
+export const setText = (node: Node, text: string): void => {
+    if (node.textContent !== text) node.textContent = text;
+};

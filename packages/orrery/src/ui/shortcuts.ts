@@ -3,13 +3,21 @@ import type { World } from "../world.ts";
 
 const TEXT = "input, select, textarea, [contenteditable], dialog";
 
+/** What the shortcuts call that isn't the world's. */
+export type ShortcutActions = {
+    /** Closes the keys card. Returns whether it was open. */
+    closeKeys: () => boolean;
+    goLive: () => void;
+    toggleDate: () => void;
+};
+
 /**
- * Binds Space, `[`, `]` and R to the clock of `world`, and F and Escape to its selection.
- * Escape closes the keys card first, through `closeKeys`. Returns a function that unbinds them.
+ * Binds Space, `[`, `]`, R, L and T to the clock of `world`, and F and Escape to its selection.
+ * Escape closes the keys card first. Returns a function that unbinds them.
  */
 export const bindShortcuts = (
     world: World,
-    closeKeys: () => boolean,
+    { closeKeys, goLive, toggleDate }: ShortcutActions,
 ): (() => void) => {
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.defaultPrevented || event.isComposing) return;
@@ -55,6 +63,10 @@ export const bindShortcuts = (
             world.setClock({ rate: stepRate(clock.rate, 1) });
         } else if (event.key === "r" || event.key === "R") {
             world.setClock({ rate: -clock.rate });
+        } else if (event.key === "l" || event.key === "L") {
+            goLive();
+        } else if (event.key === "t" || event.key === "T") {
+            toggleDate();
         } else {
             return;
         }

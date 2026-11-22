@@ -253,7 +253,11 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     });
     for (const panel of [top, bottom]) if (panel) measure.observe(panel);
 
-    const unbind = bindShortcuts(world, keys.close);
+    const unbind = bindShortcuts(world, {
+        closeKeys: keys.close,
+        goLive: timeBar.goLive,
+        toggleDate: timeBar.toggleDate,
+    });
 
     const save = () => {
         writeSaved(storage, { ...world.scenario, time: world.clock.t });
