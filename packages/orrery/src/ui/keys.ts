@@ -79,6 +79,11 @@ export const createKeys = (): Keys => {
                 h("dd", {}, what),
             ]),
         ),
+        h(
+            "p",
+            { class: "orrery__credits" },
+            "Sky: NASA/Goddard Space Flight Center Scientific Visualization Studio, with Gaia data from ESA/Gaia/DPAC. Stars: Yale Bright Star Catalogue.",
+        ),
     );
     card.hidden = true;
 

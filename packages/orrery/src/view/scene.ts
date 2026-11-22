@@ -11,6 +11,7 @@ import { createOrbits } from "./orbits.ts";
 import { type PickPoint, pickBody } from "./picking.ts";
 import { bindPointer } from "./pointer.ts";
 import { createReadouts } from "./readouts.ts";
+import { createSky } from "./sky.ts";
 import { createTheme } from "./theme.ts";
 
 /** The 3D view drawn into a container. */
@@ -149,6 +150,21 @@ export const createView = (
         );
     describe();
 
+    // The sky isn't drawn where the user asks for more contrast.
+    const plain =
+        matchMedia("(forced-colors: active)").matches ||
+        matchMedia("(prefers-contrast: more)").matches;
+    const sky = createSky();
+    const loading = new AbortController();
+    if (!plain) {
+        sky.load(loading.signal).catch((error: unknown) => {
+            if (loading.signal.aborted) return;
+
+            console.warn("The Orrery couldn't load the sky.", error);
+        });
+    }
+    let skyCleared = false;
+
     let frame = 0;
     let last = performance.now();
     const draw = (now: number) => {
@@ -195,6 +211,18 @@ export const createView = (
             blocked: keepOut,
         });
 
+        if (sky.shown()) {
+            // The canvas is transparent, so the sky needs the ground colour under it.
+            if (!skyCleared) {
+                renderer.autoClear = false;
+                renderer.setClearColor(theme.background(), 1);
+                orbits.sky(true);
+                skyCleared = true;
+            }
+            renderer.clear();
+            sky.render(renderer, camera);
+            renderer.clearDepth();
+        }
         renderer.render(scene, camera);
         labels.render(scene, camera);
     };
@@ -232,6 +260,8 @@ export const createView = (
             cancelAnimationFrame(frame);
             observer.disconnect();
             theme.stop();
+            loading.abort();
+            sky.dispose();
             rig.dispose();
             orbits.dispose();
             bodies.dispose();

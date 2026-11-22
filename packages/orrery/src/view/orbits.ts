@@ -7,7 +7,10 @@ import {
 } from "@cpluspatch/orbit";
 import {
     Color,
+    CustomBlending,
     InterleavedBufferAttribute,
+    MaxEquation,
+    NormalBlending,
     type PerspectiveCamera,
     type Scene,
     SRGBColorSpace,
@@ -45,6 +48,8 @@ export type Orbits = {
     rebuild: (body: Body) => void;
     /** Draws a dashed line for `elements` around the parent of `body`, or none with `null`. */
     ghost: (body: Body, elements: Elements | null) => void;
+    /** Switches the lines to read over the sky, which has no flat ground colour to fade into. */
+    sky: (shown: boolean) => void;
     /** Sets the line width's screen size. */
     resize: (width: number, height: number) => void;
     /** Removes the lines and frees them. */
@@ -206,11 +211,15 @@ export const createOrbits = (
     // The ghost may be made after the last resize.
     let size = { width: 0, height: 0 };
     let pickedId: string | null = null;
+    let skyShown = false;
 
     const mixed = new Color();
     const paintRamp = (orbit: Orbit, picked: boolean, dim: number) => {
         // Mixed in sRGB, like a canvas alpha blend, so faint lines don't wash out.
-        const from = background.getRGB({ r: 0, g: 0, b: 0 }, SRGBColorSpace);
+        // Over the sky the tail fades to black, which the max blend leaves out.
+        const from = skyShown
+            ? { r: 0, g: 0, b: 0 }
+            : background.getRGB({ r: 0, g: 0, b: 0 }, SRGBColorSpace);
         const to = (picked ? pick : color(orbit.body)).getRGB(
             { r: 0, g: 0, b: 0 },
             SRGBColorSpace,
@@ -436,6 +445,15 @@ export const createOrbits = (
         }
     };
 
+    // Over the sky the casing is a dark rail, and additive lines turn white where segments overlap.
+    const styleLines = (orbit: Orbit) => {
+        const { line, casing } = orbit;
+        line.material.blending = skyShown ? CustomBlending : NormalBlending;
+        line.material.blendEquation = MaxEquation;
+        line.material.needsUpdate = true;
+        casing.material.visible = !skyShown;
+    };
+
     for (const body of bodies) {
         if (body.parent === null || body.elements === null) continue;
 
@@ -464,7 +482,7 @@ export const createOrbits = (
         casing.renderOrder = -1;
 
         scene.add(casing, line);
-        orbits.push({
+        const orbit: Orbit = {
             body,
             parent: body.parent,
             line,
@@ -475,7 +493,9 @@ export const createOrbits = (
             near: false,
             paint: null,
             ramp: new Float32Array(3 * SAMPLES),
-        });
+        };
+        styleLines(orbit);
+        orbits.push(orbit);
     }
 
     return {
@@ -639,6 +659,13 @@ export const createOrbits = (
                 const px = orbit.body.id === id ? SELECTED_LINE_PX : LINE_PX;
                 orbit.line.material.linewidth = px;
                 orbit.casing.material.linewidth = casingPx(px);
+                orbit.paint = null;
+            }
+        },
+        sky: (shown) => {
+            skyShown = shown;
+            for (const orbit of orbits) {
+                styleLines(orbit);
                 orbit.paint = null;
             }
         },

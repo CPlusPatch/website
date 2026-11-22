@@ -44,6 +44,13 @@
         }
     }
 
+    .orrery__credits {
+        margin: var(--space-sm) 0 0;
+        padding: 0 var(--orrery-pad) var(--orrery-pad);
+        color: var(--orrery-dim);
+        font-size: var(--orrery-size-xs);
+    }
+
     @media (max-width: 720px) {
         .orrery__keys {
             inline-size: 100%;
