@@ -133,7 +133,7 @@ export const createBodies = (
 
     const rootGroup = entries.find(({ body }) => body.parent === null)?.group;
     const sun = new PointLight(undefined, 3, 0, 0);
-    const ambient = new AmbientLight(undefined, 0.04);
+    const ambient = new AmbientLight(undefined, 0.015);
     scene.add(sun, ambient);
 
     const view = new Vector3();
