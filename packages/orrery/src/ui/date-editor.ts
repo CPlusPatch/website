@@ -92,6 +92,7 @@ export const createDateEditor = (
         variant: "outline",
         tone: "neutral",
         size: "sm",
+        class: "orrery__small-button",
     }).join(" ");
     const preset = (...children: (Node | string)[]) =>
         h("button", { type: "button", class: outline }, ...children);
@@ -163,10 +164,10 @@ export const createDateEditor = (
         },
         h(
             "div",
-            { class: "orrery__inspector-head" },
+            { class: "orrery__inspector-head orrery__inspector-head--panel" },
             h(
                 "h2",
-                { class: "orrery__orbit-title", id: "orrery-date-title" },
+                { class: "orrery__panel-title", id: "orrery-date-title" },
                 "Set the date",
             ),
             closeButton,

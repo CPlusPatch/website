@@ -13,7 +13,7 @@
     .orrery__date-form {
         display: grid;
         gap: 0.625rem;
-        padding: var(--space-sm) var(--orrery-pad) var(--orrery-pad);
+        padding: 0 var(--orrery-pad) var(--orrery-pad);
     }
 
     .orrery__date-entry {
@@ -92,16 +92,9 @@
     }
 
     .orrery__date-presets {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        display: flex;
+        flex-wrap: wrap;
         gap: 6px;
-
-        .button {
-            flex-direction: column;
-            gap: 0;
-            block-size: auto;
-            min-block-size: var(--control-height-sm);
-        }
     }
 
     .orrery__date-iso {

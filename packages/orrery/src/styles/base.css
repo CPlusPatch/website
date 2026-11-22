@@ -67,15 +67,15 @@
     --color-border: var(--orrery-rule);
     --color-border-strong: var(--orrery-frame);
     --color-scanline: var(--orrery-scanline);
-    /* The darkest ink of the state colours, so it reads on every fill. */
-    --color-on-accent: var(--orrery-go-ink);
-    --color-primary: var(--orrery-go);
+    /* The primary is the text colour, which also draws the library's focus ring. Green is for state. */
+    --color-on-accent: var(--orrery-ground);
+    --color-primary: var(--orrery-text);
     --color-primary-hover: color-mix(
         in oklab,
-        var(--orrery-go) 80%,
-        var(--orrery-text)
+        var(--orrery-text) 80%,
+        var(--orrery-muted)
     );
-    --color-primary-accent: var(--orrery-go);
+    --color-primary-accent: var(--orrery-text);
     --color-secondary: var(--orrery-pick);
     --color-secondary-hover: color-mix(
         in oklab,

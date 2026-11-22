@@ -64,7 +64,7 @@ export const createCrumbs = (world: World): Crumbs => {
                         "data-id": body.id,
                     },
                     marker,
-                    body.name,
+                    h("span", { class: "orrery__crumb-label" }, body.name),
                 );
                 if (body.id === world.focused) {
                     button.setAttribute("aria-current", "location");

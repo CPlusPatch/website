@@ -48,7 +48,7 @@ const aScale = (unit: AUnit, a: number): { step: number; decimals: number } => {
 
 const specs = (unit: AUnit, a: number): Spec[] => [
     { field: "a", label: "Semi-major axis", unit, ...aScale(unit, a) },
-    { field: "e", label: "Eccentricity", unit: "", step: 0.01, decimals: 4 },
+    { field: "e", label: "Eccentricity", unit: "", step: 0.01, decimals: 5 },
     { field: "i", label: "Inclination", unit: "°", step: 1, decimals: 2 },
     {
         field: "raan",
@@ -64,7 +64,7 @@ const specs = (unit: AUnit, a: number): Spec[] => [
         step: 5,
         decimals: 2,
     },
-    { field: "m", label: "Mean anomaly", unit: "°", step: 5, decimals: 2 },
+    { field: "m", label: "Mean anomaly now", unit: "°", step: 5, decimals: 2 },
 ];
 
 /**
@@ -224,7 +224,7 @@ export const createElementEditor = (
                 );
                 a.input.value = text;
                 exact = { metres: change.a, text };
-                e.input.value = change.e.toFixed(4);
+                e.input.value = change.e.toFixed(5);
             }
         }
 

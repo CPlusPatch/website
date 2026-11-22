@@ -62,10 +62,10 @@ export const createKeys = (): Keys => {
         },
         h(
             "div",
-            { class: "orrery__inspector-head" },
+            { class: "orrery__inspector-head orrery__inspector-head--panel" },
             h(
                 "h2",
-                { class: "orrery__orbit-title", id: "orrery-keys-title" },
+                { class: "orrery__panel-title", id: "orrery-keys-title" },
                 "Keys",
             ),
             closeButton,

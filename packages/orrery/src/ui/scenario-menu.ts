@@ -64,7 +64,9 @@ const button = (
                 variant,
                 tone: variant === "solid" ? "primary" : "neutral",
                 size: "sm",
-                class: className,
+                class: className
+                    ? `orrery__small-button ${className}`
+                    : "orrery__small-button",
             }).join(" "),
             ...attributes,
         },
@@ -98,6 +100,8 @@ export const createScenarios = (
     const abort = new AbortController();
     const { signal } = abort;
 
+    const toolIcon = h("span", { class: "orrery__tool-icon" });
+    toolIcon.innerHTML = iconSvg("bookmark");
     const toggle = h(
         "button",
         {
@@ -105,7 +109,8 @@ export const createScenarios = (
             class: "orrery__tool",
             "aria-haspopup": "dialog",
         },
-        "Scenarios",
+        toolIcon,
+        h("span", { class: "orrery__tool-label" }, "Scenarios"),
     );
 
     const closeButton = h("button", {
@@ -179,10 +184,10 @@ export const createScenarios = (
         },
         h(
             "div",
-            { class: "orrery__inspector-head" },
+            { class: "orrery__inspector-head orrery__inspector-head--panel" },
             h(
                 "h2",
-                { class: "orrery__orbit-title", id: "orrery-scenarios-title" },
+                { class: "orrery__panel-title", id: "orrery-scenarios-title" },
                 "Scenarios",
             ),
             closeButton,
@@ -283,7 +288,7 @@ export const createScenarios = (
                             "data-index": String(index),
                             "aria-label": `Delete ${name}`,
                         },
-                        "orrery__scenarios-quiet",
+                        "orrery__scenarios-quiet orrery__orbit-quiet",
                     ),
                 );
             });

@@ -22,7 +22,7 @@
         grid-template-columns: auto 1fr;
         gap: 6px 10px;
         margin: 0;
-        padding: var(--space-sm) var(--orrery-pad) var(--orrery-pad);
+        padding: 0 var(--orrery-pad) var(--orrery-pad);
         overflow: auto;
         font-size: var(--orrery-size-sm);
 

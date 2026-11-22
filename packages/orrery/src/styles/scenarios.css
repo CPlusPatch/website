@@ -15,11 +15,8 @@
             background-color: var(--orrery-scrim);
         }
 
-        /* The title sits 16px above the first row, as in the other cards. */
         .orrery__inspector-head {
             flex: none;
-            border-block-end: 0;
-            padding-block-end: 0;
         }
 
         /* The text fields here are left-aligned, unlike the number steppers. */
@@ -51,7 +48,7 @@
         display: grid;
         gap: 0.625rem;
         min-block-size: 0;
-        padding: var(--space-md) var(--orrery-pad) var(--orrery-pad);
+        padding: 0 var(--orrery-pad) var(--orrery-pad);
         overflow-y: auto;
         overscroll-behavior: contain;
     }

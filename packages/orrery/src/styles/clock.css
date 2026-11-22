@@ -204,8 +204,9 @@
         font-size: 0.75em;
     }
 
+    /* The text starts with a space, for the accessible name. */
     .orrery__utc {
-        margin-inline-start: 6px;
+        margin-inline-start: 3px;
         color: var(--orrery-muted);
         font: 600 var(--orrery-size-xs) var(--orrery-font-ui);
         vertical-align: 0.15em;

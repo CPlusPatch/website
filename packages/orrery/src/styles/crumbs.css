@@ -112,8 +112,22 @@
     }
 
     @media (max-width: 720px) {
+        /* Takes the room the tools leave, and shrinks before they wrap. */
         .orrery__crumbs {
-            flex: 1 0 100%;
+            flex: 1 1 0;
+        }
+
+        .orrery__crumb-list {
+            flex-wrap: nowrap;
+        }
+
+        /* Past the first crumb only the marker shows. */
+        .orrery__crumb-list li + li .orrery__crumb-label {
+            position: absolute;
+            inline-size: 1px;
+            block-size: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
         }
 
         .orrery__tool {

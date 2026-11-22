@@ -118,7 +118,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
             ":",
             parts.mi,
             h("span", { class: "orrery__secs" }, ":", parts.s),
-            h("span", { class: "orrery__utc" }, "UTC"),
+            h("span", { class: "orrery__utc" }, " UTC"),
         ),
     );
     const date = h(
@@ -126,11 +126,12 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
         {
             type: "button",
             class: "orrery__date",
-            "aria-label": "Set the date",
             title: "Set the date (T)",
             "aria-expanded": "false",
             "aria-controls": "orrery-date-editor",
         },
+        // The name holds the visible date, so voice control can say what's shown.
+        h("span", { class: "visually-hidden" }, "Set the date, "),
         time,
     );
 

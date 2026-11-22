@@ -106,10 +106,14 @@ export const createInspector = (
     });
 
     const marker = h("span", { class: "orrery__orbit-marker" });
-    const title = h("h2", {
-        class: "orrery__orbit-title",
-        id: "orrery-orbit-title",
-    });
+    const title = h("h2", { id: "orrery-orbit-title" });
+    const head = h(
+        "div",
+        { class: "orrery__inspector-head" },
+        marker,
+        title,
+        close,
+    );
     // Scrolls under the head, as a scrolling card left a blank band in Chromium's canvas.
     const content = h("div", { class: "orrery__inspector-body" });
     const element = h(
@@ -118,10 +122,17 @@ export const createInspector = (
             class: `${cardClasses().join(" ")} orrery__inspector`,
             "aria-label": "Selected body",
         },
-        h("div", { class: "orrery__inspector-head" }, marker, title, close),
+        head,
         content,
     );
     element.hidden = true;
+
+    // Only the card shows the body's name big, with a rule under it.
+    const setHead = (small: boolean) => {
+        title.className = small ? "orrery__panel-title" : "orrery__orbit-title";
+        head.classList.toggle("orrery__inspector-head--panel", small);
+    };
+    setHead(false);
 
     let values: HTMLElement[] = [];
     // The switch of each distance row, or none for the rows that aren't distances.
@@ -401,6 +412,7 @@ export const createInspector = (
         adder?.destroy();
         adder = null;
         if (adding) {
+            setHead(true);
             title.textContent = "Add a body";
             adder = createBodyAdder(world, units, addName, cancelAdd);
             content.append(adder.element);
@@ -429,6 +441,7 @@ export const createInspector = (
         if (!form) mode = "card";
 
         showBodyMarker(marker, body);
+        setHead(mode !== "card");
         title.textContent =
             mode === "card"
                 ? body.name
