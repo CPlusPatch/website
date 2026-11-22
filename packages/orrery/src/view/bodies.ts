@@ -50,8 +50,6 @@ export type Bodies = {
     hover: (id: string | null) => void;
     /** Sizes the markers for a viewport. */
     resize: (camera: PerspectiveCamera, width: number, height: number) => void;
-    /** Recolours the bodies. */
-    recolor: (color: (body: Body) => Color) => void;
     /** Removes the bodies and frees them. */
     dispose: () => void;
 };
@@ -406,13 +404,6 @@ export const createBodies = (
             }
 
             measure();
-        },
-        recolor: (pick) => {
-            for (const { body, sphere, marker, halo } of entries) {
-                sphere.material.color.copy(pick(body));
-                marker.material.color.copy(pick(body));
-                halo?.material.color.copy(pick(body));
-            }
         },
         dispose: () => {
             disposed = true;

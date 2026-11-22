@@ -86,6 +86,27 @@ export default defineConfig({
             subsets: ["latin"],
             fallbacks: ["sans-serif"],
         },
+        // The orbit viewer only (src/pages/orbits.astro)
+        {
+            provider: fontProviders.fontsource(),
+            name: "IBM Plex Sans Condensed",
+            cssVariable: "--font-plex-sans-condensed",
+            styles: ["normal"],
+            weights: ["400", "500", "600", "700"],
+            display: "swap",
+            subsets: ["latin", "latin-ext"],
+            fallbacks: ["Arial Narrow", "sans-serif"],
+        },
+        {
+            provider: fontProviders.fontsource(),
+            name: "IBM Plex Mono",
+            cssVariable: "--font-plex-mono",
+            styles: ["normal"],
+            weights: ["400", "500"],
+            display: "swap",
+            subsets: ["latin", "latin-ext"],
+            fallbacks: ["monospace", "ui-monospace"],
+        },
     ],
     vite: {
         css: {

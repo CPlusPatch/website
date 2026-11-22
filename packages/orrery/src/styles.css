@@ -1,14 +1,124 @@
 .orrery {
+    color-scheme: dark;
+
     /* The room the top and bottom panels leave for the side panels. */
     --orrery-top-space: 3rem;
     --orrery-bottom-space: 6rem;
     --orrery-side-width: 19rem;
 
+    /* Neutral graphite. */
+    --orrery-ground: #09090a;
+    /* For menus and tips that float over other panels. */
+    --orrery-panel-solid: rgb(21 21 23);
+    --orrery-panel: color-mix(in srgb,
+            var(--orrery-panel-solid) 94%,
+            transparent);
+    --orrery-panel-raised: #222225;
+    --orrery-frame: #46464b;
+    --orrery-rule: #303034;
+    --orrery-scanline: rgb(255 255 255 / 0.035);
+    --orrery-backdrop: rgb(0 0 0 / 0.7);
+    --orrery-text: #eeece6;
+    --orrery-muted: #b3b0a7;
+
+    /* State colours, always paired with a word, shape or pattern. */
+    --orrery-go: #4fe079;
+    --orrery-go-ink: #04210d;
+    --orrery-signal: #f4d24a;
+    --orrery-hold: #ff9f2e;
+    --orrery-pick: #ff6fb5;
+    --orrery-abort: #ff6b5e;
+
+    --orrery-font-ui: var(--font-plex-sans-condensed);
+    --orrery-font-data: var(--font-plex-mono);
+
+    --orrery-size-xs: 0.6875rem;
+    --orrery-size-sm: 0.8125rem;
+    --orrery-size-md: 0.9375rem;
+
+    /*
+     * The site's tokens, for the ui components. A theme sets them on `:root`, so
+     * setting them on this element wins over any theme and style, whatever its
+     * selector. Only a rule that targets `.orrery` itself could beat these.
+     */
+    --color-bg: var(--orrery-ground);
+    --color-bg-alt: var(--orrery-panel-solid);
+    --color-surface: var(--orrery-panel-solid);
+    --color-surface-raised: var(--orrery-panel-raised);
+    --color-text: var(--orrery-text);
+    --color-text-muted: var(--orrery-muted);
+    --color-border: var(--orrery-rule);
+    --color-border-strong: var(--orrery-frame);
+    --color-scanline: var(--orrery-scanline);
+    /* The darkest ink of the state colours, so it reads on every fill. */
+    --color-on-accent: var(--orrery-go-ink);
+    --color-primary: var(--orrery-go);
+    --color-primary-hover: color-mix(in oklab,
+            var(--orrery-go) 80%,
+            var(--orrery-text));
+    --color-primary-accent: var(--orrery-go);
+    --color-secondary: var(--orrery-pick);
+    --color-secondary-hover: color-mix(in oklab,
+            var(--orrery-pick) 80%,
+            var(--orrery-text));
+    --color-secondary-accent: var(--orrery-pick);
+    --color-destructive: var(--orrery-abort);
+    --color-destructive-hover: color-mix(in oklab,
+            var(--orrery-abort) 80%,
+            var(--orrery-text));
+    --color-destructive-accent: var(--orrery-abort);
+    --color-warning: var(--orrery-hold);
+    --color-warning-hover: color-mix(in oklab,
+            var(--orrery-hold) 80%,
+            var(--orrery-text));
+    --color-warning-accent: var(--orrery-hold);
+    --color-success: var(--orrery-go);
+    --color-success-hover: color-mix(in oklab,
+            var(--orrery-go) 80%,
+            var(--orrery-text));
+    --color-success-accent: var(--orrery-go);
+    --color-backdrop: var(--orrery-backdrop);
+
+    /* Tokens the library derives on `:root`, which would keep the site's colours here. */
+    --border-color: var(--color-border);
+    --hover-fill: color-mix(in oklab, var(--color-text) 10%, transparent);
+    --radius: 0;
+    --border-width: 1px;
+
+    --font-base: var(--orrery-font-ui);
+    --font-mono: var(--orrery-font-data);
+    --font-size-xs: var(--orrery-size-xs);
+    --font-size-sm: var(--orrery-size-sm);
+    --font-size-base: var(--orrery-size-md);
+    --font-size-lg: var(--orrery-size-md);
+
+    /* Declared on `:root` in the library, with its font families fixed there. */
+    --type-heading:
+        700 var(--font-size-xl) / var(--leading-tight) var(--font-base);
+    --type-subheading:
+        600 var(--font-size-lg) / var(--leading-snug) var(--font-base);
+    --type-body:
+        400 var(--font-size-base) / var(--line-height) var(--font-base);
+    --type-body-strong:
+        600 var(--font-size-base) / var(--leading-snug) var(--font-base);
+    --type-body-sm:
+        400 var(--font-size-sm) / var(--leading-normal) var(--font-base);
+    --type-label:
+        600 var(--font-size-sm) / var(--leading-snug) var(--font-base);
+    --type-ui: 400 var(--font-size-sm) / var(--leading-snug) var(--font-base);
+    --type-caption:
+        400 var(--font-size-xs) / var(--leading-snug) var(--font-base);
+    --type-meta: 400 var(--font-size-xs) / var(--leading-snug) var(--font-mono);
+    --type-code:
+        400 var(--font-size-code-block) / var(--leading-code) var(--font-mono);
+
     position: relative;
     isolation: isolate;
     block-size: 100dvh;
     overflow: hidden;
-    background-color: var(--color-bg);
+    background-color: var(--orrery-ground);
+    color: var(--orrery-text);
+    font: 500 var(--orrery-size-md) / 1.35 var(--orrery-font-ui);
 
     .orrery__canvas {
         position: absolute;
@@ -51,8 +161,9 @@
         color: var(--color-text);
         /* A halo instead of a box, so orbit lines stay whole up to the letters. */
         paint-order: stroke fill;
-        -webkit-text-stroke: 3px var(--color-bg);
-        font-size: var(--font-size-sm);
+        -webkit-text-stroke: 3px var(--orrery-ground);
+        font-family: var(--orrery-font-ui);
+        font-size: var(--orrery-size-sm);
         white-space: nowrap;
     }
 
@@ -63,8 +174,7 @@
     .orrery__label--hover,
     .orrery__label--selected {
         background:
-            linear-gradient(currentColor, currentColor) bottom / 100% 1px
-            no-repeat content-box;
+            linear-gradient(currentColor, currentColor) bottom / 100% 1px no-repeat content-box;
     }
 
     /* Bold and underlined, so it doesn't rely on colour. */
@@ -105,9 +215,29 @@
             display: none;
         }
 
-        > * {
+        >* {
             pointer-events: auto;
         }
+
+        /* The dropdowns' triggers have their own frame. */
+        > :not(.dropdown, .orrery__notices),
+        .orrery__notices>* {
+            border: 1px solid var(--orrery-frame);
+            border-radius: 0;
+            background-color: var(--orrery-panel);
+            backdrop-filter: blur(6px);
+            box-shadow: none;
+        }
+    }
+
+    /* Over other panels, so no blur. */
+    .dropdown__panel,
+    .dialog {
+        border: 1px solid var(--orrery-frame);
+        border-radius: 0;
+        background-color: var(--orrery-panel-solid);
+        backdrop-filter: none;
+        box-shadow: none;
     }
 
     /* Above the side panels, so a long notice covers them instead. */
@@ -131,15 +261,18 @@
         display: none;
     }
 
-    /* The menus sit on the canvas, so a planet behind one mustn't show through. */
     .orrery__panel--top .dropdown__trigger {
+        border: 1px solid var(--orrery-frame);
+        border-radius: 0;
+        backdrop-filter: blur(6px);
+
         &:not(:hover) {
-            background-color: var(--color-surface-raised);
+            background-color: var(--orrery-panel);
         }
 
-        /* A tap leaves :hover on, which would keep the dark fill. */
+        /* A tap leaves :hover on, which would keep the light fill. */
         @media (hover: none) {
-            background-color: var(--color-surface-raised);
+            background-color: var(--orrery-panel);
         }
     }
 
@@ -189,6 +322,7 @@
     }
 
     .orrery__time {
+        font-family: var(--orrery-font-data);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
@@ -205,6 +339,7 @@
         .input {
             inline-size: auto;
             /* Chrome sizes the field by its text, so the bar would shift as the date changes. */
+            font-family: var(--orrery-font-data);
             font-variant-numeric: tabular-nums;
         }
     }
@@ -215,7 +350,8 @@
         gap: var(--space-xs) var(--space-md);
 
         /* Touch screens have no keyboard. */
-        @media (hover: none), (max-width: 720px) {
+        @media (hover: none),
+        (max-width: 720px) {
             display: none;
         }
     }
@@ -272,12 +408,12 @@
         }
     }
 
-    .orrery__body-list details[open] > summary {
+    .orrery__body-list details[open]>summary {
         margin-block-end: var(--space-sm);
     }
 
-    .orrery__body-list details[open] > summary,
-    .orrery__editor[open] > summary {
+    .orrery__body-list details[open]>summary,
+    .orrery__editor[open]>summary {
         [data-icon] {
             rotate: 180deg;
         }
@@ -296,17 +432,13 @@
     }
 
     .orrery__row {
-        /* Tints of the text colour read on the card in both themes. */
-        --orrery-row-hover: color-mix(
-            in oklab,
-            var(--color-text) 6%,
-            transparent
-        );
-        --orrery-row-pressed: color-mix(
-            in oklab,
-            var(--color-text) 12%,
-            transparent
-        );
+        /* Tints of the text colour, so they read on the card. */
+        --orrery-row-hover: color-mix(in oklab,
+                var(--color-text) 6%,
+                transparent);
+        --orrery-row-pressed: color-mix(in oklab,
+                var(--color-text) 12%,
+                transparent);
 
         display: flex;
         align-items: center;
@@ -338,7 +470,7 @@
             }
         }
 
-        > [aria-pressed="true"] {
+        >[aria-pressed="true"] {
             color: var(--color-text);
             background-color: var(--orrery-row-pressed);
         }
@@ -406,6 +538,7 @@
     }
 
     .orrery__readout {
+        font-family: var(--orrery-font-data);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
@@ -421,7 +554,7 @@
             font: var(--type-label);
         }
 
-        &[open] > summary {
+        &[open]>summary {
             margin-block-end: var(--space-sm);
         }
     }
@@ -488,9 +621,9 @@
     .orrery__warning--sticky {
         position: sticky;
         inset-block-end: 0;
-        background-color: var(--color-surface-raised);
+        background-color: var(--orrery-panel-solid);
         /* Covers the gap above it, so rows scrolling under don't show cut through. */
-        box-shadow: 0 calc(-1 * var(--space-md)) 0 var(--color-surface-raised);
+        box-shadow: 0 calc(-1 * var(--space-md)) 0 var(--orrery-panel-solid);
     }
 
     .orrery__editor-row {
@@ -498,7 +631,7 @@
         gap: var(--space-xs);
         font: var(--type-ui);
 
-        & + & {
+        &+& {
             margin-block-start: var(--space-md);
         }
 
@@ -522,6 +655,7 @@
         /* Eight digits (a in km up to 0.1 AU) plus Chrome's spin buttons. */
         inline-size: 12ch;
         /* Chrome sizes the field by its text, so the row would shift as the value changes. */
+        font-family: var(--orrery-font-data);
         font-variant-numeric: tabular-nums;
     }
 
@@ -596,7 +730,7 @@
         inset-block-end: calc(-1 * var(--space-sm));
         margin-block-end: calc(-1 * var(--space-sm));
         padding-block-end: var(--space-sm);
-        background-color: var(--color-surface-raised);
+        background-color: var(--orrery-panel-solid);
 
         &[hidden] {
             display: none;

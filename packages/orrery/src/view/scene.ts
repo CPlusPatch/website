@@ -55,10 +55,7 @@ export const createView = (
 
     container.append(canvas, labels.domElement);
 
-    const theme = createTheme(container, () => {
-        orbits.recolor(theme.color, theme.background());
-        bodies.recolor(theme.color);
-    });
+    const theme = createTheme(container);
     const orbits = createOrbits(
         scene,
         world.order,

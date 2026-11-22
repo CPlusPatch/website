@@ -17,8 +17,6 @@ export type Orbits = {
     ghost: (body: Body, elements: Elements | null) => void;
     /** Sets the line width's screen size. */
     resize: (width: number, height: number) => void;
-    /** Recolours the lines and their casings. */
-    recolor: (color: (body: Body) => Color, background: Color) => void;
     /** Removes the lines and frees them. */
     dispose: () => void;
 };
@@ -81,7 +79,6 @@ export const createOrbits = (
     background: Color,
 ): Orbits => {
     const orbits: Orbit[] = [];
-    let pick = color;
     let ghost: { body: Body; parent: string; line: Line2 } | null = null;
     // The ghost may be made after the last resize.
     let size = { width: 0, height: 0 };
@@ -143,7 +140,7 @@ export const createOrbits = (
             ghost.parent = body.parent;
             ghost.line.material.dashSize = dash;
             ghost.line.material.gapSize = dash;
-            ghost.line.material.color.copy(pick(body));
+            ghost.line.material.color.copy(color(body));
             ghost.line.computeLineDistances();
             ghost.line.visible = true;
         },
@@ -196,14 +193,6 @@ export const createOrbits = (
             for (const { line, casing } of orbits) {
                 line.material.resolution.set(width, height);
                 casing.material.resolution.set(width, height);
-            }
-        },
-        recolor: (next, background) => {
-            pick = next;
-            if (ghost) ghost.line.material.color.copy(next(ghost.body));
-            for (const { body, line, casing } of orbits) {
-                line.material.color.copy(next(body));
-                casing.material.color.copy(background);
             }
         },
         dispose: () => {

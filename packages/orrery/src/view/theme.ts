@@ -1,47 +1,56 @@
 /**
  * @module
- * Colours for the scene, taken from the site's CSS tokens.
+ * Colours for the scene: the `--orrery-*` tokens and the bodies' own colours.
  */
 
 import type { Body, BodyKind } from "@cpluspatch/orbit";
 import { Color, SRGBColorSpace } from "three";
 
-/** The colours of a scene, which follow the site's theme. */
+/** The colours of a scene, which come from the `--orrery-*` tokens. */
 export type Theme = {
     /** The colour of a body. */
     color: (body: Body) => Color;
     /** The colour of the page behind the scene. */
     background: () => Color;
-    /** Stops watching for theme changes and removes the probe. */
+    /** Removes the probe. */
     stop: () => void;
 };
 
-const KIND_COLORS: Record<BodyKind, string> = {
-    // The accent is too pale on a light background.
-    star: "light-dark(var(--color-warning), var(--color-warning-accent))",
-    planet: "var(--color-primary)",
-    dwarf: "var(--color-secondary)",
-    moon: "var(--color-text-muted)",
-    spacecraft: "var(--color-success)",
+/** CSS colours by body id, for the bodies of the solar system scenario. */
+export const BODY_COLORS: Record<string, string> = {
+    sun: "#ffd27a",
+    mercury: "#b9b2a6",
+    venus: "#e9cf98",
+    earth: "#62a7ff",
+    moon: "#cfd0d2",
+    iss: "#f2f2ee",
+    mars: "#ec6f4a",
+    jupiter: "#dcae7c",
+    saturn: "#e8d59a",
+    uranus: "#93e0dc",
+    neptune: "#7c8cff",
+    pluto: "#c8a593",
 };
 
-/** Whether a change to the root element can change the theme's colours. */
-const mayRetheme = (record: MutationRecord): boolean =>
-    record.attributeName === "style" ||
-    record.attributeName === "class" ||
-    record.attributeName?.startsWith("data-") === true;
+const KIND_COLORS: Record<BodyKind, string> = {
+    star: "var(--orrery-signal)",
+    planet: "var(--orrery-text)",
+    dwarf: "var(--orrery-muted)",
+    moon: "var(--orrery-muted)",
+    spacecraft: "var(--orrery-text)",
+};
 
-/** Colours for `container`, calling `onChange` when the site's theme changes. */
-export const createTheme = (
-    container: HTMLElement,
-    onChange: () => void,
-): Theme => {
-    // Inside the container so it inherits its `color-scheme`.
+/** The CSS colour of a body: its own, then its id's, then its kind's. */
+export const colorOf = (body: Body): string =>
+    body.color ?? BODY_COLORS[body.id] ?? KIND_COLORS[body.kind];
+
+/** Colours for `container`. */
+export const createTheme = (container: HTMLElement): Theme => {
+    // Inside the container, so the tokens resolve as they do for its content.
     const probe = document.createElement("span");
     probe.hidden = true;
     container.append(probe);
 
-    // The tokens are `light-dark()`, which only a computed colour resolves.
     const canvas = document.createElement("canvas");
     canvas.width = 1;
     canvas.height = 1;
@@ -77,37 +86,9 @@ export const createTheme = (
         return color;
     };
 
-    const changed = () => {
-        cache.clear();
-        onChange();
-    };
-
-    const mutations = new MutationObserver((records) => {
-        if (records.some(mayRetheme)) changed();
-    });
-    mutations.observe(document.documentElement, { attributes: true });
-
-    // The Display menu applies themes with `:has()` on radio inputs, which changes no attribute.
-    let pending = 0;
-    const onInput = () => {
-        cancelAnimationFrame(pending);
-        // The styles apply after the event.
-        pending = requestAnimationFrame(changed);
-    };
-    document.addEventListener("change", onInput);
-
-    const scheme = matchMedia("(prefers-color-scheme: dark)");
-    scheme.addEventListener("change", changed);
-
     return {
-        background: () => resolve("var(--color-bg)"),
-        color: (body) => resolve(body.color ?? KIND_COLORS[body.kind]),
-        stop: () => {
-            mutations.disconnect();
-            document.removeEventListener("change", onInput);
-            cancelAnimationFrame(pending);
-            scheme.removeEventListener("change", changed);
-            probe.remove();
-        },
+        background: () => resolve("var(--orrery-ground)"),
+        color: (body) => resolve(colorOf(body)),
+        stop: () => probe.remove(),
     };
 };

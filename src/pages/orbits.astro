@@ -1,12 +1,11 @@
 ---
 /** The Orrery: a 3D model of the solar system, the Moon and the ISS. */
 
+import { Font } from "astro:assets";
 import Icon from "@cpluspatch/ui/astro/icon.astro";
-import DisplayMenu from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import Dropdown from "@cpluspatch/ui/astro/ui/dropdown.astro";
 import "@cpluspatch/orrery/styles.css";
-import { effects } from "../data/home.ts";
 import Layout from "../layouts/desktop.astro";
 
 const actions = [
@@ -28,6 +27,13 @@ const actions = [
     description="An interactive model of the solar system, the Moon and the International Space Station."
     noindex
 >
+    <Fragment slot="head">
+        <Font
+            cssVariable="--font-plex-sans-condensed"
+            preload={[{ subset: "latin" }]}
+        />
+        <Font cssVariable="--font-plex-mono" />
+    </Fragment>
     <main id="main">
         <h1 class="visually-hidden">Orbits</h1>
         <div class="orrery">
@@ -75,7 +81,6 @@ const actions = [
                 >
                     <div data-orrery-bodies></div>
                 </Dropdown>
-                <DisplayMenu id="display" {effects} size="sm" />
             </div>
             <div class="orrery__panel orrery__panel--left" hidden></div>
             <div class="orrery__panel orrery__panel--right" hidden></div>
