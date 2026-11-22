@@ -17,6 +17,7 @@ import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import {
+    arcLengthAt,
     nearAnomalies,
     nearestPoint,
     orbitNear,
@@ -69,6 +70,23 @@ type Orbit = {
     paint: Paint | null;
     /** The linear colour at each step back along the trail. */
     ramp: Float32Array;
+};
+
+type Ghost = {
+    body: Body;
+    parent: string;
+    line: Line2;
+    elements: Elements;
+    /** The loop's points, in km. */
+    positions: Float32Array;
+    /** The distance along the loop at each of its points, in km. */
+    cumulative: Float64Array;
+    /** The line's segments, as start and end xyz triples. */
+    segments: InterleavedBufferAttribute["data"];
+    /** The line's dash distances, as start and end pairs. */
+    distances: InterleavedBufferAttribute["data"];
+    /** Whether the segments hold the near layout. */
+    near: boolean;
 };
 
 /** Few samples bow the chords of a big orbit off a spacecraft's path. */
@@ -146,18 +164,30 @@ const orbitGeometry = (
     };
 };
 
-/** The length of a polyline of x, y, z triples. */
-const pathLength = (positions: Float32Array): number => {
-    let total = 0;
-    for (let k = 3; k < positions.length; k += 3) {
-        total += Math.hypot(
-            (positions[k] ?? 0) - (positions[k - 3] ?? 0),
-            (positions[k + 1] ?? 0) - (positions[k - 2] ?? 0),
-            (positions[k + 2] ?? 0) - (positions[k - 1] ?? 0),
-        );
+/** The distance along a polyline of x, y, z triples at each of its vertices. */
+const arcLengths = (positions: Float32Array): Float64Array => {
+    const out = new Float64Array(positions.length / 3);
+    for (let k = 1; k < out.length; k++) {
+        out[k] =
+            (out[k - 1] ?? 0) +
+            Math.hypot(
+                (positions[3 * k] ?? 0) - (positions[3 * k - 3] ?? 0),
+                (positions[3 * k + 1] ?? 0) - (positions[3 * k - 2] ?? 0),
+                (positions[3 * k + 2] ?? 0) - (positions[3 * k - 1] ?? 0),
+            );
     }
 
-    return total;
+    return out;
+};
+
+/** Writes a vertex's distance along the line into the segment that ends there and the one that starts there. */
+const setDistance = (
+    array: InterleavedBufferAttribute["data"]["array"],
+    vertex: number,
+    distance: number,
+): void => {
+    if (vertex > 0) array[2 * (vertex - 1) + 1] = distance;
+    if (vertex < SAMPLES) array[2 * vertex] = distance;
 };
 
 /** The dashes and gaps along a ghost line, so an orbit has this many of each. */
@@ -172,7 +202,7 @@ export const createOrbits = (
     pick: Color,
 ): Orbits => {
     const orbits: Orbit[] = [];
-    let ghost: { body: Body; parent: string; line: Line2 } | null = null;
+    let ghost: Ghost | null = null;
     // The ghost may be made after the last resize.
     let size = { width: 0, height: 0 };
     let pickedId: string | null = null;
@@ -311,6 +341,101 @@ export const createOrbits = (
         orbit.paint = null;
     };
 
+    // The same near layout as an orbit's, around the vertex nearest the camera.
+    const rebuildGhostNear = (
+        g: Ghost,
+        parentR: Vec3,
+        origin: Vec3,
+        center: number,
+        distance: number,
+    ) => {
+        const aKm = g.elements.a / 1000;
+        const anomalies = nearAnomalies(center, distance / (4 * aKm), SAMPLES);
+        const points = orbitPointsAt(g.elements, anomalies);
+
+        for (let vertex = 0; vertex <= SAMPLES; vertex++) {
+            setVertex(
+                g.segments.array,
+                vertex,
+                (parentR.x - origin.x + (points[3 * vertex] ?? 0)) / 1000,
+                (parentR.y - origin.y + (points[3 * vertex + 1] ?? 0)) / 1000,
+                (parentR.z - origin.z + (points[3 * vertex + 2] ?? 0)) / 1000,
+            );
+            // Keeps the dashes on the ellipse as the vertices move.
+            setDistance(
+                g.distances.array,
+                vertex,
+                arcLengthAt(g.cumulative, anomalies[vertex] ?? 0),
+            );
+        }
+        g.segments.needsUpdate = true;
+        g.distances.needsUpdate = true;
+        g.near = true;
+        g.line.position.set(0, 0, 0);
+        g.line.frustumCulled = false;
+    };
+
+    const restoreGhostStatic = (g: Ghost) => {
+        for (let vertex = 0; vertex <= SAMPLES; vertex++) {
+            setVertex(
+                g.segments.array,
+                vertex,
+                g.positions[3 * vertex] ?? 0,
+                g.positions[3 * vertex + 1] ?? 0,
+                g.positions[3 * vertex + 2] ?? 0,
+            );
+            setDistance(g.distances.array, vertex, g.cumulative[vertex] ?? 0);
+        }
+        g.segments.needsUpdate = true;
+        g.distances.needsUpdate = true;
+        g.near = false;
+        g.line.frustumCulled = true;
+    };
+
+    const updateGhost = (
+        origin: Vec3,
+        states: Map<string, State>,
+        camera: PerspectiveCamera,
+    ) => {
+        if (!ghost) return;
+
+        const parentR = states.get(ghost.parent)?.r;
+        if (!parentR) return;
+
+        parentAt.set(
+            (parentR.x - origin.x) / 1000,
+            (parentR.y - origin.y) / 1000,
+            (parentR.z - origin.z) / 1000,
+        );
+
+        let near = false;
+        let vertex = 0;
+        let distance = Infinity;
+        if (ghost.line.visible) {
+            target.copy(camera.position).sub(parentAt);
+            vertex = nearestPoint(
+                ghost.positions,
+                SAMPLES,
+                target.x,
+                target.y,
+                target.z,
+            );
+            distance = Math.hypot(
+                target.x - (ghost.positions[3 * vertex] ?? 0),
+                target.y - (ghost.positions[3 * vertex + 1] ?? 0),
+                target.z - (ghost.positions[3 * vertex + 2] ?? 0),
+            );
+            near = orbitNear(distance, ghost.elements.a / 1000);
+        }
+        if (ghost.near && !near) restoreGhostStatic(ghost);
+        if (near) {
+            const center = (2 * Math.PI * vertex) / SAMPLES;
+            rebuildGhostNear(ghost, parentR, origin, center, distance);
+        } else {
+            ghost.line.position.copy(parentAt);
+        }
+    };
+
     for (const body of bodies) {
         if (body.parent === null || body.elements === null) continue;
 
@@ -361,31 +486,51 @@ export const createOrbits = (
             }
 
             const positions = orbitPositions(elements);
+            const cumulative = arcLengths(positions);
             const geometry = new LineGeometry();
             geometry.setPositions(positions);
-            const dash = pathLength(positions) / GHOST_DASHES;
+            const dash = (cumulative[SAMPLES] ?? 0) / GHOST_DASHES;
 
-            if (!ghost) {
+            let line = ghost?.line;
+            if (!line) {
                 const material = new LineMaterial({
                     linewidth: GHOST_LINE_PX,
                     dashed: true,
                     transparent: true,
                 });
                 material.resolution.set(size.width, size.height);
-                const line = new Line2(geometry, material);
+                line = new Line2(geometry, material);
                 scene.add(line);
-                ghost = { body, parent: body.parent, line };
             } else {
-                ghost.line.geometry.dispose();
-                ghost.line.geometry = geometry;
+                line.geometry.dispose();
+                line.geometry = geometry;
             }
-            ghost.body = body;
-            ghost.parent = body.parent;
-            ghost.line.material.dashSize = dash;
-            ghost.line.material.gapSize = dash;
-            ghost.line.material.color.copy(pick);
-            ghost.line.computeLineDistances();
-            ghost.line.visible = true;
+            line.material.dashSize = dash;
+            line.material.gapSize = dash;
+            line.material.color.copy(pick);
+            line.computeLineDistances();
+            line.frustumCulled = true;
+            line.visible = true;
+
+            const segments = geometry.getAttribute("instanceStart");
+            const distances = geometry.getAttribute("instanceDistanceStart");
+            if (
+                !(segments instanceof InterleavedBufferAttribute) ||
+                !(distances instanceof InterleavedBufferAttribute)
+            ) {
+                throw new Error("The ghost's attributes aren't interleaved.");
+            }
+            ghost = {
+                body,
+                parent: body.parent,
+                line,
+                elements,
+                positions,
+                cumulative,
+                segments: segments.data,
+                distances: distances.data,
+                near: false,
+            };
         },
         rebuild: (body) => {
             const orbit = orbits.find(
@@ -486,16 +631,7 @@ export const createOrbits = (
                 }
             }
 
-            if (ghost) {
-                const r = states.get(ghost.parent)?.r;
-                if (r) {
-                    ghost.line.position.set(
-                        (r.x - origin.x) / 1000,
-                        (r.y - origin.y) / 1000,
-                        (r.z - origin.z) / 1000,
-                    );
-                }
-            }
+            updateGhost(origin, states, camera);
         },
         highlight: (id) => {
             pickedId = id;

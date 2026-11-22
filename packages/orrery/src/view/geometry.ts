@@ -140,6 +140,30 @@ export const nearAnomalies = (
     return out;
 };
 
+/**
+ * The distance along a loop at eccentric anomaly `anomaly`, from a table of its distance at each
+ * of `cumulative.length - 1` anomalies spaced evenly from 0 to 2π, the last being the whole loop.
+ * It keeps growing as the anomaly goes past 2π, so a pattern along the loop doesn't jump there.
+ */
+export const arcLengthAt = (
+    cumulative: ArrayLike<number>,
+    anomaly: number,
+): number => {
+    const count = cumulative.length - 1;
+    const total = cumulative[count] ?? 0;
+    const at = (wrapAngle(anomaly) / (2 * Math.PI)) * count;
+    // Rounding can put `at` on `count` itself.
+    const index = Math.min(Math.floor(at), count - 1);
+    const from = cumulative[index] ?? 0;
+    const to = cumulative[index + 1] ?? from;
+
+    return (
+        from +
+        (to - from) * (at - index) +
+        total * Math.floor(anomaly / (2 * Math.PI))
+    );
+};
+
 /** The opacity of an orbit line `back` of `count` steps behind its body, which fades along the trail. */
 export const trailAlpha = (
     back: number,

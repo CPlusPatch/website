@@ -8,6 +8,7 @@ import {
 } from "@cpluspatch/orbit";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
+    arcLengthAt,
     axisPosition,
     blockSpots,
     type Clearance,
@@ -575,6 +576,18 @@ Deno.test("the nearest point is the one closest to the position, among the first
     assertEquals(nearestPoint(points, 3, 8, 12, 0), 2);
     assertEquals(nearestPoint(points, 3, 0, 0, 1), 0);
     assertEquals(nearestPoint([5, 5, 5, 5, 5, 6], 2, 5, 5, 7), 1);
+});
+
+Deno.test("the distance along a loop is interpolated in the table and keeps growing past a lap", () => {
+    const table = [0, 10, 30, 40, 100];
+    const lap = 2 * Math.PI;
+
+    assertAlmostEquals(arcLengthAt(table, 0), 0);
+    assertAlmostEquals(arcLengthAt(table, lap / 4), 10);
+    assertAlmostEquals(arcLengthAt(table, lap * 0.375), 20);
+    assertAlmostEquals(arcLengthAt(table, lap * 0.99), 40 + 60 * 0.96);
+    assertAlmostEquals(arcLengthAt(table, lap + lap / 2), 100 + 30);
+    assertAlmostEquals(arcLengthAt(table, -lap / 4), 40 - 100);
 });
 
 Deno.test("an orbit line is brightest at its body and fades along the trail", () => {
