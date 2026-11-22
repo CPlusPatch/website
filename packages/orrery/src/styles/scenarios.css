@@ -37,11 +37,25 @@
             white-space: nowrap;
         }
 
+        /* On a phone the buttons are taller than the field, so it grows with them. */
+        .orrery__stepper {
+            block-size: auto;
+            min-block-size: var(--orrery-control-lg);
+        }
+
+        /* The same width, so the Save and Copy rows line up. */
         .orrery__stepper > .button {
             block-size: auto;
+            min-inline-size: 4.5rem;
             border-width: 0 0 0 1px;
             border-color: var(--orrery-frame);
         }
+    }
+
+    .orrery__scenarios-empty {
+        margin: 0;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
     }
 
     .orrery__scenarios-body {

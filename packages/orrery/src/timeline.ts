@@ -123,6 +123,19 @@ export const isFree = (
     gap: number,
 ): boolean => taken.every(([a, b]) => to + gap <= a || from - gap >= b);
 
+/** The px a tick label keeps clear of the "Now" label. */
+const NOW_GAP_PX = 12;
+
+/** Whether a tick label at `[from, to]` is clear of the taken ranges and of the "Now" label. */
+export const tickLabelFree = (
+    taken: [number, number][],
+    now: [number, number] | null,
+    from: number,
+    to: number,
+): boolean =>
+    isFree(taken, from, to, 3) &&
+    (now === null || isFree([now], from, to, NOW_GAP_PX));
+
 /** A periapsis or apoapsis the strip can show, and when it happens. */
 export type Apsis = { name: "Ap" | "Pe"; t: number };
 

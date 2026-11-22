@@ -34,6 +34,18 @@
         font-family: var(--orrery-font-data);
     }
 
+    /* The chosen step needs more than a text colour to be seen. */
+    .orrery__burn-step .segmented__option:has(:checked) {
+        background-color: var(--orrery-panel-raised);
+        box-shadow: inset 0 0 0 1px var(--orrery-text);
+
+        @media (forced-colors: active) {
+            box-shadow: none;
+            background-color: Highlight;
+            color: HighlightText;
+        }
+    }
+
     .orrery__burn-heading {
         margin: 0;
         color: var(--color-text-muted);
@@ -255,11 +267,12 @@
         }
     }
 
-    /* A disabled primary keeps its frame and drops the fill, so opacity isn't the only cue. */
+    /* A disabled primary drops the fill and dashes its frame, so it differs from Cancel in kind. */
     .button.button--solid:disabled {
+        border-style: dashed;
         border-color: var(--orrery-frame);
         background-color: transparent;
-        color: var(--orrery-muted);
+        color: var(--orrery-dim);
         opacity: 1;
     }
 

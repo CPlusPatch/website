@@ -255,7 +255,11 @@ export const createScenarios = (
     const render = () => {
         if (saved.length === 0) {
             list.replaceChildren(
-                h("p", { class: "orrery__form-hint" }, "Nothing saved yet."),
+                h(
+                    "p",
+                    { class: "orrery__scenarios-empty" },
+                    "Nothing saved yet.",
+                ),
             );
 
             return;

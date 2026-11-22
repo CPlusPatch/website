@@ -21,7 +21,7 @@
         }
 
         &:focus-visible {
-            outline-offset: -2px;
+            outline-offset: 2px;
         }
 
         svg {
@@ -38,6 +38,9 @@
         gap: 3px;
         color: var(--orrery-muted);
         font: 400 var(--orrery-size-xs) / 1.2 var(--orrery-font-data);
+        /* Markers and orbit lines pass behind it, so it needs its own ground. */
+        background-color: var(--orrery-ground);
+        box-shadow: 0 0 0 var(--space-xs) var(--orrery-ground);
         pointer-events: none;
     }
 

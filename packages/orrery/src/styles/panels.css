@@ -6,7 +6,7 @@
         z-index: 1;
         display: flex;
         gap: var(--space-sm);
-        padding: var(--space-sm);
+        padding: var(--orrery-inset);
         pointer-events: none;
 
         &[hidden] {
@@ -66,11 +66,11 @@
         align-items: flex-start;
         gap: var(--space-sm);
         padding-block-end: max(
-            var(--space-sm),
+            var(--orrery-inset),
             env(safe-area-inset-bottom, 0px)
         );
         padding-inline-start: max(
-            var(--space-sm),
+            var(--orrery-inset),
             env(safe-area-inset-left, 0px)
         );
     }
@@ -105,7 +105,7 @@
             flex-wrap: wrap;
             align-items: center;
             gap: 0.875rem;
-            padding-block-end: var(--space-sm);
+            padding-block-end: var(--orrery-inset);
         }
 
         /* The crumbs get the first row, and the buttons the next. */

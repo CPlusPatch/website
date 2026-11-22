@@ -403,7 +403,7 @@ export const placeLabels = (
         const spots = labelSpots(label, rank);
         const onScreen: Record<Exclude<Placement, "hidden">, boolean> = {
             right: spots.right.right <= viewport.width,
-            left: spots.left.left >= 0,
+            left: spots.left.left >= 0 && spots.left.right <= viewport.width,
             above:
                 spots.above.left >= 0 &&
                 spots.above.right <= viewport.width &&
@@ -569,6 +569,9 @@ export const NOTE_HEIGHT_PX = 14;
 /** The px between a note beside an apsis and the apsis. */
 const NOTE_APSIS_GAP_PX = 9;
 
+/** The gap of the notes tried last, which clear the orbit's own line from any direction. */
+const NOTE_APSIS_FAR_GAP_PX = 17;
+
 /** The px between a tag's edge and the first line of a note block. */
 const NOTE_BLOCK_GAP_PX = 9;
 
@@ -584,7 +587,8 @@ const TURNS = [0, 0.6, -0.6, 1.2, -1.2];
 
 /**
  * Where a note of text `width` px wide goes beside the point (`x`, `y`) of an orbit centred on
- * (`cx`, `cy`). It tries the outward direction, then turned each way, then inward.
+ * (`cx`, `cy`). It tries the outward direction, then turned each way, then inward. Then it tries
+ * them again farther out, since a slanted box near the point can touch the line by itself.
  */
 export const noteSpots = (
     x: number,
@@ -597,24 +601,25 @@ export const noteSpots = (
     // A point on the centre has no outward side.
     const ux = length < 1 ? 0 : (x - cx) / length;
     const uy = length < 1 ? -1 : (y - cy) / length;
-    const beyond = (nx: number, ny: number): Rect => {
+    const beyond = (nx: number, ny: number, gap: number): Rect => {
         const t =
-            NOTE_APSIS_GAP_PX +
+            gap +
             (Math.abs(nx) * (width + 2 * NOTE_PAD_PX)) / 2 +
             Math.abs(ny) * (NOTE_HEIGHT_PX / 2);
 
         return noteBox(x + nx * t, y + ny * t, width);
     };
 
-    return [
+    return [NOTE_APSIS_GAP_PX, NOTE_APSIS_FAR_GAP_PX].flatMap((gap) => [
         ...TURNS.map((angle) =>
             beyond(
                 ux * Math.cos(angle) - uy * Math.sin(angle),
                 ux * Math.sin(angle) + uy * Math.cos(angle),
+                gap,
             ),
         ),
-        beyond(-ux, -uy),
-    ];
+        beyond(-ux, -uy, gap),
+    ]);
 };
 
 /**

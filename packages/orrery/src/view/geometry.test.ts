@@ -204,6 +204,14 @@ Deno.test("a label whose right side passes the viewport goes left", () => {
     assertEquals(placements.get("neptune"), "left");
 });
 
+Deno.test("a label of a body just past the right edge goes left if it fits there, and hides if it doesn't", () => {
+    const edge = placeLabels([box("a", 805, 100, 1)], view, "x");
+    const past = placeLabels([box("b", 830, 100, 1)], view, "x");
+
+    assertEquals(edge.get("a"), "left");
+    assertEquals(past.get("b"), "hidden");
+});
+
 Deno.test("a label that fits neither side of the viewport is hidden", () => {
     const wide = { ...box("a", 30, 100, 1), width: 60 };
     const placements = placeLabels([wide], { width: 80, height: 600 }, "x");
@@ -772,10 +780,17 @@ Deno.test("a segment with a NaN end is skipped, and the line before it still cou
 Deno.test("a note goes outward from the orbit's centre first, and inward last", () => {
     const spots = noteSpots(200, 100, 100, 100, 60);
 
-    assertEquals(spots.length, 6);
+    assertEquals(spots.length, 12);
     // Outward is +x: the box's centre is 9px plus half its width past the point.
     assertAlmostEquals(spots[0]?.left ?? 0, 209);
     assert((spots[5]?.right ?? 1000) < 200);
+});
+
+Deno.test("a note tries the same directions farther out once every near spot is taken", () => {
+    const spots = noteSpots(200, 100, 100, 100, 60);
+
+    assertAlmostEquals(spots[6]?.left ?? 0, 217);
+    assert((spots[11]?.right ?? 1000) < 192);
 });
 
 Deno.test("a note's box is 14px tall, with its text's width and 2px each side", () => {

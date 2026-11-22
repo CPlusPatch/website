@@ -5,6 +5,8 @@
     --orrery-top-space: 3rem;
     --orrery-bottom-space: 6rem;
     --orrery-side-width: 19rem;
+    /* The gap between the top bar, the HUD and the card and the canvas edge. */
+    --orrery-inset: 0.625rem;
 
     /* Neutral graphite. */
     --orrery-ground: #09090a;
@@ -52,6 +54,8 @@
     --orrery-pad: 0.75rem;
     --orrery-control: 1.875rem;
     --orrery-control-lg: 2.125rem;
+    /* The gap between the moon chips. */
+    --orrery-chip-gap: 3px;
 
     /*
      * The site's tokens, for the ui components. A theme sets them on `:root`, so
@@ -149,6 +153,7 @@
 
     @media (max-width: 720px) {
         --orrery-scrim: rgb(0 0 0 / 0.72);
+        --orrery-inset: var(--space-sm);
 
         /* The same sizes as a coarse pointer gets, since a narrow screen is touched. */
         --control-height-sm: 2.5rem;

@@ -6,6 +6,7 @@ import {
     clampT,
     isFree,
     tickLabel,
+    tickLabelFree,
     ticks,
     tipText,
     windowHalf,
@@ -190,7 +191,9 @@ export const createTimeline = (
             ctx.fill();
             nowLeft = left ? edge + 9 : edge - 9 - nowWidth;
         }
+        let nowRange: [number, number] | null = null;
         if (isFree(taken, nowLeft, nowLeft + nowWidth, 4)) {
+            nowRange = [nowLeft, nowLeft + nowWidth];
             ctx.textAlign = "left";
             ctx.fillText("Now", nowLeft, LABEL_Y);
             taken.push([nowLeft - 3, nowLeft + nowWidth + 3]);
@@ -247,7 +250,7 @@ export const createTimeline = (
             if (
                 left < FADE ||
                 left + textWidth > width - FADE ||
-                !isFree(taken, left, left + textWidth, 3)
+                !tickLabelFree(taken, nowRange, left, left + textWidth)
             ) {
                 continue;
             }

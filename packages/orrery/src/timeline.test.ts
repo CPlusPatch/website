@@ -7,6 +7,7 @@ import {
     clampT,
     isFree,
     tickLabel,
+    tickLabelFree,
     ticks,
     tipText,
     windowHalf,
@@ -180,4 +181,16 @@ Deno.test("a body with no orbit, or an open one, has no apsides", () => {
         ),
         [],
     );
+});
+
+Deno.test("a tick label keeps 12px from the Now label, and 3px from other labels", () => {
+    const now: [number, number] = [100, 120];
+
+    assertEquals(tickLabelFree([], now, 132, 160), true);
+    assertEquals(tickLabelFree([], now, 131, 160), false);
+    assertEquals(tickLabelFree([], now, 60, 88), true);
+    assertEquals(tickLabelFree([], now, 60, 89), false);
+    assertEquals(tickLabelFree([], null, 121, 160), true);
+    assertEquals(tickLabelFree([[0, 10]], null, 12, 20), false);
+    assertEquals(tickLabelFree([[0, 10]], null, 13, 20), true);
 });

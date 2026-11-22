@@ -528,6 +528,7 @@ export const createInspector = (
         if (!form) mode = "card";
 
         showBodyMarker(marker, body);
+        marker.hidden = mode !== "card";
         setHead(mode !== "card");
         grip.hidden = mode !== "card";
         element.toggleAttribute("data-peek", !open && mode === "card");
