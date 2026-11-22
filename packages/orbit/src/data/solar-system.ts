@@ -150,11 +150,16 @@ const planet = (id: string, name: string, kind: "planet" | "dwarf"): Body => {
 const EARTH_MU = G * PHYSICAL.earth.mass * 1e24;
 const ISS_MU = 0;
 
+const MOON_MU = 4.9028e12;
+// Meeus's mean longitude rate, 481 267.8813° per century: a sidereal month of 27.3216 d.
+const MOON_N = deg(481_267.8813) / (36_525 * DAY);
+
 // Meeus, Astronomical Algorithms ch. 47, mean elements at J2000 with ω = (L′ − M′) − Ω.
 // Cross-checked against JPL's mean lunar elements (https://ssd.jpl.nasa.gov/sats/elem/):
-// a 384 400 km, e 0.0554, i 5.16°, Ω 125.08°, ω 318.15°.
+// e 0.0554, i 5.16°, Ω 125.08°, ω 318.15°. `a` comes from the mean motion (≈ 384 750 km).
 const MOON: Elements = {
-    a: km(384_400),
+    // Set from the mean motion, as 384 400 km gives 27.285 d and the Moon drifts ~6° a year.
+    a: ((EARTH_MU + MOON_MU) / MOON_N ** 2) ** (1 / 3),
     e: 0.0549,
     i: deg(5.145),
     raan: deg(125.045),
@@ -226,7 +231,7 @@ export const solarSystem: Scenario = {
             name: "Moon",
             kind: "moon",
             parent: "earth",
-            mu: 4.9028e12,
+            mu: MOON_MU,
             radius: km(1737.4),
             elements: MOON,
         },
