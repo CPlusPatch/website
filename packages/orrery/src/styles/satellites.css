@@ -19,6 +19,11 @@
             outline: none;
         }
 
+        /* Inside the frame, so the box is as tall as the other tools. */
+        > .orrery__tool {
+            min-block-size: calc(var(--orrery-control) - 2px);
+        }
+
         > .orrery__tool[aria-expanded="true"] {
             background-color: var(--orrery-panel-raised);
             color: var(--orrery-text);

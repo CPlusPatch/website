@@ -18,14 +18,21 @@
             gap: 2px;
         }
 
+        /* A mask, not a rotated border, so the glyph sits in the middle of its box. */
         li + li::before {
             content: "";
-            inline-size: 7px;
-            block-size: 7px;
-            margin-inline: 6px;
-            border-inline-end: 1.5px solid var(--orrery-dim);
-            border-block-end: 1.5px solid var(--orrery-dim);
-            transform: rotate(-45deg);
+            inline-size: 6px;
+            block-size: 10px;
+            margin-inline: 4px;
+            background-color: var(--orrery-dim);
+            mask:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 10'%3E%3Cpath d='m1 1 4 4-4 4' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E")
+                center / contain no-repeat;
+
+            @media (forced-colors: active) {
+                forced-color-adjust: none;
+                background-color: CanvasText;
+            }
         }
     }
 
