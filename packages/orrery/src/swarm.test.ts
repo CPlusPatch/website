@@ -1,4 +1,5 @@
 import {
+    DAY,
     EARTH_J2,
     EARTH_RADIUS,
     G,
@@ -21,6 +22,8 @@ import {
     inSnapshotWindow,
     prepareSwarm,
     SNAPSHOT_WINDOW,
+    satelliteFacts,
+    satelliteOrbit,
     selectShown,
     snapshotGap,
     writePositions,
@@ -258,4 +261,85 @@ Deno.test("the snapshot gap is 0 inside the window and signed outside it", () =>
         snapshotGap(EPOCH + 3 * SNAPSHOT_WINDOW, EPOCH),
         2 * SNAPSHOT_WINDOW,
     );
+});
+
+Deno.test("an orbit stays between its perigee and apogee and closes", () => {
+    const sat = { a: 2.6e7, e: 0.6, i: 1, raan: 0.5, argp: 1, m0: 2 };
+    const swarm = prepareSwarm(catalogue([sat]), MU);
+    const a = (swarm.a[0] as number) / 1000;
+    const e = swarm.e[0] as number;
+
+    const orbit = satelliteOrbit(swarm, 0, EPOCH + 5000, 64);
+
+    assertEquals(orbit.length, 65 * 3);
+    for (let s = 0; s <= 64; s++) {
+        const r = Math.hypot(
+            orbit[s * 3] as number,
+            orbit[s * 3 + 1] as number,
+            orbit[s * 3 + 2] as number,
+        );
+        assert(r >= a * (1 - e) - 1 && r <= a * (1 + e) + 1);
+    }
+    assertEquals(
+        Array.from(orbit.subarray(64 * 3)),
+        Array.from(orbit.subarray(0, 3)),
+    );
+});
+
+Deno.test("a satellite lies on its own orbit", () => {
+    const sat = { a: 7e6, e: 0.1, i: 0.9, raan: 1, argp: 2, m0: 3 };
+    const swarm = prepareSwarm(catalogue([sat]), MU);
+    const t = EPOCH + 3 * DAY;
+    const position = new Float32Array(3);
+    writePositions(swarm, Uint32Array.of(0), t, position);
+
+    const orbit = satelliteOrbit(swarm, 0, t, 720);
+
+    let nearest = Number.POSITIVE_INFINITY;
+    for (let s = 0; s < 720; s++) {
+        nearest = Math.min(
+            nearest,
+            Math.hypot(
+                (orbit[s * 3] as number) - (position[0] as number),
+                (orbit[s * 3 + 1] as number) - (position[1] as number),
+                (orbit[s * 3 + 2] as number) - (position[2] as number),
+            ),
+        );
+    }
+    // The samples are about 2 * pi * a / 720 = 61 km apart.
+    assertGreater(40, nearest);
+});
+
+Deno.test("a circular orbit has the same perigee, apogee and altitude", () => {
+    const swarm = prepareSwarm(
+        catalogue([{ group: "starlink", a: 6.93e6, i: 0.9 }]),
+        MU,
+    );
+
+    const facts = satelliteFacts(swarm, 0, EPOCH + 1000);
+
+    const altitude = (swarm.a[0] as number) / 1000 - EARTH_RADIUS / 1000;
+    assertAlmostEquals(facts.perigeeKm, altitude, 1e-6);
+    assertAlmostEquals(facts.apogeeKm, altitude, 1e-6);
+    assertAlmostEquals(facts.altitudeKm, altitude, 1e-2);
+    assertAlmostEquals(
+        facts.periodS,
+        (2 * Math.PI) / (swarm.n[0] as number),
+        1e-9,
+    );
+    assertAlmostEquals(facts.inclination, 0.9, 1e-6);
+    assertEquals(facts.name, "SAT 0");
+    assertEquals(facts.group, "starlink");
+    assertEquals(facts.orbitClass, "leo");
+});
+
+Deno.test("perigee and apogee of an eccentric orbit are a(1 -/+ e) above the surface", () => {
+    const swarm = prepareSwarm(catalogue([{ a: 2.6e7, e: 0.7 }]), MU);
+
+    const facts = satelliteFacts(swarm, 0, EPOCH);
+
+    const a = swarm.a[0] as number;
+    assertAlmostEquals(facts.perigeeKm, (a * 0.3 - EARTH_RADIUS) / 1000, 1e-3);
+    assertAlmostEquals(facts.apogeeKm, (a * 1.7 - EARTH_RADIUS) / 1000, 1e-3);
+    assertEquals(facts.orbitClass, "heo");
 });

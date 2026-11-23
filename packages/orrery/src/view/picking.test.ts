@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 import { assertEquals } from "@std/assert";
-import { type PickPoint, pickBody, pickLabel } from "./picking.ts";
+import { type PickPoint, pickBody, pickLabel, pickNearest } from "./picking.ts";
 
 const point = (
     id: string,
@@ -88,4 +88,36 @@ Deno.test("a click outside every label box picks no label", () => {
     assertEquals(pickLabel(rects, 61, 15), null);
     assertEquals(pickLabel(rects, 30, 25), null);
     assertEquals(pickLabel([], 0, 0), null);
+});
+
+Deno.test("pickNearest returns the slot of the nearest point within the radius", () => {
+    const xy = Float32Array.of(100, 100, 108, 100, 300, 300);
+
+    assertEquals(pickNearest(xy, 3, 107, 100, 12), 1);
+    assertEquals(pickNearest(xy, 3, 101, 100, 12), 0);
+    assertEquals(pickNearest(xy, 3, 300, 296, 12), 2);
+});
+
+Deno.test("pickNearest returns -1 when nothing is within the radius", () => {
+    const xy = Float32Array.of(100, 100, 200, 200);
+
+    assertEquals(pickNearest(xy, 2, 150, 150, 12), -1);
+    assertEquals(pickNearest(xy, 2, 100, 112.5, 12), -1);
+});
+
+Deno.test("pickNearest skips points that are off screen", () => {
+    const xy = Float32Array.of(Number.NaN, 100, 150, 100);
+
+    assertEquals(pickNearest(xy, 2, 100, 100, 100), 1);
+    assertEquals(
+        pickNearest(Float32Array.of(Number.NaN, Number.NaN), 1, 0, 0, 100),
+        -1,
+    );
+});
+
+Deno.test("pickNearest gives the first slot on a tie and ignores slots past the count", () => {
+    const xy = Float32Array.of(90, 100, 110, 100, 100, 100);
+
+    assertEquals(pickNearest(xy, 2, 100, 100, 20), 0);
+    assertEquals(pickNearest(new Float32Array(0), 0, 0, 0, 20), -1);
 });

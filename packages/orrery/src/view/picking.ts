@@ -68,3 +68,34 @@ export const pickLabel = (
         ({ left, top, right, bottom }) =>
             x >= left && x <= right && y >= top && y <= bottom,
     )?.id ?? null;
+
+/**
+ * The slot of the point nearest to (`x`, `y`) within `radiusPx`, or -1. `xy` holds x, y pairs in
+ * px for `count` points. A NaN x means the point is off screen. The first of equals wins.
+ */
+export const pickNearest = (
+    xy: Float32Array,
+    count: number,
+    x: number,
+    y: number,
+    radiusPx: number,
+): number => {
+    let best = -1;
+    let bestDistance = radiusPx;
+
+    for (let j = 0; j < count; j++) {
+        const px = xy[j * 2] as number;
+        if (Number.isNaN(px)) continue;
+
+        const distance = Math.hypot(px - x, (xy[j * 2 + 1] as number) - y);
+        if (
+            distance <= bestDistance &&
+            (best === -1 || distance < bestDistance)
+        ) {
+            best = j;
+            bestDistance = distance;
+        }
+    }
+
+    return best;
+};
