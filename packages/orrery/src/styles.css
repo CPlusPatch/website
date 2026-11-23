@@ -1,5 +1,6 @@
 @import "./styles/base.css";
 @import "./styles/scene.css";
+@import "./styles/loading.css";
 @import "./styles/panels.css";
 @import "./styles/hud.css";
 @import "./styles/crumbs.css";

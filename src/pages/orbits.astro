@@ -17,14 +17,37 @@ import Layout from "../layouts/desktop.astro";
             preload={[{ subset: "latin" }]}
         />
         <Font cssVariable="--font-plex-mono" />
+        <noscript>
+            <style is:inline>
+            /* One element more than the library's rule, which comes later. */
+            main .orrery .orrery__loading {
+                display: none;
+            }
+            </style>
+        </noscript>
     </Fragment>
     <main id="main">
         <h1 class="visually-hidden">Orbits</h1>
         <div class="orrery">
             <div class="orrery__canvas"></div>
+            <div class="orrery__loading" role="status">
+                <p class="orrery__loading-text">
+                    <span class="orrery__loading-stage">Loading orbits</span>
+                    <!-- Hidden, so a screen reader hears each stage once, not each file. -->
+                    <span
+                        class="orrery__loading-count"
+                        aria-hidden="true"
+                    ></span>
+                </p>
+                <progress
+                    class="orrery__loading-bar"
+                    max="1"
+                    aria-label="Loading"
+                ></progress>
+            </div>
             <noscript>
                 <p class="orrery__notice">
-                    Turn on JavaScript to see the Orrery.
+                    Turn on JavaScript to see the orbits.
                 </p>
             </noscript>
             <div class="orrery__panel orrery__panel--top" hidden>
@@ -41,5 +64,18 @@ import Layout from "../layouts/desktop.astro";
 import { loadOrrery } from "../lib/orrery.ts";
 
 const root = document.querySelector<HTMLElement>(".orrery");
-if (root) await loadOrrery(root);
+if (root) {
+    try {
+        await loadOrrery(root);
+    } catch (error) {
+        const text = root.querySelector(".orrery__loading-text");
+        if (text) {
+            text.textContent =
+                "Orbits couldn't load. Reload the page to try again.";
+        }
+        root.querySelector(".orrery__loading-bar")?.remove();
+
+        throw error;
+    }
+}
 </script>

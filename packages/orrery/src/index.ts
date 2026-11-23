@@ -22,6 +22,7 @@ import { h } from "./ui/dom.ts";
 import { createHud } from "./ui/hud.ts";
 import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
+import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
 import { createScenarios } from "./ui/scenario-menu/scenario-menu.ts";
 import { createSearch, type Search } from "./ui/search.ts";
@@ -50,6 +51,9 @@ const SAVE_DELAY_MS = 500;
  * queries under `styles/`.
  */
 const NARROW_QUERY = "(max-width: 720px)";
+
+/** How long after mounting the loading state gives way, whatever is still loading, in ms. */
+const REVEAL_AFTER_MS = 8000;
 
 /** The browser's `localStorage`, which can throw on any access. */
 const storage: SavedStorage = {
@@ -159,9 +163,24 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     // Replaced with the view on each scenario.
     let inspector: Inspector | null = null;
 
-    // The view and the panels that depend on the scenario.
-    const build = (): (() => void) | null => {
-        const view = createView(container, world, blocked, band, units);
+    const loading = createLoading(root);
+
+    // The view and the panels that depend on the scenario. Only the first build reports loading.
+    const build = (
+        onLoading?: (done: number, total: number, fill: number) => void,
+    ): {
+        ready: Promise<void>;
+        reveal: () => void;
+        destroy: () => void;
+    } | null => {
+        const view = createView(
+            container,
+            world,
+            blocked,
+            band,
+            units,
+            onLoading,
+        );
         if (!view) return null;
 
         const current = createInspector(
@@ -178,11 +197,15 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             ? createHud(hudSlot, view, units, narrow)
             : () => {};
 
-        return () => {
-            if (inspector === current) inspector = null;
-            removeHud();
-            current.destroy();
-            view.destroy();
+        return {
+            ready: view.ready,
+            reveal: view.reveal,
+            destroy: () => {
+                if (inspector === current) inspector = null;
+                removeHud();
+                current.destroy();
+                view.destroy();
+            },
         };
     };
 
@@ -194,8 +217,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const notices = createNotices(root);
     if (hashPayload(location.hash) !== null) stripHash();
 
-    let destroyParts = build();
-    if (!destroyParts) {
+    let parts = build(loading.progress);
+    if (!parts) {
+        loading.reveal();
         const alert = webglAlert();
         // The top panel stays hidden, so the notice goes beside the alert.
         container.append(alert, notices.element);
@@ -212,7 +236,12 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         };
     }
 
-    for (const panel of panels) panel.hidden = false;
+    // Shown under the loading state, so the first frames are framed beside them.
+    for (const panel of panels) {
+        panel.hidden = false;
+        panel.inert = true;
+    }
+    container.inert = true;
 
     const sound = createSound(storage);
     const timeBar = createTimeBar(world, storage, sound);
@@ -282,9 +311,12 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         if (event.type === "scenario") {
             // Any new scenario, even an Import or Reset, cancels a pending link.
             loadId++;
-            destroyParts?.();
-            destroyParts = build();
-            if (!destroyParts) {
+            parts?.destroy();
+            parts = build();
+            // A view built after the reveal has no loading state, so a sky that comes later fades in.
+            if (revealed) parts?.reveal();
+            else if (parts) revealWhenReady(parts);
+            if (!parts) {
                 notices.show("destructive", "The model can't be drawn.");
             }
         }
@@ -332,11 +364,35 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     if (opened.source === "link") saveNow();
     if (opened.notice) notices.show("warning", opened.notice);
 
+    let revealed = false;
+    // A destroyed view's ready resolves too, so only the current one reveals.
+    const revealWhenReady = (built: NonNullable<typeof parts>) => {
+        void built.ready.then(() => {
+            if (parts === built) reveal();
+        });
+    };
+    const reveal = () => {
+        if (revealed || destroyed) return;
+
+        revealed = true;
+        clearTimeout(revealTimer);
+        for (const panel of panels) panel.inert = false;
+        container.inert = false;
+        loading.reveal();
+        parts?.reveal();
+    };
+    const revealTimer = setTimeout(reveal, REVEAL_AFTER_MS);
+    revealWhenReady(parts);
+
     return {
         focus: (id) => world.focus(id),
         select: (id) => world.select(id),
         destroy: () => {
             destroyed = true;
+            clearTimeout(revealTimer);
+            container.inert = false;
+            for (const panel of panels) panel.inert = false;
+            loading.destroy();
             if (saveTimer !== undefined) saveNow();
             window.removeEventListener("hashchange", onHashChange);
             window.removeEventListener("pagehide", saveNow);
@@ -354,7 +410,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             crumbs.destroy();
             keys.destroy();
             notices.destroy();
-            destroyParts?.();
+            parts?.destroy();
             for (const panel of panels) panel.hidden = true;
         },
     };

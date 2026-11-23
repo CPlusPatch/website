@@ -1,0 +1,78 @@
+.orrery {
+    /* Above the panels and the search, which stay hidden until it goes. */
+    .orrery__loading {
+        position: absolute;
+        z-index: 5;
+        inset: 0;
+        display: grid;
+        /* Fixed, so the bar doesn't move as the text changes. Fits the longest stage. */
+        grid-template-columns: min(16rem, 100%);
+        place-content: center;
+        gap: var(--space-sm);
+        padding-inline: var(--space-md);
+        background: var(--orrery-ground);
+        transition: opacity 200ms ease-out;
+
+        &.orrery__loading--done {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
+    }
+
+    .orrery__loading-text {
+        margin: 0;
+        font-family: var(--orrery-font-data);
+        font-size: var(--orrery-size-sm);
+        color: var(--orrery-muted);
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+    }
+
+    /* With no value it's indeterminate, and stays a static full track. */
+    .orrery__loading-bar {
+        appearance: none;
+        block-size: 2px;
+        inline-size: 100%;
+        border: 0;
+        border-radius: 0;
+        background: var(--orrery-rule);
+        color: var(--orrery-muted);
+
+        &::-webkit-progress-bar {
+            background: var(--orrery-rule);
+            border-radius: 0;
+        }
+
+        &::-webkit-progress-value {
+            background: var(--orrery-muted);
+            border-radius: 0;
+        }
+
+        &::-moz-progress-bar {
+            background: var(--orrery-muted);
+            border-radius: 0;
+        }
+
+        /* Firefox draws a full fill for an indeterminate bar. */
+        &:indeterminate::-moz-progress-bar {
+            background: transparent;
+        }
+
+        @media (forced-colors: active) {
+            border: 1px solid CanvasText;
+            block-size: 0.5rem;
+
+            &::-webkit-progress-value {
+                background: Highlight;
+            }
+
+            &::-moz-progress-bar {
+                background: Highlight;
+            }
+        }
+    }
+}
