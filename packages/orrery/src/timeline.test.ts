@@ -85,7 +85,7 @@ Deno.test("a window too wide for days gets ticks on the 1st of a quarter", () =>
     assertEquals(result.kind, "month");
     assertEquals(
         result.ticks.map((t) => tickLabel(t, "month")),
-        ["2026-04", "2026-07", "2026-10"],
+        ["Apr", "Jul", "Oct"],
     );
     for (const t of result.ticks) assertEquals(toParts(t).d, 1);
 });
@@ -118,12 +118,13 @@ Deno.test("a window past the last year ends instead of looping", () => {
     assert(result.ticks.length <= 2);
 });
 
-Deno.test("tick labels are zero padded, from the UTC parts", () => {
+Deno.test("tick labels come from the UTC parts", () => {
     const t = at(2026, 3, 4, 5, 6);
 
     assertEquals(tickLabel(t, "time"), "05:06");
-    assertEquals(tickLabel(t, "day"), "03-04");
-    assertEquals(tickLabel(t, "month"), "2026-03");
+    assertEquals(tickLabel(t, "day"), "Mar 4");
+    assertEquals(tickLabel(t, "month"), "Mar");
+    assertEquals(tickLabel(at(2026, 1, 1), "month"), "2026");
     assertEquals(tickLabel(t, "year"), "2026");
     assertEquals(tickLabel(at(7, 1, 1), "year"), "0007");
 });
@@ -131,9 +132,9 @@ Deno.test("tick labels are zero padded, from the UTC parts", () => {
 Deno.test("the tip shows seconds only in a window under a day", () => {
     const t = fromParts({ y: 2026, mo: 11, d: 22, h: 9, mi: 5, s: 7 });
 
-    assertEquals(tipText(t, 3600), "2026-11-22 09:05:07 UTC");
-    assertEquals(tipText(t, 43199), "2026-11-22 09:05:07 UTC");
-    assertEquals(tipText(t, 43200), "2026-11-22 09:05 UTC");
+    assertEquals(tipText(t, 3600), "22 Nov 2026 09:05:07 UTC");
+    assertEquals(tipText(t, 43199), "22 Nov 2026 09:05:07 UTC");
+    assertEquals(tipText(t, 43200), "22 Nov 2026 09:05 UTC");
 });
 
 Deno.test("a range is free when it clears every taken one by the gap", () => {

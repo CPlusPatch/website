@@ -16,7 +16,8 @@ export type PartName = keyof DateParts;
 /** The parts in the order they're written. */
 export const PART_NAMES: PartName[] = ["y", "mo", "d", "h", "mi", "s"];
 
-const MONTHS = [
+/** English month names, January first. */
+export const MONTHS = [
     "January",
     "February",
     "March",

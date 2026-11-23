@@ -1,5 +1,11 @@
 import { j2000sToUnixMs } from "@cpluspatch/orbit";
-import { fromParts, MAX_YEAR, MIN_YEAR, toParts } from "./date-parts.ts";
+import {
+    fromParts,
+    MAX_YEAR,
+    MIN_YEAR,
+    MONTHS,
+    toParts,
+} from "./date-parts.ts";
 import type { Readouts } from "./readouts.ts";
 
 /** What a labelled tick shows: a time of day, a day, a month or a year. */
@@ -96,13 +102,15 @@ const pad = (n: number, width = 2): string => String(n).padStart(width, "0");
 // Not toISOString, which writes years past 9999 as +010000.
 const year = (y: number): string => (y < 0 ? `-${pad(-y, 4)}` : pad(y, 4));
 
-/** `HH:MM`, `MM-DD`, `YYYY-MM` or `YYYY`, in UTC. */
+const shortMonth = (mo: number): string => MONTHS[mo - 1].slice(0, 3);
+
+/** `HH:MM`, `Jan 19`, `Mar` (the year on January) or `YYYY`, in UTC. */
 export const tickLabel = (t: number, kind: TickKind): string => {
     const { y, mo, d, h, mi } = toParts(t);
 
     if (kind === "time") return `${pad(h)}:${pad(mi)}`;
-    if (kind === "day") return `${pad(mo)}-${pad(d)}`;
-    if (kind === "month") return `${year(y)}-${pad(mo)}`;
+    if (kind === "day") return `${shortMonth(mo)} ${d}`;
+    if (kind === "month" && mo !== 1) return shortMonth(mo);
 
     return year(y);
 };
@@ -112,7 +120,7 @@ export const tipText = (t: number, half: number): string => {
     const { y, mo, d, h, mi, s } = toParts(t);
     const time = `${pad(h)}:${pad(mi)}${half < 43200 ? `:${pad(s)}` : ""}`;
 
-    return `${year(y)}-${pad(mo)}-${pad(d)} ${time} UTC`;
+    return `${d} ${shortMonth(mo)} ${year(y)} ${time} UTC`;
 };
 
 /** Whether `[from, to]`, with `gap` either side, is clear of every range in `taken`. */
