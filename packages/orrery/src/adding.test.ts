@@ -45,8 +45,16 @@ Deno.test("the subtree of a planet holds its moons", () => {
         "goes-19",
         "meridian-10",
         "parisat",
+        "lro",
+        "chandrayaan-2",
+        "danuri",
     ]);
-    assertEquals(subtreeIds(solarSystem, "moon"), ["moon"]);
+    assertEquals(subtreeIds(solarSystem, "moon"), [
+        "moon",
+        "lro",
+        "chandrayaan-2",
+        "danuri",
+    ]);
 });
 
 Deno.test("the subtree of a moon of a moon is reached through the moon", () => {
@@ -84,9 +92,18 @@ Deno.test("the subtree of a moon of a moon is reached through the moon", () => {
         "goes-19",
         "meridian-10",
         "parisat",
+        "lro",
+        "chandrayaan-2",
+        "danuri",
         "tiny",
     ]);
-    assertEquals(subtreeIds(scenario, "moon"), ["moon", "tiny"]);
+    assertEquals(subtreeIds(scenario, "moon"), [
+        "moon",
+        "lro",
+        "chandrayaan-2",
+        "danuri",
+        "tiny",
+    ]);
 });
 
 Deno.test("a new body converts km, degrees and kg to SI", () => {
@@ -130,7 +147,10 @@ Deno.test("a body with nothing around it takes nothing with it", () => {
 });
 
 Deno.test("a planet with a moon and a craft takes both bodies", () => {
-    assertEquals(removalNote(solarSystem, "earth"), "Its 9 bodies go with it.");
+    assertEquals(
+        removalNote(solarSystem, "earth"),
+        "Its 12 bodies go with it.",
+    );
 });
 
 Deno.test("one body below goes by name and several are counted", () => {

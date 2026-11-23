@@ -3,6 +3,7 @@ import type { Elements } from "../kepler.ts";
 import { wrapAngle } from "../kepler.ts";
 import type { Body, Scenario } from "../scenario.ts";
 import { moonBodies } from "./moons.ts";
+import { probes } from "./probes.ts";
 import { satellites } from "./satellites.ts";
 import { smallBodies } from "./small-bodies.ts";
 
@@ -172,9 +173,12 @@ const PARENT_MU = Object.fromEntries(
     Object.entries(PHYSICAL).map(([id, { mass }]) => [id, G * mass * 1e24]),
 );
 
+const SUN_MU = 1.32712440041e20;
+
 /**
  * The Sun, the planets, Pluto, four more dwarf planets, Vesta, Halley, 21 moons
- * (including ours), the ISS and seven more Earth satellites.
+ * (including ours), the ISS and seven more Earth satellites, and 11 spacecraft around Mars,
+ * the Moon, Jupiter and the Sun.
  */
 export const solarSystem: Scenario = {
     version: 1,
@@ -186,7 +190,7 @@ export const solarSystem: Scenario = {
             kind: "star",
             parent: null,
             // JPL astrodynamic parameters: https://ssd.jpl.nasa.gov/astro_par.html
-            mu: 1.32712440041e20,
+            mu: SUN_MU,
             radius: km(695_700),
             elements: null,
         },
@@ -210,6 +214,12 @@ export const solarSystem: Scenario = {
             elements: MOON,
         },
         ...satellites(EARTH_MU),
+        ...probes({
+            mars: PARENT_MU.mars,
+            moon: MOON_MU,
+            jupiter: PARENT_MU.jupiter,
+            sun: SUN_MU,
+        }),
         ...moonBodies(PARENT_MU),
     ],
 };

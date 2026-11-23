@@ -251,6 +251,24 @@ Deno.test("a body with moons is framed so its farthest moon's orbit fits the nar
     );
 });
 
+Deno.test("a body with only spacecraft is framed by their farthest orbit", () => {
+    const fov = (50 * Math.PI) / 180;
+    const reach = Math.max(
+        ...solarSystem.bodies
+            .filter((candidate) => candidate.parent === "moon")
+            .map(
+                ({ elements }) =>
+                    ((elements?.a ?? 0) * (1 + (elements?.e ?? 0))) / 1000,
+            ),
+    );
+
+    assertAlmostEquals(
+        frameDistanceKm(solarSystem, "moon", fov, 2),
+        (reach * 1.1) / Math.tan(fov / 2),
+        1e-6,
+    );
+});
+
 Deno.test("a body with no moons is framed so its sphere spans 25% of the view's height", () => {
     const fov = (50 * Math.PI) / 180;
     const mercury = body("mercury");

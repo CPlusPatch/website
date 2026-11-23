@@ -23,7 +23,7 @@ const find = (id: string) => {
     return { ...body, elements: body.elements };
 };
 
-Deno.test("there are 44 bodies with the expected ids", () => {
+Deno.test("there are 55 bodies with the expected ids", () => {
     assertEquals(
         solarSystem.bodies.map((b) => b.id),
         [
@@ -52,6 +52,17 @@ Deno.test("there are 44 bodies with the expected ids", () => {
             "goes-19",
             "meridian-10",
             "parisat",
+            "mro",
+            "mars-express",
+            "mars-odyssey",
+            "tgo",
+            "hope",
+            "lro",
+            "chandrayaan-2",
+            "danuri",
+            "juno",
+            "parker-solar-probe",
+            "solar-orbiter",
             "phobos",
             "deimos",
             "io",
@@ -326,4 +337,83 @@ Deno.test("moons point where Horizons puts them in 2015", () => {
             `${id}: ${angleBetween(r, toMoon)}°`,
         );
     }
+});
+
+// Geometric vectors from the parent in ecliptic J2000, in km, from JPL Horizons at
+// 2026-11-24 00:00 TDB, one day after the probes' epoch.
+const HORIZONS_PROBES: Record<string, Vec3> = {
+    mro: { x: 1050.583882246016, y: -1037.355041138028, z: -3327.607949548157 },
+    lro: { x: -1279.8151416294, y: -541.8156285521441, z: -1173.089278908651 },
+    juno: { x: 1171872.25891045, y: -341475.4301779601, z: -5174248.407601531 },
+    "parker-solar-probe": {
+        x: 51553564.4977901,
+        y: -2857702.930706531,
+        z: -3009760.254410001,
+    },
+};
+
+Deno.test("Juno and Parker Solar Probe point where Horizons puts them a day after the epoch", () => {
+    for (const id of ["juno", "parker-solar-probe"]) {
+        const probe = find(id);
+        const parent = solarSystem.bodies.find((b) => b.id === probe.parent);
+        const t = probe.elements.epoch + DAY;
+
+        assert(parent, `no parent for ${id}`);
+        const elements = elementsAt(probe, t);
+
+        assert(elements, `no elements for ${id}`);
+
+        const { r } = stateAt(elements, parent.mu + probe.mu, t);
+
+        assert(
+            angleBetween(r, HORIZONS_PROBES[id]) < 1,
+            `${id}: ${angleBetween(r, HORIZONS_PROBES[id])}°`,
+        );
+    }
+});
+
+Deno.test("MRO and LRO are in their orbit planes a day after the epoch", () => {
+    for (const id of ["mro", "lro"]) {
+        const probe = find(id);
+        const elements = elementsAt(probe, probe.elements.epoch + DAY);
+
+        assert(elements, `no elements for ${id}`);
+
+        // The angle to the plane is 90° minus the angle to its normal.
+        const offPlane = Math.abs(
+            90 - angleBetween(HORIZONS_PROBES[id], normalOf(elements)),
+        );
+
+        assert(offPlane < 1, `${id}: ${offPlane}°`);
+    }
+});
+
+Deno.test("every Mars, Moon and Jupiter probe precesses about its parent's pole", () => {
+    const probes = solarSystem.bodies.filter(
+        (b) =>
+            b.kind === "spacecraft" &&
+            (b.parent === "mars" ||
+                b.parent === "moon" ||
+                b.parent === "jupiter"),
+    );
+
+    assertEquals(probes.length, 9);
+
+    for (const body of probes) {
+        const pole = bodyOrientation(
+            body.parent ?? "",
+            body.elements?.epoch ?? 0,
+        );
+
+        assert(pole, `no rotation model for ${body.parent}`);
+        assert(body.precession, `${body.id} has no precession`);
+        assertVecClose(body.precession.pole, pole.z, 1e-12);
+    }
+});
+
+Deno.test("MRO's node precesses about +0.5 degrees a day, sun-synchronous with Mars", () => {
+    const rate = find("mro").precession?.nodeRate;
+
+    assert(rate !== undefined, "MRO has no precession");
+    assertAlmostEquals(toDeg(rate) * DAY, 0.5, 0.1);
 });
