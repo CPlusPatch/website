@@ -558,6 +558,7 @@ export const createView = (
         bare: (bare) => {
             orbits.show(!bare);
             labels.domElement.hidden = bare;
+            bodies.bare(bare);
         },
         kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
         satelliteGroups: swarm.groups,

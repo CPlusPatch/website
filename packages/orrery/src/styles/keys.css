@@ -33,6 +33,7 @@
 
         dt {
             display: flex;
+            align-items: flex-start;
             gap: 3px;
         }
 

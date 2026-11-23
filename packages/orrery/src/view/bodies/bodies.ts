@@ -79,6 +79,8 @@ export type Bodies = {
     hover: (id: string | null) => void;
     /** Sizes the markers for a viewport. */
     resize: (camera: PerspectiveCamera, width: number, height: number) => void;
+    /** Hides the spacecraft, asteroid and comet markers in bare mode, or shows them. */
+    bare: (bare: boolean) => void;
     /** Redraws a body's colours, after its orbit or colour changed. */
     recolor: (body: Body) => void;
     /** Removes the bodies and frees them. */
@@ -86,6 +88,9 @@ export type Bodies = {
 };
 
 const SPHERE_MIN_PX = 4;
+
+/** The kinds whose markers are icons rather than plain dots, which bare mode hides. */
+const ICON_KINDS = new Set(["spacecraft", "asteroid", "comet"]);
 
 /** The projected radius in px from which a model replaces the marker, since smaller it's a few dark pixels. */
 const MODEL_MIN_PX = 12;
@@ -152,6 +157,8 @@ export const createBodies = (
     // When each label last changed placement, from `performance.now()`.
     const changed = new Map<string, number>();
     const placed = new Map<string, Rect>();
+    const bareHidden = new Set<string>();
+    let bare = false;
 
     let disposed = false;
     document.fonts.ready.then(() => {
@@ -455,6 +462,7 @@ export const createBodies = (
             }
 
             placed.clear();
+            bareHidden.clear();
             for (const entry of entries) {
                 const { body, marker, halo, label } = entry;
                 const placement = placements.get(body.id) ?? "hidden";
@@ -472,7 +480,14 @@ export const createBodies = (
                     entry.side = placement;
                 }
 
-                if (covered.has(body.id) || unnamed.has(body.id)) {
+                if (bare && marker.visible && ICON_KINDS.has(body.kind)) {
+                    bareHidden.add(body.id);
+                }
+                if (
+                    covered.has(body.id) ||
+                    unnamed.has(body.id) ||
+                    bareHidden.has(body.id)
+                ) {
                     marker.visible = false;
                     if (halo) halo.visible = false;
                 }
@@ -482,7 +497,10 @@ export const createBodies = (
 
             return picks.filter(
                 ({ id }) =>
-                    !behind.has(id) && !covered.has(id) && !unnamed.has(id),
+                    !behind.has(id) &&
+                    !covered.has(id) &&
+                    !unnamed.has(id) &&
+                    !bareHidden.has(id),
             );
         },
         placed: () => placed,
@@ -542,6 +560,9 @@ export const createBodies = (
             }
 
             styling.measureAll();
+        },
+        bare: (on) => {
+            bare = on;
         },
         recolor: (body) => {
             const entry = entries.find(({ body: b }) => b.id === body.id);
