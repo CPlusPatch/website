@@ -18,7 +18,8 @@ export type SpacecraftRole =
     | "station"
     | "telescope"
     | "navigation"
-    | "earth-observation";
+    | "earth-observation"
+    | "science";
 
 /** One body in a scenario. */
 export type Body = {
@@ -66,6 +67,7 @@ const ROLES: readonly SpacecraftRole[] = [
     "telescope",
     "navigation",
     "earth-observation",
+    "science",
 ];
 
 const KINDS: readonly BodyKind[] = [

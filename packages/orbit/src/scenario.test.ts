@@ -311,7 +311,7 @@ Deno.test("an unknown role is rejected", () => {
 
     assert(
         errors.includes(
-            'earth.role: must be one of station, telescope, navigation, earth-observation (got "tug")',
+            'earth.role: must be one of station, telescope, navigation, earth-observation, science (got "tug")',
         ),
     );
 });
