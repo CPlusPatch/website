@@ -259,8 +259,7 @@
     }
 
     .orrery__satellite-total-row {
-        padding: 0.5rem var(--orrery-pad) 0.625rem
-            calc(var(--satellite-margin) + 0.625rem);
+        padding: 0.5rem var(--orrery-pad) 0.625rem;
         border-block-start: 1px solid var(--orrery-frame);
 
         .orrery__satellite-detail {
