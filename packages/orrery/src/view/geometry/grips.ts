@@ -14,10 +14,13 @@ export const GRIPS_MIN_ORBIT_PX = 60;
 /** The px between a grip and the drag note beside it. */
 const GRIP_NOTE_GAP_PX = 14;
 
-/** The eccentric anomaly of the ascending node, in [0, 2π). */
-export const nodeAnomaly = (e: number, argp: number): number => {
-    // The node is where the true anomaly is minus the argument of periapsis.
-    const nu = -argp;
+/**
+ * The eccentric anomaly, in [0, 2π), where the argument of latitude is `u`: 0 at the ascending
+ * node and π at the descending node.
+ */
+export const latitudeAnomaly = (e: number, argp: number, u: number): number => {
+    // The argument of latitude is the true anomaly plus the argument of periapsis.
+    const nu = u - argp;
 
     return wrapAngle(
         2 *

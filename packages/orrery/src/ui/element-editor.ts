@@ -1,4 +1,4 @@
-import { AU, type Elements, elementsAt } from "@cpluspatch/orbit";
+import { AU, type Elements, elementsAt, wrapAngle } from "@cpluspatch/orbit";
 import { cue } from "../audio/cues.ts";
 import {
     type AUnit,
@@ -208,24 +208,36 @@ export const createElementEditor = (
     }
 
     // A drag writes the fields, so they stay the source of truth.
-    const setFromDrag = (
-        change: { a: number; e: number } | { raan: number },
-    ) => {
-        if ("raan" in change) {
-            const stepper = steppers.get("raan");
-            if (stepper) {
-                stepper.input.value = (change.raan * DEGREES).toFixed(2);
-            }
-        } else {
-            const a = steppers.get("a");
-            const e = steppers.get("e");
-            if (a && e) {
-                const text = fromMetres(change.a, unit).toFixed(
+    const decimals = new Map(
+        specs(unit, original.a).map((spec) => [spec.field, spec.decimals]),
+    );
+    const setFromDrag = (change: Partial<Record<Field, number>>) => {
+        for (const [field, stepper] of steppers) {
+            const si = change[field];
+            if (si === undefined) continue;
+
+            if (field === "a") {
+                const text = fromMetres(si, unit).toFixed(
                     aScale(unit, original.a).decimals,
                 );
-                a.input.value = text;
-                exact = { metres: change.a, text };
-                e.input.value = change.e.toFixed(5);
+                stepper.input.value = text;
+                exact = { metres: si, text };
+            } else if (
+                field === "m" &&
+                Math.abs(
+                    wrapAngle(
+                        si -
+                            fieldValue(original, mu, world.clock.t, "m") +
+                            Math.PI,
+                    ) - Math.PI,
+                ) < 1e-9
+            ) {
+                // The start text, so a swap and swap back leave the mean anomaly moving with the clock.
+                stepper.input.value = starts.get("m") ?? "";
+            } else {
+                stepper.input.value = toDisplay(field, si).toFixed(
+                    decimals.get(field) ?? 2,
+                );
             }
         }
 
@@ -238,6 +250,7 @@ export const createElementEditor = (
         original,
         elements: () => current,
         minPeriapsis: min,
+        meanAnomaly: (el) => fieldValue(el, mu, world.clock.t, "m"),
         set: setFromDrag,
     });
 
@@ -299,7 +312,7 @@ export const createElementEditor = (
             h(
                 "p",
                 { class: "orrery__form-hint" },
-                "Type values, use − and +, or drag Pe, Ap and Node in the view.",
+                "Type values, use − and +, or drag Pe, Ap, Node and Inc in the view.",
             ),
             ...[...steppers.values()].map((stepper) => stepper.element),
             alert.element,

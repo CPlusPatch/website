@@ -1,21 +1,26 @@
 /**
  * @module
- * The grips on the orbit being edited: Pe, Ap and the ascending node, drawn as DOM over the scene.
+ * The grips on the orbit being edited: Pe, Ap, the ascending node and the inclination (at the
+ * descending node), drawn as DOM over the scene.
  */
 
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import { wrapAngle } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
 import { cue } from "../../audio/cues.ts";
-import { dragApsis, type GripTarget } from "../../editing.ts";
-import { formatApsisChange, formatNodeChange } from "../../format.ts";
+import { dragApsis, type GripTarget, tiltInclination } from "../../editing.ts";
+import {
+    formatApsisChange,
+    formatInclinationChange,
+    formatNodeChange,
+} from "../../format.ts";
 import { h, setText } from "../../ui/dom.ts";
 import type { Units } from "../../units.ts";
 import {
     axisPosition,
     GRIPS_MIN_ORBIT_PX,
     gripNoteSpots,
-    nodeAnomaly,
+    latitudeAnomaly,
     planeAngle,
     pointAtAnomaly,
 } from "../geometry/grips.ts";
@@ -48,9 +53,10 @@ export type Grips = {
     dispose: () => void;
 };
 
-type Kind = "pe" | "ap" | "node";
+type Kind = "pe" | "ap" | "node" | "inc";
 
 type Grip = {
+    /** What the grip does. The two apsis grips trade kinds when a drag swaps the apsides. */
     kind: Kind;
     name: string;
     element: HTMLElement;
@@ -61,6 +67,10 @@ type Grip = {
 
 type Drag = {
     grip: Grip;
+    /** The kind the grip had at the start, which picks the drag's axis. */
+    kind: Kind;
+    /** Whether the apsides are swapped, so the periapsis is at the axis's other end. */
+    swapped: boolean;
     target: GripTarget;
     pointerId: number;
     el0: Elements;
@@ -86,6 +96,7 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
         { kind: "pe", name: "Pe" },
         { kind: "ap", name: "Ap" },
         { kind: "node", name: "Node" },
+        { kind: "inc", name: "Inc" },
     ];
     const grips: Grip[] = specs.map(({ kind, name }) => {
         const flag = h("div", { class: "orrery__flag" }, name);
@@ -114,7 +125,7 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
     let camera: PerspectiveCamera | null = null;
     let current: GripTarget | null = null;
     let shown = false;
-    let hovered: Kind | null = null;
+    let hovered: Grip | null = null;
     let drag: Drag | null = null;
     const rooms: Rect[] = [];
     let noteAt: { x: number; y: number; width: number } | null = null;
@@ -136,7 +147,7 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
         };
     };
 
-    // The pointer's position along the periapsis axis, or its angle round the parent.
+    // The pointer's position along the periapsis axis, its angle round the parent, or its screen y.
     const value = (event: PointerEvent, active: Drag): number | null => {
         if (!camera) return null;
 
@@ -144,7 +155,9 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        if (active.grip.kind === "node") {
+        const { el0, kind } = active;
+        if (kind === "inc") return y;
+        if (kind === "node") {
             // In view space, then rotated, since `matrixWorld` is float32 and far from the origin.
             ray.set((x / size.width) * 2 - 1, 1 - (y / size.height) * 2, 0.5)
                 .applyMatrix4(camera.projectionMatrixInverse)
@@ -153,7 +166,6 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
             return planeAngle(camera.position, ray, base);
         }
 
-        const { el0 } = active;
         const periapsis = pointAtAnomaly(el0, 0);
         const reach = Math.hypot(periapsis.x, periapsis.y, periapsis.z);
         const km = el0.a / 1000;
@@ -178,6 +190,20 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
         return axisPosition(x - o.x, y - o.y, end.x - o.x, end.y - o.y, aPx);
     };
 
+    // The held apsis grip becomes the other apsis, and the other grip takes its place.
+    const swapApsisGrips = () => {
+        const pe = grips.find(({ kind }) => kind === "pe");
+        const ap = grips.find(({ kind }) => kind === "ap");
+        if (!pe || !ap) return;
+
+        pe.kind = "ap";
+        pe.name = "Ap";
+        ap.kind = "pe";
+        ap.name = "Pe";
+        setText(pe.flag, pe.name);
+        setText(ap.flag, ap.name);
+    };
+
     const endDrag = () => {
         if (!drag) return;
 
@@ -196,10 +222,13 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
     const onSecond = (event: PointerEvent) => {
         if (!drag || event.pointerId === drag.pointerId) return;
 
-        const { target, el0 } = drag;
+        const { target, el0, swapped } = drag;
         endDrag();
-        target.set({ a: el0.a, e: el0.e });
-        target.set({ raan: el0.raan });
+        if (swapped) swapApsisGrips();
+        target.set({ a: el0.a, e: el0.e, i: el0.i, raan: el0.raan });
+        if (swapped) {
+            target.set({ argp: el0.argp, m: target.meanAnomaly(el0) });
+        }
     };
 
     const onMove = (event: PointerEvent) => {
@@ -214,22 +243,37 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
             return;
         }
 
-        const { grip, target, el0 } = drag;
+        const { kind, target, el0 } = drag;
         if (t !== drag.last) {
             drag.last = t;
             cue("tick");
         }
-        if (grip.kind === "node") {
+        if (kind === "node") {
             target.set({ raan: wrapAngle(el0.raan + (t - drag.t0)) });
-        } else {
-            target.set(
-                dragApsis(
-                    grip.kind,
-                    el0,
-                    (t - drag.t0) * el0.a,
-                    target.minPeriapsis,
-                ),
+        } else if (kind === "inc") {
+            target.set({ i: tiltInclination(el0.i, t - drag.t0) });
+        } else if (kind === "pe" || kind === "ap") {
+            const { a, e, swapped } = dragApsis(
+                kind,
+                el0,
+                (t - drag.t0) * el0.a,
+                target.minPeriapsis,
             );
+            if (swapped === drag.swapped) {
+                target.set({ a, e });
+
+                return;
+            }
+
+            // The periapsis is at the other end of the axis, and the body stays on its side.
+            drag.swapped = swapped;
+            swapApsisGrips();
+            target.set({
+                a,
+                e,
+                argp: swapped ? wrapAngle(el0.argp + Math.PI) : el0.argp,
+                m: wrapAngle(target.meanAnomaly(el0) + (swapped ? Math.PI : 0)),
+            });
         }
     };
 
@@ -240,10 +284,10 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
     const listeners = grips.map((grip) => {
         const { element } = grip;
         const enter = () => {
-            hovered = grip.kind;
+            hovered = grip;
         };
         const leave = () => {
-            if (hovered === grip.kind) hovered = null;
+            if (hovered === grip) hovered = null;
         };
         const down = (event: PointerEvent) => {
             if (event.button !== 0 || !event.isPrimary || drag || !current) {
@@ -258,6 +302,8 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
             element.classList.add("orrery__grip--drag");
             drag = {
                 grip,
+                kind: grip.kind,
+                swapped: false,
                 target: current,
                 pointerId: event.pointerId,
                 el0,
@@ -338,7 +384,8 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
             const anomalies = {
                 pe: 0,
                 ap: Math.PI,
-                node: nodeAnomaly(elements.e, elements.argp),
+                node: latitudeAnomaly(elements.e, elements.argp, 0),
+                inc: latitudeAnomaly(elements.e, elements.argp, Math.PI),
             };
             const half = SQUARE_PX / 2;
 
@@ -370,8 +417,9 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
                 grip.element.hidden = !visible;
                 if (!visible) continue;
 
-                const lit = hovered === grip.kind || dragged;
-                const flagged = grip.kind !== "node" || lit;
+                const lit = hovered === grip || dragged;
+                const flagged =
+                    (grip.kind !== "node" && grip.kind !== "inc") || lit;
                 grip.element.classList.toggle("orrery__grip--lit", lit);
                 grip.flag.hidden = !flagged;
                 move(grip.element, at.x, at.y);
@@ -403,22 +451,25 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
             const dragged = drag?.grip;
             if (dragged?.at) {
                 const { original } = current;
+                // The held grip's role now, which differs from its first one after a swap.
                 const text =
                     dragged.kind === "node"
                         ? formatNodeChange(elements.raan, original.raan)
-                        : dragged.kind === "pe"
-                          ? formatApsisChange(
-                                "Pe",
-                                elements.a * (1 - elements.e),
-                                original.a * (1 - original.e),
-                                units.get(),
-                            )
-                          : formatApsisChange(
-                                "Ap",
-                                elements.a * (1 + elements.e),
-                                original.a * (1 + original.e),
-                                units.get(),
-                            );
+                        : dragged.kind === "inc"
+                          ? formatInclinationChange(elements.i, original.i)
+                          : dragged.kind === "pe"
+                            ? formatApsisChange(
+                                  "Pe",
+                                  elements.a * (1 - elements.e),
+                                  original.a * (1 - original.e),
+                                  units.get(),
+                              )
+                            : formatApsisChange(
+                                  "Ap",
+                                  elements.a * (1 + elements.e),
+                                  original.a * (1 + original.e),
+                                  units.get(),
+                              );
                 setText(note, text);
                 noteAt = { ...dragged.at, width: noteFont.width(text) };
             } else {

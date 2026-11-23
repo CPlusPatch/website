@@ -7,6 +7,7 @@ import {
     formatApsisChange,
     formatDistance,
     formatDuration,
+    formatInclinationChange,
     formatNodeChange,
     formatSoon,
     formatSpeed,
@@ -121,4 +122,17 @@ Deno.test("formatNodeChange writes the node and the shorter way round to it", ()
     assertEquals(formatNodeChange(125 * deg, 120 * deg), "Node 125.0° (+5.0°)");
     assertEquals(formatNodeChange(355 * deg, 5 * deg), "Node 355.0° (−10.0°)");
     assertEquals(formatNodeChange(5 * deg, 355 * deg), "Node 5.0° (+10.0°)");
+});
+
+Deno.test("formatInclinationChange writes the inclination and its change with a real minus", () => {
+    const deg = Math.PI / 180;
+
+    assertEquals(
+        formatInclinationChange(28.5 * deg, 23.4 * deg),
+        "Inc 28.5° (+5.1°)",
+    );
+    assertEquals(
+        formatInclinationChange(23.4 * deg, 28.5 * deg),
+        "Inc 23.4° (−5.1°)",
+    );
 });

@@ -120,3 +120,10 @@ export const formatNodeChange = (raan: number, before: number): string => {
 
     return `Node ${formatAngle(raan)} (${delta >= 0 ? "+" : "−"}${formatAngle(Math.abs(delta))})`;
 };
+
+/** The inclination and its change, like `Inc 23.4° (+5.1°)`. */
+export const formatInclinationChange = (i: number, before: number): string => {
+    const delta = i - before;
+
+    return `Inc ${formatAngle(i)} (${delta >= 0 ? "+" : "−"}${formatAngle(Math.abs(delta))})`;
+};

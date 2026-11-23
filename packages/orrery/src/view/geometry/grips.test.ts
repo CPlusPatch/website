@@ -4,7 +4,7 @@ import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
     axisPosition,
     gripNoteSpots,
-    nodeAnomaly,
+    latitudeAnomaly,
     planeAngle,
     pointAtAnomaly,
 } from "./grips.ts";
@@ -22,18 +22,33 @@ const TILTED: Elements = {
 };
 
 Deno.test("a circular orbit's node is at minus its argument of periapsis", () => {
-    assertAlmostEquals(nodeAnomaly(0, 1), 2 * Math.PI - 1);
-    assertAlmostEquals(nodeAnomaly(0, 0), 0);
+    assertAlmostEquals(latitudeAnomaly(0, 1, 0), 2 * Math.PI - 1);
+    assertAlmostEquals(latitudeAnomaly(0, 0, 0), 0);
 });
 
 Deno.test("the node is level with the parent and the orbit climbs after it", () => {
     for (const e of [0, 0.3, 0.9]) {
         for (const argp of [0.5, 2, 4, 6]) {
             const el = { ...TILTED, e, argp, i: 0.7 };
-            const at = nodeAnomaly(e, argp);
+            const at = latitudeAnomaly(e, argp, 0);
 
             assertAlmostEquals(pointAtAnomaly(el, at).z / el.a, 0, 1e-9);
             assert(pointAtAnomaly(el, at + 0.01).z > 0);
+        }
+    }
+});
+
+Deno.test("half a turn of latitude on from the node is the descending node", () => {
+    for (const e of [0, 0.3, 0.9]) {
+        for (const argp of [0.5, 2, 4, 6]) {
+            const el = { ...TILTED, e, argp };
+            const down = pointAtAnomaly(el, latitudeAnomaly(e, argp, Math.PI));
+
+            const r = Math.hypot(down.x, down.y, down.z);
+
+            assertAlmostEquals(down.x / r, -Math.cos(el.raan), 1e-9);
+            assertAlmostEquals(down.y / r, -Math.sin(el.raan), 1e-9);
+            assertAlmostEquals(down.z / r, 0, 1e-9);
         }
     }
 });
