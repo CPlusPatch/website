@@ -7,6 +7,7 @@ import type { RoleKey } from "../view/bodies/role-icons.ts";
 import { ORBIT_CLASS_COLORS } from "../view/theme.ts";
 import { roleMarker } from "./body-marker.ts";
 import { h } from "./dom.ts";
+import { ROLE_LABELS } from "./labels.ts";
 
 /** The keys card, the button that opens it and how to remove them. */
 export type Keys = {
@@ -43,15 +44,6 @@ const ORBIT_CLASSES: [OrbitClass, string][] = [
     ["heo", "Highly elliptical"],
 ];
 
-const ROLES: [RoleKey, string][] = [
-    ["station", "Station"],
-    ["telescope", "Telescope"],
-    ["navigation", "Navigation"],
-    ["earth-observation", "Earth observation"],
-    ["science", "Science"],
-    ["other", "Other"],
-];
-
 /** The legend for the satellites' colours and icons. */
 const createLegend = (): HTMLElement =>
     h(
@@ -72,12 +64,14 @@ const createLegend = (): HTMLElement =>
         h(
             "ul",
             {},
-            ...ROLES.map(([role, label]) => {
-                const icon = h("span", { class: "orrery__legend-icon" });
-                icon.innerHTML = roleMarker(role);
+            ...(Object.entries(ROLE_LABELS) as [RoleKey, string][]).map(
+                ([role, label]) => {
+                    const icon = h("span", { class: "orrery__legend-icon" });
+                    icon.innerHTML = roleMarker(role);
 
-                return h("li", {}, icon, label);
-            }),
+                    return h("li", {}, icon, label);
+                },
+            ),
         ),
     );
 

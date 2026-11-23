@@ -1,4 +1,3 @@
-import type { BodyKind } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -12,6 +11,7 @@ import { showBodyMarker } from "../body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "../burn-editor.ts";
 import { h, setText } from "../dom.ts";
 import { createElementEditor, type ElementEditor } from "../element-editor.ts";
+import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";
 import { type ActionButtons, button, createActions } from "./actions.ts";
 import {
@@ -34,16 +34,6 @@ type Mode = "card" | "edit" | "burn" | "add";
 
 /** How often the readouts refresh while the clock runs, in ms. */
 const REFRESH_MS = 250;
-
-const KINDS: Record<BodyKind, string> = {
-    star: "Star",
-    planet: "Planet",
-    dwarf: "Dwarf planet",
-    moon: "Moon",
-    asteroid: "Asteroid",
-    comet: "Comet",
-    spacecraft: "Spacecraft",
-};
 
 /** A card with the selected body's name, kind and live orbit readouts. */
 export const createInspector = (
@@ -337,7 +327,7 @@ export const createInspector = (
             h(
                 "p",
                 { class: "orrery__orbit-meta" },
-                `${KINDS[body.kind]} `,
+                `${KIND_LABELS[body.kind]} `,
                 ...(link ? ["around ", link] : ["at the centre"]),
             ),
         );
