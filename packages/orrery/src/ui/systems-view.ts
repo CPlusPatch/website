@@ -1,7 +1,14 @@
-import type { Body } from "@cpluspatch/orbit";
-import { formatDuration, formatRadius } from "../format.ts";
+import { AU, type Body } from "@cpluspatch/orbit";
+import type { AUnit } from "../editing.ts";
+import {
+    formatDuration,
+    formatRadius,
+    formatRange,
+    listUnit,
+} from "../format.ts";
 import { marked } from "../search.ts";
-import { facts, type Group, leftPane, system } from "../systems.ts";
+import { facts, type Group, leftPane, rail, system } from "../systems.ts";
+import { colorOf } from "../view/theme.ts";
 import { showBodyMarker } from "./body-marker.ts";
 import { h } from "./dom.ts";
 import { KIND_LABELS, ROLE_LABELS } from "./labels.ts";
@@ -222,11 +229,105 @@ export const headRows = (ctx: SystemsContext, body: Body): HTMLElement[] => {
     ];
 };
 
-/** The list of the right pane: the system of `shown`, a note for the root or an empty state. */
+const railItem = (
+    className: string,
+    at: number,
+    color?: string,
+): HTMLElement => {
+    const element = h("i", { class: className });
+    element.style.setProperty("--at", String(at));
+    if (color) element.style.setProperty("--orrery-rail-colour", color);
+
+    return element;
+};
+
+/**
+ * The orbit-size rail of `body`: a caption, a log-scale track and the labels under it. It is
+ * empty when no child has an orbit. `chosen` is the unit the user picked, or null for automatic.
+ */
+export const railRows = (
+    ctx: SystemsContext,
+    body: Body,
+    active: string | null,
+    chosen: AUnit | null,
+): HTMLElement[] => {
+    const metres = rail(ctx.bodies, body.id);
+    if (!metres) return [];
+
+    const unit = listUnit([metres.lo, metres.hi], chosen);
+    // Ticks on powers of ten of the shown unit, so AU labels read 1 and 10, not 0.6685.
+    const { marks, ticks, lo, hi } =
+        unit === "AU" ? (rail(ctx.bodies, body.id, AU) ?? metres) : metres;
+    const current = marks.find(({ body: child }) => child.id === active)?.body;
+
+    const caption = h("div", { class: "orrery__search-rail-cap" });
+    if (current?.elements) {
+        caption.append(
+            h("b", {}, current.name),
+            " · orbit ",
+            h(
+                "span",
+                { class: "orrery__search-rail-data" },
+                formatRange(Math.abs(current.elements.a), unit),
+            ),
+        );
+    } else {
+        caption.append(`Orbit size around ${named(body)}, log scale`);
+    }
+
+    const primary = h("i", { class: "orrery__search-rail-primary" });
+    primary.style.setProperty("--orrery-rail-colour", colorOf(body));
+
+    const track = h(
+        "div",
+        { class: "orrery__search-rail-track" },
+        ...ticks.map(({ at }) => railItem("orrery__search-rail-grid", at)),
+        primary,
+        ...marks.map(({ body: child, at }) => {
+            const mark = railItem(
+                `orrery__search-rail-mark${child.kind === "spacecraft" ? " orrery__search-rail-mark--craft" : ""}`,
+                at,
+                colorOf(child),
+            );
+            if (child.id === active) mark.dataset.active = "";
+
+            return mark;
+        }),
+    );
+
+    // Without decades, the ends label the range, or the one distance when they match.
+    const labelled =
+        ticks.length > 0
+            ? ticks
+            : lo === hi
+              ? [{ distance: lo, at: 0.5 }]
+              : [
+                    { distance: lo, at: 0 },
+                    { distance: hi, at: 1 },
+                ];
+    const labels = h(
+        "div",
+        { class: "orrery__search-rail-labels" },
+        ...labelled.map(({ distance, at }) => {
+            const label = h("span", {}, formatRange(distance, unit));
+            label.style.setProperty("--at", String(at));
+
+            return label;
+        }),
+    );
+
+    return [caption, track, labels];
+};
+
+/**
+ * The list of the right pane: the system of `shown`, a note for the root or an empty state.
+ * `narrow` is true when the right pane covers the left one.
+ */
 export const systemRows = (
     ctx: SystemsContext,
     shown: Body,
     active: string | null,
+    narrow: boolean,
 ): HTMLElement[] => {
     const { root } = leftPane(ctx.bodies);
 
@@ -239,7 +340,7 @@ export const systemRows = (
             h(
                 "p",
                 { class: "orrery__search-note" },
-                `${count} ${count === 1 ? "body orbits" : "bodies orbit"} ${named(root)}. Pick one on the left, or type to search.`,
+                `${count} ${count === 1 ? "body orbits" : "bodies orbit"} ${named(root)}. ${narrow ? "Go back to pick one" : "Pick one on the left"}, or type to search.`,
             ),
         ];
     }

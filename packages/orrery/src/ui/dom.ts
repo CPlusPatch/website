@@ -1,3 +1,9 @@
+/**
+ * The width in px at and below which the narrow layout applies. Keep in step with the narrow
+ * queries under `styles/`.
+ */
+export const NARROW_QUERY = "(max-width: 720px)";
+
 /** An element with the given attributes and children. */
 export const h = <K extends keyof HTMLElementTagNameMap>(
     tag: K,

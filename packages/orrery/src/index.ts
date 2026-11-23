@@ -24,7 +24,7 @@ import {
     writeSaved,
 } from "./persistence.ts";
 import { createCrumbs } from "./ui/crumbs.ts";
-import { h } from "./ui/dom.ts";
+import { h, NARROW_QUERY } from "./ui/dom.ts";
 import { createHud } from "./ui/hud.ts";
 import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
@@ -53,12 +53,6 @@ export type Orrery = {
 
 /** How long the autosave waits for more changes, in ms. */
 const SAVE_DELAY_MS = 500;
-
-/**
- * The width in px at and below which the narrow layout applies. Keep in step with the narrow
- * queries under `styles/`.
- */
-const NARROW_QUERY = "(max-width: 720px)";
 
 /** How long after mounting the loading state gives way, whatever is still loading, in ms. */
 const REVEAL_AFTER_MS = 8000;

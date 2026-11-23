@@ -8,6 +8,9 @@
             var(--orrery-panel-solid)
         );
 
+        /* How long the right pane takes to slide in on a narrow screen. */
+        --orrery-search-slide: 0.2s;
+
         position: absolute;
         z-index: 3;
         inset-block-start: var(--orrery-search-top, 3rem);
@@ -103,6 +106,48 @@
         &:focus-visible {
             outline-offset: -2px;
         }
+
+        @media (pointer: coarse), (max-width: 720px) {
+            min-block-size: var(--control-height-sm);
+        }
+    }
+
+    /* Shown under 720 px only, as the way back from the right pane. */
+    .orrery__search-back {
+        display: none;
+        align-items: center;
+        gap: var(--space-sm);
+        inline-size: 100%;
+        min-block-size: var(--control-height-sm);
+        padding: 0 var(--orrery-pad);
+        border: 0;
+        border-block-end: 1px solid var(--orrery-rule);
+        border-radius: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: inherit;
+        text-align: start;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orrery-search-hover);
+        }
+
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+    }
+
+    .orrery__search-back-icon {
+        display: flex;
+        inline-size: 8px;
+        block-size: 12px;
+        color: var(--orrery-muted);
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
     }
 
     .orrery__search-add-icon {
@@ -165,7 +210,113 @@
     }
 
     .orrery__search-rail {
+        /* Where the marks start after the primary, and the room kept at the far end for labels. */
+        --orrery-rail-start: 24px;
+        --orrery-rail-end: 2rem;
+
         flex: none;
+        padding: 0.5rem var(--orrery-pad) 0.375rem;
+        border-block-end: 1px solid var(--orrery-rule);
+    }
+
+    .orrery__search-rail-cap {
+        min-block-size: 1.1rem;
+        overflow: hidden;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-label);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        b {
+            color: var(--orrery-text);
+            font-weight: 600;
+        }
+    }
+
+    .orrery__search-rail-data {
+        font-family: var(--orrery-font-data);
+    }
+
+    .orrery__search-rail-track {
+        position: relative;
+        block-size: 2.75rem;
+        margin-block-start: 0.125rem;
+        /* Half the primary, so its left edge lines up with the caption. */
+        margin-inline-start: 11px;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset-block-start: 50%;
+            inset-inline: 0;
+            border-block-start: 1px solid var(--orrery-frame);
+        }
+
+        i {
+            position: absolute;
+            inset-block-start: 50%;
+            transform: translate(-50%, -50%);
+        }
+    }
+
+    /* Each mark, gridline and label sits at its --at, from 0 to 1 along the free part of the track. */
+    .orrery__search-rail-mark,
+    .orrery__search-rail-grid,
+    .orrery__search-rail-labels span {
+        inset-inline-start: calc(
+            var(--orrery-rail-start) +
+            var(--at) *
+            (100% - var(--orrery-rail-start) - var(--orrery-rail-end))
+        );
+    }
+
+    .orrery__search-rail-primary {
+        inset-inline-start: 0;
+        inline-size: 22px;
+        block-size: 22px;
+        border-radius: 50%;
+        background-color: var(--orrery-rail-colour);
+    }
+
+    .orrery__search-rail-mark {
+        background-color: var(--orrery-rail-colour);
+        inline-size: 12px;
+        block-size: 12px;
+        border-radius: 50%;
+
+        &[data-active] {
+            z-index: 2;
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 2px;
+        }
+    }
+
+    .orrery__search-rail-mark--craft {
+        inline-size: 3px;
+        block-size: 20px;
+        border-radius: 0;
+    }
+
+    .orrery__search-rail-track .orrery__search-rail-grid {
+        inset-block: 0;
+        inline-size: 1px;
+        background-color: var(--orrery-rule);
+        transform: translateX(-50%);
+    }
+
+    .orrery__search-rail-labels {
+        position: relative;
+        block-size: 1.1rem;
+        margin-inline-start: 0.75rem;
+        color: var(--orrery-dim);
+        font: 400 var(--orrery-size-xs) var(--orrery-font-data);
+
+        span {
+            position: absolute;
+            inset-block-start: 0;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
     }
 
     .orrery__search-system {
@@ -259,6 +410,10 @@
         &:hover {
             background-color: var(--orrery-panel-raised);
         }
+
+        @media (pointer: coarse), (max-width: 720px) {
+            block-size: var(--control-height-sm);
+        }
     }
 
     .orrery__search-button--pick {
@@ -318,6 +473,10 @@
         b {
             font-weight: 700;
         }
+
+        @media (pointer: coarse), (max-width: 720px) {
+            min-block-size: 2.5rem;
+        }
     }
 
     .orrery__search-row--nested {
@@ -327,6 +486,10 @@
     .orrery__search-row--two {
         min-block-size: 2.75rem;
         padding-block: 0.25rem;
+
+        @media (pointer: coarse), (max-width: 720px) {
+            min-block-size: 3rem;
+        }
     }
 
     .orrery__search-marker {
@@ -491,6 +654,34 @@
         .orrery__search-picked {
             background-color: CanvasText;
         }
+
+        .orrery__search-button--pick {
+            border-color: ButtonText;
+
+            &:disabled {
+                border-color: GrayText;
+            }
+        }
+
+        /* Forced colours would turn the marks into the page colour, and they'd vanish. */
+        .orrery__search-rail-primary,
+        .orrery__search-rail-mark {
+            forced-color-adjust: none;
+            background-color: CanvasText;
+        }
+
+        .orrery__search-rail-mark[data-active] {
+            outline-color: Highlight;
+        }
+
+        .orrery__search-rail-track::before {
+            border-color: CanvasText;
+        }
+
+        .orrery__search-rail-track .orrery__search-rail-grid {
+            forced-color-adjust: none;
+            background-color: GrayText;
+        }
     }
 
     @media (max-width: 720px) {
@@ -501,6 +692,80 @@
 
         .orrery__search-hint {
             display: none;
+        }
+
+        /* The right pane slides over the left one, and the Add button goes with the left. */
+        .orrery__search-panes {
+            grid-template-columns: minmax(0, 1fr);
+            overflow: clip;
+        }
+
+        .orrery__search-left,
+        .orrery__search-add {
+            transition: transform var(--orrery-search-slide) ease;
+        }
+
+        .orrery__search-right {
+            position: relative;
+            z-index: 1;
+            display: block;
+            grid-column: 1;
+            border-inline-start: 0;
+            background-color: var(--orrery-panel-solid);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            transform: translateX(100%);
+            transition:
+                transform var(--orrery-search-slide) ease,
+                visibility 0s var(--orrery-search-slide);
+            visibility: hidden;
+        }
+
+        /* Sticky, so a long system doesn't scroll the way back out of reach. */
+        .orrery__search-back {
+            position: sticky;
+            inset-block-start: 0;
+            z-index: 3;
+            display: flex;
+            background-color: var(--orrery-panel-solid);
+        }
+
+        /* The pane scrolls as one column, so the list needs no scroll or fade of its own. */
+        .orrery__search-system {
+            overflow: visible;
+            mask-image: none;
+        }
+
+        .orrery__search-panes[data-detail] {
+            .orrery__search-right {
+                transform: none;
+                transition: transform var(--orrery-search-slide) ease;
+                visibility: visible;
+            }
+
+            /* Hidden only once the slide ends, and shown at once on the way back. */
+            .orrery__search-left,
+            .orrery__search-add {
+                transform: translateX(-30%);
+                transition:
+                    transform var(--orrery-search-slide) ease,
+                    visibility 0s var(--orrery-search-slide);
+                visibility: hidden;
+            }
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .orrery__search-left,
+        .orrery__search-right,
+        .orrery__search-add,
+        .orrery__search-panes[data-detail]
+            :is(
+                .orrery__search-left,
+                .orrery__search-right,
+                .orrery__search-add
+            ) {
+            transition: none;
         }
     }
 }

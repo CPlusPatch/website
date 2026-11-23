@@ -78,10 +78,14 @@ export const path = (bodies: readonly Body[], id: string): string => {
     return names.join(" › ");
 };
 
-/** Where the children of `id` sit on a log scale of orbit size, or null with no children. */
+/**
+ * Where the children of `id` sit on a log scale of orbit size, or null with no children. Ticks
+ * fall on powers of ten of `unit` metres, so they read as decades in the unit shown.
+ */
 export const rail = (
     bodies: readonly Body[],
     id: string,
+    unit = 1,
 ): {
     marks: { body: Body; at: number }[];
     ticks: { distance: number; at: number }[];
@@ -104,11 +108,11 @@ export const rail = (
 
     if (lo !== hi) {
         // The slack covers float error in the log10 at the ends.
-        const first = Math.ceil(Math.log10(lo * (1 - 1e-4)));
-        const last = Math.floor(Math.log10(hi * (1 + 1e-4)));
+        const first = Math.ceil(Math.log10((lo / unit) * (1 - 1e-4)));
+        const last = Math.floor(Math.log10((hi / unit) * (1 + 1e-4)));
 
         for (let power = first; power <= last; power++) {
-            const distance = 10 ** power;
+            const distance = unit * 10 ** power;
             ticks.push({
                 distance,
                 at: Math.min(1, Math.max(0, at(distance))),

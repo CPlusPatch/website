@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { type Body, eridani, kerbol, solarSystem } from "@cpluspatch/orbit";
+import { AU, type Body, eridani, kerbol, solarSystem } from "@cpluspatch/orbit";
 import {
     assert,
     assertAlmostEquals,
@@ -173,6 +173,15 @@ Deno.test("a rail uses the size of a hyperbolic orbit", () => {
 
     assertEquals(result?.lo, 2e9);
     assertEquals(result?.marks[0].at, 0);
+});
+
+Deno.test("a rail in AU ticks at powers of ten of an AU", () => {
+    const result = rail(solar, "sun", AU);
+
+    assertEquals(
+        result?.ticks.map((tick) => tick.distance / AU),
+        [1, 10],
+    );
 });
 
 Deno.test("a rail is null when the body has no children", () => {

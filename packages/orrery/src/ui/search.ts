@@ -6,11 +6,12 @@ import { found, treeOrder } from "../search.ts";
 import { leftPane, system } from "../systems.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
-import { h, setText } from "./dom.ts";
+import { h, NARROW_QUERY, setText } from "./dom.ts";
 import {
     headRows,
     leftRows,
     named,
+    railRows,
     resultRows,
     type SystemsContext,
     systemRows,
@@ -32,6 +33,8 @@ const MARGIN = 8;
 
 const SEARCH_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/></g></svg>';
+const BACK_ICON =
+    '<svg viewBox="0 0 8 12" aria-hidden="true" focusable="false"><path d="M6.5 1.5 1.5 6l5 4.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const PLUS_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
 
@@ -140,6 +143,13 @@ export const createSearch = (
         icon("orrery__search-add-icon", PLUS_ICON),
         addLabel,
     );
+    const backLabel = h("span");
+    const backButton = h(
+        "button",
+        { type: "button", class: "orrery__search-back", "data-act": "back" },
+        icon("orrery__search-back-icon", BACK_ICON),
+        backLabel,
+    );
     // Scrollable lists would otherwise take a Tab stop of their own.
     const left = h("div", {
         id: "orrery-search-left",
@@ -148,8 +158,11 @@ export const createSearch = (
         role: "listbox",
     });
     const head = h("div", { class: "orrery__search-head" });
-    // Holds the distance rail, which comes later.
-    const rail = h("div", { class: "orrery__search-rail" });
+    // The rows of the rail say the same, so a screen reader skips it.
+    const rail = h("div", {
+        class: "orrery__search-rail",
+        "aria-hidden": "true",
+    });
     rail.hidden = true;
     const systemList = h("div", {
         id: "orrery-search-right",
@@ -166,12 +179,20 @@ export const createSearch = (
     });
     /** Each list's label, put back when it holds options again. */
     const labels = new Map<HTMLElement, string>([[results, "Matching bodies"]]);
+    const right = h(
+        "div",
+        { class: "orrery__search-right" },
+        backButton,
+        head,
+        rail,
+        systemList,
+    );
     // The Add button comes last so Tab reaches it after the pane's buttons. CSS places it.
     const panes = h(
         "div",
         { class: "orrery__search-panes", "data-mode": "tree" },
         left,
-        h("div", { class: "orrery__search-right" }, head, rail, systemList),
+        right,
         results,
         addButton,
     );
@@ -197,6 +218,7 @@ export const createSearch = (
     panel.hidden = true;
     root.append(panel);
 
+    const narrow = matchMedia(NARROW_QUERY);
     /** The body whose system the right pane shows: the root or one of its children. */
     let shown = "";
     let pane: "left" | "right" = "left";
@@ -303,6 +325,15 @@ export const createSearch = (
         const body = bodies.find((candidate) => candidate.id === shown) ?? top;
 
         panes.dataset.mode = inResults ? "results" : "tree";
+        panes.toggleAttribute(
+            "data-detail",
+            narrow.matches && !inResults && pane === "right",
+        );
+        setText(backLabel, `Bodies around ${named(top)}`);
+        backButton.setAttribute(
+            "aria-label",
+            `Back to bodies around ${named(top)}`,
+        );
         setText(addLabel, inResults ? `Add “${trimmed}”` : "Add a body…");
         hint.replaceChildren(...(inResults ? resultsHint : treeHint));
 
@@ -317,6 +348,8 @@ export const createSearch = (
             // Rows from another mode or scenario would keep ids that no longer exist.
             left.replaceChildren();
             head.replaceChildren();
+            rail.replaceChildren();
+            rail.hidden = true;
             systemList.replaceChildren();
         } else {
             results.replaceChildren();
@@ -338,15 +371,28 @@ export const createSearch = (
             head.replaceChildren(
                 ...headRows(contextFor(bodies, [body.id]), body),
             );
+            const railContent = railRows(
+                systemContext,
+                body,
+                pane === "right" ? active : null,
+                units.get(),
+            );
+            rail.replaceChildren(...railContent);
+            rail.hidden = railContent.length === 0;
             labels.set(systemList, `Bodies around ${named(body)}`);
             systemList.replaceChildren(
                 ...systemRows(
                     systemContext,
                     body,
                     pane === "right" ? active : null,
+                    narrow.matches,
                 ),
             );
-            if (renderedShown !== shown) systemList.scrollTop = 0;
+            // Narrow, the whole right pane scrolls rather than its list.
+            if (renderedShown !== shown) {
+                systemList.scrollTop = 0;
+                right.scrollTop = 0;
+            }
             renderedShown = shown;
         }
 
@@ -369,7 +415,11 @@ export const createSearch = (
               )
             : null;
 
-        input.setAttribute("aria-controls", list.id);
+        if (list.hasAttribute("role")) {
+            input.setAttribute("aria-controls", list.id);
+        } else {
+            input.removeAttribute("aria-controls");
+        }
         input.setAttribute("aria-activedescendant", item?.id ?? "");
         item?.scrollIntoView({ block: "nearest" });
 
@@ -477,12 +527,29 @@ export const createSearch = (
     };
 
     const showSystem = (id: string) => {
+        if (narrow.matches) {
+            // It slides over even with nothing to list, so the head can pick the body.
+            shown = id;
+            pane = "right";
+            active = firstOf(id);
+            render();
+
+            return;
+        }
+
         // Rebuilding would detach the clicked row, so its dblclick would never reach the list.
         if (id === shown && id === active && pane === "left") return;
 
         shown = active = id;
         pane = "left";
         render();
+    };
+
+    const back = () => {
+        pane = "left";
+        active = shown;
+        render();
+        input.focus();
     };
 
     const unsubscribe = world.on((event) => {
@@ -522,10 +589,12 @@ export const createSearch = (
         "keydown",
         (event) => {
             // Tab past the last control lands where Escape does, not on the page body.
+            // Narrow, the Add button slides away with the left pane, so the last right-pane button is last.
+            const last = panes.hasAttribute("data-detail")
+                ? [...right.querySelectorAll("button:not(:disabled)")].at(-1)
+                : addButton;
             const leaving =
-                event.key === "Tab" &&
-                !event.shiftKey &&
-                event.target === addButton;
+                event.key === "Tab" && !event.shiftKey && event.target === last;
             if (event.key === "Escape" || leaving) {
                 event.preventDefault();
                 close(true);
@@ -586,22 +655,21 @@ export const createSearch = (
 
                 if (active) pick(active, event.shiftKey);
                 else if (searching()) add();
+                else if (pane === "right") pick(shown, event.shiftKey);
             } else if (!searching()) {
                 // With a query, the caret keeps Left and Right.
                 if (key === "ArrowRight" && pane === "left") {
                     event.preventDefault();
 
                     const first = firstOf(shown);
-                    if (first) {
+                    if (first || narrow.matches) {
                         pane = "right";
                         active = first;
                         render();
                     }
                 } else if (key === "ArrowLeft" && pane === "right") {
                     event.preventDefault();
-                    pane = "left";
-                    active = shown;
-                    render();
+                    back();
                 }
             }
         },
@@ -621,6 +689,7 @@ export const createSearch = (
                 openAdd("");
             } else if (action === "pick") pick(shown, false);
             else if (action === "focus") pick(shown, true);
+            else if (action === "back") back();
 
             const item = target?.closest<HTMLElement>('[role="option"]');
             const id = item?.dataset.id;
@@ -645,7 +714,22 @@ export const createSearch = (
                     ? event.target.closest<HTMLElement>('[role="option"]')
                           ?.dataset.id
                     : undefined;
-            if (id) pick(id, false);
+            if (id && !narrow.matches) pick(id, false);
+        },
+        { signal },
+    );
+    // Turning the screen moves the right pane in or out of the slide-over.
+    narrow.addEventListener(
+        "change",
+        () => {
+            if (panel.hidden) return;
+
+            // Wide, the right pane needs an active row to be there at all.
+            if (!narrow.matches && pane === "right" && active === null) {
+                pane = "left";
+                active = shown;
+            }
+            render();
         },
         { signal },
     );
