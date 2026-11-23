@@ -4,7 +4,7 @@ import {
     type Color,
     Group,
     Mesh,
-    MeshBasicMaterial,
+    type MeshBasicMaterial,
     MeshStandardMaterial,
     type SphereGeometry,
     Sprite,
@@ -17,6 +17,7 @@ import { CENTERS } from "./labels.ts";
 import { HALO_OPACITY, type Shape, shapeOf } from "./markers.ts";
 import type { Extra } from "./patches.ts";
 import { createSpacecraftModel } from "./spacecraft.ts";
+import { createStarMaterial } from "./star.ts";
 
 export type Entry = {
     body: Body;
@@ -58,7 +59,7 @@ export const createEntry = (
     const sphere = new Mesh(
         geometry,
         body.kind === "star"
-            ? new MeshBasicMaterial({ color: color(body), toneMapped: false })
+            ? createStarMaterial(color(body))
             : new MeshStandardMaterial({
                   color: color(body),
                   roughness: 1,
