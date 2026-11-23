@@ -6,6 +6,7 @@ import { assertVecClose } from "../fixture.ts";
 import type { Elements } from "../kepler.ts";
 import { axes, period, stateAt, wrapAngle } from "../kepler.ts";
 import { bodyOrientation } from "../orientation.ts";
+import { elementsAt } from "../precession.ts";
 import { sortByDepth, validateScenario } from "../scenario.ts";
 import { worldStates } from "../system.ts";
 import { j2000sToUnixMs, unixMsToJ2000s } from "../time.ts";
@@ -173,7 +174,13 @@ Deno.test("every moon's period matches its table period and its a is within 0.5%
         const moon = find(row.id);
         const p = period(moon.elements, parent.mu + moon.mu) / DAY;
 
-        assertAlmostEquals(p / row.P, 1, 1e-6, row.id);
+        // A mean-longitude period also holds the apsidal and nodal turns, which are up to 0.5%.
+        assertAlmostEquals(
+            p / row.P,
+            1,
+            row.meanLongitude ? 0.01 : 1e-6,
+            row.id,
+        );
         assertAlmostEquals(moon.elements.a / (row.a * 1000), 1, 0.005, row.id);
     }
 });
@@ -252,4 +259,34 @@ Deno.test("only moons with a period for the node or apsides precess", () => {
     assert((body("io")?.precession?.argpRate ?? 0) !== 0);
     assert((body("triton")?.precession?.nodeRate ?? 0) > 0);
     assert((body("titan")?.precession?.nodeRate ?? 0) < 0);
+});
+
+// Unit vectors from the parent to the moon in ecliptic J2000, from JPL Horizons (geometric
+// vectors, TDB, REF_PLANE=ECLIPTIC, REF_SYSTEM=ICRF) at 2015-01-01 00:00 TDB.
+const HORIZONS_2015: Record<string, { toMoon: Vec3; degrees: number }> = {
+    io: { toMoon: { x: 0.03687, y: -0.9987, z: -0.0352 }, degrees: 2 },
+    dione: { toMoon: { x: -0.92357, y: -0.29585, z: 0.24391 }, degrees: 2 },
+    rhea: { toMoon: { x: 0.08835, y: 0.88151, z: -0.46382 }, degrees: 2 },
+    // Triton's mean orbit is about 5° off Horizons.
+    triton: { toMoon: { x: 0.53281, y: 0.78439, z: 0.31754 }, degrees: 6 },
+    charon: { toMoon: { x: 0.68862, y: 0.354, z: -0.63285 }, degrees: 2 },
+};
+
+Deno.test("moons point where Horizons puts them in 2015", () => {
+    const t = (2457023.5 - 2451545) * DAY;
+
+    for (const [id, { toMoon, degrees }] of Object.entries(HORIZONS_2015)) {
+        const moon = find(id);
+        const parent = find(moon.parent ?? "");
+        const elements = elementsAt(moon, t);
+
+        assert(elements, `no elements for ${id}`);
+
+        const { r } = stateAt(elements, parent.mu + moon.mu, t);
+
+        assert(
+            angleBetween(r, toMoon) < degrees,
+            `${id}: ${angleBetween(r, toMoon)}°`,
+        );
+    }
 });

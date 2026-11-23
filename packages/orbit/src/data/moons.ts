@@ -37,6 +37,8 @@ export type MoonRow = {
     apsisYr: number;
     /** Nodal period in years, 0 if JPL gives none. */
     nodeYr: number;
+    /** True when `P` is the period of the mean longitude, not of the mean anomaly. */
+    meanLongitude?: boolean;
     /** GM in km³/s². */
     gm: number;
     /** Mean radius in km. */
@@ -46,9 +48,10 @@ export type MoonRow = {
 };
 
 // JPL measures the Uranus and Pluto moons from the planet's equator, with i from the rotation pole.
-// Both planets spin retrograde, so that pole is the IAU north pole negated.
+// Uranus spins retrograde, so that pole is the IAU north pole negated. Pluto's W increases, so its
+// IAU pole is already the spin pole.
 const URANUS_POLE: Pole = { ra: 77.311, dec: 15.175 };
-const PLUTO_POLE: Pole = { ra: 312.993, dec: 6.163 };
+const PLUTO_POLE: Pole = { ra: 132.993, dec: -6.163 };
 // Triton's frame is Neptune's equator at J2000, taken from the IAU model so it can't drift from it.
 const NEPTUNE_POLE: Pole = ROTATION_MODELS.neptune(0);
 
@@ -58,6 +61,11 @@ const NEPTUNE_POLE: Pole = ROTATION_MODELS.neptune(0);
 // https://ssd.jpl.nasa.gov/sats/phys_par/
 // Mars, Jupiter and Saturn moons use their Laplace plane, Uranus, Neptune and Pluto moons the
 // planet's equator. A "-" period in the source is 0 here.
+// Checked against Horizons at J2000, 2015 and 2030, these differ from the table:
+// - Io and Europa have a retrograde apsis (negative `apsisYr`).
+// - Phobos, Triton and Mimas have `P` from Horizons: the table's doesn't hold over 30 years.
+// - Tethys has no apsidal period: the table's 0.005 yr is shorter than its orbit.
+// - Saturn's `M` is fitted to Horizons: the table's phases are up to 180° off at J2000.
 export const MOON_ROWS: MoonRow[] = [
     {
         id: "phobos",
@@ -69,9 +77,10 @@ export const MOON_ROWS: MoonRow[] = [
         M: 189.7,
         i: 1.1,
         node: 169.2,
-        P: 0.3187,
+        P: 0.31891,
         apsisYr: 1.1,
         nodeYr: 2.3,
+        meanLongitude: true,
         gm: 0.0007087,
         radius: 11.08,
         pole: { ra: 317.7, dec: 52.9 },
@@ -104,7 +113,7 @@ export const MOON_ROWS: MoonRow[] = [
         i: 0,
         node: 0,
         P: 1.762732,
-        apsisYr: 1.333,
+        apsisYr: -1.333,
         nodeYr: 0,
         gm: 5959.91547,
         radius: 1821.49,
@@ -121,7 +130,7 @@ export const MOON_ROWS: MoonRow[] = [
         i: 0.5,
         node: 184,
         P: 3.525463,
-        apsisYr: 1.394,
+        apsisYr: -1.394,
         nodeYr: 30.202,
         gm: 3202.7121,
         radius: 1560.8,
@@ -168,12 +177,13 @@ export const MOON_ROWS: MoonRow[] = [
         a: 186000,
         e: 0.02,
         w: 160.4,
-        M: 275.3,
+        M: 324.1,
         i: 1.6,
         node: 66.2,
-        P: 0.942422,
+        P: 0.94244,
         apsisYr: 0.493,
         nodeYr: 0.986,
+        meanLongitude: true,
         gm: 2.50349,
         radius: 198.2,
         pole: { ra: 40.6, dec: 83.5 },
@@ -185,12 +195,13 @@ export const MOON_ROWS: MoonRow[] = [
         a: 238400,
         e: 0.005,
         w: 119.5,
-        M: 57,
+        M: 62.8,
         i: 0,
         node: 0,
         P: 1.370218,
         apsisYr: 2.916,
         nodeYr: 0,
+        meanLongitude: true,
         gm: 7.21037,
         radius: 252.1,
         pole: { ra: 40.6, dec: 83.5 },
@@ -202,12 +213,13 @@ export const MOON_ROWS: MoonRow[] = [
         a: 295000,
         e: 0.001,
         w: 335.3,
-        M: 0,
+        M: 298.8,
         i: 1.1,
         node: 273,
         P: 1.887802,
-        apsisYr: 0.005,
+        apsisYr: 0,
         nodeYr: 4.982,
+        meanLongitude: true,
         gm: 41.21353,
         radius: 531.1,
         pole: { ra: 40.6, dec: 83.5 },
@@ -219,12 +231,13 @@ export const MOON_ROWS: MoonRow[] = [
         a: 377700,
         e: 0.002,
         w: 116,
-        M: 212,
+        M: 60.8,
         i: 0,
         node: 0,
         P: 2.736916,
         apsisYr: 11.698,
         nodeYr: 0,
+        meanLongitude: true,
         gm: 73.11607,
         radius: 561.4,
         pole: { ra: 40.6, dec: 83.5 },
@@ -236,12 +249,13 @@ export const MOON_ROWS: MoonRow[] = [
         a: 527200,
         e: 0.001,
         w: 44.3,
-        M: 31.5,
+        M: 234.2,
         i: 0.3,
         node: 133.7,
         P: 4.517503,
         apsisYr: 33.939,
         nodeYr: 35.775,
+        meanLongitude: true,
         gm: 153.94175,
         radius: 763.5,
         pole: { ra: 40.6, dec: 83.5 },
@@ -253,12 +267,13 @@ export const MOON_ROWS: MoonRow[] = [
         a: 1221900,
         e: 0.029,
         w: 78.3,
-        M: 11.7,
+        M: 215.5,
         i: 0.3,
         node: 78.6,
         P: 15.945448,
         apsisYr: 346.68,
         nodeYr: 687.37,
+        meanLongitude: true,
         gm: 8978.1371,
         radius: 2574.76,
         pole: { ra: 36.4, dec: 84 },
@@ -270,12 +285,13 @@ export const MOON_ROWS: MoonRow[] = [
         a: 3561700,
         e: 0.028,
         w: 254.5,
-        M: 74.8,
+        M: 219.4,
         i: 7.6,
         node: 86.5,
         P: 79.331002,
         apsisYr: 1662.9,
         nodeYr: 3130.302,
+        meanLongitude: true,
         gm: 120.51511,
         radius: 734.3,
         pole: { ra: 288.7, dec: 78.9 },
@@ -293,6 +309,7 @@ export const MOON_ROWS: MoonRow[] = [
         P: 1.413479,
         apsisYr: 8.939,
         nodeYr: 17.787,
+        meanLongitude: true,
         gm: 4.3,
         radius: 235.8,
         pole: URANUS_POLE,
@@ -310,6 +327,7 @@ export const MOON_ROWS: MoonRow[] = [
         P: 2.520379,
         apsisYr: 28.901,
         nodeYr: 0,
+        meanLongitude: true,
         gm: 83.5,
         radius: 578.9,
         pole: URANUS_POLE,
@@ -327,6 +345,7 @@ export const MOON_ROWS: MoonRow[] = [
         P: 4.144177,
         apsisYr: 64.126,
         nodeYr: 129.945,
+        meanLongitude: true,
         gm: 85.1,
         radius: 584.7,
         pole: URANUS_POLE,
@@ -344,6 +363,7 @@ export const MOON_ROWS: MoonRow[] = [
         P: 8.705869,
         apsisYr: 579.928,
         nodeYr: 1644.649,
+        meanLongitude: true,
         gm: 226.9,
         radius: 788.9,
         pole: URANUS_POLE,
@@ -361,6 +381,7 @@ export const MOON_ROWS: MoonRow[] = [
         P: 13.463237,
         apsisYr: 158.604,
         nodeYr: 192.798,
+        meanLongitude: true,
         gm: 205.3,
         radius: 761.4,
         pole: URANUS_POLE,
@@ -375,9 +396,10 @@ export const MOON_ROWS: MoonRow[] = [
         M: 63,
         i: 157.3,
         node: 177.7,
-        P: 5.8792,
+        P: 5.876854,
         apsisYr: 675.2,
         nodeYr: 299.4,
+        meanLongitude: true,
         gm: 1428.49546,
         radius: 1352.6,
         pole: NEPTUNE_POLE,
@@ -413,11 +435,31 @@ const icrfPole = ({ ra, dec }: Pole): Vec3 => ({
 export const moonPole = (row: MoonRow): Vec3 =>
     rotateEquatorialToEcliptic(icrfPole(row.pole));
 
+/** The rates in rad/s at which a row's orbit precesses, from its apsidal and nodal periods. */
+const precessionRates = (
+    row: MoonRow,
+): { nodeRate: number; argpRate: number } => ({
+    // J2 regresses a prograde node and advances a retrograde one.
+    nodeRate:
+        row.nodeYr === 0
+            ? 0
+            : (-Math.sign(Math.cos(deg(row.i))) * 2 * Math.PI) /
+              (row.nodeYr * JULIAN_YEAR),
+    argpRate:
+        row.apsisYr === 0 ? 0 : (2 * Math.PI) / (row.apsisYr * JULIAN_YEAR),
+});
+
 /** The ecliptic elements of a moon around a parent with gravitational parameter `parentMu`. */
 export const moonElements = (row: MoonRow, parentMu: number): Elements => {
     const mu = parentMu + row.gm * 1e9;
-    // The period gives `a`, as with the Moon: the table's mean `a` ignores J2 and drifts the phase.
-    const a = (mu * ((row.P * DAY) / (2 * Math.PI)) ** 2) ** (1 / 3);
+    // JPL's `P` is the period of the mean anomaly, except where `meanLongitude` is set. `precess`
+    // adds the apsidal and nodal rates, so a mean-longitude period has them taken out first.
+    const { nodeRate, argpRate } = precessionRates(row);
+    const turn = row.meanLongitude
+        ? argpRate + nodeRate * Math.cos(deg(row.i))
+        : 0;
+    const n = (2 * Math.PI) / (row.P * DAY) - turn;
+    const a = (mu / n ** 2) ** (1 / 3);
     const local: Elements = {
         a,
         e: row.e,
@@ -452,14 +494,7 @@ export const moonElements = (row: MoonRow, parentMu: number): Elements => {
 /** The moons of the planets in `parentMu`, a gravitational parameter in m³/s² by planet id. */
 export const moonBodies = (parentMu: Record<string, number>): Body[] =>
     MOON_ROWS.map((row) => {
-        const nodeRate =
-            row.nodeYr === 0
-                ? 0
-                : // J2 regresses a prograde node and advances a retrograde one.
-                  (-Math.sign(Math.cos(deg(row.i))) * 2 * Math.PI) /
-                  (row.nodeYr * JULIAN_YEAR);
-        const argpRate =
-            row.apsisYr === 0 ? 0 : (2 * Math.PI) / (row.apsisYr * JULIAN_YEAR);
+        const { nodeRate, argpRate } = precessionRates(row);
         const body: Body = {
             id: row.id,
             name: row.name,
