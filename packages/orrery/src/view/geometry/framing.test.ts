@@ -31,7 +31,7 @@ Deno.test("the camera stays where a body's sphere spans 80% of the view, and at 
         1,
     );
     assertEquals(minDistanceKm(iss, fov), 0.01);
-    assertAlmostEquals(minDistanceKm(body("iss"), fov), 0.15, 0.01);
+    assertAlmostEquals(minDistanceKm(body("iss"), fov), 0.2, 0.01);
 });
 
 /** The NDC coordinates of a point on a circle of `radius` in the ecliptic, as the fit sees it. */

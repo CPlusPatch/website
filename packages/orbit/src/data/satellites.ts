@@ -44,6 +44,8 @@ type Satellite = {
     /** NORAD catalog number, for the CelesTrak URL. */
     catalog: number;
     tle: readonly [string, string];
+    /** The bounding radius of its model in the orrery, in m. */
+    radius: number;
 };
 
 // Fetched from CelesTrak at 2026-11-23T12:48:34Z,
@@ -57,6 +59,7 @@ const SATELLITES: Satellite[] = [
             "1 25544U 98067A   26327.20353680  .00007096  00000+0  13418-3 0  9998",
             "2 25544  51.6320 233.1644 0007425  56.0849 304.0845 15.49560282596402",
         ],
+        radius: 67.5,
     },
     {
         id: "hubble",
@@ -66,6 +69,7 @@ const SATELLITES: Satellite[] = [
             "1 20580U 90037B   26327.00639607  .00004292  00000+0  12600-3 0  9993",
             "2 20580  28.4727  73.7669 0002533 112.8756 247.2108 15.32397842812940",
         ],
+        radius: 12,
     },
     {
         id: "tiangong",
@@ -75,6 +79,7 @@ const SATELLITES: Satellite[] = [
             "1 48274U 21035A   26327.20372910  .00014662  00000+0  17385-3 0  9995",
             "2 48274  41.4699  75.5877 0004869 283.0054  77.0241 15.60901120318006",
         ],
+        radius: 29.9,
     },
     {
         id: "landsat-9",
@@ -84,6 +89,7 @@ const SATELLITES: Satellite[] = [
             "1 49260U 21088A   26327.09832900  .00000188  00000+0  51832-4 0  9990",
             "2 49260  98.2119  35.2016 0000983  94.4337 265.6974 14.57118423274143",
         ],
+        radius: 6.7,
     },
     {
         id: "gps-biii-1",
@@ -93,6 +99,7 @@ const SATELLITES: Satellite[] = [
             "1 43873U 18109A   26326.80176365  .00000003  00000+0  00000+0 0  9990",
             "2 43873  55.7910  85.9338 0041684 197.5727 334.4554  2.00567043 58256",
         ],
+        radius: 8.7,
     },
     {
         id: "goes-19",
@@ -102,6 +109,7 @@ const SATELLITES: Satellite[] = [
             "1 60133U 24119A   26327.23479124 -.00000226  00000+0  00000+0 0  9991",
             "2 60133   0.0065  67.0732 0001034 222.1135 142.3965  1.00271989  8550",
         ],
+        radius: 11.7,
     },
     {
         id: "meridian-10",
@@ -111,6 +119,7 @@ const SATELLITES: Satellite[] = [
             "1 52145U 22030A   26326.49233843  .00000307  00000+0  00000+0 0  9997",
             "2 52145  62.6994 123.4926 6833520 272.8165  17.2977  2.00590701 34206",
         ],
+        radius: 5.3,
     },
 ];
 
@@ -118,7 +127,7 @@ const SATELLITES: Satellite[] = [
 export const satellites = (earthMu: number): Body[] => {
     const pole = rotateEquatorialToEcliptic({ x: 0, y: 0, z: 1 });
 
-    return SATELLITES.map(({ id, name, tle }) => {
+    return SATELLITES.map(({ id, name, tle, radius }) => {
         const elements = fromTle(tle[0], tle[1], earthMu);
 
         return {
@@ -127,8 +136,7 @@ export const satellites = (earthMu: number): Body[] => {
             kind: "spacecraft",
             parent: "earth",
             mu: 0,
-            // Display only.
-            radius: km(0.05),
+            radius,
             elements,
             precession: j2Precession(
                 elements,
