@@ -1,6 +1,7 @@
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
+import { TRACKS } from "../audio/music.ts";
 import { h } from "./dom.ts";
 
 /** The keys card, the button that opens it and how to remove them. */
@@ -95,7 +96,11 @@ export const createKeys = (): Keys => {
                 { href: "https://creativecommons.org/licenses/by/4.0/" },
                 "CC BY 4.0",
             ),
-            ". Pluto:\u00a0NASA/JHUAPL/SwRI.",
+            ". Pluto:\u00a0NASA/JHUAPL/SwRI. Sounds:\u00a0Kenney (CC0). Music:\u00a0" +
+                TRACKS.map(({ title, artist }) => `${title} by ${artist}`).join(
+                    ", ",
+                ) +
+                ".",
         ),
     );
     card.hidden = true;

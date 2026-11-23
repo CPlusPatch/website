@@ -1,0 +1,50 @@
+.orrery {
+    .orrery__sound {
+        position: relative;
+    }
+
+    .orrery__sound-button {
+        display: grid;
+        place-items: center;
+        inline-size: var(--orrery-clock-control);
+        block-size: var(--orrery-clock-control);
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--orrery-muted);
+        cursor: pointer;
+
+        &:hover,
+        &[aria-expanded="true"] {
+            background-color: var(--orrery-panel-raised);
+        }
+
+        svg {
+            inline-size: 12px;
+            block-size: 12px;
+        }
+    }
+
+    .orrery__sound-menu {
+        position: absolute;
+        z-index: 4;
+        inset-inline-end: 0;
+        /* Above the capsule: its padding and frame, and 8px. */
+        inset-block-end: calc(100% + var(--space-sm) + 1px + 8px);
+        inline-size: 200px;
+        /* The live readout around it doesn't wrap. */
+        white-space: normal;
+        padding: 4px 0;
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-panel-solid);
+    }
+
+    .orrery__sound-now {
+        margin: 4px 0 0;
+        padding: 4px var(--orrery-pad);
+        border-block-start: 1px solid var(--orrery-rule);
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-xs) var(--orrery-font-ui);
+        overflow-wrap: anywhere;
+    }
+}

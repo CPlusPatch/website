@@ -1,4 +1,5 @@
 import { solarSystem, unixMsToJ2000s } from "@cpluspatch/orbit";
+import { cue } from "../../audio/cues.ts";
 import {
     encodeScenario,
     HASH_PREFIX,
@@ -190,6 +191,7 @@ export const createScenarios = (
             return;
         }
 
+        cue("load");
         world.load(result.scenario, startTime(result.scenario));
         close();
     };
@@ -235,6 +237,7 @@ export const createScenarios = (
                     const entry = saved[Number(index)];
                     if (!entry) return;
 
+                    cue("load");
                     world.load(entry.scenario, startTime(entry.scenario));
                     close();
                 } else if (action === "delete") {
@@ -258,6 +261,7 @@ export const createScenarios = (
                 } else if (action === "reset") {
                     if (armed() === pressed) {
                         disarm();
+                        cue("load");
                         world.load(solarSystem, unixMsToJ2000s(Date.now()));
                         close();
                     } else {

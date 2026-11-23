@@ -6,6 +6,7 @@
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import { wrapAngle } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
+import { cue } from "../../audio/cues.ts";
 import { dragApsis, type GripTarget } from "../../editing.ts";
 import { formatApsisChange, formatNodeChange } from "../../format.ts";
 import { h, setText } from "../../ui/dom.ts";
@@ -65,6 +66,8 @@ type Drag = {
     el0: Elements;
     /** The pointer's value at the start, which is `null` until the pointer can say. */
     t0: number | null;
+    /** The last value that played a tick. */
+    last: number | null;
 };
 
 const FLAG_PAD_PX = 10;
@@ -206,11 +209,16 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
         if (t === null) return;
         if (drag.t0 === null) {
             drag.t0 = t;
+            drag.last = t;
 
             return;
         }
 
         const { grip, target, el0 } = drag;
+        if (t !== drag.last) {
+            drag.last = t;
+            cue("tick");
+        }
         if (grip.kind === "node") {
             target.set({ raan: wrapAngle(el0.raan + (t - drag.t0)) });
         } else {
@@ -254,8 +262,10 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
                 pointerId: event.pointerId,
                 el0,
                 t0: null,
+                last: null,
             };
             drag.t0 = value(event, drag);
+            drag.last = drag.t0;
             container.addEventListener("pointerdown", onSecond, true);
         };
 

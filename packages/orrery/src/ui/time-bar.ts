@@ -1,5 +1,7 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
+import { cue } from "../audio/cues.ts";
+import type { Sound } from "../audio/sound.ts";
 import { RATES } from "../clock.ts";
 import { PART_NAMES, type PartName } from "../date-parts.ts";
 import type { SavedStorage } from "../persistence.ts";
@@ -7,6 +9,7 @@ import { isLive, offsetText, rateText, stampParts } from "../time-text.ts";
 import type { World } from "../world.ts";
 import { createDateEditor } from "./date-editor.ts";
 import { h, setText } from "./dom.ts";
+import { createSoundMenu } from "./sound-menu.ts";
 import { createTimeline } from "./timeline/timeline.ts";
 
 /** The time bar's element and how to drive it. */
@@ -29,8 +32,15 @@ const presetOf = (rate: number): number =>
         0,
     );
 
-/** The run and rate controls, the date, the live status and the timeline of a world's clock. */
-export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
+/**
+ * The run and rate controls, the date, the live status, the sound menu and the timeline of a
+ * world's clock.
+ */
+export const createTimeBar = (
+    world: World,
+    storage: SavedStorage,
+    sound: Sound,
+): TimeBar => {
     const { clock } = world;
 
     const run = h("button", { type: "button", class: "orrery__run" });
@@ -168,6 +178,9 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
         goLiveButton,
     );
 
+    const soundMenu = createSoundMenu(sound);
+    live.append(soundMenu.element);
+
     const editor = createDateEditor(world, date);
     const timeline = createTimeline(world, storage);
 
@@ -263,11 +276,14 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
 
     RATES.forEach((preset, k) => {
         rateItems[k]?.addEventListener("click", () => {
-            world.setClock({ rate: clock.rate < 0 ? -preset : preset });
+            const next = clock.rate < 0 ? -preset : preset;
+            if (next !== clock.rate) cue("rate");
+            world.setClock({ rate: next });
             closeRateMenu(true);
         });
     });
     reverseItem.addEventListener("click", () => {
+        cue("rate");
         world.setClock({ rate: -clock.rate });
     });
     rateButton.addEventListener("click", () => {
@@ -327,6 +343,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     document.addEventListener("pointerdown", onPointerDown);
 
     run.addEventListener("click", () => {
+        cue(clock.paused ? "play" : "pause");
         world.setClock({ paused: !clock.paused });
     });
     date.addEventListener("click", editor.toggle);
@@ -348,6 +365,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
             document.removeEventListener("pointerdown", onPointerDown);
             editor.destroy();
             timeline.destroy();
+            soundMenu.destroy();
             element.remove();
         },
     };

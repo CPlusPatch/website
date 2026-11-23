@@ -2,6 +2,7 @@ import type { Burn, Elements } from "@cpluspatch/orbit";
 import { elementsAt, nextApsisTime } from "@cpluspatch/orbit";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
+import { cue } from "../audio/cues.ts";
 import {
     failureMessage,
     isZero,
@@ -294,6 +295,7 @@ export const createBurnEditor = (
         () => {
             if (!world.burn(id, read()).ok) return;
 
+            cue("edit");
             resume();
             done(true);
         },

@@ -6,6 +6,8 @@
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { announcement } from "./announce.ts";
+import { cue } from "./audio/cues.ts";
+import { createSound } from "./audio/sound.ts";
 import { Clock, DEFAULT_RATE } from "./clock.ts";
 import {
     decodeScenario,
@@ -212,7 +214,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     for (const panel of panels) panel.hidden = false;
 
-    const timeBar = createTimeBar(world, storage);
+    const sound = createSound(storage);
+    const timeBar = createTimeBar(world, storage, sound);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
     // The page has the spacer between them. The notices come last.
     const crumbs = createCrumbs(world);
@@ -285,6 +288,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 notices.show("destructive", "The model can't be drawn.");
             }
         }
+        if (event.type === "selection" && event.id !== null) cue("select");
         // The keys card hides the orbit card, so a new pick would show nothing.
         if (event.type === "selection" && event.id !== null) keys.close();
 
@@ -315,6 +319,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             return;
         }
 
+        cue("load");
         world.load(result.scenario, startTime(result.scenario));
         saveNow();
     };
@@ -345,6 +350,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             scenarios.destroy();
             search?.destroy();
             timeBar.destroy();
+            sound.destroy();
             crumbs.destroy();
             keys.destroy();
             notices.destroy();

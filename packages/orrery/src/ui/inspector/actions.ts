@@ -1,4 +1,5 @@
 import { removalNote } from "../../adding.ts";
+import { cue } from "../../audio/cues.ts";
 import type { World } from "../../world.ts";
 import { h } from "../dom.ts";
 
@@ -114,6 +115,7 @@ export const createActions = (
                     (candidate) => candidate.id === id,
                 )?.parent;
 
+                cue("remove");
                 // The parent stays selected, so its card is the one that replaces this.
                 if (parent) world.select(parent);
                 world.removeBody(id);

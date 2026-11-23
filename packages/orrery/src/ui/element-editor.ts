@@ -1,4 +1,5 @@
 import { AU, type Elements, elementsAt } from "@cpluspatch/orbit";
+import { cue } from "../audio/cues.ts";
 import {
     type AUnit,
     aMin,
@@ -282,7 +283,10 @@ export const createElementEditor = (
         }
 
         const next = draft();
-        if (next && changes().length > 0) world.setElements(id, next);
+        if (next && changes().length > 0) {
+            cue("edit");
+            world.setElements(id, next);
+        }
 
         scene.ghost(id, null);
         scene.grips(null);

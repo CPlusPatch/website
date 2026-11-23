@@ -1,6 +1,7 @@
 import { AU, type Body, type BodyKind, solarSystem } from "@cpluspatch/orbit";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { type AddField, addErrors, newBody, slugId } from "../adding.ts";
+import { cue } from "../audio/cues.ts";
 import { type AUnit, aUnit, fromMetres, toMetres } from "../editing.ts";
 import { otherUnit, type Units } from "../units.ts";
 import type { World } from "../world.ts";
@@ -362,6 +363,7 @@ export const createBodyAdder = (
             return;
         }
 
+        cue("add");
         world.select(body.id);
         orrery?.querySelector<HTMLElement>(".orrery__orbit-focus")?.focus();
     };

@@ -1,3 +1,4 @@
+import { cue } from "../audio/cues.ts";
 import { stepRate } from "../clock.ts";
 import { type AUnit, aUnit } from "../editing.ts";
 import { readouts } from "../readouts.ts";
@@ -51,6 +52,10 @@ export const bindShortcuts = (
         if (event.key === " " && element?.closest("button")) return;
 
         const { clock } = world;
+        const rate = (next: number) => {
+            if (next !== clock.rate) cue("rate");
+            world.setClock({ rate: next });
+        };
 
         if (event.key === "Escape") {
             // Esc closes an open menu first. Manual popovers, like the
@@ -73,13 +78,14 @@ export const bindShortcuts = (
 
             world.focus(world.selected);
         } else if (event.key === " ") {
+            cue(clock.paused ? "play" : "pause");
             world.setClock({ paused: !clock.paused });
         } else if (event.key === "[") {
-            world.setClock({ rate: stepRate(clock.rate, -1) });
+            rate(stepRate(clock.rate, -1));
         } else if (event.key === "]") {
-            world.setClock({ rate: stepRate(clock.rate, 1) });
+            rate(stepRate(clock.rate, 1));
         } else if (event.key === "r" || event.key === "R") {
-            world.setClock({ rate: -clock.rate });
+            rate(-clock.rate);
         } else if (event.key === "l" || event.key === "L") {
             goLive();
         } else if (event.key === "t" || event.key === "T") {
