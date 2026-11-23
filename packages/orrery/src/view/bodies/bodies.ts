@@ -69,6 +69,9 @@ export type Bodies = {
 
 const SPHERE_MIN_PX = 4;
 
+/** The ms a label keeps a new placement, so a fast moon doesn't blink as it passes other labels. */
+const LABEL_HOLD_MS = 500;
+
 /** How the spheres are textured. */
 export type BodyOptions = {
     /** Whether to load the maps. */
@@ -126,6 +129,8 @@ export const createBodies = (
 
     let hoverId: string | null = null;
     let placements = new Map<string, Placement>();
+    // When each label last changed placement, from `performance.now()`.
+    const changed = new Map<string, number>();
     const placed = new Map<string, Rect>();
 
     let disposed = false;
@@ -324,17 +329,35 @@ export const createBodies = (
                 }
             }
 
+            const now = performance.now();
+            const held = new Map<string, Placement>();
+            for (const [id, placement] of placements) {
+                if (now - (changed.get(id) ?? -Infinity) < LABEL_HOLD_MS) {
+                    held.set(id, placement);
+                }
+            }
+            const sides = new Map(
+                entries.map(({ body, side }) => [body.id, side]),
+            );
+
             const behind = hiddenBehindSpheres(anchors, spheres, keep);
             const covered = hiddenMarkers(markers, keep);
-            placements = placeLabels(
+            const next = placeLabels(
                 labels.filter(({ id }) => !behind.has(id)),
                 size,
                 focus,
                 dots.filter(({ id }) => !covered.has(id)),
                 [selected, hoverId].filter((id) => id !== null),
-                placements,
+                sides,
                 blocked,
+                held,
             );
+            for (const [id, placement] of next) {
+                if (placement !== (placements.get(id) ?? "hidden")) {
+                    changed.set(id, now);
+                }
+            }
+            placements = next;
 
             const boxes = new Map(labels.map((box) => [box.id, box]));
             const unnamed = new Set<string>();

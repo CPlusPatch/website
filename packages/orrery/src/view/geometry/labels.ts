@@ -102,8 +102,10 @@ export const labelRect = (
  * It hides if none fits the viewport or avoids a higher-ranked label. It also hides when its anchor
  * is on top of an earlier label's anchor, and never covers another body's dot.
  * The focus is never hidden, and a pinned label only when it's off screen.
- * A label tries the side it had in `previous` first, so it doesn't jump when the selection changes.
+ * A label tries the side it last had in `previous` first, so it doesn't jump when the selection changes.
  * A side that overlaps a `blocked` rect, like a panel, isn't free.
+ * A label in `held` changed a moment ago, so it keeps that placement while it's on screen,
+ * even over another label. A fast moon would otherwise blink as it passes other labels.
  */
 export const placeLabels = (
     labels: LabelBox[],
@@ -113,6 +115,7 @@ export const placeLabels = (
     pinned: readonly string[] = [],
     previous: ReadonlyMap<string, Placement> = new Map(),
     blocked: readonly Rect[] = [],
+    held: ReadonlyMap<string, Placement> = new Map(),
 ): Map<string, Placement> => {
     const placements = new Map<string, Placement>();
     const placed: Box[] = [];
@@ -142,13 +145,16 @@ export const placeLabels = (
             x > viewport.width + margin ||
             y < -margin ||
             y > viewport.height + margin;
+        const hold = held.get(id);
         // From far away a moon sits on its planet, and two labels on one dot read as one body.
         const stacked =
             !pinned.includes(id) &&
+            (hold === undefined || hold === "hidden") &&
             anchors.some(
                 (other) => Math.hypot(other.x - x, other.y - y) < MARKER_GAP_PX,
             );
-        if (outside || stacked) {
+        const kept = hold === "hidden" && id !== focus && !pinned.includes(id);
+        if (outside || stacked || kept) {
             placements.set(id, "hidden");
             continue;
         }
@@ -208,7 +214,10 @@ export const placeLabels = (
             order.unshift(before);
         }
 
-        const fits = order.find(free);
+        const fits =
+            hold && hold !== "hidden" && onScreen[hold]
+                ? hold
+                : order.find(free);
         const placement: Placement =
             fits ?? (id === focus || pinned.includes(id) ? "right" : "hidden");
 

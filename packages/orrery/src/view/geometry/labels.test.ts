@@ -407,3 +407,39 @@ Deno.test("a placed label's box is the one placeLabels tried", () => {
     assertEquals(labelRect(label, "left"), area(30, 42, 90, 58));
     assertEquals(labelRect(label, "above"), area(70, 16, 130, 32));
 });
+
+Deno.test("a held label keeps its placement even when a larger label now covers it", () => {
+    const labels = [box("big", 230, 100, 10), box("moon", 200, 105, 1)];
+    const crowded = [...labels, box("probe", 200, 105, 0.5)];
+    const place = (held: Map<string, "right" | "hidden">) =>
+        placeLabels(crowded, view, "x", [], [], new Map(), [], held);
+
+    assertEquals(place(new Map([["moon", "right"]])).get("moon"), "right");
+    assertEquals(place(new Map([["probe", "hidden"]])).get("probe"), "hidden");
+    assertEquals(
+        placeLabels(
+            [box("a", 100, 100, 1)],
+            view,
+            "x",
+            [],
+            [],
+            new Map(),
+            [],
+            new Map([["a", "hidden"]]),
+        ).get("a"),
+        "hidden",
+    );
+    assertEquals(
+        placeLabels(
+            [box("a", 790, 100, 1)],
+            view,
+            "x",
+            [],
+            [],
+            new Map(),
+            [],
+            new Map([["a", "right"]]),
+        ).get("a"),
+        "left",
+    );
+});
