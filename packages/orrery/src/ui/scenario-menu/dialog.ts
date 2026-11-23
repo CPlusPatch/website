@@ -7,6 +7,7 @@ import { button } from "./buttons.ts";
 export type ScenarioDialog = {
     toggle: HTMLButtonElement;
     closeButton: HTMLButtonElement;
+    builtIn: HTMLElement;
     list: HTMLElement;
     nameInput: HTMLInputElement;
     nameError: HTMLElement;
@@ -44,7 +45,10 @@ export const createScenarioDialog = (): ScenarioDialog => {
     });
     closeButton.innerHTML = iconSvg("x");
 
-    const list = h("div", { class: "orrery__scenarios-saved" });
+    const builtIn = h("section", {
+        "aria-labelledby": "orrery-scenarios-built-in",
+    });
+    const list = h("section", { "aria-labelledby": "orrery-scenarios-saved" });
 
     const nameInput = h("input", {
         id: "orrery-scenario-name",
@@ -92,7 +96,6 @@ export const createScenarioDialog = (): ScenarioDialog => {
 
     const importButton = button("Import", "ghost", { "data-action": "import" });
     const exportButton = button("Export", "ghost", { "data-action": "export" });
-    const resetButton = button("Reset", "ghost", { "data-action": "reset" });
     const addButton = button("Add a body", "ghost", { "data-action": "add" });
 
     const dialog = h(
@@ -115,6 +118,23 @@ export const createScenarioDialog = (): ScenarioDialog => {
         h(
             "div",
             { class: "orrery__scenarios-body" },
+            h(
+                "h3",
+                {
+                    class: "orrery__scenarios-heading",
+                    id: "orrery-scenarios-built-in",
+                },
+                "Built in",
+            ),
+            builtIn,
+            h(
+                "h3",
+                {
+                    class: "orrery__scenarios-heading",
+                    id: "orrery-scenarios-saved",
+                },
+                "Saved",
+            ),
             list,
             form,
             h(
@@ -128,7 +148,6 @@ export const createScenarioDialog = (): ScenarioDialog => {
                 { class: "orrery__scenarios-actions" },
                 importButton,
                 exportButton,
-                resetButton,
                 addButton,
             ),
             status,
@@ -139,6 +158,7 @@ export const createScenarioDialog = (): ScenarioDialog => {
     return {
         toggle,
         closeButton,
+        builtIn,
         list,
         nameInput,
         nameError,

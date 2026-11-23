@@ -1,16 +1,52 @@
-import { j2000sToUnixMs } from "@cpluspatch/orbit";
+import { j2000sToUnixMs, type Scenario } from "@cpluspatch/orbit";
 import { type SavedScenario, startTime } from "../../persistence.ts";
 import { h } from "../dom.ts";
 import { button } from "./buttons.ts";
 
+/** The body count of a scenario, like "12 bodies". */
+const bodyCount = ({ bodies }: Scenario): string =>
+    `${bodies.length} ${bodies.length === 1 ? "body" : "bodies"}`;
+
 /** The meta line of a saved scenario, like "12 bodies · 2026-11-22". */
 const meta = ({ savedAt, scenario }: SavedScenario): string => {
-    const count = scenario.bodies.length;
     const date = new Date(j2000sToUnixMs(startTime(scenario, savedAt)))
         .toISOString()
         .slice(0, 10);
 
-    return `${count} ${count === 1 ? "body" : "bodies"} · ${date}`;
+    return `${bodyCount(scenario)} · ${date}`;
+};
+
+/** One row of a scenario list: its name, meta line and buttons. */
+const row = (
+    name: string,
+    detail: string,
+    ...buttons: HTMLButtonElement[]
+): HTMLLIElement =>
+    h(
+        "li",
+        { class: "orrery__scenarios-row" },
+        h("div", {}, h("strong", {}, name), h("small", {}, detail)),
+        ...buttons,
+    );
+
+/** Fills `list` with the built-in scenarios, in their order. */
+export const renderBuiltIn = (
+    list: HTMLElement,
+    scenarios: readonly Scenario[],
+): void => {
+    const rows = scenarios.map((scenario, index) =>
+        row(
+            scenario.name,
+            bodyCount(scenario),
+            button("Load", "outline", {
+                "data-action": "built-in",
+                "data-index": String(index),
+                "aria-label": `Load ${scenario.name}`,
+            }),
+        ),
+    );
+
+    list.replaceChildren(h("ul", { class: "orrery__scenarios-list" }, ...rows));
 };
 
 /** Fills `list` with the saved scenarios, newest first, or a note that there are none. */
@@ -32,18 +68,13 @@ export const renderSaved = (
         .map(({ entry, index }) => {
             const { name } = entry.scenario;
 
-            return h(
-                "li",
-                { class: "orrery__scenarios-row" },
-                h(
-                    "div",
-                    {},
-                    h("strong", {}, name),
-                    h("small", {}, meta(entry)),
-                ),
+            return row(
+                name,
+                meta(entry),
                 button("Load", "outline", {
                     "data-action": "load",
                     "data-index": String(index),
+                    "aria-label": `Load ${name}`,
                 }),
                 button(
                     "Delete",

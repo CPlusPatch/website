@@ -1,4 +1,4 @@
-import { solarSystem, unixMsToJ2000s } from "@cpluspatch/orbit";
+import { builtInScenarios } from "@cpluspatch/orbit";
 import { cue } from "../../audio/cues.ts";
 import {
     encodeScenario,
@@ -16,7 +16,7 @@ import { h } from "../dom.ts";
 import { createArming } from "./buttons.ts";
 import { createScenarioDialog } from "./dialog.ts";
 import { current, download, fileName } from "./files.ts";
-import { renderSaved } from "./saved-list.ts";
+import { renderBuiltIn, renderSaved } from "./saved-list.ts";
 
 /** The Scenarios dialog, the top bar button that opens it and how to remove them. */
 export type Scenarios = {
@@ -41,6 +41,7 @@ export const createScenarios = (
     const {
         toggle,
         closeButton,
+        builtIn,
         list,
         nameInput,
         nameError,
@@ -52,6 +53,7 @@ export const createScenarios = (
         dialog,
     } = createScenarioDialog();
     root.append(dialog);
+    renderBuiltIn(builtIn, builtInScenarios);
 
     let saved: SavedScenario[] = [];
     // Each open takes an id, so a link that finishes late can tell it's stale.
@@ -233,7 +235,14 @@ export const createScenarios = (
             } else if (pressed) {
                 const { action, index } = pressed.dataset;
 
-                if (action === "load") {
+                if (action === "built-in") {
+                    const scenario = builtInScenarios[Number(index)];
+                    if (!scenario) return;
+
+                    cue("load");
+                    world.load(scenario, startTime(scenario));
+                    close();
+                } else if (action === "load") {
                     const entry = saved[Number(index)];
                     if (!entry) return;
 
@@ -258,18 +267,6 @@ export const createScenarios = (
                     file.click();
                 } else if (action === "export") {
                     exportJson();
-                } else if (action === "reset") {
-                    if (armed() === pressed) {
-                        disarm();
-                        cue("load");
-                        world.load(solarSystem, unixMsToJ2000s(Date.now()));
-                        close();
-                    } else {
-                        arm(
-                            pressed,
-                            "Press Confirm to reset to the solar system now.",
-                        );
-                    }
                 } else if (action === "add") {
                     close();
                     openAdd();

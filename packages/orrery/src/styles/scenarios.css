@@ -83,6 +83,14 @@
         }
     }
 
+    /* Styled like the form labels, so the lists don't outrank the dialog title. */
+    .orrery__scenarios-heading {
+        margin: 0;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+        font-weight: 600;
+    }
+
     .orrery__scenarios-empty {
         margin: 0;
         color: var(--orrery-muted);
