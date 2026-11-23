@@ -96,7 +96,9 @@ export const createKeys = (): Keys => {
                 { href: "https://creativecommons.org/licenses/by/4.0/" },
                 "CC BY 4.0",
             ),
-            ". Pluto:\u00a0NASA/JHUAPL/SwRI. Sounds:\u00a0Kenney (CC0). Music:\u00a0" +
+            ". Pluto and Charon:\u00a0NASA/JHUAPL/SwRI. Jupiter's and Saturn's major moons (not Titan), Triton, Phobos, Ceres and Vesta:\u00a0" +
+                "USGS Astrogeology and DLR, from NASA (Voyager, Galileo, Cassini, Dawn) and " +
+                "ESA (Mars Express) data. Sounds:\u00a0Kenney (CC0). Music:\u00a0" +
                 TRACKS.map(({ title, artist }) => `${title} by ${artist}`).join(
                     ", ",
                 ) +
