@@ -10,6 +10,7 @@ export { builtInScenarios } from "./data/built-in.ts";
 export { eridani, gargantua, kerbol, tauCeti } from "./data/fiction.ts";
 export {
     CURATED_CATALOG_NUMBERS,
+    CURATED_NAMES,
     EARTH_J2,
     EARTH_RADIUS,
 } from "./data/satellites.ts";

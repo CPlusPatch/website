@@ -149,6 +149,9 @@ export const CURATED_CATALOG_NUMBERS: number[] = SATELLITES.map(
     ({ catalog }) => catalog,
 );
 
+/** The names of the satellites above, in the same order. */
+export const CURATED_NAMES: string[] = SATELLITES.map(({ name }) => name);
+
 /** The ISS and seven more Earth satellites, with J2 precession, around an Earth of `earthMu`. */
 export const satellites = (earthMu: number): Body[] => {
     const pole = rotateEquatorialToEcliptic({ x: 0, y: 0, z: 1 });
