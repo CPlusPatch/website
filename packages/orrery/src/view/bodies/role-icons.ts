@@ -2,8 +2,8 @@
  * The icon of each spacecraft role, as the `d` of a filled path in a 24x24
  * viewBox. The scene draws them as markers and the panels as inline SVG.
  *
- * Station, navigation, Earth observation and other share one satellite, so a
- * role reads as the one part it adds.
+ * Station, navigation, Earth observation, science and other share one
+ * satellite, so a role reads as the one part it adds.
  */
 
 import type { Body, SpacecraftRole } from "@cpluspatch/orbit";
@@ -20,6 +20,8 @@ export const ROLE_ICONS: Record<RoleKey, string> = {
         "M10 3.5h4a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-5a1.5 1.5 0 0 1 1.5 -1.5zM1.5 4.5h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM17.5 4.5h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM7 6.75h1.5v1.5h-1.5zM15.5 6.75h1.5v1.5h-1.5zM17.02 14.67A8.75 8.75 0 0 1 6.98 14.67L7.98 13.23A7 7 0 0 0 16.02 13.23zM18.38 18.54A12.75 12.75 0 0 1 5.63 18.54L6.5 17.03A11 11 0 0 0 17.5 17.03z",
     "earth-observation":
         "M10 1.5h4a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-5a1.5 1.5 0 0 1 1.5 -1.5zM1.5 2.5h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM17.5 2.5h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM7 4.75h1.5v1.5h-1.5zM15.5 4.75h1.5v1.5h-1.5zM10.5 10.5L13.5 10.5L17 17.5L7 17.5zM2.5 22Q12 17.5 21.5 22L21.5 24Q12 19.5 2.5 24z",
+    science:
+        "M3.84 8.44A8.5 5.5 -20 0 0 19.82 2.62zM11.49 4.59L8.58 2.46L12.34 1.09zM11.25 10.5h1.5v2.5h-1.5zM10 13h4a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-5a1.5 1.5 0 0 1 1.5 -1.5zM1.5 14h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM17.5 14h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM7 16.25h1.5v1.5h-1.5zM15.5 16.25h1.5v1.5h-1.5z",
     other: "M10 8h4a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-5a1.5 1.5 0 0 1 1.5 -1.5zM1.5 9h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM17.5 9h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM7 11.25h1.5v1.5h-1.5zM15.5 11.25h1.5v1.5h-1.5z",
 };
 

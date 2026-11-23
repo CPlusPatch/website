@@ -48,6 +48,7 @@ const ROLES: [RoleKey, string][] = [
     ["telescope", "Telescope"],
     ["navigation", "Navigation"],
     ["earth-observation", "Earth observation"],
+    ["science", "Science"],
     ["other", "Other"],
 ];
 
