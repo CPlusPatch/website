@@ -16,8 +16,28 @@
             border-inline-start: 1px solid var(--orrery-rule);
         }
 
-        &:hover {
+        &:hover:not(:disabled) {
             background-color: var(--orrery-panel-raised);
+        }
+
+        &[aria-pressed="true"] {
+            background-color: var(--orrery-go);
+            color: var(--orrery-go-ink);
+        }
+
+        /* Struck through, so disabled differs in shape, not only in colour. */
+        &:disabled {
+            background-image: linear-gradient(
+                to top right,
+                transparent calc(50% - 0.75px),
+                var(--orrery-dim) calc(50% - 0.75px) calc(50% + 0.75px),
+                transparent calc(50% + 0.75px)
+            );
+            background-size: 60% 60%;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: var(--orrery-dim);
+            cursor: default;
         }
 
         &:focus-visible {
@@ -66,6 +86,11 @@
 
         .orrery__hud-button + .orrery__hud-button {
             border-color: ButtonText;
+        }
+
+        .orrery__hud-button[aria-pressed="true"] {
+            background-color: Highlight;
+            color: HighlightText;
         }
 
         .orrery__hud-bar {

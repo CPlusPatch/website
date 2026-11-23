@@ -5,7 +5,12 @@
 
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
-import { announcement, satelliteAnnouncement } from "./announce.ts";
+import {
+    announcement,
+    chaseAnnouncement,
+    noChaseAnnouncement,
+    satelliteAnnouncement,
+} from "./announce.ts";
 import { cue } from "./audio/cues.ts";
 import { createSound } from "./audio/sound.ts";
 import { Clock, DEFAULT_RATE } from "./clock.ts";
@@ -246,6 +251,21 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             if (message !== null) live.textContent = message;
         });
 
+        let wasChasing = view.chasing();
+        const offChase = view.onChase(({ chasing }) => {
+            if (chasing === wasChasing) return;
+
+            wasChasing = chasing;
+
+            const k = view.satellite.focused();
+            const name =
+                (k === null ? null : view.satellite.facts(k)?.name) ??
+                world.scenario.bodies.find((body) => body.id === world.focused)
+                    ?.name ??
+                world.focused;
+            live.textContent = chaseAnnouncement(chasing, name);
+        });
+
         const hudSlot = root.querySelector<HTMLElement>(".orrery__panel--hud");
         const removeHud = hudSlot
             ? createHud(hudSlot, view, units, narrow)
@@ -261,6 +281,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                     crumbs.setSatellite(null);
                 }
                 offSatellite();
+                offChase();
                 card.destroy();
                 if (setSatellites === view.satelliteGroups) {
                     setSatellites = null;
@@ -368,6 +389,20 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         },
         goLive: timeBar.goLive,
         openSearch: search.open,
+        toggleChase: () => {
+            const view = currentView;
+            if (!view) return;
+
+            if (view.canChase()) {
+                view.chase(!view.chasing());
+            } else {
+                const name =
+                    world.scenario.bodies.find(
+                        (body) => body.id === world.focused,
+                    )?.name ?? world.focused;
+                live.textContent = noChaseAnnouncement(name);
+            }
+        },
         toggleDate: timeBar.toggleDate,
     });
 

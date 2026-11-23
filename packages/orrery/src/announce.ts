@@ -20,6 +20,14 @@ export const announcement = (
     return null;
 };
 
+/** What a screen reader says when the camera starts or stops chasing `name`. */
+export const chaseAnnouncement = (chasing: boolean, name: string): string =>
+    chasing ? `Chasing ${name}.` : `Orbiting ${name}.`;
+
+/** What a screen reader says when C can't chase `name`, which orbits nothing. */
+export const noChaseAnnouncement = (name: string): string =>
+    `${name} orbits nothing, so it can't be chased.`;
+
 /**
  * What a screen reader says for a satellite change, or `null` when the world's event says it.
  * `name` is the satellite's, or `null` when it's gone.

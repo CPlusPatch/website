@@ -17,6 +17,8 @@ export type ShortcutActions = {
     focusSatellite: () => boolean;
     goLive: () => void;
     openSearch: () => void;
+    /** Turns the chase camera on, or off if it's on. */
+    toggleChase: () => void;
     toggleDate: () => void;
 };
 
@@ -34,7 +36,7 @@ const shownUnit = (world: World): AUnit => {
 /**
  * Binds Space, `[`, `]`, R, L and T to the clock of `world`, and F and Escape to its selection,
  * or to the selected satellite when no body is selected.
- * U switches the distance `units`, and `/` opens the search.
+ * U switches the distance `units`, C chases the focus, and `/` opens the search.
  * Escape closes the keys card first. Returns a function that unbinds them.
  */
 export const bindShortcuts = (
@@ -46,6 +48,7 @@ export const bindShortcuts = (
         focusSatellite,
         goLive,
         openSearch,
+        toggleChase,
         toggleDate,
     }: ShortcutActions,
 ): (() => void) => {
@@ -102,6 +105,8 @@ export const bindShortcuts = (
             toggleDate();
         } else if (event.key === "u" || event.key === "U") {
             units.toggle(shownUnit(world));
+        } else if (event.key === "c" || event.key === "C") {
+            toggleChase();
         } else if (event.key === "/") {
             openSearch();
         } else {

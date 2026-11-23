@@ -1,6 +1,11 @@
 /// <reference types="deno" />
 import { assertEquals } from "@std/assert";
-import { announcement, satelliteAnnouncement } from "./announce.ts";
+import {
+    announcement,
+    chaseAnnouncement,
+    noChaseAnnouncement,
+    satelliteAnnouncement,
+} from "./announce.ts";
 
 const bodies = [
     { id: "earth", name: "Earth" },
@@ -56,4 +61,16 @@ Deno.test("focusing a satellite names it", () => {
 
 Deno.test("ending a satellite focus says nothing, as the world's focus event does", () => {
     assertEquals(satelliteAnnouncement({ type: "focus", k: null }, null), null);
+});
+
+Deno.test("the chase says whether the camera chases or orbits, and what", () => {
+    assertEquals(chaseAnnouncement(true, "Mars"), "Chasing Mars.");
+    assertEquals(chaseAnnouncement(false, "Mars"), "Orbiting Mars.");
+});
+
+Deno.test("chasing a body that orbits nothing says why it can't", () => {
+    assertEquals(
+        noChaseAnnouncement("Sun"),
+        "Sun orbits nothing, so it can't be chased.",
+    );
 });
