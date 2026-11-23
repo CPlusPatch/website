@@ -2,6 +2,7 @@ import type { BodyKind } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
+import { bodyStats } from "../../body-stats.ts";
 import type { EditScene } from "../../editing.ts";
 import { readouts } from "../../readouts.ts";
 import type { Units } from "../../units.ts";
@@ -18,6 +19,7 @@ import {
     type ReadoutRows,
     refreshReadoutRows,
 } from "./readouts.ts";
+import { createStatsSection } from "./stats.ts";
 
 /** The inspector's element and how to remove it. */
 export type Inspector = {
@@ -147,6 +149,7 @@ export const createInspector = (
     setHead(false);
 
     let rows: ReadoutRows | null = null;
+    let stats: HTMLElement | null = null;
     let shown: string | null = null;
     let mode: Mode = "card";
     let editor: ElementEditor | null = null;
@@ -274,6 +277,7 @@ export const createInspector = (
             adding ? "Add a body" : "Selected body",
         );
         rows = null;
+        stats = null;
         buttons.focus = null;
         content.replaceChildren();
         editor?.destroy();
@@ -348,6 +352,11 @@ export const createInspector = (
             content.append(...rows.elements);
         }
 
+        stats = createStatsSection(
+            bodyStats(world.scenario, body.id, world.clock.t),
+        );
+        if (stats) content.append(stats);
+
         const chips = parent ? around(body.id, body.name) : null;
         if (chips) content.append(chips);
         content.append(
@@ -384,8 +393,28 @@ export const createInspector = (
             }
         } else if (event.type === "focus") syncFocus();
         else if (event.type === "clock") refresh();
-        else if (event.type === "body" && event.id === world.selected)
+        else if (event.type === "body" && event.id === world.selected) {
             refresh();
+
+            // A grip drag changes the orbit, and with it the axial tilt.
+            if (mode !== "card") return;
+
+            const next = createStatsSection(
+                bodyStats(world.scenario, event.id, world.clock.t),
+            );
+            if (stats && next) stats.replaceWith(next);
+            else if (stats) stats.remove();
+            else if (next) {
+                // An edit can give a body its first row, so the section goes before the chips.
+                content.insertBefore(
+                    next,
+                    content.querySelector(
+                        ".orrery__orbit-around, .orrery__orbit-actions",
+                    ),
+                );
+            }
+            stats = next;
+        }
     });
     const interval = setInterval(refresh, REFRESH_MS);
 

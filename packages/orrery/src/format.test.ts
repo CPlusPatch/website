@@ -7,8 +7,12 @@ import {
     formatApsisChange,
     formatDistance,
     formatDuration,
+    formatEscapeSpeed,
+    formatGravity,
     formatInclinationChange,
+    formatMass,
     formatNodeChange,
+    formatRadius,
     formatSoon,
     formatSpeed,
 } from "./format.ts";
@@ -135,4 +139,31 @@ Deno.test("formatInclinationChange writes the inclination and its change with a 
         formatInclinationChange(23.4 * deg, 28.5 * deg),
         "Inc 23.4° (−5.1°)",
     );
+});
+
+Deno.test("formatMass writes 3 significant figures in scientific notation", () => {
+    assertEquals(formatMass(5.972e24), "5.97 × 10²⁴ kg");
+    assertEquals(formatMass(1.989e30), "1.99 × 10³⁰ kg");
+    assertEquals(formatMass(420_000), "4.20 × 10⁵ kg");
+    assertEquals(formatMass(9.996e24), "1.00 × 10²⁵ kg");
+    assertEquals(formatMass(3.3e-3), "3.30 × 10⁻³ kg");
+});
+
+Deno.test("formatRadius groups kilometres from 100 km and keeps 3 figures below", () => {
+    assertEquals(formatRadius(6_371_000), "6,371 km");
+    assertEquals(formatRadius(99_950), "100 km");
+    assertEquals(formatRadius(11_300), "11.3 km");
+    assertEquals(formatRadius(6_200), "6.20 km");
+});
+
+Deno.test("formatGravity writes 3 significant figures", () => {
+    assertEquals(formatGravity(9.82), "9.82 m/s²");
+    assertEquals(formatGravity(0.057), "0.0570 m/s²");
+    assertEquals(formatGravity(274), "274 m/s²");
+});
+
+Deno.test("formatEscapeSpeed writes 3 significant figures, in m/s under 1 km/s", () => {
+    assertEquals(formatEscapeSpeed(11_186), "11.2 km/s");
+    assertEquals(formatEscapeSpeed(617_670), "618 km/s");
+    assertEquals(formatEscapeSpeed(11.39), "11.4 m/s");
 });

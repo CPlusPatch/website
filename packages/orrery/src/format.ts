@@ -23,6 +23,10 @@ const AU_VALUE = new Intl.NumberFormat("en", {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
 });
+const THREE_SIGNIFICANT = new Intl.NumberFormat("en", {
+    minimumSignificantDigits: 3,
+    maximumSignificantDigits: 3,
+});
 const KM_PER_S = unit("kilometer-per-second", 2);
 const DEGREES = unit("degree", 1, "narrow");
 
@@ -55,6 +59,36 @@ export const formatDistance = (
 
 /** A speed in m/s, as `7.66 km/s`. */
 export const formatSpeed = (mps: number): string => KM_PER_S.format(mps / 1000);
+
+/** A radius in metres, as `6,371 km`, or with 3 significant figures under 100 km, like `6.20 km`. */
+export const formatRadius = (m: number): string => {
+    const km = m / 1000;
+
+    return `${km >= 100 ? KM.format(km) : THREE_SIGNIFICANT.format(km)} km`;
+};
+
+/** A surface gravity in m/s², as `9.82 m/s²` or `0.0570 m/s²`. */
+export const formatGravity = (mps2: number): string =>
+    `${THREE_SIGNIFICANT.format(mps2)} m/s²`;
+
+/** An escape speed in m/s with 3 significant figures, as `11.2 km/s`, or `11.4 m/s` under 1 km/s. */
+export const formatEscapeSpeed = (mps: number): string =>
+    mps < 1000
+        ? `${THREE_SIGNIFICANT.format(mps)} m/s`
+        : `${THREE_SIGNIFICANT.format(mps / 1000)} km/s`;
+
+const SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+
+/** A mass in kg in scientific notation with 3 significant figures, like `5.97 × 10²⁴ kg`. */
+export const formatMass = (kg: number): string => {
+    const [mantissa = "", exponent = "0"] = kg.toExponential(2).split("e");
+    const digits = exponent
+        .replace("-", "\u207b")
+        .replace("+", "")
+        .replace(/\d/g, (digit) => SUPERSCRIPT[Number(digit)] ?? digit);
+
+    return `${mantissa} × 10${digits} kg`;
+};
 
 const DURATIONS: [limit: number, size: number, format: Intl.NumberFormat][] = [
     [2 * 3600, 60, unit("minute", 1)],

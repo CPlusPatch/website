@@ -118,7 +118,8 @@
         display: none;
     }
 
-    .orrery__orbit-around {
+    .orrery__orbit-around,
+    .orrery__body-stats {
         margin-block-start: var(--orrery-pad);
 
         h3 {
@@ -141,6 +142,11 @@
         li {
             display: flex;
         }
+    }
+
+    /* The root has no readouts, and the two margins don't collapse in the scroll body. */
+    .orrery__orbit-meta + .orrery__body-stats {
+        margin-block-start: 0;
     }
 
     .orrery__orbit-chip {
@@ -293,7 +299,8 @@
             }
 
             .orrery__orbit-meta,
-            .orrery__readouts {
+            .orrery__readouts,
+            .orrery__body-stats {
                 display: none;
             }
         }
