@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { AU, type Body, solarSystem } from "@cpluspatch/orbit";
+import { AU, type Body, eridani, solarSystem } from "@cpluspatch/orbit";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
     centreShift,
@@ -187,6 +187,12 @@ Deno.test("moving a planet out to 100 AU moves the reach out with it", () => {
     };
 
     assertAlmostEquals(reachKm(far), (100 * AU) / 1000, 1);
+});
+
+Deno.test("a companion star around the root counts toward the reach", () => {
+    const b = eridani.bodies.find((body) => body.id === "40-eridani-b");
+
+    assertAlmostEquals(reachKm(eridani), (b?.elements?.a ?? 0) / 1000, 1);
 });
 
 Deno.test("the view shifts by the gap between its centre and the free band's, and not at all when the band is centred", () => {

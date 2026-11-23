@@ -17,7 +17,7 @@ export const focusDistanceKm = (body: Body): number =>
 export const minDistanceKm = (body: Body, fovRad: number): number =>
     Math.max(body.radius / 1000 / Math.sin(0.4 * fovRad), 0.01);
 
-/** The farthest a planet gets from the root, in km, or the root's radius if there are none. */
+/** The farthest a planet or star gets from the root, in km, or the root's radius if there are none. */
 export const reachKm = (scenario: Scenario): number => {
     const root = scenario.bodies.find((body) => body.parent === null);
     if (!root) throw new Error("The scenario has no root body.");
@@ -25,9 +25,12 @@ export const reachKm = (scenario: Scenario): number => {
     return (
         Math.max(
             ...scenario.bodies
-                // Planets only, so Pluto's wide orbit doesn't shrink the view.
+                // Not dwarfs, so Pluto's wide orbit doesn't shrink the view. Stars count, so a
+                // companion star like 40 Eridani B stays in reach.
                 .filter(
-                    (body) => body.parent === root.id && body.kind === "planet",
+                    (body) =>
+                        body.parent === root.id &&
+                        (body.kind === "planet" || body.kind === "star"),
                 )
                 .map(
                     (body) =>
