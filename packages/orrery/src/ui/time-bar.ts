@@ -306,7 +306,10 @@ export const createTimeBar = (
     });
     rateMenu.addEventListener("keydown", (event) => {
         const last = menuItems.length - 1;
-        const k = menuItems.findIndex((item) => item === event.target);
+        const k =
+            event.target instanceof HTMLButtonElement
+                ? menuItems.indexOf(event.target)
+                : -1;
         const to = {
             ArrowDown: k === last ? 0 : k + 1,
             ArrowUp: k <= 0 ? last : k - 1,

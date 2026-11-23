@@ -66,7 +66,10 @@ export const attachMenu = ({
     });
     menu.addEventListener("keydown", (event) => {
         const last = items.length - 1;
-        const k = items.findIndex((entry) => entry === event.target);
+        const k =
+            event.target instanceof HTMLElement
+                ? items.indexOf(event.target)
+                : -1;
         const to = {
             ArrowDown: k === last ? 0 : k + 1,
             ArrowUp: k <= 0 ? last : k - 1,

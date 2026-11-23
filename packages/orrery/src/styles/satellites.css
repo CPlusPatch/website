@@ -332,6 +332,7 @@
         overflow-wrap: anywhere;
         text-wrap: balance;
 
+        /* biome-ignore lint/style/noDescendingSpecificity: the rule it's flagged against styles .orrery__satellite-bar, not this */
         & + & {
             margin-block-start: -0.125rem;
             padding-block-start: 0;
