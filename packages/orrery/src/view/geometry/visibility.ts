@@ -67,6 +67,26 @@ export const foldOrbits = (
     return folded;
 };
 
+/**
+ * The ids of `culled` bodies by parent id, in input order, left out when folded.
+ * A parent's "+N" counts these with its folded bodies.
+ */
+export const culledByParent = (
+    bodies: readonly { id: string; parent: string | null }[],
+    culled: ReadonlySet<string>,
+    folded: ReadonlySet<string>,
+): Map<string, string[]> => {
+    const byParent = new Map<string, string[]>();
+
+    for (const { id, parent } of bodies) {
+        if (parent === null || !culled.has(id) || folded.has(id)) continue;
+
+        byParent.set(parent, [...(byParent.get(parent) ?? []), id]);
+    }
+
+    return byParent;
+};
+
 /** Where labels sort: the star, then planets, then the rest, each by `mu`. */
 export const labelRank = (kind: BodyKind, mu: number): number => {
     const tier = kind === "star" ? 2 : kind === "planet" ? 1 : 0;

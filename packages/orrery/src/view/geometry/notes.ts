@@ -20,6 +20,9 @@ const NOTE_APSIS_GAP_PX = 9;
 /** The gap of the notes tried last, which clear the orbit's own line from any direction. */
 const NOTE_APSIS_FAR_GAP_PX = 17;
 
+/** The room in px under a picked tag that labels leave for its speed and period block. */
+export const READOUT_BLOCK_PX = { width: 130, height: 32 };
+
 /** The px between a tag's edge and the first line of a note block. */
 const NOTE_BLOCK_GAP_PX = 9;
 

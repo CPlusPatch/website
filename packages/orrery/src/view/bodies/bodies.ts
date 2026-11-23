@@ -29,14 +29,17 @@ import {
     placeLabels,
     type Rect,
 } from "../geometry/labels.ts";
+import { READOUT_BLOCK_PX, READOUTS_MIN_ORBIT_PX } from "../geometry/notes.ts";
 import {
     type Anchor,
+    culledByParent,
     foldOrbits,
     hiddenBehindSpheres,
     hiddenMarkers,
     labelRank,
     labelShownForOrbit,
     type MarkerPoint,
+    orbitShown,
     projectedRadiusPx,
     type Sphere,
 } from "../geometry/visibility.ts";
@@ -144,6 +147,8 @@ export const createBodies = (
 
     let hoverId: string | null = null;
     let placements = new Map<string, Placement>();
+    // The children whose labels the last placement culled, by parent id, for the "+N" counts.
+    let culled = new Map<string, string[]>();
     // When each label last changed placement, from `performance.now()`.
     const changed = new Map<string, number>();
     const placed = new Map<string, Rect>();
@@ -212,6 +217,34 @@ export const createBodies = (
             const names = new Map(
                 entries.map(({ body }) => [body.id, body.name]),
             );
+            const isMajor = (body: Body) =>
+                body.kind === "star" ||
+                body.kind === "planet" ||
+                body.id === focus;
+            const restyle = (entry: Entry) => {
+                const { body } = entry;
+                const hidden = [
+                    ...(folds.get(body.id) ?? []),
+                    ...(culled.get(body.id) ?? []),
+                ];
+                const hovered = body.id === hoverId;
+                styling.restyle(entry, {
+                    selected: body.id === selected,
+                    big: isMajor(body),
+                    hover: hovered,
+                    count: !hidden.length
+                        ? ""
+                        : hovered
+                          ? `+ ${hidden.map((id) => names.get(id)).join(", ")}`
+                          : `+${hidden.length}`,
+                });
+            };
+            // The picked orbit's readouts show from the same size as `readouts.ts` uses.
+            const pickedPx = selected ? orbitPx.get(selected) : undefined;
+            const readoutRoom =
+                pickedPx !== undefined &&
+                pickedPx > READOUTS_MIN_ORBIT_PX &&
+                orbitShown(pickedPx, size.width, size.height, true);
             const anchors: Anchor[] = [];
             const spheres: Sphere[] = [];
             const labels: LabelBox[] = [];
@@ -235,21 +268,8 @@ export const createBodies = (
                 }
 
                 const hovered = body.id === hoverId;
-                const children = folds.get(body.id) ?? [];
-                const major =
-                    body.kind === "star" ||
-                    body.kind === "planet" ||
-                    body.id === focus;
-                styling.restyle(entry, {
-                    selected: body.id === selected,
-                    big: major,
-                    hover: hovered,
-                    count: !children.length
-                        ? ""
-                        : hovered
-                          ? `+ ${children.map((id) => names.get(id)).join(", ")}`
-                          : `+${children.length}`,
-                });
+                const major = isMajor(body);
+                restyle(entry);
 
                 group.position.set(
                     (r.x - origin.x) / 1000,
@@ -360,6 +380,10 @@ export const createBodies = (
                         disc: big,
                         rank: labelRank(body.kind, body.mu),
                         big: major,
+                        readout:
+                            readoutRoom && body.id === selected
+                                ? READOUT_BLOCK_PX
+                                : undefined,
                     });
                 }
                 if (big) {
@@ -405,7 +429,31 @@ export const createBodies = (
             placements = next;
 
             const boxes = new Map(labels.map((box) => [box.id, box]));
+            // A moon or craft with no label would show as an unnamed marker.
             const unnamed = new Set<string>();
+            for (const { body } of entries) {
+                if (
+                    (placements.get(body.id) ?? "hidden") === "hidden" &&
+                    (body.kind === "moon" || body.kind === "spacecraft") &&
+                    !keep.has(body.id) &&
+                    body.id !== hoverId
+                ) {
+                    unnamed.add(body.id);
+                }
+            }
+
+            // The "+N" counts them too, once placement has culled them.
+            culled = culledByParent(
+                entries.map(({ body }) => body),
+                unnamed,
+                folded,
+            );
+            for (const entry of entries) {
+                if (states.has(entry.body.id) && !folded.has(entry.body.id)) {
+                    restyle(entry);
+                }
+            }
+
             placed.clear();
             for (const entry of entries) {
                 const { body, marker, halo, label } = entry;
@@ -424,10 +472,6 @@ export const createBodies = (
                     entry.side = placement;
                 }
 
-                // A moon with no label would show as an unnamed marker the "+N" doesn't count.
-                if (placement === "hidden" && body.kind === "moon") {
-                    unnamed.add(body.id);
-                }
                 if (covered.has(body.id) || unnamed.has(body.id)) {
                     marker.visible = false;
                     if (halo) halo.visible = false;

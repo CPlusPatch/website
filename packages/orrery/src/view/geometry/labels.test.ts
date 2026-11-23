@@ -443,3 +443,26 @@ Deno.test("a held label keeps its placement even when a larger label now covers 
         "left",
     );
 });
+
+Deno.test("a label gives way to the readout block under a higher-ranked label", () => {
+    const picked = {
+        ...box("picked", 20, 100, 10),
+        readout: { width: 120, height: 32 },
+    };
+    const craft = box("craft", 20, 125, 1);
+
+    assertEquals(
+        placeLabels([craft, picked], view, "x", [], ["picked"]).get("craft"),
+        "hidden",
+    );
+    assertEquals(
+        placeLabels(
+            [craft, { ...picked, readout: undefined }],
+            view,
+            "x",
+            [],
+            ["picked"],
+        ).get("craft"),
+        "right",
+    );
+});

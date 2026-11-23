@@ -1,6 +1,7 @@
 /// <reference types="deno" />
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
+    culledByParent,
     foldOrbits,
     hiddenBehindSpheres,
     hiddenMarkers,
@@ -126,4 +127,24 @@ Deno.test("a label of a small orbit shows only when kept, and a body without an 
     assertEquals(labelShownForOrbit(LABEL_MIN_ORBIT_PX - 1, true), true);
     assertEquals(labelShownForOrbit(LABEL_MIN_ORBIT_PX, false), true);
     assertEquals(labelShownForOrbit(undefined, false), true);
+});
+
+Deno.test("a parent's culled children are counted by parent, without the folded ones", () => {
+    const bodies = [
+        { id: "mars", parent: "sun" },
+        { id: "phobos", parent: "mars" },
+        { id: "mro", parent: "mars" },
+        { id: "hope", parent: "mars" },
+        { id: "tgo", parent: "mars" },
+    ];
+    const culled = new Set(["phobos", "mro", "hope", "mars"]);
+    const folded = new Set(["hope"]);
+
+    assertEquals(
+        [...culledByParent(bodies, culled, folded)],
+        [
+            ["sun", ["mars"]],
+            ["mars", ["phobos", "mro"]],
+        ],
+    );
 });

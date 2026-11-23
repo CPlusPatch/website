@@ -25,6 +25,8 @@ export type LabelBox = {
     rank: number;
     /** Whether it may also go above or below its anchor. */
     big: boolean;
+    /** The size in px of the readout block that hangs under the label, which other labels keep out of. */
+    readout?: { width: number; height: number };
 };
 
 /** A rectangle on screen in px, from the canvas's top left. */
@@ -104,6 +106,7 @@ export const labelRect = (
  * The focus is never hidden, and a pinned label only when it's off screen.
  * A label tries the side it last had in `previous` first, so it doesn't jump when the selection changes.
  * A side that overlaps a `blocked` rect, like a panel, isn't free.
+ * A label with a `readout` also takes the block under it, so lower-ranked labels avoid that too.
  * A label in `held` changed a moment ago, so it keeps that placement while it's on screen,
  * even over another label. A fast moon would otherwise blink as it passes other labels.
  */
@@ -222,7 +225,20 @@ export const placeLabels = (
             fits ?? (id === focus || pinned.includes(id) ? "right" : "hidden");
 
         placements.set(id, placement);
-        if (placement !== "hidden") placed.push(spots[placement]);
+        if (placement === "hidden") continue;
+
+        placed.push(spots[placement]);
+        if (label.readout) {
+            const { left, bottom } = spots[placement];
+            placed.push({
+                id,
+                left,
+                top: bottom,
+                right: left + Math.max(width, label.readout.width),
+                bottom: bottom + label.readout.height,
+                rank,
+            });
+        }
     }
 
     return placements;
