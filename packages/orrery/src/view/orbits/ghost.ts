@@ -3,8 +3,8 @@ import { orbitPointsAt } from "@cpluspatch/orbit";
 import {
     type Color,
     InterleavedBufferAttribute,
+    type Object3D,
     type PerspectiveCamera,
-    type Scene,
     Vector3,
 } from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
@@ -127,7 +127,7 @@ export const updateGhost = (
 
 /** Draws the dashed line for `elements` around `parent`, reusing the line of `previous` if there is one. */
 export const createGhost = (
-    scene: Scene,
+    into: Object3D,
     previous: Ghost | null,
     body: Body,
     parent: string,
@@ -151,7 +151,7 @@ export const createGhost = (
         });
         material.resolution.set(size.width, size.height);
         line = new Line2(geometry, material);
-        scene.add(line);
+        into.add(line);
     } else {
         line.geometry.dispose();
         line.geometry = geometry;

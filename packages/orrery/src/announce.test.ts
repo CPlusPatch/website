@@ -2,6 +2,7 @@
 import { assertEquals } from "@std/assert";
 import {
     announcement,
+    bareAnnouncement,
     chaseAnnouncement,
     noChaseAnnouncement,
     satelliteAnnouncement,
@@ -66,6 +67,14 @@ Deno.test("ending a satellite focus says nothing, as the world's focus event doe
 Deno.test("the chase says whether the camera chases or orbits, and what", () => {
     assertEquals(chaseAnnouncement(true, "Mars"), "Chasing Mars.");
     assertEquals(chaseAnnouncement(false, "Mars"), "Orbiting Mars.");
+});
+
+Deno.test("hiding the interface says how to show it again", () => {
+    assertEquals(
+        bareAnnouncement(true),
+        "Interface, labels and orbits hidden. F1 shows them.",
+    );
+    assertEquals(bareAnnouncement(false), "Interface shown.");
 });
 
 Deno.test("chasing a body that orbits nothing says why it can't", () => {

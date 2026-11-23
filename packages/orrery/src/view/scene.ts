@@ -59,6 +59,8 @@ export type View = EditScene & {
     canChase: () => boolean;
     /** Calls `fn` whenever the chase turns on or off, or the focus's `canChase` changes. Returns a function that stops it. */
     onChase: (fn: (state: ChaseState) => void) => () => void;
+    /** Hides the orbit lines and labels for a clear view, or shows them. */
+    bare: (bare: boolean) => void;
     /** The km one CSS pixel spans at the focus, or 0 before the view has a size. */
     kmPerPx: () => number;
     /** Sets the satellite groups drawn around Earth. The first non-empty list loads the snapshot. */
@@ -552,6 +554,10 @@ export const createView = (
             return () => {
                 chaseListeners.delete(fn);
             };
+        },
+        bare: (bare) => {
+            orbits.show(!bare);
+            labels.domElement.hidden = bare;
         },
         kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
         satelliteGroups: swarm.groups,

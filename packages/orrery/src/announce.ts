@@ -28,6 +28,12 @@ export const chaseAnnouncement = (chasing: boolean, name: string): string =>
 export const noChaseAnnouncement = (name: string): string =>
     `${name} orbits nothing, so it can't be chased.`;
 
+/** What a screen reader says when F1 hides or shows the interface. */
+export const bareAnnouncement = (bare: boolean): string =>
+    bare
+        ? "Interface, labels and orbits hidden. F1 shows them."
+        : "Interface shown.";
+
 /**
  * What a screen reader says for a satellite change, or `null` when the world's event says it.
  * `name` is the satellite's, or `null` when it's gone.

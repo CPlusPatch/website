@@ -32,6 +32,7 @@ const KEYS: [keys: string[], what: string][] = [
     [["+", "−"], "Zoom in, out"],
     [["0"], "Fit the focus"],
     [["C"], "Chase the focus, or stop"],
+    [["F1"], "Hide the interface, labels and orbits, or show them"],
     [["Esc"], "Close, or clear the pick"],
 ];
 

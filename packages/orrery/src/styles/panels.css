@@ -13,6 +13,11 @@
             display: none;
         }
 
+        /* F1 hides the interface, for a clear view of the scene. */
+        .orrery--bare & {
+            display: none;
+        }
+
         > * {
             pointer-events: auto;
         }

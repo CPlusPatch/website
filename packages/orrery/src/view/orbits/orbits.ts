@@ -3,6 +3,7 @@ import { precessionTurns } from "@cpluspatch/orbit";
 import {
     Color,
     CustomBlending,
+    Group,
     MaxEquation,
     NormalBlending,
     type PerspectiveCamera,
@@ -54,6 +55,8 @@ export type Orbits = {
     ghost: (body: Body, elements: Elements | null) => void;
     /** Switches the lines to read over the sky, which has no flat ground colour to fade into. */
     sky: (shown: boolean) => void;
+    /** Shows the lines, or hides them all. */
+    show: (shown: boolean) => void;
     /** Sets the line width's screen size. */
     resize: (width: number, height: number) => void;
     /** Removes the lines and frees them. */
@@ -75,6 +78,8 @@ export const createOrbits = (
     background: Color,
     pick: Color,
 ): Orbits => {
+    const group = new Group();
+    scene.add(group);
     const orbits: Orbit[] = [];
     let ghost: Ghost | null = null;
     // The ghost may be made after the last resize.
@@ -181,7 +186,7 @@ export const createOrbits = (
         );
         casing.renderOrder = -1;
 
-        scene.add(casing, line);
+        group.add(casing, line);
         const orbit: Orbit = {
             body,
             parent: body.parent,
@@ -206,7 +211,7 @@ export const createOrbits = (
             }
 
             ghost = createGhost(
-                scene,
+                group,
                 ghost,
                 body,
                 body.parent,
@@ -365,6 +370,9 @@ export const createOrbits = (
                 orbit.paint = null;
             }
         },
+        show: (shown) => {
+            group.visible = shown;
+        },
         resize: (width, height) => {
             size = { width, height };
             ghost?.line.material.resolution.set(width, height);
@@ -386,6 +394,7 @@ export const createOrbits = (
                 line.material.dispose();
                 casing.material.dispose();
             }
+            group.removeFromParent();
         },
     };
 };

@@ -7,6 +7,7 @@ import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import {
     announcement,
+    bareAnnouncement,
     chaseAnnouncement,
     noChaseAnnouncement,
     satelliteAnnouncement,
@@ -220,6 +221,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         root.querySelector(".orrery__panel--right")?.append(card.element);
 
         currentView = view;
+        view.bare(root.classList.contains("orrery--bare"));
         const offSatellite = view.satellite.on((event) => {
             const k = event.k;
             const name =
@@ -368,6 +370,22 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     });
     for (const panel of [top, bottom]) if (panel) measure.observe(panel);
 
+    const setBare = (bare: boolean) => {
+        if (root.classList.contains("orrery--bare") === bare) return;
+
+        // Focus on a hidden control would fall to the body.
+        if (bare && document.activeElement?.closest(".orrery__panel")) {
+            // A focus ring around the whole view would spoil it.
+            container.querySelector("canvas")?.focus({ focusVisible: false });
+        }
+
+        root.classList.toggle("orrery--bare", bare);
+        currentView?.bare(bare);
+        live.textContent = bareAnnouncement(bare);
+    };
+    // Shortcuts that open a panel's control show the interface first.
+    const showInterface = () => setBare(false);
+
     const unbind = bindShortcuts(world, units, {
         closeKeys: keys.close,
         clearSatellite: () => {
@@ -388,7 +406,10 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             return true;
         },
         goLive: timeBar.goLive,
-        openSearch: search.open,
+        openSearch: () => {
+            showInterface();
+            search.open();
+        },
         toggleChase: () => {
             const view = currentView;
             if (!view) return;
@@ -403,7 +424,11 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 live.textContent = noChaseAnnouncement(name);
             }
         },
-        toggleDate: timeBar.toggleDate,
+        toggleBare: () => setBare(!root.classList.contains("orrery--bare")),
+        toggleDate: () => {
+            showInterface();
+            timeBar.toggleDate();
+        },
     });
 
     const save = () => {
