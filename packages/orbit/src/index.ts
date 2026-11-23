@@ -6,6 +6,8 @@
 export type { Burn } from "./burn.ts";
 export { applyBurn } from "./burn.ts";
 export { AU, DAY, G, J2000_UNIX_MS, OBLIQUITY_J2000 } from "./constants.ts";
+export { builtInScenarios } from "./data/built-in.ts";
+export { eridani, gargantua, kerbol, tauCeti } from "./data/fiction.ts";
 export { solarSystem } from "./data/solar-system.ts";
 export type { ElementsResult } from "./elements.ts";
 export { elementsFromState, nextApsisTime, reepoch } from "./elements.ts";
