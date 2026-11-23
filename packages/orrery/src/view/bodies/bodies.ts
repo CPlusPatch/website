@@ -2,10 +2,12 @@ import {
     type Body,
     bodyOrientation,
     type State,
+    sub,
     type Vec3,
 } from "@cpluspatch/orbit";
 import {
     AmbientLight,
+    Box3,
     type CanvasTexture,
     type Color,
     Matrix4,
@@ -15,6 +17,8 @@ import {
     SphereGeometry,
     Vector3,
 } from "three";
+import { lvlhMatrix } from "../geometry/attitude.ts";
+import { projectedBox } from "../geometry/footprint.ts";
 import {
     type Dot,
     LABEL_ANCHOR_GAP_PX,
@@ -42,6 +46,7 @@ import { spinMatrix } from "../spin.ts";
 import { createEntry, type Entry } from "./entry.ts";
 import { CENTERS, createLabels } from "./labels.ts";
 import { HALO_SCALE, markerPx, markerTexture, type Shape } from "./markers.ts";
+import { disposeModel } from "./spacecraft.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
@@ -59,6 +64,8 @@ export type Bodies = {
     placed: () => ReadonlyMap<string, Rect>;
     /** The body whose shown label holds a point, in px from the canvas's top left. */
     labelAt: (x: number, y: number, canvas: DOMRect) => string | null;
+    /** The box the selected body's drawn shape took in the last update, in px from the canvas's top left. Undefined when `id` isn't selected or shows as a marker. */
+    footprint: (id: string) => Rect | undefined;
     /** Marks the label of the hovered body, or clears it. */
     hover: (id: string | null) => void;
     /** Sizes the markers for a viewport. */
@@ -68,6 +75,9 @@ export type Bodies = {
 };
 
 const SPHERE_MIN_PX = 4;
+
+/** The projected radius in px from which a model replaces the marker, since smaller it's a few dark pixels. */
+const MODEL_MIN_PX = 12;
 
 /** The ms a label keeps a new placement, so a fast moon doesn't blink as it passes other labels. */
 const LABEL_HOLD_MS = 500;
@@ -146,6 +156,16 @@ export const createBodies = (
     scene.add(sun, ambient);
 
     const view = new Vector3();
+    const worldBox = new Box3();
+    // The selected body's drawn shape in the last update, or null when it isn't drawn big.
+    let drawn: {
+        id: string;
+        camera: PerspectiveCamera;
+        x: number;
+        y: number;
+        radiusPx: number;
+        model: Entry["model"];
+    } | null = null;
     let size = { width: 1, height: 1 };
 
     return {
@@ -195,14 +215,17 @@ export const createBodies = (
             const markers: MarkerPoint[] = [];
             const dots: Dot[] = [];
             const picks: PickPoint[] = [];
+            drawn = null;
 
             for (const entry of entries) {
-                const { body, group, sphere, marker, halo, label } = entry;
+                const { body, group, sphere, model, marker, halo, label } =
+                    entry;
                 const r = states.get(body.id)?.r;
                 if (!r) continue;
 
                 if (folded.has(body.id)) {
                     sphere.visible = false;
+                    if (model) model.visible = false;
                     marker.visible = false;
                     if (halo) halo.visible = false;
                     continue;
@@ -238,10 +261,24 @@ export const createBodies = (
                     fov,
                     size.height,
                 );
-                const big = radiusPx >= SPHERE_MIN_PX;
+                const big = radiusPx >= (model ? MODEL_MIN_PX : SPHERE_MIN_PX);
                 sphere.visible = big;
+                if (model) {
+                    model.visible = big;
+                    const state = states.get(body.id);
+                    const parent = body.parent && states.get(body.parent);
+                    if (big && state && parent) {
+                        spin.fromArray(
+                            lvlhMatrix(
+                                sub(state.r, parent.r),
+                                sub(state.v, parent.v),
+                            ),
+                        );
+                        model.quaternion.setFromRotationMatrix(spin);
+                    }
+                }
                 if (big) {
-                    if (options.maps && !entry.mapped) {
+                    if (options.maps && !entry.mapped && !model) {
                         entry.mapped = true;
                         maps.load(body.id, (map) => {
                             sphere.material.map = map;
@@ -301,6 +338,9 @@ export const createBodies = (
                     radius: big ? radiusPx : markerPx(body) / 2,
                 });
                 anchors.push({ id: body.id, pos });
+                if (big && body.id === selected) {
+                    drawn = { id: body.id, camera, x, y, radiusPx, model };
+                }
                 if (
                     labelShownForOrbit(
                         orbitPx.get(body.id),
@@ -416,6 +456,25 @@ export const createBodies = (
 
             return pickLabel(rects, x, y);
         },
+        footprint: (id) => {
+            if (!drawn || drawn.id !== id) return undefined;
+
+            const { camera, x, y, radiusPx, model } = drawn;
+            if (!model) {
+                return {
+                    left: x - radiusPx,
+                    top: y - radiusPx,
+                    right: x + radiusPx,
+                    bottom: y + radiusPx,
+                };
+            }
+
+            // The group's matrices are only refreshed when rendering.
+            model.updateWorldMatrix(true, true);
+            worldBox.setFromObject(model);
+
+            return projectedBox(worldBox, camera, size.width, size.height);
+        },
         hover: (id) => {
             if (id === hoverId) return;
 
@@ -442,12 +501,14 @@ export const createBodies = (
             for (const {
                 group,
                 sphere,
+                model,
                 marker,
                 halo,
                 label,
                 extras,
             } of entries) {
                 extras.dispose();
+                if (model) disposeModel(model);
                 label.removeFromParent();
                 group.removeFromParent();
                 sphere.material.dispose();

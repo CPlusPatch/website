@@ -41,6 +41,8 @@ export type ReadoutsFrame = {
     labels: ReadonlyMap<string, Rect>;
     /** Rects that notes keep out of. */
     blocked: readonly Rect[];
+    /** The box the selected body is drawn in, when it's drawn big. The speed and period block keeps out of it. */
+    footprint?: Rect;
 };
 
 /** The picked orbit's flags and notes. */
@@ -179,6 +181,7 @@ export const createReadouts = (
             hidden,
             labels,
             blocked,
+            footprint,
         }) => {
             const { selected } = world;
             const body =
@@ -244,6 +247,7 @@ export const createReadouts = (
 
             taken.length = 0;
             taken.push(...blocked, ...labels.values());
+            if (footprint) taken.push(footprint);
 
             const points = apsides.map((apsis) => {
                 const x = line[2 * apsis.index] ?? Number.NaN;

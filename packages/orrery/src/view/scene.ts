@@ -282,6 +282,9 @@ export const createView = (
             hidden: ghostShown || grips.shown(),
             labels: bodies.placed(),
             blocked: keepOut,
+            footprint: world.selected
+                ? bodies.footprint(world.selected)
+                : undefined,
         });
 
         if (sky.shown()) {

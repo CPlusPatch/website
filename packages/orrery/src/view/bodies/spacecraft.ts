@@ -1,0 +1,297 @@
+/**
+ * @module
+ * Low-poly models of the Earth satellites, at true size.
+ */
+
+import type { Body } from "@cpluspatch/orbit";
+import {
+    Box3,
+    BoxGeometry,
+    type BufferGeometry,
+    CylinderGeometry,
+    Group,
+    Mesh,
+    MeshStandardMaterial,
+    Sphere,
+    Vector3,
+} from "three";
+
+type Palette = Record<
+    "white" | "grey" | "dark" | "gold" | "array",
+    MeshStandardMaterial
+>;
+
+type Axis = "x" | "y" | "z";
+
+type Vec = [number, number, number];
+
+type Bus = {
+    /** The bus's size along x, y and z, in m. */
+    size: Vec;
+    /** The wings on the mast along y, 1 or 2. */
+    wings: 1 | 2;
+    wingLength: number;
+    wingWidth: number;
+    /** The length of a boom along -x, in m. */
+    boom?: number;
+    /** An Earth-facing antenna panel on -z, as its width and depth. */
+    antenna?: [number, number];
+};
+
+const MAST = 0.6;
+
+// Earth-shine stand-in: the only other fill is an ambient of 0.015, so unlit faces were black.
+const material = (color: number, roughness: number): MeshStandardMaterial =>
+    new MeshStandardMaterial({
+        color,
+        roughness,
+        metalness: 0,
+        emissive: 0x0d0f14,
+        emissiveIntensity: 1,
+    });
+
+const palette = (): Palette => ({
+    white: material(0xe6e6e8, 0.5),
+    grey: material(0x8e9299, 0.6),
+    dark: material(0x25262b, 0.8),
+    gold: material(0xb8903a, 0.6),
+    array: material(0x1f2838, 0.5),
+});
+
+const box = (
+    group: Group,
+    material: MeshStandardMaterial,
+    [w, d, h]: Vec,
+    [x, y, z]: Vec,
+): Mesh => {
+    const mesh = new Mesh(new BoxGeometry(w, d, h), material);
+    mesh.position.set(x, y, z);
+    group.add(mesh);
+
+    return mesh;
+};
+
+// A cylinder along `axis`, `length` long.
+const cylinder = (
+    group: Group,
+    material: MeshStandardMaterial,
+    axis: Axis,
+    radius: number,
+    length: number,
+    [x, y, z]: Vec,
+): Mesh => {
+    const geometry = new CylinderGeometry(radius, radius, length, 16, 1);
+    if (axis === "x") geometry.rotateZ(Math.PI / 2);
+    if (axis === "z") geometry.rotateX(Math.PI / 2);
+    const mesh = new Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    group.add(mesh);
+
+    return mesh;
+};
+
+// Dimensions are approximate.
+const iss = (group: Group, m: Palette, amber: MeshStandardMaterial): void => {
+    // Pressurised modules from the Progress at the aft end to a visiting capsule.
+    const modules: [MeshStandardMaterial, number, number][] = [
+        [m.grey, 7, 1.35],
+        [m.white, 13.1, 2.1],
+        [m.white, 12.6, 2.05],
+        [m.white, 5.5, 2.3],
+        [m.white, 8.5, 2.15],
+        [m.white, 7.2, 2.2],
+        [m.white, 11.2, 2.2],
+        [m.grey, 8, 2],
+    ];
+    let x = -43.5;
+    for (const [material, length, radius] of modules) {
+        cylinder(group, material, "x", radius, length, [x + length / 2, 0, 0]);
+        x += length;
+    }
+
+    const trussX = -1;
+    const trussZ = 3.8;
+    box(group, m.grey, [3, 3, trussZ], [trussX, 0, trussZ / 2]);
+    box(group, m.grey, [3.2, 109, 3.2], [trussX, 0, trussZ]);
+
+    // Four pairs of wings, one pair each side of the truss at two stations.
+    for (const side of [-1, 1]) {
+        for (const station of [34, 47]) {
+            for (const end of [-1, 1]) {
+                const cx = trussX + end * (1.7 + 17.5);
+                const cy = side * station;
+                box(group, amber, [35, 12, 0.2], [cx, cy, trussZ]);
+
+                // Dark seams so the wing reads as a grid of cells, not a slab.
+                for (let k = -4; k <= 4; k++) {
+                    box(
+                        group,
+                        m.dark,
+                        [0.3, 12, 0.24],
+                        [cx + k * 3.9, cy, trussZ],
+                    );
+                }
+                box(group, m.dark, [35, 0.3, 0.24], [cx, cy, trussZ]);
+            }
+        }
+
+        box(group, m.white, [0.15, 14, 4], [trussX + 2.4, side * 17, trussZ]);
+        box(group, m.white, [0.15, 14, 4], [trussX - 2.4, side * 17, trussZ]);
+    }
+};
+
+const hubble = (group: Group, m: Palette): void => {
+    cylinder(group, m.gold, "x", 2.1, 4.5, [-4.35, 0, 0]);
+    cylinder(group, m.white, "x", 2.1, 8.7, [2.25, 0, 0]);
+    cylinder(group, m.dark, "x", 1.85, 0.2, [6.6, 0, 0]);
+
+    for (const side of [-1, 1]) {
+        box(group, m.grey, [0.3, MAST, 0.3], [-1, side * (2.1 + MAST / 2), 0]);
+        box(
+            group,
+            m.array,
+            [2.6, 7.1, 0.1],
+            [-1, side * (2.1 + MAST + 3.55), 0],
+        );
+    }
+};
+
+const tiangong = (group: Group, m: Palette): void => {
+    // Greyer than the shared white so the modules stand out from bright cloud.
+    const hull = material(0xd0d2d6, 0.5);
+    cylinder(group, hull, "x", 2.1, 16.6, [0, 0, 0]);
+    cylinder(group, m.grey, "x", 1.4, 3, [9.8, 0, 0]);
+
+    // The lab modules hang off the forward node, one each way.
+    for (const side of [-1, 1]) {
+        cylinder(group, hull, "y", 2.1, 17.9, [8.3, side * 11.05, 0]);
+        box(group, m.grey, [0.4, MAST, 0.4], [8.3, side * (20 + MAST / 2), 0]);
+        for (const end of [-1, 1]) {
+            box(
+                group,
+                m.array,
+                [3.2, 7.5, 0.1],
+                [8.3 + end * 1.8, side * (20 + MAST + 3.75), 0],
+            );
+        }
+    }
+};
+
+const bus = (group: Group, m: Palette, config: Bus): void => {
+    const [bx, by, bz] = config.size;
+    box(group, m.gold, config.size, [0, 0, 0]);
+
+    // One wing sits on the +y mast. Two have one each side.
+    const sides = config.wings === 2 ? [-1, 1] : [1];
+    for (const side of sides) {
+        box(
+            group,
+            m.grey,
+            [0.2, MAST, 0.2],
+            [0, side * (by / 2 + MAST / 2), 0],
+        );
+        box(
+            group,
+            m.array,
+            [config.wingWidth, config.wingLength, 0.08],
+            [0, side * (by / 2 + MAST + config.wingLength / 2), 0],
+        );
+    }
+
+    if (config.boom) {
+        cylinder(group, m.grey, "x", 0.08, config.boom, [
+            -(bx / 2 + config.boom / 2),
+            0,
+            0,
+        ]);
+        box(group, m.dark, [0.3, 0.3, 0.3], [-(bx / 2 + config.boom), 0, 0]);
+    }
+
+    if (config.antenna) {
+        const [w, d] = config.antenna;
+        box(group, m.grey, [w, d, 0.1], [0, 0, -(bz / 2 + 0.05)]);
+    }
+};
+
+// Each spacecraft's bus, by id.
+const BUSES: Record<string, Bus> = {
+    "landsat-9": {
+        size: [3, 2.4, 4.3],
+        wings: 1,
+        wingLength: 9.4,
+        wingWidth: 2.6,
+    },
+    "gps-biii-1": {
+        size: [2.5, 2.5, 2.5],
+        wings: 2,
+        wingLength: 6.65,
+        wingWidth: 1.9,
+        antenna: [1.6, 1.6],
+    },
+    "goes-19": {
+        size: [6, 5.6, 3.9],
+        wings: 1,
+        wingLength: 12,
+        wingWidth: 3,
+        boom: 8,
+    },
+    "meridian-10": {
+        size: [1.5, 1.5, 2.5],
+        wings: 2,
+        wingLength: 3.75,
+        wingWidth: 1.8,
+    },
+};
+
+const GENERIC: Bus = {
+    size: [2, 2, 2],
+    wings: 2,
+    wingLength: 3,
+    wingWidth: 1.5,
+};
+
+/**
+ * A model of `body` in km, nadir-pointing when it's turned by `lvlhMatrix`.
+ *
+ * Its x is along the track, y the orbit normal and z up. Dimensions are approximate.
+ */
+export const createSpacecraftModel = (body: Body): Group => {
+    const parts = new Group();
+    const m = palette();
+    const amber = material(0xc99a2e, 0.35);
+    amber.metalness = 0.5;
+    // A brighter floor than the rest, so the arrays still show in Earth's shadow.
+    amber.emissive.set(0x2a2010);
+
+    if (body.id === "iss") iss(parts, m, amber);
+    else if (body.id === "hubble") hubble(parts, m);
+    else if (body.id === "tiangong") tiangong(parts, m);
+    else bus(parts, m, BUSES[body.id] ?? GENERIC);
+
+    // The group's origin is the body's position, so the bounding box is centred on it.
+    const box = new Box3().setFromObject(parts);
+    parts.position.copy(box.getCenter(new Vector3()).negate());
+
+    const group = new Group();
+    group.add(parts);
+
+    // A spacecraft without a model of its own is drawn at the size it declares.
+    const known =
+        body.id in BUSES || ["iss", "hubble", "tiangong"].includes(body.id);
+    const radius = known
+        ? 1
+        : body.radius / box.getBoundingSphere(new Sphere()).radius;
+    group.scale.setScalar(radius / 1000);
+
+    return group;
+};
+
+/** Frees the geometries and materials of a model. */
+export const disposeModel = (group: Group): void => {
+    group.traverse((object) => {
+        if (!(object instanceof Mesh)) return;
+
+        (object.geometry as BufferGeometry).dispose();
+        (object.material as MeshStandardMaterial).dispose();
+    });
+};

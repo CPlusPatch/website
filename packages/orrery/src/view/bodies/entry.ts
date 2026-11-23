@@ -16,11 +16,14 @@ import { createExtras } from "./extras.ts";
 import { CENTERS } from "./labels.ts";
 import { HALO_OPACITY, SHAPES, type Shape } from "./markers.ts";
 import type { Extra } from "./patches.ts";
+import { createSpacecraftModel } from "./spacecraft.ts";
 
 export type Entry = {
     body: Body;
     group: Group;
     sphere: Mesh<SphereGeometry, MeshBasicMaterial | MeshStandardMaterial>;
+    /** A spacecraft's model, which stands in for its sphere. */
+    model: Group | null;
     marker: Sprite;
     /** The root's glow, drawn with its marker. */
     halo: Sprite | null;
@@ -101,6 +104,14 @@ export const createEntry = (
     // Its left edge sits on the body.
     label.center.set(...CENTERS.right);
 
+    // The sphere stays for occlusion, picking and framing.
+    const model =
+        body.kind === "spacecraft" ? createSpacecraftModel(body) : null;
+    if (model) {
+        sphere.material.visible = false;
+        group.add(model);
+    }
+
     group.add(sphere, marker, label);
     if (halo) group.add(halo);
     const extras = createExtras(body, group, sphere);
@@ -109,6 +120,7 @@ export const createEntry = (
         body,
         group,
         sphere,
+        model,
         marker,
         halo,
         label,
