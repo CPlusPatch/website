@@ -83,7 +83,8 @@ export const fitDistanceKm = (
 
 /**
  * The camera distance in km that frames a body: its farthest child's orbit fits the view, or
- * the body spans 25% of the view's height if it has no children.
+ * the body spans 25% of the view's height if it has no children. Spacecraft are skipped when
+ * the body has other children.
  */
 export const frameDistanceKm = (
     scenario: Scenario,
@@ -99,10 +100,14 @@ export const frameDistanceKm = (
         return body.radius / 1000 / Math.sin(0.125 * fovRad);
     }
 
+    // Juno's orbit reaches 3 times past Callisto's, so craft only count when there are no moons.
+    const moons = children.filter((child) => child.kind !== "spacecraft");
+    const framed = moons.length > 0 ? moons : children;
+
     const tanVertical = Math.tan(fovRad / 2);
     const tanNarrow = Math.min(tanVertical, tanVertical * aspect);
 
-    return (Math.max(...children.map(apoapsisKm)) * FIT_MARGIN) / tanNarrow;
+    return (Math.max(...framed.map(apoapsisKm)) * FIT_MARGIN) / tanNarrow;
 };
 
 /**
