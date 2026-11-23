@@ -66,9 +66,14 @@ export type Orbits = {
 /** How much a picked orbit's trail dims while a ghost shows. */
 const GHOST_DIM = 0.4;
 
-// Dwarf, asteroid and comet lines cross the planets' frame, and shouldn't outshine them.
+// Minor-body and craft lines cross the planets' and moons' frame, and shouldn't outshine them.
 const MINOR_DIM = 0.6;
-const MINOR_KINDS: readonly BodyKind[] = ["dwarf", "asteroid", "comet"];
+const MINOR_KINDS: readonly BodyKind[] = [
+    "dwarf",
+    "asteroid",
+    "comet",
+    "spacecraft",
+];
 
 /** One line per body that has an orbit, in km. */
 export const createOrbits = (
