@@ -290,6 +290,42 @@ Deno.test("time and color are kept only when present", () => {
     assert(!("color" in plain.scenario.bodies[0]));
 });
 
+Deno.test("a spacecraft role is kept", () => {
+    const scenario = structuredClone(valid);
+
+    scenario.bodies[1].kind = "spacecraft";
+    scenario.bodies[1].role = "telescope";
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assertEquals(planet(result.scenario).role, "telescope");
+    assert(!("role" in result.scenario.bodies[0]));
+});
+
+Deno.test("an unknown role is rejected", () => {
+    const errors = errorsAfter((s) => {
+        planet(s).kind = "spacecraft";
+        (planet(s) as { role: string }).role = "tug";
+    });
+
+    assert(
+        errors.includes(
+            'earth.role: must be one of station, telescope, navigation, earth-observation (got "tug")',
+        ),
+    );
+});
+
+Deno.test("a role on another kind is rejected", () => {
+    const errors = errorsAfter((s) => {
+        planet(s).role = "station";
+    });
+
+    assert(
+        errors.includes("earth.role: must be absent unless kind is spacecraft"),
+    );
+});
+
 Deno.test("sorting puts every body after its parent", () => {
     const reversed: Scenario = {
         ...solarSystem,

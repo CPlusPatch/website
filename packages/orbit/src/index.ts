@@ -27,6 +27,8 @@ export {
     trueAnomalyAt,
     wrapAngle,
 } from "./kepler.ts";
+export type { OrbitClass } from "./orbit-class.ts";
+export { orbitClass } from "./orbit-class.ts";
 export type { Orientation, RotationModel } from "./orientation.ts";
 export {
     bodyOrientation,
@@ -41,7 +43,13 @@ export {
     precess,
     precessionTurns,
 } from "./precession.ts";
-export type { Body, BodyKind, Scenario, ScenarioResult } from "./scenario.ts";
+export type {
+    Body,
+    BodyKind,
+    Scenario,
+    ScenarioResult,
+    SpacecraftRole,
+} from "./scenario.ts";
 export { sortByDepth, validateScenario } from "./scenario.ts";
 export { worldStates } from "./system.ts";
 export { j2000sToUnixMs, unixMsToJ2000s } from "./time.ts";

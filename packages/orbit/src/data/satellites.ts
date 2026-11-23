@@ -2,7 +2,7 @@ import { DAY, km } from "../constants.ts";
 import { equatorialToEcliptic, rotateEquatorialToEcliptic } from "../frames.ts";
 import type { Elements } from "../kepler.ts";
 import { j2Precession } from "../precession.ts";
-import type { Body } from "../scenario.ts";
+import type { Body, SpacecraftRole } from "../scenario.ts";
 import { unixMsToJ2000s } from "../time.ts";
 
 const deg = (x: number): number => (x * Math.PI) / 180;
@@ -46,6 +46,8 @@ type Satellite = {
     tle: readonly [string, string];
     /** The bounding radius of its model in the orrery, in m. */
     radius: number;
+    /** What it does. Absent means other. */
+    role?: SpacecraftRole;
 };
 
 // Fetched from CelesTrak at 2026-11-23T12:48:34Z,
@@ -60,6 +62,7 @@ const SATELLITES: Satellite[] = [
             "2 25544  51.6320 233.1644 0007425  56.0849 304.0845 15.49560282596402",
         ],
         radius: 67.5,
+        role: "station",
     },
     {
         id: "hubble",
@@ -70,6 +73,7 @@ const SATELLITES: Satellite[] = [
             "2 20580  28.4727  73.7669 0002533 112.8756 247.2108 15.32397842812940",
         ],
         radius: 12,
+        role: "telescope",
     },
     {
         id: "tiangong",
@@ -80,6 +84,7 @@ const SATELLITES: Satellite[] = [
             "2 48274  41.4699  75.5877 0004869 283.0054  77.0241 15.60901120318006",
         ],
         radius: 29.9,
+        role: "station",
     },
     {
         id: "landsat-9",
@@ -90,6 +95,7 @@ const SATELLITES: Satellite[] = [
             "2 49260  98.2119  35.2016 0000983  94.4337 265.6974 14.57118423274143",
         ],
         radius: 6.7,
+        role: "earth-observation",
     },
     {
         id: "gps-biii-1",
@@ -100,6 +106,7 @@ const SATELLITES: Satellite[] = [
             "2 43873  55.7910  85.9338 0041684 197.5727 334.4554  2.00567043 58256",
         ],
         radius: 8.7,
+        role: "navigation",
     },
     {
         id: "goes-19",
@@ -110,6 +117,7 @@ const SATELLITES: Satellite[] = [
             "2 60133   0.0065  67.0732 0001034 222.1135 142.3965  1.00271989  8550",
         ],
         radius: 11.7,
+        role: "earth-observation",
     },
     {
         id: "meridian-10",
@@ -127,7 +135,7 @@ const SATELLITES: Satellite[] = [
 export const satellites = (earthMu: number): Body[] => {
     const pole = rotateEquatorialToEcliptic({ x: 0, y: 0, z: 1 });
 
-    return SATELLITES.map(({ id, name, tle, radius }) => {
+    return SATELLITES.map(({ id, name, tle, radius, role }) => {
         const elements = fromTle(tle[0], tle[1], earthMu);
 
         return {
@@ -145,6 +153,7 @@ export const satellites = (earthMu: number): Body[] => {
                 EARTH_RADIUS,
                 pole,
             ),
+            ...(role === undefined ? {} : { role }),
         };
     });
 };

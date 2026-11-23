@@ -13,6 +13,13 @@ export type BodyKind =
     | "comet"
     | "spacecraft";
 
+/** What a spacecraft does. */
+export type SpacecraftRole =
+    | "station"
+    | "telescope"
+    | "navigation"
+    | "earth-observation";
+
 /** One body in a scenario. */
 export type Body = {
     /** A unique slug of lowercase letters, digits and hyphens. */
@@ -33,6 +40,8 @@ export type Body = {
     precession?: Precession;
     /** An optional CSS colour. */
     color?: string;
+    /** What a spacecraft does. Absent means other. Only spacecraft have one. */
+    role?: SpacecraftRole;
 };
 
 /** A set of bodies in one tree, with an optional start time. */
@@ -51,6 +60,13 @@ export type Scenario = {
 export type ScenarioResult =
     | { ok: true; scenario: Scenario }
     | { ok: false; errors: string[] };
+
+const ROLES: readonly SpacecraftRole[] = [
+    "station",
+    "telescope",
+    "navigation",
+    "earth-observation",
+];
 
 const KINDS: readonly BodyKind[] = [
     "star",
@@ -241,8 +257,18 @@ const validateBody = (
     }
 
     const before = errors.length;
-    const { id, name, kind, parent, mu, radius, elements, precession, color } =
-        input;
+    const {
+        id,
+        name,
+        kind,
+        parent,
+        mu,
+        radius,
+        elements,
+        precession,
+        color,
+        role,
+    } = input;
     const validId = typeof id === "string" && SLUG.test(id);
     const label = validId ? id : `bodies[${index}]`;
 
@@ -280,6 +306,18 @@ const validateBody = (
 
     if (color !== undefined && typeof color !== "string") {
         errors.push(`${label}.color: must be a string (got ${show(color)})`);
+    }
+
+    if (role !== undefined) {
+        if (!ROLES.includes(role as SpacecraftRole)) {
+            errors.push(
+                `${label}.role: must be one of ${ROLES.join(", ")} (got ${show(role)})`,
+            );
+        } else if (kind !== "spacecraft") {
+            errors.push(
+                `${label}.role: must be absent unless kind is spacecraft`,
+            );
+        }
     }
 
     let parsed: Elements | null = null;
@@ -324,6 +362,7 @@ const validateBody = (
         elements: parsed,
         ...(parsedPrecession ? { precession: parsedPrecession } : {}),
         ...(color === undefined ? {} : { color: color as string }),
+        ...(role === undefined ? {} : { role: role as SpacecraftRole }),
     };
 };
 
