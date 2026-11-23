@@ -41,6 +41,12 @@
     --orrery-pick-ink: #2a0716;
     --orrery-abort: #ff6b5e;
 
+    /* Earth satellites by orbit class. */
+    --orrery-orbit-leo: #8fd694;
+    --orrery-orbit-meo: #e8b75a;
+    --orrery-orbit-geo: #a99cff;
+    --orrery-orbit-heo: #f08a7a;
+
     --orrery-font-ui: var(--font-plex-sans-condensed);
     --orrery-font-data: var(--font-plex-mono);
 

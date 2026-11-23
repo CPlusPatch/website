@@ -1,7 +1,7 @@
 /// <reference types="deno" />
 import { type Body, solarSystem } from "@cpluspatch/orbit";
 import { assert, assertEquals } from "@std/assert";
-import { BODY_COLORS, colorOf } from "./theme.ts";
+import { BODY_COLORS, colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 
 const body = (id: string, kind: Body["kind"], color?: string): Body => ({
     id,
@@ -35,4 +35,23 @@ Deno.test("the Sun and every planet have a colour of their own", () => {
     );
 
     for (const { id } of named) assert(id in BODY_COLORS, id);
+});
+
+const satellite = (parent: string, color?: string): Body => ({
+    ...body("sat", "spacecraft", color),
+    parent,
+    // 7,000 km and circular: low Earth orbit.
+    elements: { a: 7e6, e: 0, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
+});
+
+Deno.test("an Earth spacecraft takes its orbit class's colour", () => {
+    assertEquals(colorOf(satellite("earth")), ORBIT_CLASS_COLORS.leo);
+});
+
+Deno.test("a spacecraft around another body keeps its kind's colour", () => {
+    assertEquals(colorOf(satellite("mars")), "var(--orrery-text)");
+});
+
+Deno.test("an Earth spacecraft's own colour wins over its orbit class", () => {
+    assertEquals(colorOf(satellite("earth", "gold")), "gold");
 });

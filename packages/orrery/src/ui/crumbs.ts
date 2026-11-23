@@ -1,4 +1,5 @@
 import type { Body } from "@cpluspatch/orbit";
+import { colorOf } from "../view/theme.ts";
 import type { World } from "../world.ts";
 import { showBodyMarker } from "./body-marker.ts";
 import { h } from "./dom.ts";
@@ -39,7 +40,13 @@ export const createCrumbs = (world: World): Crumbs => {
     const render = () => {
         const path = focusPath(world.scenario.bodies, world.focused);
         const key = JSON.stringify(
-            path.map((body) => [body.id, body.name, body.kind, body.color]),
+            path.map((body) => [
+                body.id,
+                body.name,
+                body.kind,
+                body.role,
+                colorOf(body),
+            ]),
         );
         if (key === shown) return;
         shown = key;

@@ -315,7 +315,10 @@ export const createView = (
             describe();
         } else if (event.type === "body") {
             const body = world.scenario.bodies.find((b) => b.id === event.id);
-            if (body) orbits.rebuild(body);
+            if (body) {
+                orbits.rebuild(body);
+                bodies.recolor(body);
+            }
             rig.rescale();
         }
     });

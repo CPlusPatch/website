@@ -17,13 +17,18 @@
         }
     }
 
+    /* One scroll area under the head, so short screens scroll instead of clipping. */
+    .orrery__keys-body {
+        min-block-size: 0;
+        overflow: auto;
+    }
+
     .orrery__keys-list {
         display: grid;
         grid-template-columns: auto 1fr;
         gap: 6px 10px;
         margin: 0;
         padding: 0 var(--orrery-pad) var(--orrery-pad);
-        overflow: auto;
         font-size: var(--orrery-size-sm);
 
         dt {
@@ -44,8 +49,57 @@
         }
     }
 
+    .orrery__legend {
+        display: grid;
+        gap: var(--space-sm);
+        margin-inline: var(--orrery-pad);
+        padding-block: var(--orrery-pad);
+        border-block-start: 1px solid var(--orrery-frame);
+        font-size: var(--orrery-size-sm);
+
+        h3 {
+            margin: 0;
+            font-size: inherit;
+        }
+
+        ul {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 10px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            color: var(--orrery-muted);
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    }
+
+    .orrery__legend-swatch,
+    .orrery__legend-icon {
+        flex: none;
+        inline-size: 14px;
+        block-size: 14px;
+    }
+
+    /* A short stroke, like the orbit lines, so it isn't read as a planet. */
+    .orrery__legend-swatch {
+        block-size: 2px;
+        border-radius: 1px;
+    }
+
+    .orrery__legend-icon svg {
+        display: block;
+        inline-size: 100%;
+        block-size: 100%;
+    }
+
     .orrery__credits {
-        margin: var(--space-sm) 0 0;
+        margin: 0;
         padding: 0 var(--orrery-pad) var(--orrery-pad);
         color: var(--orrery-dim);
         font-size: var(--orrery-size-xs);

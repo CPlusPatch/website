@@ -3,7 +3,12 @@
  * Colours for the scene: the `--orrery-*` tokens and the bodies' own colours.
  */
 
-import type { Body, BodyKind } from "@cpluspatch/orbit";
+import {
+    type Body,
+    type BodyKind,
+    type OrbitClass,
+    orbitClass,
+} from "@cpluspatch/orbit";
 import { Color, SRGBColorSpace } from "three";
 
 /** The colours of a scene, which come from the `--orrery-*` tokens. */
@@ -25,7 +30,6 @@ export const BODY_COLORS: Record<string, string> = {
     venus: "#e9cf98",
     earth: "#62a7ff",
     moon: "#cfd0d2",
-    iss: "#f2f2ee",
     mars: "#ec6f4a",
     jupiter: "#dcae7c",
     saturn: "#e8d59a",
@@ -58,9 +62,28 @@ const KIND_COLORS: Record<BodyKind, string> = {
     spacecraft: "var(--orrery-text)",
 };
 
-/** The CSS colour of a body: its own, then its id's, then its kind's. */
-export const colorOf = (body: Body): string =>
-    body.color ?? BODY_COLORS[body.id] ?? KIND_COLORS[body.kind];
+/** The token that colours Earth satellites of each orbit class. */
+export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
+    leo: "var(--orrery-orbit-leo)",
+    meo: "var(--orrery-orbit-meo)",
+    geo: "var(--orrery-orbit-geo)",
+    heo: "var(--orrery-orbit-heo)",
+};
+
+/** The CSS colour of a body: its own, its orbit class's, its id's, then its kind's. */
+export const colorOf = (body: Body): string => {
+    if (body.color !== undefined) return body.color;
+
+    if (
+        body.kind === "spacecraft" &&
+        body.parent === "earth" &&
+        body.elements
+    ) {
+        return ORBIT_CLASS_COLORS[orbitClass(body.elements)];
+    }
+
+    return BODY_COLORS[body.id] ?? KIND_COLORS[body.kind];
+};
 
 /** Colours for `container`. */
 export const createTheme = (container: HTMLElement): Theme => {

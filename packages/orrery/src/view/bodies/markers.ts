@@ -1,8 +1,11 @@
 import type { Body, BodyKind } from "@cpluspatch/orbit";
 import { CanvasTexture, SRGBColorSpace } from "three";
+import { ROLE_ICONS, type RoleKey, roleOf } from "./role-icons.ts";
 
 export const HALO_SCALE = 2.5;
 export const HALO_OPACITY = 0.22;
+
+type RoleShape = `role-${RoleKey}`;
 
 export type Shape =
     | "disc"
@@ -10,18 +13,30 @@ export type Shape =
     | "diamond"
     | "triangle"
     | "teardrop"
-    | "square";
+    | RoleShape;
 
-/** Each kind has its own shape, so colour isn't the only signal. */
-export const SHAPES: Record<BodyKind, Shape> = {
+const KIND_SHAPES: Record<Exclude<BodyKind, "spacecraft">, Shape> = {
     star: "disc",
     planet: "disc",
     dwarf: "ring",
     moon: "diamond",
     asteroid: "triangle",
     comet: "teardrop",
-    spacecraft: "square",
 };
+
+/** Every shape, for building one texture of each. */
+export const SHAPES: Shape[] = [
+    ...(Object.values(KIND_SHAPES) as Shape[]),
+    ...(Object.keys(ROLE_ICONS) as RoleKey[]).map(
+        (role): RoleShape => `role-${role}`,
+    ),
+];
+
+/** Each kind has its own shape and spacecraft one per role, so colour isn't the only signal. */
+export const shapeOf = (body: Body): Shape =>
+    body.kind === "spacecraft"
+        ? `role-${roleOf(body)}`
+        : KIND_SHAPES[body.kind];
 
 /** The on-screen size of each kind's marker, in px. */
 const MARKER_PX: Record<BodyKind, number> = {
@@ -31,7 +46,7 @@ const MARKER_PX: Record<BodyKind, number> = {
     moon: 9,
     asteroid: 8,
     comet: 11,
-    spacecraft: 6,
+    spacecraft: 12,
 };
 
 export const markerPx = (body: Body): number => MARKER_PX[body.kind];
@@ -120,7 +135,12 @@ export const markerTexture = (shape: Shape | "halo"): CanvasTexture => {
     } else if (shape === "teardrop") {
         teardrop(context, reach);
     } else {
-        context.fillRect(EDGE_PX, EDGE_PX, 2 * reach, 2 * reach);
+        // The icons are drawn on a 24-unit grid.
+        context.translate(EDGE_PX, EDGE_PX);
+        context.scale((2 * reach) / 24, (2 * reach) / 24);
+        context.fill(
+            new Path2D(ROLE_ICONS[shape.slice("role-".length) as RoleKey]),
+        );
     }
 
     const texture = new CanvasTexture(canvas);

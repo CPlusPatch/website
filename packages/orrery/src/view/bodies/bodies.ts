@@ -45,7 +45,13 @@ import { type LabelRect, type PickPoint, pickLabel } from "../picking.ts";
 import { spinMatrix } from "../spin.ts";
 import { createEntry, type Entry } from "./entry.ts";
 import { CENTERS, createLabels } from "./labels.ts";
-import { HALO_SCALE, markerPx, markerTexture, type Shape } from "./markers.ts";
+import {
+    HALO_SCALE,
+    markerPx,
+    markerTexture,
+    SHAPES,
+    type Shape,
+} from "./markers.ts";
 import { disposeModel } from "./spacecraft.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
@@ -70,6 +76,8 @@ export type Bodies = {
     hover: (id: string | null) => void;
     /** Sizes the markers for a viewport. */
     resize: (camera: PerspectiveCamera, width: number, height: number) => void;
+    /** Redraws a body's colours, after its orbit or colour changed. */
+    recolor: (body: Body) => void;
     /** Removes the bodies and frees them. */
     dispose: () => void;
 };
@@ -104,14 +112,9 @@ export const createBodies = (
     // Up close, as from the ISS, 128 segments show as facets on Earth's limb.
     const fineGeometry = new SphereGeometry(1, 512, 256);
     // One texture per shape, shared by every body of that shape.
-    const textures: Record<Shape, CanvasTexture> = {
-        disc: markerTexture("disc"),
-        ring: markerTexture("ring"),
-        diamond: markerTexture("diamond"),
-        triangle: markerTexture("triangle"),
-        teardrop: markerTexture("teardrop"),
-        square: markerTexture("square"),
-    };
+    const textures = Object.fromEntries(
+        SHAPES.map((shape) => [shape, markerTexture(shape)]),
+    ) as Record<Shape, CanvasTexture>;
     const haloTexture = markerTexture("halo");
     const entries: Entry[] = [];
     const maps = createMaps(options.anisotropy, options.onMaps);
@@ -495,6 +498,21 @@ export const createBodies = (
             }
 
             styling.measureAll();
+        },
+        recolor: (body) => {
+            const entry = entries.find(({ body: b }) => b.id === body.id);
+            if (!entry) return;
+
+            // The body is replaced on each edit.
+            entry.body = body;
+
+            // Only a satellite's colour follows its orbit, and a mapped sphere must stay white.
+            if (body.kind !== "spacecraft") return;
+
+            const next = color(body);
+            entry.sphere.material.color.copy(next);
+            entry.marker.material.color.copy(next);
+            entry.halo?.material.color.copy(next);
         },
         dispose: () => {
             disposed = true;

@@ -14,7 +14,7 @@ import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Placement } from "../geometry/labels.ts";
 import { createExtras } from "./extras.ts";
 import { CENTERS } from "./labels.ts";
-import { HALO_OPACITY, SHAPES, type Shape } from "./markers.ts";
+import { HALO_OPACITY, type Shape, shapeOf } from "./markers.ts";
 import type { Extra } from "./patches.ts";
 import { createSpacecraftModel } from "./spacecraft.ts";
 
@@ -71,7 +71,7 @@ export const createEntry = (
     const marker = new Sprite(
         new SpriteMaterial({
             sizeAttenuation: false,
-            map: textures[SHAPES[body.kind]],
+            map: textures[shapeOf(body)],
             color: color(body),
             // Markers draw in `renderOrder`, so they mustn't hide each other.
             depthWrite: false,

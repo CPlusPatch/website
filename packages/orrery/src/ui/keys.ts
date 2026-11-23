@@ -1,7 +1,11 @@
+import type { OrbitClass } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { TRACKS } from "../audio/music.ts";
+import type { RoleKey } from "../view/bodies/role-icons.ts";
+import { ORBIT_CLASS_COLORS } from "../view/theme.ts";
+import { roleMarker } from "./body-marker.ts";
 import { h } from "./dom.ts";
 
 /** The keys card, the button that opens it and how to remove them. */
@@ -29,6 +33,50 @@ const KEYS: [keys: string[], what: string][] = [
     [["0"], "Fit the focus"],
     [["Esc"], "Close, or clear the pick"],
 ];
+
+const ORBIT_CLASSES: [OrbitClass, string][] = [
+    ["leo", "Low orbit"],
+    ["meo", "Medium orbit"],
+    ["geo", "Geostationary"],
+    ["heo", "Highly elliptical"],
+];
+
+const ROLES: [RoleKey, string][] = [
+    ["station", "Station"],
+    ["telescope", "Telescope"],
+    ["navigation", "Navigation"],
+    ["earth-observation", "Earth observation"],
+    ["other", "Other"],
+];
+
+/** The legend for the satellites' colours and icons. */
+const createLegend = (): HTMLElement =>
+    h(
+        "section",
+        { class: "orrery__legend" },
+        h("h3", {}, "Satellites"),
+        h(
+            "ul",
+            {},
+            ...ORBIT_CLASSES.map(([orbit, label]) => {
+                const swatch = h("span", { class: "orrery__legend-swatch" });
+                swatch.style.backgroundColor = ORBIT_CLASS_COLORS[orbit];
+                swatch.setAttribute("aria-hidden", "true");
+
+                return h("li", {}, swatch, label);
+            }),
+        ),
+        h(
+            "ul",
+            {},
+            ...ROLES.map(([role, label]) => {
+                const icon = h("span", { class: "orrery__legend-icon" });
+                icon.innerHTML = roleMarker(role);
+
+                return h("li", {}, icon, label);
+            }),
+        ),
+    );
 
 /** A card that lists the keyboard shortcuts, and the "?" button that toggles it. */
 export const createKeys = (): Keys => {
@@ -73,37 +121,42 @@ export const createKeys = (): Keys => {
             closeButton,
         ),
         h(
-            "dl",
-            { class: "orrery__keys-list" },
-            ...KEYS.flatMap(([keys, what]) => [
-                h("dt", {}, ...keys.map((key) => h("kbd", {}, key))),
-                h("dd", {}, what),
-            ]),
-        ),
-        h(
-            "p",
-            { class: "orrery__credits" },
-            // No-break spaces keep each label on the line of what it labels.
-            "Sky: NASA/Goddard Space Flight Center Scientific Visualization Studio, with Gaia data from ESA/Gaia/DPAC. Stars: Yale Bright Star Catalogue. Maps:\u00a0",
+            "div",
+            { class: "orrery__keys-body" },
             h(
-                "a",
-                { href: "https://www.solarsystemscope.com/textures/" },
-                "Solar System Scope",
+                "dl",
+                { class: "orrery__keys-list" },
+                ...KEYS.flatMap(([keys, what]) => [
+                    h("dt", {}, ...keys.map((key) => h("kbd", {}, key))),
+                    h("dd", {}, what),
+                ]),
             ),
-            ", ",
+            createLegend(),
             h(
-                "a",
-                { href: "https://creativecommons.org/licenses/by/4.0/" },
-                "CC BY 4.0",
+                "p",
+                { class: "orrery__credits" },
+                // No-break spaces keep each label on the line of what it labels.
+                "Sky: NASA/Goddard Space Flight Center Scientific Visualization Studio, with Gaia data from ESA/Gaia/DPAC. Stars: Yale Bright Star Catalogue. Maps:\u00a0",
+                h(
+                    "a",
+                    { href: "https://www.solarsystemscope.com/textures/" },
+                    "Solar System Scope",
+                ),
+                ", ",
+                h(
+                    "a",
+                    { href: "https://creativecommons.org/licenses/by/4.0/" },
+                    "CC BY 4.0",
+                ),
+                ". Pluto and Charon:\u00a0NASA/JHUAPL/SwRI. Jupiter's and Saturn's major moons (not Titan), Triton, Phobos, Ceres and Vesta:\u00a0" +
+                    "USGS Astrogeology and DLR, from NASA (Voyager, Galileo, Cassini, Dawn) and " +
+                    "ESA (Mars Express) data. Kerbol system:\u00a0Kerbal Space Program, " +
+                    "\u00a9\u00a0Take-Two Interactive. Sounds:\u00a0Kenney (CC0). Music:\u00a0" +
+                    TRACKS.map(
+                        ({ title, artist }) => `${title} by ${artist}`,
+                    ).join(", ") +
+                    ".",
             ),
-            ". Pluto and Charon:\u00a0NASA/JHUAPL/SwRI. Jupiter's and Saturn's major moons (not Titan), Triton, Phobos, Ceres and Vesta:\u00a0" +
-                "USGS Astrogeology and DLR, from NASA (Voyager, Galileo, Cassini, Dawn) and " +
-                "ESA (Mars Express) data. Kerbol system:\u00a0Kerbal Space Program, " +
-                "\u00a9\u00a0Take-Two Interactive. Sounds:\u00a0Kenney (CC0). Music:\u00a0" +
-                TRACKS.map(({ title, artist }) => `${title} by ${artist}`).join(
-                    ", ",
-                ) +
-                ".",
         ),
     );
     card.hidden = true;
