@@ -36,7 +36,7 @@ export type Entry = {
     offset: number;
     /** Where the label sits, as a class modifier. */
     side: Placement;
-    /** What the sphere has beyond its map: a limb, and Earth's lights and clouds or Saturn's rings. */
+    /** What the sphere has beyond its map: an atmosphere, and Earth's lights and clouds or Saturn's rings. */
     extras: Extra;
     /** Whether the body's map has been asked for. */
     mapped: boolean;

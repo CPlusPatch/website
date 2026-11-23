@@ -6,13 +6,13 @@ import {
     MeshStandardMaterial,
     type SphereGeometry,
 } from "three";
+import { atmosphereExtra } from "./atmosphere.ts";
 import { cloudsExtra } from "./clouds.ts";
-import { limbPatch } from "./limb.ts";
 import { nightExtra } from "./night.ts";
 import { applyPatches, type Extra } from "./patches.ts";
 import { ringsExtra } from "./rings.ts";
 
-/** Everything a body's sphere gets on top of its map: its limb, and for Earth and Saturn more. */
+/** Everything a body's sphere gets on top of its map: its atmosphere, and for Earth and Saturn more. */
 export const createExtras = (
     body: Body,
     group: Group,
@@ -22,9 +22,10 @@ export const createExtras = (
     if (body.id === "earth") extras.push(nightExtra(), cloudsExtra(sphere));
     if (body.id === "saturn") extras.push(ringsExtra(body, group, sphere));
 
-    const limb = limbPatch(body.id);
+    const atmosphere = atmosphereExtra(body, sphere);
+    if (atmosphere) extras.push(atmosphere);
+
     const patches = extras.flatMap((extra) => extra.patches);
-    if (limb) patches.push(limb);
     if (sphere.material instanceof MeshStandardMaterial)
         applyPatches(sphere.material, patches);
 
