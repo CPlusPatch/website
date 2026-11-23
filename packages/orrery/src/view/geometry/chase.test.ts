@@ -1,7 +1,35 @@
 /// <reference types="deno" />
 import { length, type Vec3 } from "@cpluspatch/orbit";
 import { assertAlmostEquals, assertEquals } from "@std/assert";
-import { behindDirection, chaseFrame } from "./chase.ts";
+import {
+    BEHIND_ELEVATION_RAD,
+    behindDirection,
+    chaseFrame,
+    chaseView,
+} from "./chase.ts";
+
+const FOV = (50 * Math.PI) / 180;
+const deg = (d: number): number => (d * Math.PI) / 180;
+
+/** Where the craft and the parent's centre land on screen, as -1 to 1 up the half-frame. */
+const screen = (
+    parentAngularRadiusRad: number,
+): { craft: number; parent: number } => {
+    const view = chaseView(parentAngularRadiusRad, FOV);
+    const camera = behindDirection(view.elevationRad);
+    const target = { x: 0, y: 0, z: -view.nadirOffset };
+    const axis = { x: target.x - camera.x, y: 0, z: target.z - camera.z };
+    const up = (d: Vec3): number => {
+        const k = Math.atan2(d.z, d.x) - Math.atan2(axis.z, axis.x);
+
+        return Math.tan(k) / Math.tan(FOV / 2);
+    };
+
+    return {
+        craft: up({ x: -camera.x, y: 0, z: -camera.z }),
+        parent: up({ x: 0, y: 0, z: -1 }),
+    };
+};
 
 const axes = (m: number[]): [Vec3, Vec3, Vec3] => [
     { x: m[0], y: m[1], z: m[2] },
@@ -38,4 +66,46 @@ Deno.test("the behind direction is a unit vector behind the body and above its t
     assertEquals(d.x < 0, true);
     assertEquals(d.z > 0, true);
     assertEquals(d.y, 0);
+});
+
+Deno.test("a large parent keeps the 15 degree view that looks straight at the craft", () => {
+    const view = chaseView(deg(67), FOV);
+
+    assertEquals(view.elevationRad, BEHIND_ELEVATION_RAD);
+    assertEquals(view.pitchRad, 0);
+    assertEquals(view.nadirOffset, 0);
+});
+
+Deno.test("a 0.5 degree parent lands its centre in the lower third with the craft at or above centre", () => {
+    const { craft, parent } = screen(deg(0.5));
+
+    assertAlmostEquals(parent, -2 / 3, 1e-9);
+    assertEquals(craft >= 0 && craft <= 1, true);
+});
+
+Deno.test("the view is the same for a tiny parent at any size below a degree", () => {
+    const a = chaseView(deg(0.4), FOV);
+    const b = chaseView(deg(0.9), FOV);
+
+    assertAlmostEquals(a.elevationRad, b.elevationRad, 1e-12);
+    assertAlmostEquals(a.nadirOffset, b.nadirOffset, 1e-12);
+});
+
+Deno.test("the view changes in small steps as the parent's angular radius grows", () => {
+    let last = chaseView(0, FOV);
+
+    for (let degrees = 0.1; degrees <= 80; degrees += 0.1) {
+        const view = chaseView(deg(degrees), FOV);
+
+        assertEquals(
+            Math.abs(view.elevationRad - last.elevationRad) < deg(1),
+            true,
+        );
+        assertEquals(
+            Math.abs(view.nadirOffset - last.nadirOffset) < 0.02,
+            true,
+        );
+
+        last = view;
+    }
 });

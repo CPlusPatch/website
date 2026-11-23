@@ -1,5 +1,6 @@
 import {
     type Body,
+    length,
     type Scenario,
     type State,
     sub,
@@ -9,7 +10,7 @@ import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { kmPerPx } from "../scale.ts";
-import { behindDirection, chaseFrame } from "./geometry/chase.ts";
+import { behindDirection, chaseFrame, chaseView } from "./geometry/chase.ts";
 import {
     approachDistance,
     ease,
@@ -107,6 +108,8 @@ type Target = {
 type Turn = { from: Vector3; elapsed: number };
 type Move = { from: Pose; target: Target; distance: number; elapsed: number };
 type Zoom = { to: number };
+/** The look target's offset from the focus, in camera distances, gliding from `from` to `to`. */
+type LookGlide = { from: Vector3; to: Vector3; elapsed: number };
 
 /** A camera that starts above the ecliptic and looks at the root. */
 export const createRig = (
@@ -196,6 +199,9 @@ export const createRig = (
     // The glides of the proxy's direction to behind the focus, and of the camera's up.
     let aim: Turn | null = null;
     let upGlide: Turn | null = null;
+    // Where the camera looks, as a multiple of its distance from the focus, in the proxy's frame.
+    const look = new Vector3();
+    let lookGlide: LookGlide | null = null;
     const up = new Vector3(0, 0, 1);
     const origin: Vec3 = { ...positionOf(root.id) };
 
@@ -244,7 +250,38 @@ export const createRig = (
         upGlide = reducedMotion() ? null : { from: up.clone(), elapsed: 0 };
     };
 
+    // The radius of the body the focus moves around. A followed point moves around the focused body.
+    const parentRadius = (): number => {
+        if (following) return bodyOf(focused).radius;
+
+        const parent = bodyOf(focused).parent;
+
+        return parent === null ? 0 : bodyOf(parent).radius;
+    };
+
+    // Glides the look target to `to`, or jumps there under reduced motion.
+    const startLook = (to: Vector3) => {
+        if (reducedMotion()) {
+            look.copy(to);
+            lookGlide = null;
+
+            return;
+        }
+
+        lookGlide = { from: look.clone(), to: to.clone(), elapsed: 0 };
+    };
+
     const aimBehind = () => {
+        const relative = focusRelative();
+        const distance = relative ? length(relative.r) : 0;
+        const angularRadius =
+            distance > 0
+                ? Math.asin(Math.min(parentRadius() / distance, 1))
+                : 0;
+        const view = chaseView(angularRadius, fovRad);
+        behind.copy(behindDirection(view.elevationRad));
+        startLook(goal.set(0, 0, -view.nadirOffset));
+
         if (reducedMotion()) {
             aim = null;
             proxy.position.copy(behind).setLength(proxy.position.length());
@@ -259,10 +296,12 @@ export const createRig = (
         if (!chasing) return;
 
         proxy.position.applyQuaternion(frame);
+        look.applyQuaternion(frame);
         frame.identity();
         chasing = false;
         aim = null;
         startUpGlide();
+        startLook(goal.set(0, 0, 0));
     };
 
     // A new focus keeps the chase if it has a parent. The camera stays put in the new frame, then
@@ -275,8 +314,10 @@ export const createRig = (
         }
 
         proxy.position.applyQuaternion(frame);
+        look.applyQuaternion(frame);
         refreshFrame();
         proxy.position.applyQuaternion(rest.copy(frame).invert());
+        look.applyQuaternion(rest);
         startUpGlide();
         aimBehind();
     };
@@ -309,7 +350,10 @@ export const createRig = (
 
         camera.position.copy(proxy.position).applyQuaternion(frame);
         camera.up.copy(up);
-        camera.lookAt(0, 0, 0);
+        goal.copy(look)
+            .multiplyScalar(proxy.position.length())
+            .applyQuaternion(frame);
+        camera.lookAt(goal);
     };
 
     // The up the camera has, which glides to the frame's Z, or to the ecliptic's when not chasing.
@@ -344,6 +388,16 @@ export const createRig = (
         const distance = proxy.position.length();
         swing(proxy.position, aim.from, behind, ease(s)).setLength(distance);
         if (s === 1) aim = null;
+    };
+
+    const advanceLook = (dt: number) => {
+        if (!lookGlide) return;
+
+        lookGlide.elapsed += dt;
+
+        const s = Math.min(lookGlide.elapsed / FOCUS_SECONDS, 1);
+        look.lerpVectors(lookGlide.from, lookGlide.to, ease(s));
+        if (s === 1) lookGlide = null;
     };
 
     const fit = () => {
@@ -606,6 +660,7 @@ export const createRig = (
             }
 
             advanceAim(dt);
+            advanceLook(dt);
             controls.update();
             advanceUp(dt);
             place();
