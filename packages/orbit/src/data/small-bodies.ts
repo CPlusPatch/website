@@ -1,9 +1,8 @@
-import { AU, DAY, G } from "../constants.ts";
+import { AU, DAY, G, km } from "../constants.ts";
 import { wrapAngle } from "../kepler.ts";
 import type { Body, BodyKind } from "../scenario.ts";
 
 const deg = (x: number): number => (x * Math.PI) / 180;
-const km = (x: number): number => x * 1000;
 
 // The SBDB epochs are TDB. The app's seconds are UTC-based, so they're ~69 s off, which is ignored.
 const J2000_JD = 2451545.0;

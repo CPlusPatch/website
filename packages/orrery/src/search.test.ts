@@ -40,6 +40,15 @@ Deno.test("each body is followed by its children, before the next sibling", () =
     const earth = order.indexOf("Earth");
 
     assertEquals(order.length, solarSystem.bodies.length);
-    assertEquals(order.slice(earth + 1, earth + 3).sort(), ["ISS", "Moon"]);
-    assertEquals(order.indexOf("Mars"), earth + 3);
+    assertEquals(order.slice(earth + 1, earth + 9).sort(), [
+        "GOES-19",
+        "GPS BIII-1",
+        "Hubble",
+        "ISS",
+        "Landsat 9",
+        "Meridian 10",
+        "Moon",
+        "Tiangong",
+    ]);
+    assertEquals(order.indexOf("Mars"), earth + 9);
 });

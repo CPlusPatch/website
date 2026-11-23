@@ -1,10 +1,17 @@
 /// <reference types="deno" />
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
+import { DAY } from "./constants.ts";
+import { solarSystem } from "./data/solar-system.ts";
 import { assertVecClose, MU } from "./fixture.ts";
 import type { Elements } from "./kepler.ts";
 import { axes, orbitPoints, stateAt, wrapAngle } from "./kepler.ts";
 import type { Precession } from "./precession.ts";
-import { elementsAt, precess, precessionTurns } from "./precession.ts";
+import {
+    elementsAt,
+    j2Precession,
+    precess,
+    precessionTurns,
+} from "./precession.ts";
 import type { Body } from "./scenario.ts";
 import { cross, dot, normalize, rotate } from "./vec.ts";
 
@@ -199,4 +206,52 @@ Deno.test("turning the epoch orbit by the precession turns gives the precessed o
             1e-6,
         );
     }
+});
+
+const satelliteRates = (id: string) => {
+    const body = solarSystem.bodies.find((b) => b.id === id);
+    const precession = body?.precession;
+
+    assert(precession, `${id} has no precession`);
+
+    const perDay = (rate: number) => (rate * DAY * 180) / Math.PI;
+
+    return {
+        node: perDay(precession.nodeRate),
+        argp: perDay(precession.argpRate),
+    };
+};
+
+Deno.test("the ISS node regresses about 5 degrees a day", () => {
+    assertAlmostEquals(satelliteRates("iss").node, -5.0, 0.2);
+});
+
+Deno.test("Landsat 9's node advances with the Sun, 0.9856 degrees a day", () => {
+    assertAlmostEquals(satelliteRates("landsat-9").node, 0.9856, 0.03);
+});
+
+Deno.test("Meridian 10 is near the critical inclination, so its periapsis barely turns", () => {
+    assertAlmostEquals(satelliteRates("meridian-10").argp, 0, 0.05);
+});
+
+Deno.test("GOES-19's node regresses by a small amount", () => {
+    const { node } = satelliteRates("goes-19");
+
+    assert(node < 0 && node > -0.05, `node rate is ${node} degrees a day`);
+});
+
+Deno.test("j2Precession leaves a polar orbit's node still and turns its periapsis back", () => {
+    const polar: Elements = {
+        ...el,
+        a: 7e6,
+        e: 0,
+        i: Math.PI / 2,
+        raan: 0,
+        argp: 0,
+    };
+    const pole = { x: 0, y: 0, z: 1 };
+    const { nodeRate, argpRate } = j2Precession(polar, MU, 1e-3, 6.4e6, pole);
+
+    assertAlmostEquals(nodeRate, 0, 1e-15);
+    assert(argpRate < 0);
 });

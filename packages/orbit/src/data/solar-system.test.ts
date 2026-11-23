@@ -23,7 +23,7 @@ const find = (id: string) => {
     return { ...body, elements: body.elements };
 };
 
-Deno.test("there are 38 bodies with the expected ids", () => {
+Deno.test("there are 44 bodies with the expected ids", () => {
     assertEquals(
         solarSystem.bodies.map((b) => b.id),
         [
@@ -45,6 +45,12 @@ Deno.test("there are 38 bodies with the expected ids", () => {
             "halley",
             "moon",
             "iss",
+            "hubble",
+            "tiangong",
+            "landsat-9",
+            "gps-biii-1",
+            "goes-19",
+            "meridian-10",
             "phobos",
             "deimos",
             "io",
@@ -96,7 +102,7 @@ Deno.test("the Moon's period around the Earth is 27.32 days", () => {
     );
 });
 
-Deno.test("the ISS orbits in about 93 minutes from an epoch on 2026-11-21", () => {
+Deno.test("the ISS orbits in about 93 minutes from an epoch on 2026-11-23", () => {
     const earth = find("earth");
     const iss = find("iss");
     const minutes = period(iss.elements, earth.mu + iss.mu) / 60;
@@ -104,11 +110,11 @@ Deno.test("the ISS orbits in about 93 minutes from an epoch on 2026-11-21", () =
     assert(minutes > 92 && minutes < 94, `period is ${minutes} minutes`);
     assertEquals(
         new Date(j2000sToUnixMs(iss.elements.epoch)).toISOString().slice(0, 10),
-        "2026-11-21",
+        "2026-11-23",
     );
 });
 
-Deno.test("the ISS inclination is converted to the ecliptic and recovers 51.6319 degrees", () => {
+Deno.test("the ISS inclination is converted to the ecliptic and recovers 51.632 degrees", () => {
     const earth = find("earth");
     const iss = find("iss");
     const mu = earth.mu + iss.mu;
@@ -125,8 +131,8 @@ Deno.test("the ISS inclination is converted to the ecliptic and recovers 51.6319
     });
     const h = cross(back(r), back(v));
 
-    assert(Math.abs(toDeg(iss.elements.i) - 51.6319) > 1);
-    assertAlmostEquals(toDeg(Math.acos(h.z / length(h))), 51.6319, 1e-6);
+    assert(Math.abs(toDeg(iss.elements.i) - 51.632) > 1);
+    assertAlmostEquals(toDeg(Math.acos(h.z / length(h))), 51.632, 1e-6);
 });
 
 Deno.test("Earth's negative Table 1 inclination is the same orbit after the flip", () => {
@@ -259,6 +265,36 @@ Deno.test("only moons with a period for the node or apsides precess", () => {
     assert((body("io")?.precession?.argpRate ?? 0) !== 0);
     assert((body("triton")?.precession?.nodeRate ?? 0) > 0);
     assert((body("titan")?.precession?.nodeRate ?? 0) < 0);
+});
+
+Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
+    const spacecraft = solarSystem.bodies.filter(
+        (b) => b.kind === "spacecraft" && b.parent === "earth",
+    );
+
+    assertEquals(spacecraft.length, 7);
+
+    for (const body of spacecraft) {
+        assert(body.precession, `${body.id} has no precession`);
+        assert(body.precession.nodeRate !== 0, `${body.id} has no node rate`);
+        assertAlmostEquals(
+            body.precession.pole.z,
+            Math.cos(OBLIQUITY_J2000),
+            1e-12,
+        );
+    }
+});
+
+Deno.test("GPS orbits in 718 minutes and GOES-19 in 1436", () => {
+    const earth = find("earth");
+    const minutes = (id: string) => {
+        const body = find(id);
+
+        return period(body.elements, earth.mu + body.mu) / 60;
+    };
+
+    assertAlmostEquals(minutes("gps-biii-1"), 718, 2);
+    assertAlmostEquals(minutes("goes-19"), 1436, 2);
 });
 
 // Unit vectors from the parent to the moon in ecliptic J2000, from JPL Horizons (geometric

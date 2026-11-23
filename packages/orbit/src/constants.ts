@@ -12,3 +12,6 @@ export const OBLIQUITY_J2000 = ((84381.448 / 3600) * Math.PI) / 180;
 
 /** The gravitational constant, in m³ kg⁻¹ s⁻². */
 export const G = 6.6743e-11;
+
+/** Kilometres to metres. */
+export const km = (x: number): number => x * 1000;

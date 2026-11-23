@@ -1,15 +1,13 @@
-import { AU, DAY, G } from "../constants.ts";
-import { equatorialToEcliptic } from "../frames.ts";
+import { AU, DAY, G, km } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
 import { wrapAngle } from "../kepler.ts";
 import type { Body, Scenario } from "../scenario.ts";
-import { unixMsToJ2000s } from "../time.ts";
 import { moonBodies } from "./moons.ts";
+import { satellites } from "./satellites.ts";
 import { smallBodies } from "./small-bodies.ts";
 
 const deg = (x: number): number => (x * Math.PI) / 180;
 const au = (x: number): number => x * AU;
-const km = (x: number): number => x * 1000;
 
 type Table1Row = {
     /** Semi-major axis in au. */
@@ -150,7 +148,6 @@ const planet = (id: string, name: string, kind: "planet" | "dwarf"): Body => {
 };
 
 const EARTH_MU = G * PHYSICAL.earth.mass * 1e24;
-const ISS_MU = 0;
 
 const MOON_MU = 4.9028e12;
 // Meeus's mean longitude rate, 481 267.8813° per century: a sidereal month of 27.3216 d.
@@ -170,40 +167,6 @@ const MOON: Elements = {
     epoch: 0,
 };
 
-/** Converts a TLE to ecliptic elements around a parent with gravitational parameter `mu`. */
-const fromTle = (line1: string, line2: string, mu: number): Elements => {
-    const twoDigitYear = Number(line1.slice(18, 20));
-    const year = twoDigitYear < 57 ? 2000 + twoDigitYear : 1900 + twoDigitYear;
-    const day = Number(line1.slice(20, 32));
-    const revPerDay = Number(line2.slice(52, 63));
-
-    // Day 1.0 is Jan 1 00:00 UTC.
-    const epoch = unixMsToJ2000s(Date.UTC(year, 0, 1) + (day - 1) * DAY * 1000);
-    const n = (revPerDay * 2 * Math.PI) / DAY;
-
-    // The period comes from the mean motion, so a is chosen to match it for this mu.
-    const equatorial: Elements = {
-        a: (mu / n ** 2) ** (1 / 3),
-        e: Number(`0.${line2.slice(26, 33)}`),
-        i: deg(Number(line2.slice(8, 16))),
-        raan: deg(Number(line2.slice(17, 25))),
-        argp: deg(Number(line2.slice(34, 42))),
-        m0: deg(Number(line2.slice(43, 51))),
-        epoch,
-    };
-
-    // TLEs are TEME mean elements, treated as osculating J2000 equatorial.
-    // J2 precession and drag are ignored, so it drifts within days.
-    return equatorialToEcliptic(equatorial, mu);
-};
-
-// Fetched from CelesTrak at 2026-11-21T14:29:51Z.
-// https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle
-const ISS_TLE = [
-    "1 25544U 98067A   26325.20426939  .00011207  00000+0  20733-3 0  9991",
-    "2 25544  51.6319 243.0636 0007384  49.3258 310.8372 15.49527370596090",
-] as const;
-
 /** The gravitational parameter of each planet and Pluto, for the moons' orbits. */
 const PARENT_MU = Object.fromEntries(
     Object.entries(PHYSICAL).map(([id, { mass }]) => [id, G * mass * 1e24]),
@@ -211,7 +174,7 @@ const PARENT_MU = Object.fromEntries(
 
 /**
  * The Sun, the planets, Pluto, four more dwarf planets, Vesta, Halley, 21 moons
- * (including ours) and the ISS.
+ * (including ours), the ISS and six more Earth satellites.
  */
 export const solarSystem: Scenario = {
     version: 1,
@@ -246,16 +209,7 @@ export const solarSystem: Scenario = {
             radius: km(1737.4),
             elements: MOON,
         },
-        {
-            id: "iss",
-            name: "ISS",
-            kind: "spacecraft",
-            parent: "earth",
-            mu: ISS_MU,
-            // Display only.
-            radius: km(0.05),
-            elements: fromTle(ISS_TLE[0], ISS_TLE[1], EARTH_MU + ISS_MU),
-        },
+        ...satellites(EARTH_MU),
         ...moonBodies(PARENT_MU),
     ],
 };

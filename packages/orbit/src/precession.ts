@@ -35,6 +35,28 @@ export const precessionTurns = (
     ];
 };
 
+/** Secular J2 drift of the node and periapsis of `el` around a parent oblate about `pole`. */
+export const j2Precession = (
+    el: Elements,
+    mu: number,
+    j2: number,
+    radius: number,
+    pole: Vec3,
+): Precession => {
+    const n = Math.sqrt(mu / el.a ** 3);
+    const p = el.a * (1 - el.e ** 2);
+    const k = n * j2 * (radius / p) ** 2;
+
+    const { p: periapsis, q } = axes(el);
+    const cosI = dot(cross(periapsis, q), pole);
+
+    return {
+        pole,
+        nodeRate: -1.5 * k * cosI,
+        argpRate: 0.75 * k * (5 * cosI ** 2 - 1),
+    };
+};
+
 /** The orbit `el` after it has precessed by `p` from its epoch to time `t`. */
 export const precess = (el: Elements, p: Precession, t: number): Elements => {
     const { p: periapsis } = axes(el);

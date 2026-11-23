@@ -30,7 +30,12 @@ export {
 export type { Orientation, RotationModel } from "./orientation.ts";
 export { bodyOrientation, orientationFromPole } from "./orientation.ts";
 export type { Precession, Turn } from "./precession.ts";
-export { elementsAt, precess, precessionTurns } from "./precession.ts";
+export {
+    elementsAt,
+    j2Precession,
+    precess,
+    precessionTurns,
+} from "./precession.ts";
 export type { Body, BodyKind, Scenario, ScenarioResult } from "./scenario.ts";
 export { sortByDepth, validateScenario } from "./scenario.ts";
 export { worldStates } from "./system.ts";
