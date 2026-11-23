@@ -23,6 +23,8 @@ export interface Props {
     canonical?: boolean;
     /** Off for pages that are only parts of others, like gallery stories. */
     analytics?: boolean;
+    /** A 1200×630 PNG under public/ for share cards, with its alt text. */
+    image?: { path: string; alt: string };
 }
 
 const {
@@ -31,13 +33,15 @@ const {
     noindex = false,
     canonical: hasCanonical = true,
     analytics = true,
+    image = {
+        path: "/og.png",
+        alt: "Hi, I'm CPlusPatch. I write software. Beside it, a terminal showing neofetch.",
+    },
 } = Astro.props;
 
 const pageTitle = title === site.name ? title : `${title} — ${site.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
-const ogImage = new URL("/og.png", Astro.site ?? Astro.url);
-const ogImageAlt =
-    "Hi, I'm CPlusPatch. I write software. Beside it, a terminal showing neofetch.";
+const ogImage = new URL(image.path, Astro.site ?? Astro.url);
 ---
 
 <meta charset="utf-8">
@@ -60,12 +64,12 @@ const ogImageAlt =
 <meta property="og:title" content={pageTitle}>
 {description && <meta property="og:description" content={description} />}
 {hasCanonical && <meta property="og:url" content={canonical.href} />}
-{/* One for the whole site: the front page's hero, in the dark scheme. */}
+{/* By default the front page's hero, in the dark scheme. */}
 <meta property="og:image" content={ogImage.href}>
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content={ogImageAlt}>
+<meta property="og:image:alt" content={image.alt}>
 <meta name="twitter:card" content="summary_large_image">
 
 {/*
