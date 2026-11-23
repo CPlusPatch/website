@@ -4,6 +4,7 @@
  */
 
 import { OBLIQUITY_J2000 } from "@cpluspatch/orbit";
+import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import {
     AdditiveBlending,
     BackSide,
@@ -42,12 +43,26 @@ const MILKY_WAY_SATURATION = 0.7;
 /** The linear brightness where the Milky Way starts to compress, so the core stays dim. */
 const MILKY_WAY_KNEE = 0.01;
 
+/** How long the sky takes to fade in, in ms. */
+const FADE_MS = 600;
+
+const STARS_URL = new URL("../assets/stars.bin", import.meta.url);
+const MILKY_WAY_URL = new URL("../assets/milky-way.webp", import.meta.url);
+
 type Disposable = { dispose: () => void };
 
 /** The sky, drawn before the scene. */
 export type Sky = {
-    /** Fetches the stars and the Milky Way. Rejects if `signal` aborts or a fetch fails. */
-    load: (signal: AbortSignal) => Promise<void>;
+    /**
+     * Fetches the stars and the Milky Way. Rejects if `signal` aborts or a fetch fails.
+     * `onProgress` hears the fraction of the bytes received, when both files give their length.
+     */
+    load: (
+        signal: AbortSignal,
+        onProgress?: (fraction: number) => void,
+    ) => Promise<void>;
+    /** Marks the loading state as gone. A sky that arrives later fades in. */
+    reveal: () => void;
     /** Draws the sky as seen by `camera`. Does nothing until `load` has finished. */
     render: (renderer: WebGLRenderer, camera: PerspectiveCamera) => void;
     /** Whether `render` draws anything yet. */
@@ -68,6 +83,7 @@ void main() {
 const MILKY_WAY_FRAGMENT = /* glsl */ `
 uniform sampler2D map;
 uniform float strength;
+uniform float fade;
 uniform float saturation;
 uniform float knee;
 uniform vec2 tilt;
@@ -80,7 +96,7 @@ void main() {
     float ra = atan(q.y, q.x);
     float dec = asin(clamp(q.z, -1.0, 1.0));
     vec2 uv = vec2(fract(0.5 - ra / 6.283185307179586), 0.5 + dec / 3.141592653589793);
-    vec3 c = texture2D(map, uv).rgb * strength;
+    vec3 c = texture2D(map, uv).rgb * strength * fade;
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
     c = mix(vec3(l), c, saturation);
     c /= 1.0 + l / knee;
@@ -103,12 +119,13 @@ void main() {
 `;
 
 const STARS_FRAGMENT = /* glsl */ `
+uniform float fade;
 varying vec3 vColor;
 
 void main() {
     float r = length(gl_PointCoord - 0.5) * 2.0;
     if (r > 1.0) discard;
-    float alpha = exp(-r * r * 2.5);
+    float alpha = exp(-r * r * 2.5) * fade;
     gl_FragColor = vec4(vColor, alpha);
     #include <colorspace_fragment>
 }
@@ -136,12 +153,14 @@ const starColors = (stars: Star[]): Float32Array => {
     return out;
 };
 
+type Fade = { value: number };
+
 type Built = {
     object: Object3D;
     disposables: Disposable[];
 };
 
-const buildMilkyWay = (texture: Texture): Built => {
+const buildMilkyWay = (texture: Texture, fade: Fade): Built => {
     texture.colorSpace = SRGBColorSpace;
     texture.wrapS = RepeatWrapping;
     // Mipmaps would show a seam where the lookup wraps.
@@ -154,6 +173,7 @@ const buildMilkyWay = (texture: Texture): Built => {
         uniforms: {
             map: { value: texture },
             strength: { value: MILKY_WAY_STRENGTH },
+            fade,
             saturation: { value: MILKY_WAY_SATURATION },
             knee: { value: MILKY_WAY_KNEE },
             tilt: {
@@ -177,7 +197,11 @@ const buildMilkyWay = (texture: Texture): Built => {
     return { object: mesh, disposables: [geometry, material] };
 };
 
-const buildStars = (stars: Star[], pixelRatio: { value: number }): Built => {
+const buildStars = (
+    stars: Star[],
+    pixelRatio: { value: number },
+    fade: Fade,
+): Built => {
     const geometry = new BufferGeometry();
     geometry.setAttribute(
         "position",
@@ -193,7 +217,7 @@ const buildStars = (stars: Star[], pixelRatio: { value: number }): Built => {
     geometry.setAttribute("color", new BufferAttribute(starColors(stars), 3));
 
     const material = new ShaderMaterial({
-        uniforms: { pixelRatio },
+        uniforms: { pixelRatio, fade },
         vertexShader: STARS_VERTEX,
         fragmentShader: STARS_FRAGMENT,
         transparent: true,
@@ -209,6 +233,64 @@ const buildStars = (stars: Star[], pixelRatio: { value: number }): Built => {
     return { object: points, disposables: [geometry, material] };
 };
 
+const checkResponse = (response: Response, name: string) => {
+    if (!response.ok) {
+        throw new Error(
+            `The ${name} file gave ${response.status} ${response.statusText}.`,
+        );
+    }
+};
+
+/** The sum of the `Content-Length`s, or `null` if a response has none. */
+const totalLength = (responses: Response[]): number | null => {
+    let total = 0;
+    for (const response of responses) {
+        // A compressed body's length isn't the length the reader counts.
+        if (response.headers.has("Content-Encoding")) return null;
+
+        const length = Number(response.headers.get("Content-Length"));
+        if (!(length > 0)) return null;
+
+        total += length;
+    }
+
+    return total;
+};
+
+/** The body of `response`, reporting each chunk's size to `onChunk`. */
+const readBytes = async (
+    response: Response,
+    onChunk: (bytes: number) => void,
+): Promise<Uint8Array<ArrayBuffer>> => {
+    if (!response.body) {
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        onChunk(bytes.length);
+
+        return bytes;
+    }
+
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        length += value.length;
+        onChunk(value.length);
+    }
+
+    const out = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+        out.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    return out;
+};
+
 /** A sky that draws nothing until it's loaded. */
 export const createSky = (): Sky => {
     const scene = new Scene();
@@ -216,58 +298,89 @@ export const createSky = (): Sky => {
     const camera = new PerspectiveCamera();
     let disposables: Disposable[] = [];
     let pixelRatio = { value: 1 };
+    // Shared by both materials, so the whole sky fades together.
+    const fade: Fade = { value: 0 };
+    let shownAt: number | null = null;
     let ready = false;
+    let revealed = false;
 
     return {
-        load: async (signal) => {
-            // allSettled, so a texture that loads after the fetch fails is still disposed.
-            const [fetched, loaded] = await Promise.allSettled([
-                fetch(new URL("../assets/stars.bin", import.meta.url), {
-                    signal,
-                }),
-                new TextureLoader().loadAsync(
-                    new URL("../assets/milky-way.webp", import.meta.url).href,
-                ),
-            ]);
-            const texture =
-                loaded.status === "fulfilled" ? loaded.value : undefined;
+        load: async (signal, onProgress) => {
+            // Aborted when either file fails, so the other doesn't keep downloading.
+            const failed = new AbortController();
+            const both = AbortSignal.any([signal, failed.signal]);
+            let starsBytes: Uint8Array<ArrayBuffer>;
+            let milkyWayBytes: Uint8Array<ArrayBuffer>;
+            try {
+                const [starsResponse, milkyWayResponse] = await Promise.all([
+                    fetch(STARS_URL, { signal: both }),
+                    fetch(MILKY_WAY_URL, { signal: both }),
+                ]);
+                checkResponse(starsResponse, "star");
+                checkResponse(milkyWayResponse, "Milky Way");
+
+                const total = totalLength([starsResponse, milkyWayResponse]);
+                let received = 0;
+                const count = (bytes: number) => {
+                    received += bytes;
+                    if (total !== null)
+                        onProgress?.(Math.min(received / total, 1));
+                };
+                [starsBytes, milkyWayBytes] = await Promise.all([
+                    readBytes(starsResponse, count),
+                    readBytes(milkyWayResponse, count),
+                ]);
+            } catch (error) {
+                failed.abort();
+                throw error;
+            }
+            signal.throwIfAborted();
+
+            const stars = decodeStars(starsBytes);
+            const objectUrl = URL.createObjectURL(
+                new Blob([milkyWayBytes], { type: "image/webp" }),
+            );
+            let texture: Texture;
+            try {
+                texture = await new TextureLoader().loadAsync(objectUrl);
+            } finally {
+                URL.revokeObjectURL(objectUrl);
+            }
 
             try {
-                if (fetched.status === "rejected") throw fetched.reason;
-                if (loaded.status === "rejected") throw loaded.reason;
-                signal.throwIfAborted();
-
-                const response = fetched.value;
-                if (!response.ok) {
-                    throw new Error(
-                        `The star file gave ${response.status} ${response.statusText}.`,
-                    );
-                }
-
-                const stars = decodeStars(
-                    new Uint8Array(await response.arrayBuffer()),
-                );
                 signal.throwIfAborted();
 
                 pixelRatio = { value: 1 };
-                const milkyWay = buildMilkyWay(loaded.value);
-                const points = buildStars(stars, pixelRatio);
+                const milkyWay = buildMilkyWay(texture, fade);
+                const points = buildStars(stars, pixelRatio, fade);
 
                 scene.add(milkyWay.object, points.object);
                 disposables = [
                     ...milkyWay.disposables,
                     ...points.disposables,
-                    loaded.value,
+                    texture,
                 ];
+                // A sky that's ready before the reveal is part of the first picture.
+                if (!revealed) fade.value = 1;
                 ready = true;
             } catch (error) {
-                texture?.dispose();
+                texture.dispose();
                 throw error;
             }
+        },
+        reveal: () => {
+            revealed = true;
         },
         render: (renderer, main) => {
             if (!ready) return;
 
+            if (fade.value < 1) {
+                const now = performance.now();
+                shownAt ??= now;
+                fade.value = reducedMotion()
+                    ? 1
+                    : Math.min((now - shownAt) / FADE_MS, 1);
+            }
             // The projection carries the main camera's view offset.
             main.getWorldQuaternion(camera.quaternion);
             camera.projectionMatrix.copy(main.projectionMatrix);

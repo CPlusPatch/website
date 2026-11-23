@@ -27,6 +27,10 @@ export type View = EditScene & {
     fitFocus: () => void;
     /** The km one CSS pixel spans at the focus, or 0 before the view has a size. */
     kmPerPx: () => number;
+    /** Marks the loading state as gone; a sky that arrives later fades in. */
+    reveal: () => void;
+    /** Resolves once the first frame is drawn and the sky and every map asked for by then have settled. Never rejects. */
+    ready: Promise<void>;
     destroy: () => void;
 };
 
@@ -35,6 +39,8 @@ export type View = EditScene & {
  * `blocked` gives the rects, in px from the container's top left, that labels keep out of.
  * `band` gives the rows the panels leave free, where the focus is centred.
  * `units` sets the unit of the distances in the notes.
+ * `onLoading` hears the files done of the files started, for the sky and the maps, and how full the bar is, from 0 to 1.
+ * The sky counts as one file, and fills the bar by the bytes it has received.
  */
 export const createView = (
     container: HTMLElement,
@@ -42,6 +48,7 @@ export const createView = (
     blocked: () => Rect[],
     band: () => Band,
     units: Units,
+    onLoading?: (done: number, total: number, fill: number) => void,
 ): View | null => {
     let renderer: WebGLRenderer;
     try {
@@ -86,6 +93,33 @@ export const createView = (
     const plain =
         matchMedia("(forced-colors: active)").matches ||
         matchMedia("(prefers-contrast: more)").matches;
+    // The sky counts as one file, the stars and the Milky Way together.
+    let skyDone = 0;
+    let skyFraction = 0;
+    let mapsDone = 0;
+    let mapsTotal = 0;
+    let drawn = false;
+    const { promise: ready, resolve: resolveReady } =
+        Promise.withResolvers<void>();
+    const skyTotal = plain ? 0 : 1;
+    let destroyed = false;
+    const report = () => {
+        // The sky and maps of a destroyed view can still settle.
+        if (destroyed) return;
+
+        const total = skyTotal + mapsTotal;
+        if (total > 0) {
+            onLoading?.(
+                skyDone + mapsDone,
+                total,
+                (skyFraction + mapsDone) / total,
+            );
+        }
+        // The maps of the first frame are started by then.
+        if (drawn && skyDone === skyTotal && mapsDone === mapsTotal) {
+            resolveReady();
+        }
+    };
     const bodies = createBodies(
         scene,
         labels.domElement,
@@ -94,6 +128,11 @@ export const createView = (
         {
             maps: !plain,
             anisotropy: renderer.capabilities.getMaxAnisotropy(),
+            onMaps: (done, total) => {
+                mapsDone = done;
+                mapsTotal = total;
+                report();
+            },
         },
     );
 
@@ -169,12 +208,22 @@ export const createView = (
 
     const sky = createSky();
     const loading = new AbortController();
+    report();
     if (!plain) {
-        sky.load(loading.signal).catch((error: unknown) => {
-            if (loading.signal.aborted) return;
+        sky.load(loading.signal, (fraction) => {
+            skyFraction = fraction;
+            report();
+        })
+            .catch((error: unknown) => {
+                if (loading.signal.aborted) return;
 
-            console.warn("The Orrery couldn't load the sky.", error);
-        });
+                console.warn("The Orrery couldn't load the sky.", error);
+            })
+            .finally(() => {
+                skyDone = skyTotal;
+                skyFraction = 1;
+                report();
+            });
     }
     let skyCleared = false;
 
@@ -221,6 +270,10 @@ export const createView = (
             [...keepOut, ...rooms],
         );
         grips.placeNote(bodies.placed());
+        if (!drawn) {
+            drawn = true;
+            report();
+        }
         readouts.update({
             camera,
             origin: rig.origin(),
@@ -274,7 +327,12 @@ export const createView = (
         zoom: rig.zoom,
         fitFocus: rig.fitFocus,
         kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
+        reveal: sky.reveal,
+        ready,
         destroy: () => {
+            // A view that goes before it's ready doesn't hold the reveal.
+            destroyed = true;
+            resolveReady();
             unsubscribe();
             unbindPointer();
             cancelAnimationFrame(frame);

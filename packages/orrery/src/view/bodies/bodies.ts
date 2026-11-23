@@ -78,6 +78,8 @@ export type BodyOptions = {
     maps: boolean;
     /** The anisotropy of each map. */
     anisotropy: number;
+    /** Hears each map request and each map that settles, as done of total. */
+    onMaps?: (done: number, total: number) => void;
 };
 
 /** The bodies of a scenario, in km, with their labels measured in `host`. */
@@ -102,7 +104,7 @@ export const createBodies = (
     };
     const haloTexture = markerTexture("halo");
     const entries: Entry[] = [];
-    const maps = createMaps(options.anisotropy);
+    const maps = createMaps(options.anisotropy, options.onMaps);
     const spin = new Matrix4();
     const styling = createLabels(host, entries);
 

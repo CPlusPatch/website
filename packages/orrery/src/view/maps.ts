@@ -74,12 +74,21 @@ export type Maps = {
     dispose: () => void;
 };
 
-/** Maps that load on demand, with `anisotropy` set on each. */
-export const createMaps = (anisotropy: number): Maps => {
+/** Maps that load on demand, with `anisotropy` set on each. `onChange` hears each start and settle. */
+export const createMaps = (
+    anisotropy: number,
+    onChange?: (done: number, total: number) => void,
+): Maps => {
     const loader = new TextureLoader();
     const started = new Set<string>();
     const loaded: Texture[] = [];
     let disposed = false;
+    let settled = 0;
+
+    const settle = () => {
+        settled++;
+        onChange?.(settled, started.size);
+    };
 
     return {
         load: (id, onLoad) => {
@@ -87,6 +96,7 @@ export const createMaps = (anisotropy: number): Maps => {
             if (url === undefined || started.has(id)) return;
 
             started.add(id);
+            onChange?.(settled, started.size);
             loader.loadAsync(url).then(
                 (texture) => {
                     if (disposed) {
@@ -100,12 +110,14 @@ export const createMaps = (anisotropy: number): Maps => {
                     texture.anisotropy = anisotropy;
                     loaded.push(texture);
                     onLoad(texture);
+                    settle();
                 },
                 (error: unknown) => {
                     console.warn(
                         `The Orrery couldn't load the map of ${id}.`,
                         error,
                     );
+                    settle();
                 },
             );
         },
