@@ -23,6 +23,11 @@
         &[aria-pressed="true"] {
             background-color: var(--orrery-go);
             color: var(--orrery-go-ink);
+
+            /* The plain hover outranks this, and its grey hid the dark ink. */
+            &:hover:not(:disabled) {
+                background-color: var(--color-success-hover);
+            }
         }
 
         /* Struck through, so disabled differs in shape, not only in colour. */
