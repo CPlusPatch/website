@@ -49,7 +49,7 @@ const PROBES: Probe[] = [
         argp: 2.474579407178342e2,
         n: 5.344071942776321e-2,
         m: 1.041850228909853e2,
-        radius: 6.8,
+        radius: 7.6,
     },
     {
         id: "mars-express",
@@ -61,7 +61,7 @@ const PROBES: Probe[] = [
         argp: 5.973029261766103e1,
         n: 1.43145588198146e-2,
         m: 2.669840690702506e1,
-        radius: 6,
+        radius: 7.0,
     },
     {
         id: "mars-odyssey",
@@ -73,7 +73,7 @@ const PROBES: Probe[] = [
         argp: 3.065494948206198e2,
         n: 5.069693275457881e-2,
         m: 2.179841229815442e2,
-        radius: 3.5,
+        radius: 5.6,
     },
     {
         id: "tgo",
@@ -85,7 +85,7 @@ const PROBES: Probe[] = [
         argp: 2.554824678068956e2,
         n: 5.115671361663326e-2,
         m: 3.455324785155294e2,
-        radius: 8.8,
+        radius: 9.4,
     },
     {
         id: "hope",
@@ -97,7 +97,7 @@ const PROBES: Probe[] = [
         argp: 2.364344783111673e2,
         n: 1.800268411148792e-3,
         m: 3.590641259080228e2,
-        radius: 4,
+        radius: 5.0,
     },
     {
         id: "lro",
@@ -109,7 +109,7 @@ const PROBES: Probe[] = [
         argp: 1.617430876686674e2,
         n: 5.135253060762546e-2,
         m: 3.027323492368843e2,
-        radius: 3,
+        radius: 3.5,
     },
     {
         id: "chandrayaan-2",
@@ -121,7 +121,7 @@ const PROBES: Probe[] = [
         argp: 3.304561551631276e2,
         n: 5.087247556960483e-2,
         m: 1.387050510557551e2,
-        radius: 4,
+        radius: 3.6,
     },
     {
         id: "danuri",
@@ -133,7 +133,7 @@ const PROBES: Probe[] = [
         argp: 2.732330042092777e2,
         n: 4.966778108266254e-2,
         m: 6.496339844977224e1,
-        radius: 4,
+        radius: 4.3,
     },
     {
         id: "juno",
@@ -145,7 +145,7 @@ const PROBES: Probe[] = [
         argp: 1.02598323813354e2,
         n: 1.274519778533516e-4,
         m: 1.033059327911283e2,
-        radius: 10,
+        radius: 12.4,
     },
     {
         id: "parker-solar-probe",
@@ -157,7 +157,7 @@ const PROBES: Probe[] = [
         argp: 6.864143660637346e1,
         n: 4.712185418486895e-5,
         m: 3.232305375428312e2,
-        radius: 1.6,
+        radius: 2.6,
     },
     {
         id: "solar-orbiter",
@@ -169,7 +169,7 @@ const PROBES: Probe[] = [
         argp: 3.063952646690736e2,
         n: 2.472668199064429e-5,
         m: 2.047260575089868e2,
-        radius: 9,
+        radius: 9.6,
     },
 ];
 

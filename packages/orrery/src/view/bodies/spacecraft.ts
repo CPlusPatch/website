@@ -36,6 +36,10 @@ type Bus = {
     boom?: number;
     /** An Earth-facing antenna panel on -z, as its width and depth. */
     antenna?: [number, number];
+    /** The diameter of a high-gain dish on a stub on +x, in m. */
+    dish?: number;
+    /** A heat shield below the bus on -z. */
+    shield?: { shape: "disc" | "plate"; size: number; thickness: number };
 };
 
 const MAST = 0.6;
@@ -183,6 +187,64 @@ const parisat = (group: Group, m: Palette): void => {
     box(group, m.gold, [0.34, 0.1, 0.1], [4, 2.75, 0]);
 };
 
+// A shallow dish on a stub, from `base` on a face towards +axis and opening that way.
+const dish = (
+    group: Group,
+    m: Palette,
+    axis: "x" | "z",
+    diameter: number,
+    base: number,
+): void => {
+    const stub = 0.4;
+    const depth = diameter * 0.2;
+    const at = (offset: number): Vec =>
+        axis === "x" ? [base + offset, 0, 0] : [0, 0, base + offset];
+    cylinder(group, m.grey, axis, 0.05, stub, at(stub / 2));
+
+    const geometry = new CylinderGeometry(diameter / 2, 0.1, depth, 16, 1);
+    if (axis === "x") geometry.rotateZ(-Math.PI / 2);
+    else geometry.rotateX(Math.PI / 2);
+    const mesh = new Mesh(geometry, m.white);
+    mesh.position.set(...at(stub + depth / 2));
+    group.add(mesh);
+};
+
+// The spin-stabilised hexagonal bus, with three wings 120 degrees apart around z.
+const juno = (group: Group, m: Palette): void => {
+    const radius = 1.75;
+    // The wings meet the hexagon's flat faces, which are closer in than its corners.
+    const apothem = radius * Math.cos(Math.PI / 6);
+    const height = 3.5;
+    const hex = new CylinderGeometry(radius, radius, height, 6, 1);
+    hex.rotateX(Math.PI / 2);
+    group.add(new Mesh(hex, m.gold));
+    dish(group, m, "z", 2.5, height / 2);
+
+    for (let k = 0; k < 3; k++) {
+        const angle = (k * 2 * Math.PI) / 3;
+        // One wing has a panel fewer, and the magnetometer boom in its place.
+        const length = k === 2 ? 7 : 8.9;
+        const reach = apothem + length / 2;
+        const wing = box(
+            group,
+            m.array,
+            [length, 2.65, 0.08],
+            [reach * Math.cos(angle), reach * Math.sin(angle), 0],
+        );
+        wing.rotation.z = angle;
+
+        if (k === 2) {
+            const tip = apothem + length + 0.25;
+            box(
+                group,
+                m.dark,
+                [0.5, 0.5, 0.5],
+                [tip * Math.cos(angle), tip * Math.sin(angle), 0],
+            );
+        }
+    }
+};
+
 const bus = (group: Group, m: Palette, config: Bus): void => {
     const [bx, by, bz] = config.size;
     box(group, m.gold, config.size, [0, 0, 0]);
@@ -217,6 +279,16 @@ const bus = (group: Group, m: Palette, config: Bus): void => {
         const [w, d] = config.antenna;
         box(group, m.grey, [w, d, 0.1], [0, 0, -(bz / 2 + 0.05)]);
     }
+
+    if (config.dish) dish(group, m, "x", config.dish, bx / 2);
+
+    if (config.shield) {
+        const { shape, size, thickness } = config.shield;
+        const z = -(bz / 2 + thickness / 2);
+        if (shape === "disc")
+            cylinder(group, m.white, "z", size / 2, thickness, [0, 0, z]);
+        else box(group, m.white, [size, size, thickness], [0, 0, z]);
+    }
 };
 
 // Each spacecraft's bus, by id.
@@ -247,6 +319,79 @@ const BUSES: Record<string, Bus> = {
         wingLength: 3.75,
         wingWidth: 1.8,
     },
+    mro: {
+        size: [3, 2.5, 2.5],
+        wings: 2,
+        wingLength: 5.35,
+        wingWidth: 2.53,
+        dish: 3,
+    },
+    "mars-express": {
+        size: [1.5, 1.8, 1.4],
+        wings: 2,
+        wingLength: 5.3,
+        wingWidth: 1.9,
+        dish: 1.6,
+    },
+    "mars-odyssey": {
+        size: [2.2, 1.7, 2.6],
+        wings: 1,
+        wingLength: 3.4,
+        wingWidth: 2.1,
+        dish: 1.3,
+        boom: 6.2,
+    },
+    tgo: {
+        size: [3.2, 2, 2],
+        wings: 2,
+        wingLength: 7.5,
+        wingWidth: 2.2,
+        dish: 2.2,
+    },
+    hope: {
+        size: [2.4, 2.9, 2.4],
+        wings: 2,
+        wingLength: 2.5,
+        wingWidth: 1.8,
+        dish: 1.85,
+    },
+    lro: {
+        size: [1.9, 1.9, 2.7],
+        wings: 1,
+        wingLength: 3.3,
+        wingWidth: 2.4,
+        dish: 0.75,
+    },
+    "chandrayaan-2": {
+        size: [3.2, 2.2, 2.2],
+        wings: 1,
+        wingLength: 3,
+        wingWidth: 2,
+        dish: 1,
+    },
+    danuri: {
+        size: [2.14, 1.82, 2.19],
+        wings: 2,
+        wingLength: 2.3,
+        wingWidth: 1.2,
+        dish: 2.6,
+    },
+    "parker-solar-probe": {
+        size: [1, 1, 1.4],
+        wings: 2,
+        wingLength: 1.1,
+        wingWidth: 0.6,
+        shield: { shape: "disc", size: 2.3, thickness: 0.115 },
+    },
+    "solar-orbiter": {
+        size: [2.5, 3.1, 2.7],
+        wings: 2,
+        wingLength: 6.5,
+        wingWidth: 1.2,
+        dish: 1.1,
+        boom: 4.4,
+        shield: { shape: "plate", size: 3.1, thickness: 0.3 },
+    },
 };
 
 const GENERIC: Bus = {
@@ -273,6 +418,7 @@ export const createSpacecraftModel = (body: Body): Group => {
     else if (body.id === "hubble") hubble(parts, m);
     else if (body.id === "tiangong") tiangong(parts, m);
     else if (body.id === "parisat") parisat(parts, m);
+    else if (body.id === "juno") juno(parts, m);
     else bus(parts, m, BUSES[body.id] ?? GENERIC);
 
     // The group's origin is the body's position, so the bounding box is centred on it.
@@ -285,7 +431,7 @@ export const createSpacecraftModel = (body: Body): Group => {
     // A spacecraft without a model of its own is drawn at the size it declares.
     const known =
         body.id in BUSES ||
-        ["iss", "hubble", "tiangong", "parisat"].includes(body.id);
+        ["iss", "hubble", "tiangong", "parisat", "juno"].includes(body.id);
     const radius = known
         ? 1
         : body.radius / box.getBoundingSphere(new Sphere()).radius;
