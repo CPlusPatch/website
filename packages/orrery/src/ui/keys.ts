@@ -151,7 +151,7 @@ export const createKeys = (): Keys => {
                 ". Pluto and Charon:\u00a0NASA/JHUAPL/SwRI. Jupiter's and Saturn's major moons (not Titan), Triton, Phobos, Ceres and Vesta:\u00a0" +
                     "USGS Astrogeology and DLR, from NASA (Voyager, Galileo, Cassini, Dawn) and " +
                     "ESA (Mars Express) data. Kerbol system:\u00a0Kerbal Space Program, " +
-                    "\u00a9\u00a0Take-Two Interactive. Sounds:\u00a0Kenney (CC0). Music:\u00a0" +
+                    "\u00a9\u00a0Take-Two Interactive. Satellites:\u00a0CelesTrak (Dr T.S. Kelso). Sounds:\u00a0Kenney (CC0). Music:\u00a0" +
                     TRACKS.map(
                         ({ title, artist }) => `${title} by ${artist}`,
                     ).join(", ") +

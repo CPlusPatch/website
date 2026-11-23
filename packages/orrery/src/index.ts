@@ -24,6 +24,7 @@ import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
+import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import { createScenarios } from "./ui/scenario-menu/scenario-menu.ts";
 import { createSearch, type Search } from "./ui/search.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
@@ -31,7 +32,7 @@ import { createTimeBar } from "./ui/time-bar.ts";
 import { createUnits } from "./units.ts";
 import type { Band } from "./view/geometry/framing.ts";
 import type { Rect } from "./view/geometry/labels.ts";
-import { createView } from "./view/scene.ts";
+import { createView, type View } from "./view/scene.ts";
 import { World } from "./world.ts";
 
 /** A mounted Orrery. */
@@ -165,6 +166,17 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     const loading = createLoading(root);
 
+    // Points at the current view, as the menu outlives the views.
+    let setSatellites: View["satelliteGroups"] | null = null;
+    const satellites = createSatelliteMenu(
+        storage,
+        (groups) => setSatellites?.(groups),
+        // `timeBar` is made below, and the menu only calls this once it's open.
+        { now: () => world.clock.t, goLive: () => timeBar.goLive() },
+    );
+    const hasEarth = () =>
+        world.scenario.bodies.some((body) => body.id === "earth");
+
     // The view and the panels that depend on the scenario. Only the first build reports loading.
     const build = (
         onLoading?: (done: number, total: number, fill: number) => void,
@@ -182,6 +194,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             onLoading,
         );
         if (!view) return null;
+
+        setSatellites = view.satelliteGroups;
+        view.satelliteGroups(satellites.groups());
 
         const current = createInspector(
             world,
@@ -202,6 +217,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             reveal: view.reveal,
             destroy: () => {
                 if (inspector === current) inspector = null;
+                if (setSatellites === view.satelliteGroups) {
+                    setSatellites = null;
+                }
                 removeHud();
                 current.destroy();
                 view.destroy();
@@ -229,6 +247,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             focus: () => {},
             select: () => {},
             destroy: () => {
+                satellites.destroy();
                 alert.remove();
                 live.remove();
                 notices.destroy();
@@ -258,7 +277,13 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     search = createSearch(root, world, units, openAdd);
     top?.prepend(crumbs.element, search.toggle);
     const scenarios = createScenarios(root, world, storage, () => openAdd());
-    top?.append(scenarios.toggle, keys.toggle, notices.element);
+    top?.append(
+        scenarios.toggle,
+        satellites.element,
+        keys.toggle,
+        notices.element,
+    );
+    satellites.setAvailable(hasEarth());
     root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
     const measure = new ResizeObserver(() => {
@@ -313,6 +338,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             loadId++;
             parts?.destroy();
             parts = build();
+            satellites.setAvailable(hasEarth());
             // A view built after the reveal has no loading state, so a sky that comes later fades in.
             if (revealed) parts?.reveal();
             else if (parts) revealWhenReady(parts);
@@ -404,6 +430,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             live.remove();
             unbind();
             scenarios.destroy();
+            satellites.destroy();
             search?.destroy();
             timeBar.destroy();
             sound.destroy();

@@ -22,6 +22,7 @@ import {
     prepareSwarm,
     SNAPSHOT_WINDOW,
     selectShown,
+    snapshotGap,
     writePositions,
 } from "./swarm.ts";
 
@@ -245,4 +246,16 @@ Deno.test("the snapshot window is a year either side of the epoch", () => {
     assert(inSnapshotWindow(swarm, EPOCH - SNAPSHOT_WINDOW));
     assert(!inSnapshotWindow(swarm, EPOCH + SNAPSHOT_WINDOW + 1));
     assert(!inSnapshotWindow(swarm, EPOCH - SNAPSHOT_WINDOW - 1));
+});
+
+Deno.test("the snapshot gap is 0 inside the window and signed outside it", () => {
+    assertEquals(snapshotGap(EPOCH, EPOCH), 0);
+    assertEquals(snapshotGap(EPOCH + SNAPSHOT_WINDOW, EPOCH), 0);
+    assertEquals(snapshotGap(EPOCH - SNAPSHOT_WINDOW, EPOCH), 0);
+    assertEquals(snapshotGap(EPOCH + SNAPSHOT_WINDOW + 10, EPOCH), 10);
+    assertEquals(snapshotGap(EPOCH - SNAPSHOT_WINDOW - 10, EPOCH), -10);
+    assertEquals(
+        snapshotGap(EPOCH + 3 * SNAPSHOT_WINDOW, EPOCH),
+        2 * SNAPSHOT_WINDOW,
+    );
 });

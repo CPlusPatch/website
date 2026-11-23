@@ -118,9 +118,21 @@ export const prepareSwarm = (catalogue: Catalogue, earthMu: number): Swarm => {
     return swarm;
 };
 
+/**
+ * The seconds by which `t` lies outside the window around `epoch` (both since J2000).
+ * Positive after it, negative before it, 0 inside.
+ */
+export const snapshotGap = (t: number, epoch: number): number => {
+    const offset = t - epoch;
+    if (offset > SNAPSHOT_WINDOW) return offset - SNAPSHOT_WINDOW;
+    if (offset < -SNAPSHOT_WINDOW) return offset + SNAPSHOT_WINDOW;
+
+    return 0;
+};
+
 /** Whether `t` (seconds since J2000) is close enough to the snapshot's epoch to draw it. */
 export const inSnapshotWindow = (swarm: Swarm, t: number): boolean =>
-    Math.abs(t - swarm.epoch) <= SNAPSHOT_WINDOW;
+    snapshotGap(t, swarm.epoch) === 0;
 
 /** The indices of the satellites in `groups`, in catalogue order. */
 export const selectShown = (
