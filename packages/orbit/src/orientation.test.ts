@@ -8,6 +8,7 @@ import { rotateEquatorialToEcliptic } from "./frames.ts";
 import { stateAt } from "./kepler.ts";
 import type { Orientation } from "./orientation.ts";
 import { bodyOrientation, orientationFromPole } from "./orientation.ts";
+import { elementsAt } from "./precession.ts";
 import type { Vec3 } from "./vec.ts";
 import { cross, dot, length, scale } from "./vec.ts";
 
@@ -153,6 +154,84 @@ Deno.test("the Moon keeps one face to the Earth", () => {
             10,
             `day ${t / DAY}: latitude ${latitude}`,
         );
+    }
+});
+
+const LOCKED_MOONS = [
+    "io",
+    "europa",
+    "ganymede",
+    "callisto",
+    "mimas",
+    "enceladus",
+    "tethys",
+    "dione",
+    "rhea",
+    "iapetus",
+    "triton",
+    "phobos",
+    "charon",
+];
+
+// Mimas librates by about 44° in longitude, which a Kepler orbit can't follow.
+const LONGITUDE_TOLERANCE: Record<string, number> = { mimas: 20 };
+
+Deno.test("a tidally locked moon keeps one face to its parent", () => {
+    for (const id of LOCKED_MOONS) {
+        const moon = solarSystem.bodies.find((b) => b.id === id);
+        const parent = solarSystem.bodies.find((b) => b.id === moon?.parent);
+
+        assert(moon && parent, `no body or parent for ${id}`);
+
+        for (let k = 0; k < 12; k++) {
+            const t = k * 2.53 * 365.25 * DAY + 1234.5;
+
+            const elements = elementsAt(moon, t);
+
+            assert(elements, `no elements for ${id}`);
+
+            const { r } = stateAt(elements, parent.mu + moon.mu, t);
+            const { x, y, z } = orientationOf(id, t);
+            const toParent = scale(r, -1 / length(r));
+            const local = {
+                x: dot(toParent, x),
+                y: dot(toParent, y),
+                z: dot(toParent, z),
+            };
+            const longitude = Math.atan2(local.y, local.x) / RAD;
+            const latitude = Math.asin(local.z) / RAD;
+
+            assertAlmostEquals(
+                longitude,
+                0,
+                LONGITUDE_TOLERANCE[id] ?? 10,
+                `${id}, day ${t / DAY}: longitude ${longitude}`,
+            );
+            assertAlmostEquals(
+                latitude,
+                0,
+                10,
+                `${id}, day ${t / DAY}: latitude ${latitude}`,
+            );
+        }
+    }
+});
+
+Deno.test("Ceres and Vesta have their pck pole at d = 0", () => {
+    const poles = {
+        ceres: { ra: 291.418, dec: 66.764 },
+        vesta: { ra: 309.031, dec: 42.235 },
+    };
+
+    for (const [id, { ra, dec }] of Object.entries(poles)) {
+        const { z } = orientationOf(id, 0);
+        const expected = rotateEquatorialToEcliptic({
+            x: Math.cos(dec * RAD) * Math.cos(ra * RAD),
+            y: Math.cos(dec * RAD) * Math.sin(ra * RAD),
+            z: Math.sin(dec * RAD),
+        });
+
+        assertVecClose(z, expected, 1e-12);
     }
 });
 

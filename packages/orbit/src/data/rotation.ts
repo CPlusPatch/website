@@ -2,8 +2,11 @@ import type { RotationModel } from "../orientation.ts";
 
 const rad = (x: number): number => (x * Math.PI) / 180;
 
-// E1 to E13 of the Moon: [constant, rate per Julian century] in degrees (BODY3_NUT_PREC_ANGLES).
-const MOON_ANGLES: [number, number][] = [
+/** [constant, rate per Julian century, rate per century squared] in degrees. */
+type Angle = [number, number, number?];
+
+// E1 to E13 of the Moon (BODY3_NUT_PREC_ANGLES).
+const MOON_ANGLES: Angle[] = [
     [125.045, -1935.5364525],
     [250.089, -3871.072905],
     [260.008, 475263.3328725],
@@ -32,21 +35,62 @@ const MOON_PM = [
     0.0052, 0.004, 0.0019, -0.0044,
 ];
 
-/** The sum of `coefficients[k] * trig(E_k)` over the Moon's angles, in degrees. */
-const moonSeries = (
+// J1 to J8 of Jupiter's system (BODY5_NUT_PREC_ANGLES).
+const JUPITER_ANGLES: Angle[] = [
+    [73.32, 91472.9],
+    [24.62, 45137.2],
+    [283.9, 4850.7],
+    [355.8, 1191.3],
+    [119.9, 262.1],
+    [229.8, 64.3],
+    [352.25, 2382.6],
+    [113.35, 6070.0],
+];
+
+// S1 to S6 of Saturn's system (BODY6_NUT_PREC_ANGLES).
+const SATURN_ANGLES: Angle[] = [
+    [353.32, 75706.7],
+    [28.72, 75706.7],
+    [177.4, -36505.5],
+    [300.0, -7225.9],
+    [316.45, 506.2],
+    [345.2, -1016.3],
+];
+
+// N7 of Neptune's system and its multiples 2 N7 to 9 N7 (BODY8_NUT_PREC_ANGLES).
+const TRITON_ANGLES: Angle[] = Array.from({ length: 9 }, (_, k) => [
+    177.85 * (k + 1),
+    52.316 * (k + 1),
+]);
+
+// M1 to M5 of Mars's system (BODY4_NUT_PREC_ANGLES).
+const PHOBOS_ANGLES: Angle[] = [
+    [190.72646643, 15917.10818695],
+    [21.4689247, 31834.27934054],
+    [332.86082793, 19139.89694742],
+    [394.93256437, 38280.79631835],
+    [189.6327156, 41215158.1842005, 12.711923222],
+];
+
+/** The sum of `coefficients[k] * trig(angles[k])` at `T` Julian centuries, in degrees. */
+const series = (
+    angles: Angle[],
     coefficients: number[],
     trig: (x: number) => number,
     T: number,
 ): number =>
-    MOON_ANGLES.reduce(
-        (sum, [e0, rate], k) =>
-            sum + coefficients[k] * trig(rad(e0 + rate * T)),
+    angles.reduce(
+        (sum, [e0, rate, quadratic = 0], k) =>
+            sum +
+            (coefficients[k] ?? 0) *
+                trig(rad(e0 + rate * T + quadratic * T * T)),
         0,
     );
 
 // IAU WGCCRE 2015 as in NAIF pck00011.tpc (Earth and Moon: its 2009 values):
 // https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc
-// Linear terms only, except for the Moon and Neptune. Mercury's and Jupiter's periodic terms
+// Linear terms only, except for the Moon, Neptune and the moons with a surface map (Jupiter's,
+// Saturn's, Triton and Phobos have periodic terms). Mercury's and Jupiter's own periodic terms
 // are under 0.02°, so they are skipped.
 /** The rotation model of each body in `solarSystem` that has one, by body id. */
 export const ROTATION_MODELS: Record<string, RotationModel> = {
@@ -114,13 +158,292 @@ export const ROTATION_MODELS: Record<string, RotationModel> = {
         const T = d / 36525;
 
         return {
-            ra: 269.9949 + 0.0031 * T + moonSeries(MOON_RA, Math.sin, T),
-            dec: 66.5392 + 0.013 * T + moonSeries(MOON_DEC, Math.cos, T),
+            ra:
+                269.9949 +
+                0.0031 * T +
+                series(MOON_ANGLES, MOON_RA, Math.sin, T),
+            dec:
+                66.5392 +
+                0.013 * T +
+                series(MOON_ANGLES, MOON_DEC, Math.cos, T),
             w:
                 38.3213 +
                 13.17635815 * d -
                 1.4e-12 * d * d +
-                moonSeries(MOON_PM, Math.sin, T),
+                series(MOON_ANGLES, MOON_PM, Math.sin, T),
         };
     },
+    // Jupiter's moons: periodic terms of the J angles.
+    io: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                268.05 -
+                0.009 * T +
+                series(JUPITER_ANGLES, [0, 0, 0.094, 0.024], Math.sin, T),
+            dec:
+                64.5 +
+                0.003 * T +
+                series(JUPITER_ANGLES, [0, 0, 0.04, 0.011], Math.cos, T),
+            w:
+                200.39 +
+                203.4889538 * d +
+                series(JUPITER_ANGLES, [0, 0, -0.085, -0.022], Math.sin, T),
+        };
+    },
+    europa: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                268.08 -
+                0.009 * T +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, 1.086, 0.06, 0.015, 0.009],
+                    Math.sin,
+                    T,
+                ),
+            dec:
+                64.51 +
+                0.003 * T +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, 0.468, 0.026, 0.007, 0.002],
+                    Math.cos,
+                    T,
+                ),
+            w:
+                36.022 +
+                101.3747235 * d +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, -0.98, -0.054, -0.014, -0.008],
+                    Math.sin,
+                    T,
+                ),
+        };
+    },
+    ganymede: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                268.2 -
+                0.009 * T +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, -0.037, 0.431, 0.091],
+                    Math.sin,
+                    T,
+                ),
+            dec:
+                64.57 +
+                0.003 * T +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, -0.016, 0.186, 0.039],
+                    Math.cos,
+                    T,
+                ),
+            w:
+                44.064 +
+                50.3176081 * d +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, 0.033, -0.389, -0.082],
+                    Math.sin,
+                    T,
+                ),
+        };
+    },
+    callisto: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                268.72 -
+                0.009 * T +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, 0, -0.068, 0.59, 0, 0.01],
+                    Math.sin,
+                    T,
+                ),
+            dec:
+                64.83 +
+                0.003 * T +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, 0, -0.029, 0.254, 0, -0.004],
+                    Math.cos,
+                    T,
+                ),
+            w:
+                259.51 +
+                21.5710715 * d +
+                series(
+                    JUPITER_ANGLES,
+                    [0, 0, 0, 0, 0.061, -0.533, 0, -0.009],
+                    Math.sin,
+                    T,
+                ),
+        };
+    },
+    // Saturn's moons: periodic terms of the S angles.
+    mimas: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                40.66 -
+                0.036 * T +
+                series(SATURN_ANGLES, [0, 0, 13.56], Math.sin, T),
+            dec:
+                83.52 -
+                0.004 * T +
+                series(SATURN_ANGLES, [0, 0, -1.53], Math.cos, T),
+            w:
+                333.46 +
+                381.994555 * d +
+                series(SATURN_ANGLES, [0, 0, -13.48, 0, -44.85], Math.sin, T),
+        };
+    },
+    enceladus: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra: 40.66 - 0.036 * T,
+            dec: 83.52 - 0.004 * T,
+            w: 6.32 + 262.7318996 * d,
+        };
+    },
+    tethys: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                40.66 -
+                0.036 * T +
+                series(SATURN_ANGLES, [0, 0, 0, 9.66], Math.sin, T),
+            dec:
+                83.52 -
+                0.004 * T +
+                series(SATURN_ANGLES, [0, 0, 0, -1.09], Math.cos, T),
+            w:
+                8.95 +
+                190.6979085 * d +
+                series(SATURN_ANGLES, [0, 0, 0, -9.6, 2.23], Math.sin, T),
+        };
+    },
+    dione: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra: 40.66 - 0.036 * T,
+            dec: 83.52 - 0.004 * T,
+            w: 357.6 + 131.5349316 * d,
+        };
+    },
+    rhea: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                40.38 -
+                0.036 * T +
+                series(SATURN_ANGLES, [0, 0, 0, 0, 0, 3.1], Math.sin, T),
+            dec:
+                83.55 -
+                0.004 * T +
+                series(SATURN_ANGLES, [0, 0, 0, 0, 0, -0.35], Math.cos, T),
+            w:
+                235.16 +
+                79.6900478 * d +
+                series(SATURN_ANGLES, [0, 0, 0, 0, 0, -3.08], Math.sin, T),
+        };
+    },
+    iapetus: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra: 318.16 - 3.949 * T,
+            dec: 75.03 - 1.143 * T,
+            w: 355.2 + 4.5379572 * d,
+        };
+    },
+    // Triton: periodic terms of N7 and its multiples.
+    triton: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                299.36 +
+                series(
+                    TRITON_ANGLES,
+                    [
+                        -32.35, -6.28, -2.08, -0.74, -0.28, -0.11, -0.07, -0.02,
+                        -0.01,
+                    ],
+                    Math.sin,
+                    T,
+                ),
+            dec:
+                41.17 +
+                series(
+                    TRITON_ANGLES,
+                    [22.55, 2.1, 0.55, 0.16, 0.05, 0.02, 0.01],
+                    Math.cos,
+                    T,
+                ),
+            w:
+                296.53 -
+                61.2572637 * d +
+                series(
+                    TRITON_ANGLES,
+                    [22.25, 6.73, 2.05, 0.74, 0.28, 0.11, 0.05, 0.02, 0.01],
+                    Math.sin,
+                    T,
+                ),
+        };
+    },
+    // Phobos: periodic terms of the M angles.
+    phobos: (d) => {
+        const T = d / 36525;
+
+        return {
+            ra:
+                317.67071657 -
+                0.10844326 * T +
+                series(
+                    PHOBOS_ANGLES,
+                    [-1.78428399, 0.02212824, -0.01028251, -0.00475595],
+                    Math.sin,
+                    T,
+                ),
+            dec:
+                52.88627266 -
+                0.06134706 * T +
+                series(
+                    PHOBOS_ANGLES,
+                    [-1.07516537, 0.00668626, -0.0064874, 0.00281576],
+                    Math.cos,
+                    T,
+                ),
+            w:
+                35.1877444 +
+                1128.84475928 * d +
+                9.536137031212154e-9 * d * d +
+                series(
+                    PHOBOS_ANGLES,
+                    [1.42421769, -0.02273783, 0.00410711, 0.00631964, -1.143],
+                    Math.sin,
+                    T,
+                ),
+        };
+    },
+    charon: (d) => ({ ra: 132.993, dec: -6.163, w: 122.695 + 56.3625225 * d }),
+    ceres: (d) => ({ ra: 291.418, dec: 66.764, w: 170.65 + 952.1532 * d }),
+    vesta: (d) => ({ ra: 309.031, dec: 42.235, w: 285.39 + 1617.3329428 * d }),
 };
