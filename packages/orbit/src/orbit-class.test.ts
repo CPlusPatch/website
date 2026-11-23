@@ -18,6 +18,7 @@ Deno.test("the catalogue satellites fall in their known bands", () => {
         "gps-biii-1": "meo",
         "goes-19": "geo",
         "meridian-10": "heo",
+        parisat: "leo",
     };
 
     assertEquals(bodies.length, Object.keys(expected).length);

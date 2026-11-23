@@ -51,6 +51,7 @@ Deno.test("there are 44 bodies with the expected ids", () => {
             "gps-biii-1",
             "goes-19",
             "meridian-10",
+            "parisat",
             "phobos",
             "deimos",
             "io",
@@ -272,7 +273,7 @@ Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
         (b) => b.kind === "spacecraft" && b.parent === "earth",
     );
 
-    assertEquals(spacecraft.length, 7);
+    assertEquals(spacecraft.length, 8);
 
     for (const body of spacecraft) {
         assert(body.precession, `${body.id} has no precession`);

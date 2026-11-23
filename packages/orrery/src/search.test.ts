@@ -18,7 +18,7 @@ Deno.test("a query ignores case and the spaces around it", () => {
 });
 
 Deno.test("name prefixes come before other substrings", () => {
-    assertEquals(names("ar"), ["Ariel", "Earth", "Mars", "Charon"]);
+    assertEquals(names("ar"), ["Ariel", "Earth", "Mars", "PariSat", "Charon"]);
 });
 
 Deno.test("a query that matches no name finds nothing", () => {
@@ -40,7 +40,7 @@ Deno.test("each body is followed by its children, before the next sibling", () =
     const earth = order.indexOf("Earth");
 
     assertEquals(order.length, solarSystem.bodies.length);
-    assertEquals(order.slice(earth + 1, earth + 9).sort(), [
+    assertEquals(order.slice(earth + 1, earth + 10).sort(), [
         "GOES-19",
         "GPS BIII-1",
         "Hubble",
@@ -48,7 +48,8 @@ Deno.test("each body is followed by its children, before the next sibling", () =
         "Landsat 9",
         "Meridian 10",
         "Moon",
+        "PariSat",
         "Tiangong",
     ]);
-    assertEquals(order.indexOf("Mars"), earth + 9);
+    assertEquals(order.indexOf("Mars"), earth + 10);
 });

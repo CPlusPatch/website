@@ -174,7 +174,7 @@ const PARENT_MU = Object.fromEntries(
 
 /**
  * The Sun, the planets, Pluto, four more dwarf planets, Vesta, Halley, 21 moons
- * (including ours), the ISS and six more Earth satellites.
+ * (including ours), the ISS and seven more Earth satellites.
  */
 export const solarSystem: Scenario = {
     version: 1,

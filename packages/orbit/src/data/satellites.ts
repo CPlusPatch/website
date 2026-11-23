@@ -129,6 +129,17 @@ const SATELLITES: Satellite[] = [
         ],
         radius: 5.3,
     },
+    {
+        // A CubeSat that never separated from the first Ariane 6 upper stage, so it's catalogued as that stage.
+        id: "parisat",
+        name: "PariSat",
+        catalog: 60239,
+        tle: [
+            "1 60239U 24128E   26327.47941660  .00000714  00000+0  71931-4 0  9990",
+            "2 60239  62.0128  38.2552 0019078 177.4555 182.6636 15.00751896129933",
+        ],
+        radius: 7,
+    },
 ];
 
 /** The NORAD catalog numbers of the satellites above. */
@@ -136,7 +147,7 @@ export const CURATED_CATALOG_NUMBERS: number[] = SATELLITES.map(
     ({ catalog }) => catalog,
 );
 
-/** The ISS and six more Earth satellites, with J2 precession, around an Earth of `earthMu`. */
+/** The ISS and seven more Earth satellites, with J2 precession, around an Earth of `earthMu`. */
 export const satellites = (earthMu: number): Body[] => {
     const pole = rotateEquatorialToEcliptic({ x: 0, y: 0, z: 1 });
 

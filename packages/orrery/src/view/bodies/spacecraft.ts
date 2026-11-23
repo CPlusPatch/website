@@ -177,6 +177,12 @@ const tiangong = (group: Group, m: Palette): void => {
     }
 };
 
+// The Ariane 6 upper stage, 5.4 m across and 11.6 m long, with a 3U CubeSat still on its side.
+const parisat = (group: Group, m: Palette): void => {
+    cylinder(group, m.white, "x", 2.7, 11.6, [0, 0, 0]);
+    box(group, m.gold, [0.34, 0.1, 0.1], [4, 2.75, 0]);
+};
+
 const bus = (group: Group, m: Palette, config: Bus): void => {
     const [bx, by, bz] = config.size;
     box(group, m.gold, config.size, [0, 0, 0]);
@@ -266,6 +272,7 @@ export const createSpacecraftModel = (body: Body): Group => {
     if (body.id === "iss") iss(parts, m, amber);
     else if (body.id === "hubble") hubble(parts, m);
     else if (body.id === "tiangong") tiangong(parts, m);
+    else if (body.id === "parisat") parisat(parts, m);
     else bus(parts, m, BUSES[body.id] ?? GENERIC);
 
     // The group's origin is the body's position, so the bounding box is centred on it.
@@ -277,7 +284,8 @@ export const createSpacecraftModel = (body: Body): Group => {
 
     // A spacecraft without a model of its own is drawn at the size it declares.
     const known =
-        body.id in BUSES || ["iss", "hubble", "tiangong"].includes(body.id);
+        body.id in BUSES ||
+        ["iss", "hubble", "tiangong", "parisat"].includes(body.id);
     const radius = known
         ? 1
         : body.radius / box.getBoundingSphere(new Sphere()).radius;
