@@ -32,6 +32,12 @@ export type SatelliteEvent =
     | { type: "selection"; k: number | null }
     | { type: "focus"; k: number | null };
 
+/** What a listener of `View.onChase` is told: whether the camera chases, and whether it could. */
+export type ChaseState = { chasing: boolean; canChase: boolean };
+
+/** The seconds either side of now that a satellite's velocity is taken over. */
+const VELOCITY_HALF_SPAN = 1;
+
 /** The pointer's id for satellite `k`, which can't clash with a body's. */
 const SATELLITE_PREFIX = "sat:";
 
@@ -46,6 +52,13 @@ export type View = EditScene & {
     zoom: (steps: number) => void;
     /** Moves the camera to the focus's framing distance. */
     fitFocus: () => void;
+    /** Turns the chase camera on or off. Returns false when `on` is asked of a focus that can't be chased. */
+    chase: (on: boolean) => boolean;
+    chasing: () => boolean;
+    /** Whether the focus has a parent to chase against. */
+    canChase: () => boolean;
+    /** Calls `fn` whenever the chase turns on or off, or the focus's `canChase` changes. Returns a function that stops it. */
+    onChase: (fn: (state: ChaseState) => void) => () => void;
     /** The km one CSS pixel spans at the focus, or 0 before the view has a size. */
     kmPerPx: () => number;
     /** Sets the satellite groups drawn around Earth. The first non-empty list loads the snapshot. */
@@ -175,6 +188,8 @@ export const createView = (
     )?.mu;
     const swarm = createSwarm(scene, theme, earthMu ?? 0);
     const earthOffset = { x: 0, y: 0, z: 0 };
+    // Passed as Earth's position, which gives a satellite's position relative to Earth.
+    const earthCentre = { x: 0, y: 0, z: 0 };
 
     let satelliteSelected: number | null = null;
     let satelliteFocused: number | null = null;
@@ -282,6 +297,25 @@ export const createView = (
     const rig = createRig(camera, canvas, () => world.scenario, world.states());
     resize();
 
+    const chaseListeners = new Set<(state: ChaseState) => void>();
+    let chaseShown: ChaseState = {
+        chasing: rig.chasing(),
+        canChase: rig.canChase(),
+    };
+    // Called after anything that can change the rig's chase, and tells listeners only of a change.
+    const notifyChase = () => {
+        const next = { chasing: rig.chasing(), canChase: rig.canChase() };
+        if (
+            next.chasing === chaseShown.chasing &&
+            next.canChase === chaseShown.canChase
+        ) {
+            return;
+        }
+
+        chaseShown = next;
+        for (const fn of chaseListeners) fn(next);
+    };
+
     const describe = () => {
         const satellite =
             satelliteFocused === null
@@ -292,7 +326,7 @@ export const createView = (
             "aria-label",
             `The solar system, centred on ${
                 satellite?.name ?? names.get(rig.focusId())
-            }. Arrow keys rotate, plus and minus zoom, 0 fits the focus.`,
+            }. Arrow keys rotate, plus and minus zoom, 0 fits the focus, C chases it.`,
         );
     };
     describe();
@@ -316,7 +350,34 @@ export const createView = (
                 return swarm.positionOf(k, world.clock.t, earth) ?? earth;
             },
             pointFrameDistanceKm(apogeeKm, fov, camera.aspect),
+            () => {
+                const t = world.clock.t;
+                const before = swarm.positionOf(
+                    k,
+                    t - VELOCITY_HALF_SPAN,
+                    earthCentre,
+                );
+                const now = swarm.positionOf(k, t, earthCentre);
+                const after = swarm.positionOf(
+                    k,
+                    t + VELOCITY_HALF_SPAN,
+                    earthCentre,
+                );
+                if (!before || !now || !after) return null;
+
+                const span = 2 * VELOCITY_HALF_SPAN;
+
+                return {
+                    r: now,
+                    v: {
+                        x: (after.x - before.x) / span,
+                        y: (after.y - before.y) / span,
+                        z: (after.z - before.z) / span,
+                    },
+                };
+            },
         );
+        notifyChase();
 
         // Emitted even on a refocus, so its announcement follows Earth's.
         satelliteFocused = k;
@@ -452,6 +513,7 @@ export const createView = (
             if (event.id !== null) selectSatellite(null);
         } else if (event.type === "focus") {
             rig.focus(event.id);
+            notifyChase();
             if (!focusingSatellite && satelliteFocused !== null) {
                 satelliteFocused = null;
                 emitSatellite({ type: "focus", k: null });
@@ -476,6 +538,21 @@ export const createView = (
         grips: grips.target,
         zoom: rig.zoom,
         fitFocus: rig.fitFocus,
+        chase: (on) => {
+            const done = rig.chase(on);
+            notifyChase();
+
+            return done;
+        },
+        chasing: rig.chasing,
+        canChase: rig.canChase,
+        onChase: (fn) => {
+            chaseListeners.add(fn);
+
+            return () => {
+                chaseListeners.delete(fn);
+            };
+        },
         kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
         satelliteGroups: swarm.groups,
         satellite: {

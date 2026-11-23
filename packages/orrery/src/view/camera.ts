@@ -1,10 +1,18 @@
-import type { Body, Scenario, State, Vec3 } from "@cpluspatch/orbit";
+import {
+    type Body,
+    type Scenario,
+    type State,
+    sub,
+    type Vec3,
+} from "@cpluspatch/orbit";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
-import type { PerspectiveCamera } from "three";
+import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { kmPerPx } from "../scale.ts";
+import { behindDirection, chaseFrame } from "./geometry/chase.ts";
 import {
     approachDistance,
+    ease,
     fitDistanceKm,
     focusTween,
     frameDistanceKm,
@@ -14,6 +22,9 @@ import {
     type Pose,
     reachKm,
 } from "./geometry/framing.ts";
+
+/** A state relative to the parent, in metres and metres per second. */
+export type Relative = { r: Vec3; v: Vec3 };
 
 /** The camera and its controls, which orbit the focused body. */
 export type Rig = {
@@ -31,15 +42,29 @@ export type Rig = {
     focus: (id: string) => void;
     /**
      * Moves the view to a moving point and follows it, `distanceKm` away. `position` gives world
-     * metres. `focusId` keeps the last focused body.
+     * metres. `relative` gives its state against the body it moves around, which a chase needs.
+     * `focusId` keeps the last focused body.
      */
-    focusPoint: (position: () => Vec3, distanceKm: number) => void;
+    focusPoint: (
+        position: () => Vec3,
+        distanceKm: number,
+        relative: () => Relative | null,
+    ) => void;
     /** Glides in for a positive `steps`, out for a negative one, by the factor of the zoom keys. Presses add up. */
     zoom: (steps: number) => void;
     /** Glides to the focus's framing distance, keeping the view direction. */
     fitFocus: () => void;
     /** The km one CSS pixel spans at the focus, in a viewport `viewportHeightPx` tall. */
     kmPerPx: (viewportHeightPx: number) => number;
+    /**
+     * Turns the chase camera on or off. The camera then orbits in the focus's own frame, behind it
+     * along its track. Returns false when `on` is asked of a focus that can't be chased.
+     */
+    chase: (on: boolean) => boolean;
+    /** Whether the camera is chasing the focus. */
+    chasing: () => boolean;
+    /** Whether the focus has a parent to chase against. */
+    canChase: () => boolean;
     /** Advances a focus move by `dt` seconds, follows the focus and updates the controls. */
     update: (dt: number, states: Map<string, State>) => void;
     /** Removes the controls' and the keys' listeners. */
@@ -72,8 +97,14 @@ const START_ELEVATION = Math.PI / 6;
 /** The closest the camera may get to a followed point, in km. A point has no size to keep out of. */
 const POINT_MIN_KM = 1;
 
-/** Where the camera looks, in world metres, and the closest it may get. */
-type Target = { position: () => Vec3; min: () => number };
+/** Where the camera looks, in world metres, the closest it may get and how it moves. */
+type Target = {
+    position: () => Vec3;
+    min: () => number;
+    relative: () => Relative | null;
+};
+/** A direction that glides from `from` to a goal, as seconds in. */
+type Turn = { from: Vector3; elapsed: number };
 type Move = { from: Pose; target: Target; distance: number; elapsed: number };
 type Zoom = { to: number };
 
@@ -104,8 +135,25 @@ export const createRig = (
         return state.r;
     };
 
+    const bodyRelative = (id: string): Relative | null => {
+        const parent = bodyOf(id).parent;
+        const state = states.get(id);
+        const parentState = parent === null ? undefined : states.get(parent);
+        if (!state || !parentState) return null;
+
+        return {
+            r: sub(state.r, parentState.r),
+            v: sub(state.v, parentState.v),
+        };
+    };
+
     // The ecliptic is the XY plane, so north is Z.
     camera.up.set(0, 0, 1);
+
+    // The controls orbit this proxy, which stays in the focus's frame with Z up. OrbitControls
+    // keeps the up it's built with, so the real camera, whose up changes, can't be its object.
+    const proxy = new PerspectiveCamera(camera.fov, camera.aspect);
+    proxy.up.set(0, 0, 1);
 
     // These run before the controls' own listeners, which read `zoomSpeed`.
     const onWheel = (event: WheelEvent) => {
@@ -118,6 +166,8 @@ export const createRig = (
         zoomMove = null;
     };
     const onPointerDown = (event: PointerEvent) => {
+        // A drag takes the direction over from a chase glide.
+        aim = null;
         if (event.pointerType !== "touch") return;
 
         controls.zoomSpeed = PINCH_ZOOM_SPEED;
@@ -126,7 +176,7 @@ export const createRig = (
     canvas.addEventListener("wheel", onWheel);
     canvas.addEventListener("pointerdown", onPointerDown);
 
-    const controls = new OrbitControls(camera, canvas);
+    const controls = new OrbitControls(proxy, canvas);
     controls.enablePan = false;
     controls.zoomSpeed = WHEEL_ZOOM_SPEED;
     controls.enableDamping = !reducedMotion();
@@ -140,6 +190,13 @@ export const createRig = (
     // Set while the camera follows a point instead of the focused body.
     let following: { target: Target; distance: number } | null = null;
     let zoomMove: Zoom | null = null;
+    let chasing = false;
+    // Turns the proxy's offset into the world's. It's the identity unless chasing.
+    const frame = new Quaternion();
+    // The glides of the proxy's direction to behind the focus, and of the camera's up.
+    let aim: Turn | null = null;
+    let upGlide: Turn | null = null;
+    const up = new Vector3(0, 0, 1);
     const origin: Vec3 = { ...positionOf(root.id) };
 
     const fovRad = (camera.fov * Math.PI) / 180;
@@ -151,25 +208,162 @@ export const createRig = (
     const openingDistance = () => fitTo(openingReachKm(scenario()));
 
     const setDistance = (distance: number) => {
-        camera.position.setLength(distance);
+        proxy.position.setLength(distance);
+    };
+
+    const behind = new Vector3().copy(behindDirection());
+    const eclipticUp = new Vector3(0, 0, 1);
+    const matrix = new Matrix4();
+    const turn = new Quaternion();
+    const rest = new Quaternion();
+    const goal = new Vector3();
+
+    const focusRelative = (): Relative | null =>
+        following ? following.target.relative() : bodyRelative(focused);
+
+    // Takes the focus's frame, or keeps the last one when it's undefined. Returns whether it had one.
+    const refreshFrame = (): boolean => {
+        const relative = focusRelative();
+        const m = relative && chaseFrame(relative.r, relative.v);
+        if (!m) return false;
+
+        frame.setFromRotationMatrix(matrix.fromArray(m));
+
+        return true;
+    };
+
+    // `from` turned toward `to`, `k` of the way, into `out`.
+    const swing = (out: Vector3, from: Vector3, to: Vector3, k: number) => {
+        turn.setFromUnitVectors(from, to);
+        rest.identity().slerp(turn, k);
+
+        return out.copy(from).applyQuaternion(rest);
+    };
+
+    const startUpGlide = () => {
+        upGlide = reducedMotion() ? null : { from: up.clone(), elapsed: 0 };
+    };
+
+    const aimBehind = () => {
+        if (reducedMotion()) {
+            aim = null;
+            proxy.position.copy(behind).setLength(proxy.position.length());
+
+            return;
+        }
+
+        aim = { from: proxy.position.clone().normalize(), elapsed: 0 };
+    };
+
+    const leaveChase = () => {
+        if (!chasing) return;
+
+        proxy.position.applyQuaternion(frame);
+        frame.identity();
+        chasing = false;
+        aim = null;
+        startUpGlide();
+    };
+
+    // A new focus keeps the chase if it has a parent. The camera stays put in the new frame, then
+    // glides behind, so the view doesn't snap.
+    const retargetChase = () => {
+        if (!focusRelative()) {
+            leaveChase();
+
+            return;
+        }
+
+        proxy.position.applyQuaternion(frame);
+        refreshFrame();
+        proxy.position.applyQuaternion(rest.copy(frame).invert());
+        startUpGlide();
+        aimBehind();
+    };
+
+    const canChase = () => focusRelative() !== null;
+
+    const chase = (on: boolean): boolean => {
+        if (!on) {
+            leaveChase();
+
+            return true;
+        }
+        if (chasing) return true;
+        if (!canChase() || !refreshFrame()) return false;
+
+        touched = true;
+        // The frame was the identity, so the proxy's offset is the world's. This keeps the camera put.
+        proxy.position.applyQuaternion(rest.copy(frame).invert());
+        chasing = true;
+        startUpGlide();
+        aimBehind();
+
+        return true;
+    };
+
+    // Sets the real camera to the proxy's offset in the frame, looking at the focus.
+    const place = () => {
+        proxy.fov = camera.fov;
+        proxy.aspect = camera.aspect;
+
+        camera.position.copy(proxy.position).applyQuaternion(frame);
+        camera.up.copy(up);
+        camera.lookAt(0, 0, 0);
+    };
+
+    // The up the camera has, which glides to the frame's Z, or to the ecliptic's when not chasing.
+    const advanceUp = (dt: number) => {
+        const to = goal.copy(eclipticUp);
+        if (chasing) to.applyQuaternion(frame);
+        if (!upGlide) {
+            up.copy(to);
+
+            return;
+        }
+
+        upGlide.elapsed += dt;
+
+        const s = Math.min(upGlide.elapsed / FOCUS_SECONDS, 1);
+        if (s === 1) {
+            up.copy(to);
+            upGlide = null;
+
+            return;
+        }
+
+        swing(up, upGlide.from, to, ease(s));
+    };
+
+    const advanceAim = (dt: number) => {
+        if (!aim) return;
+
+        aim.elapsed += dt;
+
+        const s = Math.min(aim.elapsed / FOCUS_SECONDS, 1);
+        const distance = proxy.position.length();
+        swing(proxy.position, aim.from, behind, ease(s)).setLength(distance);
+        if (s === 1) aim = null;
     };
 
     const fit = () => {
         const distance = openingDistance();
         controls.maxDistance = fitDistance() * MAX_DISTANCE_FACTOR;
         zoomMove = null;
-        camera.position.set(
+        proxy.position.set(
             0,
             -Math.cos(START_ELEVATION) * distance,
             Math.sin(START_ELEVATION) * distance,
         );
         controls.update();
+        place();
     };
     fit();
 
     const bodyTarget = (id: string): Target => ({
         position: () => positionOf(id),
         min: () => minDistanceKm(bodyOf(id), fovRad),
+        relative: () => bodyRelative(id),
     });
 
     const zoom = (steps: number) => {
@@ -186,7 +380,7 @@ export const createRig = (
         // both ends, so it restarts from here instead of jumping.
         if (move) {
             move.from = {
-                distance: camera.position.length(),
+                distance: proxy.position.length(),
                 position: { ...origin },
             };
             move.distance = clamp(move.distance);
@@ -195,7 +389,7 @@ export const createRig = (
             return;
         }
 
-        const to = clamp(zoomMove?.to ?? camera.position.length());
+        const to = clamp(zoomMove?.to ?? proxy.position.length());
         if (reducedMotion()) {
             zoomMove = null;
             setDistance(to);
@@ -221,7 +415,7 @@ export const createRig = (
 
         move = {
             from: {
-                distance: camera.position.length(),
+                distance: proxy.position.length(),
                 position: { ...origin },
             },
             target,
@@ -246,6 +440,7 @@ export const createRig = (
 
     const fitFocus = () => {
         touched = true;
+        if (chasing) aimBehind();
         if (following) {
             glide(following.target, following.distance);
 
@@ -263,15 +458,19 @@ export const createRig = (
 
         switch (event.key) {
             case "ArrowLeft":
+                aim = null;
                 controls.rotateLeft(KEY_ROTATE_RAD);
                 break;
             case "ArrowRight":
+                aim = null;
                 controls.rotateLeft(-KEY_ROTATE_RAD);
                 break;
             case "ArrowUp":
+                aim = null;
                 controls.rotateUp(KEY_ROTATE_RAD);
                 break;
             case "ArrowDown":
+                aim = null;
                 controls.rotateUp(-KEY_ROTATE_RAD);
                 break;
             case "+":
@@ -307,8 +506,11 @@ export const createRig = (
         },
         zoom,
         fitFocus,
+        chase,
+        chasing: () => chasing,
+        canChase,
         kmPerPx: (viewportHeightPx) =>
-            kmPerPx(camera.position.length(), fovRad, viewportHeightPx),
+            kmPerPx(proxy.position.length(), fovRad, viewportHeightPx),
         focus: (id) => {
             const old = bodyOf(focused);
             const body = bodyOf(id);
@@ -318,7 +520,7 @@ export const createRig = (
             focused = id;
             following = null;
 
-            const distance = camera.position.length();
+            const distance = proxy.position.length();
             const oldKm = old.radius / 1000;
             const px =
                 canvas.clientHeight > 0
@@ -331,20 +533,27 @@ export const createRig = (
                     : frameDistance(id);
 
             glide(bodyTarget(id), clampDistance(id, target));
+            if (chasing) retargetChase();
         },
-        focusPoint: (position, distanceKm) => {
+        focusPoint: (position, distanceKm, relative) => {
             const distance = Math.min(
                 Math.max(distanceKm, POINT_MIN_KM),
                 controls.maxDistance,
             );
-            const target: Target = { position, min: () => POINT_MIN_KM };
+            const target: Target = {
+                position,
+                min: () => POINT_MIN_KM,
+                relative,
+            };
             touched = true;
             following = { target, distance };
 
             glide(target, distance);
+            if (chasing) retargetChase();
         },
         update: (dt, latest) => {
             states = latest;
+            if (chasing) refreshFrame();
 
             if (move) {
                 move.elapsed += dt;
@@ -382,7 +591,7 @@ export const createRig = (
                     controls.maxDistance,
                 );
                 const distance = approachDistance(
-                    camera.position.length(),
+                    proxy.position.length(),
                     to,
                     dt,
                     ZOOM_TAU_SECONDS,
@@ -396,7 +605,10 @@ export const createRig = (
                 }
             }
 
+            advanceAim(dt);
             controls.update();
+            advanceUp(dt);
+            place();
         },
         dispose: () => {
             canvas.removeEventListener("keydown", onKeyDown);
