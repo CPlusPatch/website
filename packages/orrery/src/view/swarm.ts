@@ -38,6 +38,16 @@ const DOT_PX = 2;
 
 const OPACITY = 0.7;
 
+/** The radius in km of the low Earth orbit shell, where most of the snapshot sits. */
+const LEO_RADIUS_KM = 7_000;
+
+/**
+ * The dots dim once their total area passes this share of the LEO shell's disc on screen, so they
+ * don't hide Earth and the markers in it. They never dim below `MIN_DENSITY`.
+ */
+const MAX_COVER = 1;
+const MIN_DENSITY = 0.35;
+
 /** The satellites around Earth. */
 export type SwarmLayer = {
     /** Sets the groups drawn. The first non-empty list starts loading the snapshot. */
@@ -196,6 +206,7 @@ export const createSwarm = (
 
             const { swarm, points, positions, colors, geometry } = loaded;
             let fade = 0;
+            let density = 1;
             if (
                 earthOffsetKm &&
                 wanted.size > 0 &&
@@ -207,17 +218,33 @@ export const createSwarm = (
                     earthOffsetKm.z,
                 );
                 const distance = camera.position.distanceTo(points.position);
+                const fov = (camera.fov * Math.PI) / 180;
                 const ringPx =
                     2 *
                     projectedRadiusPx(
                         GEO_RADIUS_KM,
                         distance,
-                        (camera.fov * Math.PI) / 180,
+                        fov,
                         viewportHeight,
                     );
                 fade = smoothstep(FADE_FROM_PX, FADE_TO_PX, ringPx);
+
+                const shellPx = projectedRadiusPx(
+                    LEO_RADIUS_KM,
+                    distance,
+                    fov,
+                    viewportHeight,
+                );
+                const dotsArea = shown.length * Math.PI * (DOT_PX / 2) ** 2;
+                density = Math.min(
+                    Math.max(
+                        (MAX_COVER * Math.PI * shellPx ** 2) / dotsArea,
+                        MIN_DENSITY,
+                    ),
+                    1,
+                );
             }
-            uniforms.fade.value = fade;
+            uniforms.fade.value = fade * density;
             points.visible = fade > 0;
             if (fade === 0) {
                 writtenAt = null;
