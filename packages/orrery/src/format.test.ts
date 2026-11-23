@@ -13,8 +13,10 @@ import {
     formatMass,
     formatNodeChange,
     formatRadius,
+    formatRange,
     formatSoon,
     formatSpeed,
+    listUnit,
 } from "./format.ts";
 
 Deno.test("formatDistance groups thousands of kilometres below 0.1 AU", () => {
@@ -50,6 +52,39 @@ Deno.test("distanceParts splits the number from the unit", () => {
     assertEquals(distanceParts(AU), ["1.000", "AU"]);
     assertEquals(distanceParts(AU, "km"), ["149,597,871", "km"]);
     assertEquals(distanceParts(6_790_000, "AU"), ["4.54e-5", "AU"]);
+});
+
+Deno.test("formatRange keeps whole kilometres with grouping", () => {
+    assertEquals(formatRange(384_400_000, "km"), "384,400 km");
+    assertEquals(formatRange(-2_527_000, "km"), "\u22122,527 km");
+});
+
+Deno.test("formatRange shows AU with at most 4 significant digits and no trailing zeros", () => {
+    assertEquals(formatRange(400 * AU, "AU"), "400 AU");
+    assertEquals(formatRange(36.32 * AU, "AU"), "36.32 AU");
+    assertEquals(formatRange(0.369 * AU, "AU"), "0.369 AU");
+    assertEquals(formatRange(1.0159 * AU, "AU"), "1.016 AU");
+    assertEquals(formatRange(0, "AU"), "0 AU");
+});
+
+Deno.test("formatRange keeps 4 significant digits under 0.001 AU, with no exponent", () => {
+    assertEquals(formatRange(0.000297 * AU, "AU"), "0.000297 AU");
+    assertEquals(formatRange(6_790_000, "AU"), "0.00004539 AU");
+    assertEquals(formatRange(-0.0005 * AU, "AU"), "\u22120.0005 AU");
+});
+
+Deno.test("listUnit returns the chosen unit when there is one", () => {
+    assertEquals(listUnit([AU], "km"), "km");
+    assertEquals(listUnit([1000], "AU"), "AU");
+});
+
+Deno.test("listUnit follows the largest distance when none is chosen", () => {
+    assertEquals(listUnit([6_790_000, 384_400_000], null), "km");
+    assertEquals(listUnit([6_790_000, AU], null), "AU");
+});
+
+Deno.test("listUnit falls back to km for an empty list", () => {
+    assertEquals(listUnit([], null), "km");
 });
 
 Deno.test("formatSpeed writes km/s with two decimals", () => {

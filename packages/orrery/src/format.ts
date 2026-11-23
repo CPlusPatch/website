@@ -23,6 +23,7 @@ const AU_VALUE = new Intl.NumberFormat("en", {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
 });
+const AU_RANGE = new Intl.NumberFormat("en", { maximumSignificantDigits: 4 });
 const THREE_SIGNIFICANT = new Intl.NumberFormat("en", {
     minimumSignificantDigits: 3,
     maximumSignificantDigits: 3,
@@ -56,6 +57,24 @@ export const formatDistance = (
     m: number,
     chosen: AUnit | null = null,
 ): string => distanceParts(m, chosen).join(" ");
+
+/**
+ * A distance in metres for a list row: whole km like `6,790 km`, or AU with up to 4
+ * significant digits like `36.32 AU` or `0.000297 AU`.
+ */
+export const formatRange = (m: number, unit: AUnit): string => {
+    const number =
+        unit === "km" ? KM.format(m / 1000) : AU_RANGE.format(m / AU);
+
+    return `${number.replace(/^-/, "\u2212")} ${unit}`;
+};
+
+/** The unit one list shares: `chosen`, else the unit of its largest distance (km when empty). */
+export const listUnit = (
+    distances: readonly number[],
+    chosen: AUnit | null,
+): AUnit =>
+    chosen ?? (distances.length > 0 ? aUnit(Math.max(...distances)) : "km");
 
 /** A speed in m/s, as `7.66 km/s`. */
 export const formatSpeed = (mps: number): string => KM_PER_S.format(mps / 1000);

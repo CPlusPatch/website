@@ -1,12 +1,21 @@
 .orrery {
     /* Above the side panels and the top bar, and below the dialogs, which sit in the top layer. */
     .orrery__search {
+        /* Halfway between the panel and the shown and active fill. */
+        --orrery-search-hover: color-mix(
+            in srgb,
+            var(--orrery-panel-raised) 50%,
+            var(--orrery-panel-solid)
+        );
+
         position: absolute;
         z-index: 3;
         inset-block-start: var(--orrery-search-top, 3rem);
         inset-inline-start: var(--orrery-search-left, var(--space-sm));
-        inline-size: 320px;
-        max-inline-size: calc(100% - 2 * var(--space-sm));
+        display: flex;
+        flex-direction: column;
+        inline-size: min(40rem, 100% - 2 * var(--space-sm));
+        block-size: min(70vh, 36rem);
         border: 1px solid var(--orrery-frame);
         border-radius: 0;
         background-color: var(--orrery-panel-solid);
@@ -16,20 +25,27 @@
         &[hidden] {
             display: none;
         }
+
+        /* With a button focused, the active row's frame would read as a second focus. */
+        &:has(button:focus-visible) .orrery__search-row[aria-selected="true"] {
+            box-shadow: none;
+        }
+
+        /* A query fits the panel to its matches, up to the same cap. */
+        &:has(.orrery__search-panes[data-mode="results"]) {
+            block-size: auto;
+            max-block-size: min(70vh, 36rem);
+        }
     }
 
     .orrery__search-field {
         display: flex;
+        flex: none;
         align-items: center;
         gap: var(--space-sm);
-        block-size: 2.375rem;
+        block-size: var(--orrery-control-lg);
         padding: 0 var(--orrery-pad);
         border-block-end: 1px solid var(--orrery-rule);
-
-        &:focus-within {
-            outline: 2px solid var(--orrery-text);
-            outline-offset: -2px;
-        }
 
         input {
             flex: 1;
@@ -60,10 +76,40 @@
         }
     }
 
-    .orrery__search-marker {
+    /* Last in the DOM so Tab reaches it after the pane's buttons, and drawn under the list. */
+    .orrery__search-add {
+        display: flex;
+        grid-column: 1;
+        grid-row: 2;
+        align-items: center;
+        gap: var(--space-sm);
+        inline-size: 100%;
+        min-block-size: var(--orrery-control);
+        padding: 0 var(--orrery-pad);
+        border: 0;
+        border-block-start: 1px solid var(--orrery-rule);
+        border-radius: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: inherit;
+        text-align: start;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orrery-search-hover);
+        }
+
+        /* Inside the popover, so the frame doesn't clip the ring. */
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+    }
+
+    .orrery__search-add-icon {
         display: flex;
         inline-size: 16px;
         block-size: 16px;
+        color: var(--orrery-muted);
 
         svg {
             inline-size: 100%;
@@ -71,105 +117,379 @@
         }
     }
 
-    .orrery__search-list {
-        max-block-size: min(52vh, 420px);
-        margin: 0;
-        padding: 4px 0;
-        list-style: none;
+    .orrery__search-panes {
+        position: relative;
+        display: grid;
+        flex: 1;
+        grid-template-columns: 16.5rem 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+        min-block-size: 0;
+    }
+
+    .orrery__search-left {
+        grid-column: 1;
+        grid-row: 1;
+        min-block-size: 0;
+        padding-block-end: 0.25rem;
         overflow-y: auto;
         overscroll-behavior: contain;
+    }
 
-        li {
-            display: grid;
-            grid-template-columns: 16px minmax(0, 1fr) auto;
-            align-items: center;
-            gap: var(--space-sm);
-            min-block-size: var(--orrery-control);
-            padding: 0 var(--orrery-pad);
-            cursor: pointer;
-
-            &[aria-selected="true"] {
-                background-color: var(--orrery-panel-raised);
-            }
-
-            b {
-                font-weight: 700;
-            }
-        }
-
-        /* The picked body, so the active row's fill isn't the only mark. */
-        li[data-picked] .orrery__search-name::after {
-            content: "";
-            display: inline-block;
-            inline-size: 6px;
-            block-size: 6px;
-            margin-inline-start: 6px;
-            border-radius: 50%;
-            background-color: var(--orrery-pick);
-            vertical-align: 0.1em;
-        }
-
-        li[data-add] .orrery__search-marker {
-            color: var(--orrery-muted);
+    /* Fades the foot of a list while more rows are below. */
+    .orrery__search-left,
+    .orrery__search-system,
+    .orrery__search-results {
+        &[data-more] {
+            mask-image: linear-gradient(
+                to bottom,
+                #000 calc(100% - 1.5rem),
+                transparent
+            );
         }
     }
 
-    /* A parent that doesn't fit beside the name wraps, and the fixed height clips it whole. */
-    .orrery__search-text {
+    .orrery__search-right {
+        display: flex;
+        flex-direction: column;
+        grid-column: 2;
+        grid-row: 1 / -1;
+        min-block-size: 0;
+        min-inline-size: 0;
+        border-inline-start: 1px solid var(--orrery-rule);
+    }
+
+    .orrery__search-head {
+        flex: none;
+        padding: var(--orrery-pad);
+        border-block-end: 1px solid var(--orrery-rule);
+    }
+
+    .orrery__search-rail {
+        flex: none;
+    }
+
+    .orrery__search-system {
+        flex: 1;
+        min-block-size: 0;
+        padding-block-end: 0.25rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .orrery__search-results {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        min-block-size: 0;
+        padding-block-end: 0.25rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .orrery__search-panes[data-mode="results"] {
+        .orrery__search-left,
+        .orrery__search-right {
+            display: none;
+        }
+
+        .orrery__search-add {
+            grid-column: 1 / -1;
+        }
+    }
+
+    .orrery__search-panes:not([data-mode="results"]) .orrery__search-results {
+        display: none;
+    }
+
+    .orrery__search-title {
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-sm);
+
+        h2 {
+            margin: 0;
+            font-size: var(--orrery-size-lg);
+            font-weight: 600;
+            line-height: 1.2;
+        }
+    }
+
+    .orrery__search-kind {
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__search-facts {
         display: flex;
         flex-wrap: wrap;
-        column-gap: 0.4em;
+        gap: 0.25rem 1.5rem;
+        margin: var(--space-sm) 0 0;
+
+        div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        dt {
+            color: var(--orrery-muted);
+            font-size: var(--orrery-size-xs);
+        }
+
+        dd {
+            margin: 0;
+            font: 400 var(--orrery-size-sm) var(--orrery-font-data);
+        }
+    }
+
+    .orrery__search-actions {
+        display: flex;
+        gap: var(--space-sm);
+        margin-block-start: 0.625rem;
+    }
+
+    .orrery__search-button {
+        block-size: var(--orrery-control);
+        padding: 0 var(--orrery-pad);
+        border: 1px solid var(--orrery-frame);
+        border-radius: 0;
+        background: none;
+        color: inherit;
+        font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orrery-panel-raised);
+        }
+    }
+
+    .orrery__search-button--pick {
+        border-color: var(--orrery-pick);
+        background-color: var(--orrery-pick);
+        color: var(--orrery-pick-ink);
+        font-weight: 600;
+
+        &:hover {
+            background-color: var(--orrery-pick);
+            filter: brightness(1.1);
+        }
+
+        &:disabled {
+            border-color: var(--orrery-pick);
+            background: none;
+            color: var(--orrery-pick);
+            cursor: default;
+            filter: none;
+        }
+    }
+
+    .orrery__search-group {
+        display: flex;
+        gap: var(--space-sm);
+        padding: 0.625rem var(--orrery-pad) 0.25rem;
+        color: var(--orrery-dim);
+        font-size: var(--orrery-size-label);
+        font-weight: 500;
+
+        span {
+            font: 400 var(--orrery-size-label) var(--orrery-font-data);
+        }
+    }
+
+    .orrery__search-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        min-block-size: var(--orrery-control);
+        padding: 0 var(--orrery-pad);
+        cursor: default;
+
+        &:hover {
+            background-color: var(--orrery-search-hover);
+        }
+
+        &.orrery__search-row--shown,
+        &[aria-selected="true"] {
+            background-color: var(--orrery-panel-raised);
+        }
+
+        &[aria-selected="true"] {
+            box-shadow: inset 0 0 0 1px var(--orrery-frame);
+        }
+
+        b {
+            font-weight: 700;
+        }
+    }
+
+    .orrery__search-row--nested {
+        padding-inline-start: calc(var(--orrery-pad) + 1.5rem);
+    }
+
+    .orrery__search-row--two {
+        min-block-size: 2.75rem;
+        padding-block: 0.25rem;
+    }
+
+    .orrery__search-marker {
+        display: flex;
+        flex: none;
+        /* The head title aligns on the name's baseline. */
+        align-self: center;
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
+    }
+
+    .orrery__search-marker--row {
+        inline-size: 16px;
+        block-size: 16px;
+    }
+
+    .orrery__search-marker--head {
+        inline-size: 20px;
+        block-size: 20px;
+    }
+
+    .orrery__search-text {
+        display: flex;
+        flex-direction: column;
         min-inline-size: 0;
-        block-size: 1.35em;
-        overflow: hidden;
-        line-height: 1.35;
     }
 
     .orrery__search-name {
-        max-inline-size: 100%;
+        min-inline-size: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .orrery__search-parent {
+    .orrery__search-row--two .orrery__search-name {
+        font-weight: 400;
+    }
+
+    /* The role gives way before the name does. */
+    .orrery__search-role {
+        flex: 0 100 auto;
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
         color: var(--orrery-muted);
         font-size: var(--orrery-size-sm);
         white-space: nowrap;
     }
 
+    .orrery__search-sub {
+        overflow: hidden;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-label);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .orrery__search-range {
+        flex: none;
+        margin-inline-start: auto;
+        padding-inline-start: var(--space-sm);
         color: var(--orrery-muted);
         font: 400 var(--orrery-size-xs) var(--orrery-font-data);
         font-variant-numeric: tabular-nums;
         text-align: end;
+        white-space: nowrap;
     }
 
-    .orrery__search-empty {
+    .orrery__search-title .orrery__search-range {
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__search-chevron {
+        display: flex;
+        flex: none;
+        inline-size: 8px;
+        block-size: 12px;
+        color: var(--orrery-muted);
+
+        svg {
+            inline-size: 100%;
+            block-size: 100%;
+        }
+    }
+
+    .orrery__search-picked {
+        flex: none;
+        align-self: center;
+        inline-size: 7px;
+        block-size: 7px;
+        border-radius: 50%;
+        background-color: var(--orrery-pick);
+    }
+
+    .orrery__search-note,
+    .orrery__search-nothing {
         margin: 0;
-        padding: 10px var(--orrery-pad);
+        padding: 1rem var(--orrery-pad);
         color: var(--orrery-muted);
         font-size: var(--orrery-size-sm);
     }
 
-    .orrery__search-hint {
+    .orrery__search-nothing {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .orrery__search-nomatch {
         margin: 0;
-        padding: 6px var(--orrery-pad) var(--orrery-pad);
+        padding: 1rem var(--orrery-pad);
+        color: var(--orrery-muted);
+    }
+
+    .orrery__search-hint {
+        display: flex;
+        flex: none;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem 0.5rem;
+        margin: 0;
+        padding: 0.5rem var(--orrery-pad);
         border-block-start: 1px solid var(--orrery-rule);
         color: var(--orrery-dim);
-        font-size: var(--orrery-size-xs);
+        font-size: var(--orrery-size-label);
+    }
+
+    .orrery__search-keyhint {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .orrery__search-key {
+        padding: 0 5px;
+        border: 1px solid var(--orrery-frame);
+        background-color: var(--orrery-panel-raised);
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-xs) / 1.4 var(--orrery-font-data);
     }
 
     @media (forced-colors: active) {
-        .orrery__search-list li {
+        .orrery__search-row {
             &[aria-selected="true"] {
                 outline: 2px solid Highlight;
-                outline-offset: -2px;
             }
 
-            &[data-picked] .orrery__search-name::after {
-                background-color: CanvasText;
+            &.orrery__search-row--shown:not([aria-selected="true"]) {
+                outline: 1px solid CanvasText;
+                outline-offset: -1px;
             }
+        }
+
+        .orrery__search-picked {
+            background-color: CanvasText;
         }
     }
 
@@ -177,7 +497,6 @@
         .orrery__search {
             inset-inline: var(--space-sm);
             inline-size: auto;
-            max-inline-size: none;
         }
 
         .orrery__search-hint {

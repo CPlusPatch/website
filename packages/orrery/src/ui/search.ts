@@ -1,13 +1,22 @@
 import type { Body } from "@cpluspatch/orbit";
-import { formatDistance } from "../format.ts";
+import type { AUnit } from "../editing.ts";
+import { formatRange, listUnit } from "../format.ts";
 import { readouts } from "../readouts.ts";
-import { found, marked, treeOrder } from "../search.ts";
+import { found, treeOrder } from "../search.ts";
+import { leftPane, system } from "../systems.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
-import { showBodyMarker } from "./body-marker.ts";
 import { h, setText } from "./dom.ts";
+import {
+    headRows,
+    leftRows,
+    named,
+    resultRows,
+    type SystemsContext,
+    systemRows,
+} from "./systems-view.ts";
 
-/** The search button, the combobox it opens and how to remove them. */
+/** The search button, the Systems panel it opens and how to remove them. */
 export type Search = {
     toggle: HTMLButtonElement;
     /** Opens the panel and focuses its input. */
@@ -18,9 +27,6 @@ export type Search = {
 /** How often the ranges are patched while the panel is open, in ms. */
 const RANGE_MS = 250;
 
-/** The panel's width in px, which the left edge is clamped with. */
-const WIDTH = 320;
-
 /** The gap in px between the panel and the edges of the root. */
 const MARGIN = 8;
 
@@ -28,6 +34,50 @@ const SEARCH_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/></g></svg>';
 const PLUS_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+
+/** The keys of the hint: the symbols, what a screen reader says for them and the action. */
+type HintKey = [symbol: string, label: string, action: string];
+
+const UP_DOWN: HintKey = ["↑↓", "Up and Down", "move"];
+const PICK: HintKey = ["↵", "Enter", "pick"];
+const FOCUS: HintKey = ["⇧↵", "Shift+Enter", "focus"];
+const CLOSE: HintKey = ["esc", "Escape", "close"];
+const TREE_HINT: HintKey[] = [
+    UP_DOWN,
+    ["→", "Right", "open"],
+    ["←", "Left", "back"],
+    PICK,
+    FOCUS,
+    CLOSE,
+];
+const RESULTS_HINT: HintKey[] = [UP_DOWN, PICK, FOCUS, CLOSE];
+
+/** The ids of the rows of `groups`, top to bottom. */
+const idsOf = (groups: ReturnType<typeof system>): string[] =>
+    groups.flatMap((group) => group.rows.map((row) => row.body.id));
+
+const hintNodes = (keys: HintKey[]): HTMLElement[] =>
+    keys.flatMap(([symbol, label, action], index) => [
+        ...(index > 0
+            ? [
+                  h(
+                      "span",
+                      { class: "orrery__search-sep", "aria-hidden": "true" },
+                      "·",
+                  ),
+              ]
+            : []),
+        h(
+            "span",
+            { class: "orrery__search-keyhint" },
+            h(
+                "kbd",
+                { class: "orrery__search-key", "aria-label": label },
+                symbol,
+            ),
+            action,
+        ),
+    ]);
 
 const icon = (className: string, svg: string): HTMLElement => {
     const element = h("span", { class: className });
@@ -37,8 +87,9 @@ const icon = (className: string, svg: string): HTMLElement => {
 };
 
 /**
- * A button for the top bar, and under it a combobox that lists every body, grouped by parent.
- * Picking a body selects it, and Shift focuses it. The first row adds a body with `openAdd`.
+ * A button for the top bar, and under it a two-pane panel: the root and its children on the
+ * left, the system of one of them on the right. Typing a query lists matches from every system.
+ * Picking a body selects it, and Shift focuses it. The Add button opens the form with `openAdd`.
  */
 export const createSearch = (
     root: HTMLElement,
@@ -75,22 +126,58 @@ export const createSearch = (
         role: "combobox",
         "aria-label": "Find a body",
         "aria-expanded": "false",
-        "aria-controls": "orrery-search-list",
+        "aria-controls": "orrery-search-left",
         "aria-autocomplete": "list",
         "aria-activedescendant": "",
         placeholder: "Find a body",
         autocomplete: "off",
         spellcheck: "false",
     });
-    const empty = h("p", { class: "orrery__search-empty" });
-    empty.hidden = true;
-    const list = h("ul", {
-        id: "orrery-search-list",
-        class: "orrery__search-list",
+    const addLabel = h("span", {}, "Add a body…");
+    const addButton = h(
+        "button",
+        { type: "button", class: "orrery__search-add", "data-act": "add" },
+        icon("orrery__search-add-icon", PLUS_ICON),
+        addLabel,
+    );
+    // Scrollable lists would otherwise take a Tab stop of their own.
+    const left = h("div", {
+        id: "orrery-search-left",
+        class: "orrery__search-left",
+        tabindex: "-1",
         role: "listbox",
-        "aria-label": "Bodies",
     });
-    const hint = h("p", { class: "orrery__search-hint" });
+    const head = h("div", { class: "orrery__search-head" });
+    // Holds the distance rail, which comes later.
+    const rail = h("div", { class: "orrery__search-rail" });
+    rail.hidden = true;
+    const systemList = h("div", {
+        id: "orrery-search-right",
+        class: "orrery__search-system",
+        tabindex: "-1",
+        role: "listbox",
+    });
+    const results = h("div", {
+        id: "orrery-search-results",
+        class: "orrery__search-results",
+        tabindex: "-1",
+        role: "listbox",
+        "aria-label": "Matching bodies",
+    });
+    /** Each list's label, put back when it holds options again. */
+    const labels = new Map<HTMLElement, string>([[results, "Matching bodies"]]);
+    // The Add button comes last so Tab reaches it after the pane's buttons. CSS places it.
+    const panes = h(
+        "div",
+        { class: "orrery__search-panes", "data-mode": "tree" },
+        left,
+        h("div", { class: "orrery__search-right" }, head, rail, systemList),
+        results,
+        addButton,
+    );
+    const treeHint = hintNodes(TREE_HINT);
+    const resultsHint = hintNodes(RESULTS_HINT);
+    const hint = h("p", { class: "orrery__search-hint" }, ...treeHint);
     const panel = h(
         "section",
         {
@@ -104,118 +191,209 @@ export const createSearch = (
             icon("orrery__search-icon", SEARCH_ICON),
             input,
         ),
-        list,
-        empty,
+        panes,
         hint,
     );
     panel.hidden = true;
     root.append(panel);
 
+    /** The body whose system the right pane shows: the root or one of its children. */
+    let shown = "";
+    let pane: "left" | "right" = "left";
+    let active: string | null = null;
     let hits: Body[] = [];
-    let active = 0;
+    let renderedShown = "";
     let timer: ReturnType<typeof setInterval> | undefined;
 
-    const range = (id: string): string => {
-        const current = readouts(
-            world.scenario,
-            id,
-            world.states(),
-            world.clock.t,
+    const searching = (): boolean => input.value.trim() !== "";
+
+    const distance = (id: string): number | null =>
+        readouts(world.scenario, id, world.states(), world.clock.t)?.distance ??
+        null;
+
+    /** The unit all of one list's rows share. */
+    const unitOf = (ids: readonly string[]): AUnit =>
+        listUnit(
+            ids.flatMap((id) => distance(id) ?? []),
+            units.get(),
         );
 
-        return current ? formatDistance(current.distance, units.get()) : "";
-    };
+    const rangeIn =
+        (unit: AUnit) =>
+        (id: string): string => {
+            const metres = distance(id);
 
-    const row = (body: Body, query: string): HTMLElement => {
-        const [before, match, after] = marked(body.name, query);
-        const marker = h("span", { class: "orrery__search-marker" });
-        showBodyMarker(marker, body);
+            return metres === null ? "" : formatRange(metres, unit);
+        };
 
-        const name = h("span", { class: "orrery__search-name" }, before);
-        if (match) name.append(h("b", {}, match));
-        name.append(after);
+    const contextFor = (
+        bodies: readonly Body[],
+        ids: readonly string[],
+    ): SystemsContext => ({
+        bodies,
+        picked: world.selected,
+        range: rangeIn(unitOf(ids)),
+    });
 
-        const parent = world.scenario.bodies.find((b) => b.id === body.parent);
-        const text = h("span", { class: "orrery__search-text" }, name);
-        if (parent) {
-            text.append(
-                h(
-                    "span",
-                    { class: "orrery__search-parent" },
-                    `around ${parent.name}`,
-                ),
-            );
+    /** Fades the foot of a list while more rows are below. */
+    const updateMore = (list: HTMLElement) =>
+        list.toggleAttribute(
+            "data-more",
+            list.scrollTop + list.clientHeight < list.scrollHeight - 1,
+        );
+
+    const matches = (): Body[] =>
+        found(treeOrder(world.scenario.bodies), input.value);
+
+    /** The first row of the right pane for `id`. The root has none, since the pane shows a note. */
+    const firstOf = (id: string): string | null =>
+        id === leftPane(world.scenario.bodies).root.id
+            ? null
+            : (system(world.scenario.bodies, id)[0]?.rows[0]?.body.id ?? null);
+
+    /** The ids of the rows the arrow keys move through, top to bottom. */
+    const rowIds = (): string[] => {
+        const bodies = world.scenario.bodies;
+        if (searching()) return hits.map((body) => body.id);
+        if (pane === "left") {
+            const { root: top, groups } = leftPane(bodies);
+
+            return [top.id, ...idsOf(groups)];
         }
 
-        const item = h(
-            "li",
-            {
-                role: "option",
-                id: `orrery-search-body-${body.id}`,
-                "data-id": body.id,
-                "aria-selected": "false",
-            },
-            marker,
-            text,
-            h("span", { class: "orrery__search-range" }, range(body.id)),
-        );
-        if (body.id === world.selected) item.dataset.picked = "";
-
-        return item;
-    };
-
-    const markActive = (scroll = true) => {
-        const items = [...list.children];
-
-        items.forEach((item, k) => {
-            item.setAttribute("aria-selected", String(k === active));
-        });
-
-        const item = items[active];
-        input.setAttribute("aria-activedescendant", item?.id ?? "");
-        setText(
-            hint,
-            active === 0 ? "Enter adds." : "Enter picks. Shift+Enter focuses.",
-        );
-        if (scroll) item?.scrollIntoView({ block: "nearest" });
+        return bodies.some((body) => body.id === shown)
+            ? idsOf(system(bodies, shown))
+            : [];
     };
 
     const render = () => {
+        // A focused button that replaceChildren removes would blur with no target and close the panel.
+        if (
+            panel.contains(document.activeElement) &&
+            document.activeElement !== input
+        ) {
+            input.focus();
+        }
+
+        const bodies = world.scenario.bodies;
+        const { root: top } = leftPane(bodies);
         const query = input.value;
         const trimmed = query.trim();
-        hits = found(treeOrder(world.scenario.bodies), query);
+        const inResults = trimmed !== "";
 
-        const label =
-            hits.length > 0 || !trimmed ? "Add a body…" : `Add “${trimmed}”`;
-        const add = h(
-            "li",
-            {
-                role: "option",
-                id: "orrery-search-add",
-                "data-add": "",
-                "aria-selected": "false",
-            },
-            icon("orrery__search-marker", PLUS_ICON),
-            h(
-                "span",
-                { class: "orrery__search-text" },
-                h("span", { class: "orrery__search-name" }, label),
-            ),
-        );
-        list.replaceChildren(add, ...hits.map((body) => row(body, query)));
+        // The scenario can change under an open panel.
+        if (!bodies.some((body) => body.id === shown)) {
+            shown = top.id;
+            if (!inResults) {
+                pane = "left";
+                active = shown;
+            }
+        }
 
-        empty.hidden = hits.length > 0;
-        setText(empty, `No body named “${trimmed}”.`);
-        // The Add row is first, so the hits are rows 1 and up. With no hits it's the only row.
-        active = Math.min(active, hits.length);
-        markActive();
+        if (active !== null && !bodies.some((body) => body.id === active)) {
+            pane = "left";
+            active = inResults ? null : shown;
+        }
+
+        hits = inResults ? matches() : [];
+        if (inResults && !hits.some((hit) => hit.id === active)) {
+            active = hits[0]?.id ?? null;
+        }
+
+        const body = bodies.find((candidate) => candidate.id === shown) ?? top;
+
+        panes.dataset.mode = inResults ? "results" : "tree";
+        setText(addLabel, inResults ? `Add “${trimmed}”` : "Add a body…");
+        hint.replaceChildren(...(inResults ? resultsHint : treeHint));
+
+        if (inResults) {
+            const context = contextFor(
+                bodies,
+                hits.map((hit) => hit.id),
+            );
+            results.replaceChildren(
+                ...resultRows(context, hits, query, active),
+            );
+            // Rows from another mode or scenario would keep ids that no longer exist.
+            left.replaceChildren();
+            head.replaceChildren();
+            systemList.replaceChildren();
+        } else {
+            results.replaceChildren();
+
+            const { groups } = leftPane(bodies);
+            const leftContext = contextFor(bodies, [top.id, ...idsOf(groups)]);
+            const systemContext = contextFor(
+                bodies,
+                idsOf(system(bodies, body.id)),
+            );
+            left.setAttribute("aria-label", `Bodies around ${named(top)}`);
+            left.replaceChildren(
+                ...leftRows(
+                    leftContext,
+                    shown,
+                    pane === "left" ? active : null,
+                ),
+            );
+            head.replaceChildren(
+                ...headRows(contextFor(bodies, [body.id]), body),
+            );
+            labels.set(systemList, `Bodies around ${named(body)}`);
+            systemList.replaceChildren(
+                ...systemRows(
+                    systemContext,
+                    body,
+                    pane === "right" ? active : null,
+                ),
+            );
+            if (renderedShown !== shown) systemList.scrollTop = 0;
+            renderedShown = shown;
+        }
+
+        // A note or empty state isn't an option, so its list stops being a listbox.
+        for (const list of [results, systemList]) {
+            if (list.querySelector('[role="option"]')) {
+                list.setAttribute("role", "listbox");
+                list.setAttribute("aria-label", labels.get(list) ?? "");
+            } else {
+                // ARIA doesn't allow a label on an element with no role.
+                list.removeAttribute("role");
+                list.removeAttribute("aria-label");
+            }
+        }
+
+        const list = inResults ? results : pane === "left" ? left : systemList;
+        const item = active
+            ? list.querySelector<HTMLElement>(
+                  `[role="option"][data-id="${CSS.escape(active)}"]`,
+              )
+            : null;
+
+        input.setAttribute("aria-controls", list.id);
+        input.setAttribute("aria-activedescendant", item?.id ?? "");
+        item?.scrollIntoView({ block: "nearest" });
+
+        for (const scroller of [left, systemList, results]) {
+            updateMore(scroller);
+        }
     };
 
     const patchRanges = () => {
-        for (const item of list.querySelectorAll<HTMLElement>("li[data-id]")) {
-            const id = item.dataset.id;
-            const node = item.querySelector(".orrery__search-range");
-            if (id && node) setText(node, range(id));
+        for (const list of [left, head, systemList, results]) {
+            const items = [...list.querySelectorAll<HTMLElement>("[data-id]")];
+            const range = rangeIn(
+                unitOf(items.flatMap((item) => item.dataset.id ?? [])),
+            );
+
+            for (const item of items) {
+                const id = item.dataset.id;
+                const node = item.querySelector(".orrery__search-range");
+                if (id && node) setText(node, range(id));
+            }
+        }
+
+        for (const scroller of [left, systemList, results]) {
+            updateMore(scroller);
         }
     };
 
@@ -238,9 +416,9 @@ export const createSearch = (
         const host = root.getBoundingClientRect();
         const bar = root.querySelector(".orrery__panel--top");
         const at = toggle.getBoundingClientRect();
-        const left = Math.max(
+        const leftEdge = Math.max(
             MARGIN,
-            Math.min(at.left, host.right - WIDTH - MARGIN),
+            Math.min(at.left, host.right - panel.offsetWidth - MARGIN),
         );
         panel.style.setProperty(
             "--orrery-search-top",
@@ -248,14 +426,33 @@ export const createSearch = (
         );
         panel.style.setProperty(
             "--orrery-search-left",
-            `${left - host.left}px`,
+            `${leftEdge - host.left}px`,
         );
 
+        const bodies = world.scenario.bodies;
+        const { root: top } = leftPane(bodies);
+        const picked = bodies.find((body) => body.id === world.selected);
+
         input.value = "";
-        active =
-            treeOrder(world.scenario.bodies).findIndex(
-                (body) => body.id === world.selected,
-            ) + 1 || 1;
+        if (!picked || picked.id === top.id || picked.parent === top.id) {
+            shown = active = picked?.id ?? top.id;
+            pane = "left";
+        } else {
+            // Walk up to the child of the root that the picked body orbits.
+            let ancestor: Body = picked;
+            while (ancestor.parent !== top.id) {
+                const next = bodies.find((body) => body.id === ancestor.parent);
+                if (!next) break;
+
+                ancestor = next;
+            }
+
+            shown = ancestor.parent === top.id ? ancestor.id : top.id;
+            pane = shown === top.id ? "left" : "right";
+            active = pane === "left" ? shown : picked.id;
+        }
+
+        renderedShown = "";
         render();
         timer = setInterval(patchRanges, RANGE_MS);
         toggle.setAttribute("aria-expanded", "true");
@@ -279,6 +476,19 @@ export const createSearch = (
         openAdd(name);
     };
 
+    const showSystem = (id: string) => {
+        // Rebuilding would detach the clicked row, so its dblclick would never reach the list.
+        if (id === shown && id === active && pane === "left") return;
+
+        shown = active = id;
+        pane = "left";
+        render();
+    };
+
+    const unsubscribe = world.on((event) => {
+        if (event.type === "scenario" && !panel.hidden) render();
+    });
+
     // Pressing the button or a row would blur the input, and close the panel.
     toggle.addEventListener(
         "pointerdown",
@@ -299,18 +509,39 @@ export const createSearch = (
         },
         { signal },
     );
-    input.addEventListener(
-        "blur",
+    // A button reached with Tab keeps the panel open, and leaving the panel closes it.
+    panel.addEventListener(
+        "focusout",
         (event) => {
             const next = event.relatedTarget;
             if (!(next instanceof Node && panel.contains(next))) close(false);
         },
         { signal },
     );
+    panel.addEventListener(
+        "keydown",
+        (event) => {
+            // Tab past the last control lands where Escape does, not on the page body.
+            const leaving =
+                event.key === "Tab" &&
+                !event.shiftKey &&
+                event.target === addButton;
+            if (event.key === "Escape" || leaving) {
+                event.preventDefault();
+                close(true);
+            }
+        },
+        { signal },
+    );
     input.addEventListener(
         "input",
         () => {
-            active = 1;
+            if (searching()) {
+                active = matches()[0]?.id ?? null;
+            } else {
+                pane = "left";
+                active = shown;
+            }
             render();
         },
         { signal },
@@ -320,52 +551,101 @@ export const createSearch = (
         (event) => {
             if (event.isComposing) return;
 
-            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            const { key } = event;
+
+            if (
+                key === "ArrowDown" ||
+                key === "ArrowUp" ||
+                // In a query they move the caret.
+                ((key === "Home" || key === "End") && !searching())
+            ) {
                 event.preventDefault();
 
-                const step = event.key === "ArrowDown" ? 1 : -1;
-                active = (active + step + hits.length + 1) % (hits.length + 1);
-                markActive();
-            } else if (event.key === "Enter") {
+                const ids = rowIds();
+                if (ids.length === 0) return;
+
+                const at = active === null ? -1 : ids.indexOf(active);
+                const next =
+                    key === "Home"
+                        ? 0
+                        : key === "End"
+                          ? ids.length - 1
+                          : Math.min(
+                                ids.length - 1,
+                                Math.max(
+                                    0,
+                                    at + (key === "ArrowDown" ? 1 : -1),
+                                ),
+                            );
+
+                active = ids[next] ?? null;
+                if (pane === "left" && !searching() && active) shown = active;
+                render();
+            } else if (key === "Enter") {
                 event.preventDefault();
 
-                const hit = hits[active - 1];
-                if (hit) pick(hit.id, event.shiftKey);
-                else add();
-            } else if (event.key === "Escape") {
-                event.preventDefault();
-                close(true);
+                if (active) pick(active, event.shiftKey);
+                else if (searching()) add();
+            } else if (!searching()) {
+                // With a query, the caret keeps Left and Right.
+                if (key === "ArrowRight" && pane === "left") {
+                    event.preventDefault();
+
+                    const first = firstOf(shown);
+                    if (first) {
+                        pane = "right";
+                        active = first;
+                        render();
+                    }
+                } else if (key === "ArrowLeft" && pane === "right") {
+                    event.preventDefault();
+                    pane = "left";
+                    active = shown;
+                    render();
+                }
             }
         },
         { signal },
     );
-    list.addEventListener(
+    panel.addEventListener(
         "click",
         (event) => {
-            const item =
-                event.target instanceof Element
-                    ? event.target.closest("li")
-                    : null;
-            if (!item) return;
+            const target =
+                event.target instanceof Element ? event.target : null;
+            const action =
+                target?.closest<HTMLElement>("[data-act]")?.dataset.act;
 
-            if (item.dataset.id) pick(item.dataset.id, event.shiftKey);
-            else add();
+            if (action === "add") add();
+            else if (action === "add-blank") {
+                close(false);
+                openAdd("");
+            } else if (action === "pick") pick(shown, false);
+            else if (action === "focus") pick(shown, true);
+
+            const item = target?.closest<HTMLElement>('[role="option"]');
+            const id = item?.dataset.id;
+            if (action || !id) return;
+
+            if (item.parentElement === left) showSystem(id);
+            else pick(id, event.shiftKey);
         },
         { signal },
     );
-    list.addEventListener(
-        "mousemove",
+    for (const scroller of [left, systemList, results]) {
+        scroller.addEventListener("scroll", () => updateMore(scroller), {
+            passive: true,
+            signal,
+        });
+    }
+    left.addEventListener(
+        "dblclick",
         (event) => {
-            const item =
+            const id =
                 event.target instanceof Element
-                    ? event.target.closest("li")
-                    : null;
-            const k = item ? [...list.children].indexOf(item) : -1;
-
-            if (k >= 0 && k !== active) {
-                active = k;
-                markActive(false);
-            }
+                    ? event.target.closest<HTMLElement>('[role="option"]')
+                          ?.dataset.id
+                    : undefined;
+            if (id) pick(id, false);
         },
         { signal },
     );
@@ -375,6 +655,7 @@ export const createSearch = (
         open,
         destroy: () => {
             abort.abort();
+            unsubscribe();
             clearInterval(timer);
             toggle.remove();
             panel.remove();
