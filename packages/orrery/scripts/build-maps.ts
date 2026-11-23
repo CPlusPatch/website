@@ -11,6 +11,10 @@
  * - The moons, Ceres and Vesta: global mosaics from USGS Astrogeology and DLR, named in `MOONS`
  *   below. Search by file name at https://astrogeology.usgs.gov/search
  *
+ * - Kerbol system: textures from Kerbal Space Program's game files, (c) Take-Two Interactive. They
+ *   are resized to 2048x1024 for Kerbol and the planets and 1024x512 for the moons, and the grey
+ *   ones are coloured, see `KERBOL_COLOURS`.
+ *
  * Credits: Solar System Scope for the maps of the Sun, planets and the Moon. NASA/JHUAPL/SwRI
  * for Pluto and Charon. USGS Astrogeology and DLR, from NASA (Voyager, Galileo, Cassini, Dawn)
  * and ESA (Mars Express) data, for Jupiter's and Saturn's major moons (not Titan), Triton,
@@ -18,9 +22,10 @@
  *
  * Needs oiiotool. The directory holds the `2k_*` files, the Pluto TIFF and the moon TIFFs. With
  * `--moons`, only the moon, Ceres and Vesta maps are built, so the directory needs just their
- * TIFFs. Run it from the repository root:
+ * TIFFs. With `--kerbol`, only the Kerbol maps are built, from `<id>.webp` files. Run it from the
+ * repository root:
  *
- *   deno run --allow-read --allow-write --allow-run=oiiotool packages/orrery/scripts/build-maps.ts <directory> [--moons]
+ *   deno run --allow-read --allow-write --allow-run=oiiotool packages/orrery/scripts/build-maps.ts <directory> [--moons | --kerbol]
  */
 
 import { fileURLToPath } from "node:url";
@@ -47,6 +52,10 @@ type Filled = {
     roll?: true;
     // Unimaged bands to fill from the opposite hemisphere.
     fill?: Side[];
+    // Reads only the red channel, for a grey source stored as RGB.
+    grey?: true;
+    // Source values, from 0 to 1, stretched to black and white.
+    levels?: [number, number];
     // A `#rrggbb` colour, for a grey source. Scaled so its largest channel is 1.
     tint?: string;
     // `#rrggbb` colours for the darkest and lightest tones of a grey source, instead of a tint.
@@ -215,10 +224,49 @@ const MAPS: { out: string; source: string; alpha?: true; steps?: string[] }[] =
         { out: "neptune", source: "2k_neptune.jpg" },
     ];
 
+// Kerbol, Ike and Dres have grey sources, so they're coloured here. Kerbol's is dark noise that
+// the game lights with a shader, so it is stretched. Ike and Dres are tinted by their body
+// colours in `kerbol` in `orbit/src/data/fiction.ts`.
+const KERBOL_COLOURS: Record<
+    string,
+    Pick<Filled, "levels" | "tint" | "duotone">
+> = {
+    kerbol: { levels: [0, 0.3], duotone: ["#e8841e", "#ffe9b0"] },
+    ike: { tint: "#6e6a66" },
+    dres: { tint: "#8c847a" },
+};
+
+// Kerbol and its planets get 2048x1024, the moons 1024x512. Kerbol's source is only 1024x512.
+const KERBOL: { out: string; size: [number, number] }[] = [
+    ...["moho", "eve", "kerbin", "duna", "dres", "jool", "eeloo"].map(
+        (out) => ({
+            out,
+            size: [2048, 1024] as [number, number],
+        }),
+    ),
+    ...[
+        "kerbol",
+        "gilly",
+        "mun",
+        "minmus",
+        "ike",
+        "laythe",
+        "vall",
+        "tylo",
+        "bop",
+        "pol",
+    ].map((out) => ({ out, size: MOON_SIZE })),
+];
+
 const [directory, ...flags] = Deno.args;
 const onlyMoons = flags.includes("--moons");
-if (!directory || flags.some((flag) => flag !== "--moons")) {
-    console.error("Usage: build-maps.ts <directory> [--moons]");
+const onlyKerbol = flags.includes("--kerbol");
+if (
+    !directory ||
+    flags.length > 1 ||
+    flags.some((flag) => flag !== "--moons" && flag !== "--kerbol")
+) {
+    console.error("Usage: build-maps.ts <directory> [--moons | --kerbol]");
     Deno.exit(2);
 }
 
@@ -281,6 +329,8 @@ const buildFilled = async (
         out,
         source,
         roll,
+        grey,
+        levels,
         fill = [],
         tint: colour,
         duotone: duo,
@@ -301,6 +351,16 @@ const buildFilled = async (
         // Rolling by half the width puts longitude 0 at the centre, like the other maps.
         ...(roll
             ? ["--cshift", `+${Math.floor((await widthOf(sourcePath)) / 2)}+0`]
+            : []),
+        ...(grey ? ["--ch", "R"] : []),
+        ...(levels
+            ? [
+                  "--contrast:black=" +
+                      levels[0] +
+                      ":white=" +
+                      levels[1] +
+                      ":clamp=1",
+              ]
             : []),
         "--resize",
         `${workWidth}x${workHeight}`,
@@ -393,6 +453,43 @@ const buildFilled = async (
     ]);
     await report(name);
 };
+
+if (onlyKerbol) {
+    const temp = await Deno.makeTempDir();
+    try {
+        for (const { out, size } of KERBOL) {
+            const colours = KERBOL_COLOURS[out];
+            if (colours) {
+                await buildFilled(
+                    {
+                        out,
+                        source: `${out}.webp`,
+                        grey: true,
+                        ...colours,
+                        work: size,
+                        size,
+                    },
+                    temp,
+                );
+                continue;
+            }
+
+            const name = `${out}.webp`;
+            await oiio([
+                `${directory}/${out}.webp`,
+                "--resize",
+                `${size[0]}x${size[1]}`,
+                ...compression,
+                "-o",
+                fileURLToPath(new URL(name, maps)),
+            ]);
+            await report(name);
+        }
+    } finally {
+        await Deno.remove(temp, { recursive: true });
+    }
+    Deno.exit(0);
+}
 
 if (!onlyMoons) {
     for (const { out, source, alpha, steps } of MAPS) {
