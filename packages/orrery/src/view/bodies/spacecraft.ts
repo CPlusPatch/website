@@ -44,15 +44,27 @@ type Bus = {
 
 const MAST = 0.6;
 
-// Earth-shine stand-in: the only other fill is an ambient of 0.015, so unlit faces were black.
-const material = (color: number, roughness: number): MeshStandardMaterial =>
-    new MeshStandardMaterial({
+// A fill from the camera's upper left, so unlit faces aren't black. A flat emissive hid the edges.
+const fill = (shader: { fragmentShader: string }): void => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <emissivemap_fragment>",
+        `#include <emissivemap_fragment>
+        totalEmissiveRadiance *= 0.3 + 1.1 * max(dot(normal, normalize(vec3(-0.5, 0.6, 0.6))), 0.0);`,
+    );
+};
+
+const material = (color: number, roughness: number): MeshStandardMaterial => {
+    const made = new MeshStandardMaterial({
         color,
         roughness,
         metalness: 0,
-        emissive: 0x0d0f14,
+        emissive: 0x30343e,
         emissiveIntensity: 1,
     });
+    made.onBeforeCompile = fill;
+
+    return made;
+};
 
 const palette = (): Palette => ({
     white: material(0xe6e6e8, 0.5),
