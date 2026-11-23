@@ -2,12 +2,15 @@
 import { AU, type Body, eridani, solarSystem } from "@cpluspatch/orbit";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
+    approachDistance,
     centreShift,
     ease,
     fitDistanceKm,
-    focusDistanceKm,
     focusTween,
+    frameDistanceKm,
+    keepSizeDistanceKm,
     minDistanceKm,
+    openingReachKm,
     reachKm,
 } from "./framing.ts";
 
@@ -17,23 +20,6 @@ const body = (id: string): Body => {
 
     return found;
 };
-
-Deno.test("a body is focused at six radii, or a twentieth of its orbit if that is farther", () => {
-    const earth = body("earth");
-    const big: Body = { ...earth, radius: 1e10 };
-
-    assertAlmostEquals(focusDistanceKm(big), 6e7);
-    assertAlmostEquals(
-        focusDistanceKm(earth),
-        (0.05 * (earth.elements?.a ?? 0)) / 1000,
-    );
-});
-
-Deno.test("a body with no orbit is focused no closer than a twentieth of 50 AU", () => {
-    const root: Body = { ...body("sun"), radius: 1, elements: null };
-
-    assertAlmostEquals(focusDistanceKm(root), (0.05 * 50 * AU) / 1000);
-});
 
 Deno.test("the camera stays where a body's sphere spans 80% of the view, and at least 10 m", () => {
     const fov = (50 * Math.PI) / 180;
@@ -131,42 +117,57 @@ Deno.test("easing starts and ends at rest and clamps outside 0 to 1", () => {
     assertAlmostEquals(ease(0.5), 0.5);
 });
 
-Deno.test("a focus move lands on the target, halfway by ratio at the middle, moved as far as the distance", () => {
+const TAN_HALF_FOV = Math.tan((25 * Math.PI) / 180);
+
+Deno.test("a focus move lands on the target, and a move in place zooms by ratio", () => {
     const from = { distance: 100, position: { x: 0, y: 0, z: 0 } };
     const to = { distance: 400, position: { x: 10, y: -20, z: 30 } };
 
-    const start = focusTween(from, to, 0);
-    const end = focusTween(from, to, 1);
+    const start = focusTween(from, to, 0, TAN_HALF_FOV);
+    const end = focusTween(from, to, 1, TAN_HALF_FOV);
 
     assertAlmostEquals(start.distance, 100);
     assertAlmostEquals(end.distance, 400);
     assertEquals(end.position, to.position);
 
-    const middle = focusTween(from, to, 0.5);
+    const inPlace = { ...to, position: from.position };
 
-    assertAlmostEquals(middle.distance, 200);
-    assertAlmostEquals(middle.position.x, 10 / 3);
-    assertAlmostEquals(middle.position.y, -20 / 3);
-    assertAlmostEquals(middle.position.z, 10);
+    assertAlmostEquals(
+        focusTween(from, inPlace, 0.5, TAN_HALF_FOV).distance,
+        200,
+    );
 });
 
-Deno.test("zooming in on a focus never pushes the target further across the screen", () => {
-    const from = { distance: 1000, position: { x: 0, y: 0, z: 0 } };
-    const to = { distance: 1, position: { x: 500, y: 0, z: 0 } };
+Deno.test("a far focus move pulls back until the view is as tall as the move", () => {
+    const from = { distance: 1166, position: { x: 0, y: 0, z: 0 } };
+    const to = { distance: 2185, position: { x: 1e10, y: 0, z: 0 } };
+    let widest = 0;
 
-    for (let s = 0; s <= 1; s += 0.05) {
-        const pose = focusTween(from, to, s);
-        const offScreen = (to.position.x - pose.position.x) / pose.distance;
+    for (let s = 0; s <= 1; s += 0.001) {
+        const pose = focusTween(from, to, s, TAN_HALF_FOV);
+        widest = Math.max(widest, 2 * pose.distance * TAN_HALF_FOV);
 
-        assert(offScreen <= 0.5 + 1e-9);
+        assert(Number.isFinite(pose.distance));
+        assert(pose.position.x >= -1e-3 && pose.position.x <= 1e10 + 1e-3);
     }
+
+    assert(widest >= 0.99 * 1e7);
 });
 
-Deno.test("a focus move between equal distances moves by the eased progress", () => {
+Deno.test("a focus move between equal distances is halfway at the middle", () => {
     const pose = { distance: 5, position: { x: 0, y: 0, z: 0 } };
-    const to = { distance: 5, position: { x: 8, y: 0, z: 0 } };
+    const to = { distance: 5, position: { x: 8000, y: 0, z: 0 } };
 
-    assertAlmostEquals(focusTween(pose, to, 0.5).position.x, 4);
+    assertAlmostEquals(
+        focusTween(pose, to, 0.5, TAN_HALF_FOV).position.x,
+        4000,
+    );
+});
+
+Deno.test("a key zoom closes the gap by ratio, faster for a longer step", () => {
+    assertAlmostEquals(approachDistance(100, 400, Math.LN2 * 0.05, 0.05), 200);
+    assertEquals(approachDistance(100, 400, 0, 0.05), 100);
+    assertAlmostEquals(approachDistance(100, 400, 10, 0.05), 400);
 });
 
 Deno.test("the reach is the farthest planet's aphelion in km, and ignores dwarf planets", () => {
@@ -199,4 +200,70 @@ Deno.test("the view shifts by the gap between its centre and the free band's, an
     assertEquals(centreShift(740, { top: 48, bottom: 100 }), 296);
     assertEquals(centreShift(800, { top: 60, bottom: 740 }), 0);
     assertEquals(centreShift(800, { top: 0, bottom: 700 }), 50);
+});
+
+Deno.test("the opening view frames Mars's apoapsis, the 4th planet out", () => {
+    const mars = body("mars");
+    const { a = 0, e = 0 } = mars.elements ?? {};
+
+    assertAlmostEquals(openingReachKm(solarSystem), (a * (1 + e)) / 1000, 1);
+});
+
+Deno.test("the opening view falls back to the farthest planet, then to the reach", () => {
+    const planets = solarSystem.bodies.filter((b) => b.kind === "planet");
+    const keep = new Set(["sun", "mercury", "venus"]);
+    const few = {
+        ...solarSystem,
+        bodies: solarSystem.bodies.filter(
+            (b) => b.kind !== "planet" || keep.has(b.id),
+        ),
+    };
+    const venus = body("venus");
+    const { a = 0, e = 0 } = venus.elements ?? {};
+
+    assertEquals(planets.length > 3, true);
+    assertAlmostEquals(openingReachKm(few), (a * (1 + e)) / 1000, 1);
+
+    const none = {
+        ...solarSystem,
+        bodies: solarSystem.bodies.filter((b) => b.kind !== "planet"),
+    };
+
+    assertAlmostEquals(openingReachKm(none), reachKm(none), 1);
+});
+
+Deno.test("a body with moons is framed so its farthest moon's orbit fits the narrower side", () => {
+    const fov = (50 * Math.PI) / 180;
+    const callisto = body("callisto");
+    const { a = 0, e = 0 } = callisto.elements ?? {};
+    const reach = (a * (1 + e)) / 1000;
+
+    assertAlmostEquals(
+        frameDistanceKm(solarSystem, "jupiter", fov, 2),
+        (reach * 1.1) / Math.tan(fov / 2),
+        1,
+    );
+    assertAlmostEquals(
+        frameDistanceKm(solarSystem, "jupiter", fov, 0.5),
+        (reach * 1.1) / (Math.tan(fov / 2) * 0.5),
+        1,
+    );
+});
+
+Deno.test("a body with no moons is framed so its sphere spans 25% of the view's height", () => {
+    const fov = (50 * Math.PI) / 180;
+    const mercury = body("mercury");
+
+    assertAlmostEquals(
+        frameDistanceKm(solarSystem, "mercury", fov, 1.5),
+        mercury.radius / 1000 / Math.sin(0.125 * fov),
+        1e-6,
+    );
+});
+
+Deno.test("a focus that keeps its size scales the distance by the radii's ratio", () => {
+    assertAlmostEquals(
+        keepSizeDistanceKm(1000, 6371, 1737),
+        (1000 * 1737) / 6371,
+    );
 });
