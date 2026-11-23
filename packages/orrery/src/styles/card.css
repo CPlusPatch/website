@@ -13,7 +13,8 @@
 
     .orrery__inspector-head {
         display: flex;
-        align-items: center;
+        /* A wrapped title keeps the marker and close button on its first line. */
+        align-items: flex-start;
         gap: var(--space-sm);
         padding: var(--space-sm) var(--orrery-pad);
     }
@@ -32,6 +33,7 @@
 
     /* The head of the small panels: the title is size-md. */
     .orrery__inspector-head--panel {
+        align-items: center;
         padding-block: 0.5rem 0.375rem;
 
         + .orrery__inspector-body {
@@ -44,6 +46,8 @@
         display: flex;
         inline-size: 1.375rem;
         block-size: 1.375rem;
+        /* Centred on the title's first line, which is as tall as the close button. */
+        margin-block-start: calc((1.75rem - 1.375rem) / 2);
 
         &[hidden] {
             display: none;
@@ -53,6 +57,10 @@
             inline-size: 100%;
             block-size: 100%;
         }
+    }
+
+    .orrery__inspector-head--panel .orrery__orbit-marker {
+        margin-block-start: 0;
     }
 
     /* The selection ring of the scene, for a catalogue satellite. */
@@ -82,7 +90,7 @@
         min-inline-size: 0;
         margin: 0;
         overflow-wrap: anywhere;
-        font: 600 var(--orrery-size-xl) / 1.1 var(--orrery-font-ui);
+        font: 600 var(--orrery-size-lg) / 1.75rem var(--orrery-font-ui);
         letter-spacing: 0.02em;
     }
 
