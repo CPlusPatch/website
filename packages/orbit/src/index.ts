@@ -28,7 +28,12 @@ export {
     wrapAngle,
 } from "./kepler.ts";
 export type { Orientation, RotationModel } from "./orientation.ts";
-export { bodyOrientation, orientationFromPole } from "./orientation.ts";
+export {
+    bodyOrientation,
+    orientationFromPole,
+    rotationPeriod,
+    spinAxis,
+} from "./orientation.ts";
 export type { Precession, Turn } from "./precession.ts";
 export {
     elementsAt,

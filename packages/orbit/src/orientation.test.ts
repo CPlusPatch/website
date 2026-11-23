@@ -7,7 +7,12 @@ import { assertVecClose } from "./fixture.ts";
 import { rotateEquatorialToEcliptic } from "./frames.ts";
 import { stateAt } from "./kepler.ts";
 import type { Orientation } from "./orientation.ts";
-import { bodyOrientation, orientationFromPole } from "./orientation.ts";
+import {
+    bodyOrientation,
+    orientationFromPole,
+    rotationPeriod,
+    spinAxis,
+} from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
 import type { Vec3 } from "./vec.ts";
 import { cross, dot, length, scale } from "./vec.ts";
@@ -103,6 +108,41 @@ Deno.test("a body's pole is tilted from its orbit normal by its obliquity", () =
 
         assertAlmostEquals(angle, degrees, 0.3, `${id} obliquity ${angle}`);
     }
+});
+
+Deno.test("a body's sidereal rotation period comes from its rotation model", () => {
+    const hours = (id: string) => (rotationPeriod(id, 0) ?? 0) / 3600;
+
+    assertAlmostEquals(rotationPeriod("earth", 0) ?? 0, 86164.1, 1);
+    assertAlmostEquals(hours("moon") / 24, 27.32, 0.01);
+    assertAlmostEquals(hours("jupiter"), 9.925, 0.01);
+    assertAlmostEquals(hours("venus") / 24, 243.0, 0.1);
+    assertEquals(rotationPeriod("no-such-body", 0), null);
+});
+
+Deno.test("the spin axis is tilted from the orbit normal by the usual obliquity", () => {
+    const expected: Record<string, number> = {
+        earth: 23.44,
+        venus: 177.36,
+        uranus: 97.77,
+    };
+
+    for (const [id, degrees] of Object.entries(expected)) {
+        const { i, raan } = find(id).elements;
+        const normal = {
+            x: Math.sin(i) * Math.sin(raan),
+            y: -Math.sin(i) * Math.cos(raan),
+            z: Math.cos(i),
+        };
+        const axis = spinAxis(id, 0);
+        assert(axis, `no spin axis for ${id}`);
+
+        const angle = angleBetween(axis, normal) / RAD;
+
+        assertAlmostEquals(angle, degrees, 0.3, `${id} obliquity ${angle}`);
+    }
+
+    assertEquals(spinAxis("no-such-body", 0), null);
 });
 
 // The Earth rotation angle counts from the CIO, which stays on the ICRF axes, unlike GMST.
