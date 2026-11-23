@@ -25,7 +25,7 @@ const ENTRIES: CatalogueEntry[] = [
         group: "starlink",
         epoch: Date.UTC(2026, 10, 23, 6),
     }),
-    entry({ name: "天链 ☆ 1", group: "constellation", m0: 0.25 }),
+    entry({ name: "天链 ☆ 1", group: "phone-iot", m0: 0.25 }),
 ];
 
 Deno.test("a catalogue survives encoding within float32 precision", () => {
@@ -33,7 +33,7 @@ Deno.test("a catalogue survives encoding within float32 precision", () => {
 
     assertEquals(decoded.epoch, Date.UTC(2026, 10, 23, 12));
     assertEquals(decoded.names, ["ISS (ZARYA)", "STARLINK-1007", "天链 ☆ 1"]);
-    assertEquals(Array.from(decoded.groups), [3, 0, 2]);
+    assertEquals(Array.from(decoded.groups), [8, 0, 4]);
     assertEquals(decoded.elements.length, 21);
     ENTRIES.forEach((e, i) => {
         const at = i * 7;
@@ -107,7 +107,7 @@ Deno.test("a name list that doesn't match the count throws", () => {
 
 Deno.test("an unknown group byte throws", () => {
     const bytes = encodeCatalogue(ENTRIES);
-    bytes[20 + ENTRIES.length * 7 * 4] = 4;
+    bytes[20 + ENTRIES.length * 7 * 4] = 9;
 
     assertThrows(() => decodeCatalogue(bytes), Error, "group");
 });

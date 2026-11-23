@@ -28,20 +28,6 @@ const COLUMNS = [
     "NORAD_CAT_ID",
 ];
 
-const CONSTELLATION_PREFIXES = [
-    "KUIPER",
-    "QIANFAN",
-    "HULIANWANG",
-    "IRIDIUM",
-    "GLOBALSTAR",
-    "ORBCOMM",
-    "TIANQI",
-    "KINEIS",
-    "CENTISPACE",
-    "RASSVET",
-    "GONETS",
-];
-
 const RADIANS = Math.PI / 180;
 
 /** The records of an OMM CSV, in file order. Columns are found by their header name. */
@@ -107,13 +93,109 @@ export const parseOmmCsv = (text: string): OmmRecord[] => {
 const startsWithWord = (name: string, prefix: string): boolean =>
     name.startsWith(prefix) && !/^[A-Za-z]/.test(name.slice(prefix.length));
 
+type Rule = {
+    group: SatelliteGroup;
+    prefixes: string[];
+    /** For names that don't start with the constellation's name. */
+    patterns?: RegExp[];
+};
+
+// The first match wins, so weather comes before imaging: GEO-KOMPSAT-2A is weather, KOMPSAT-3A isn't.
+const RULES: Rule[] = [
+    { group: "starlink", prefixes: ["STARLINK"] },
+    { group: "oneweb", prefixes: ["ONEWEB"] },
+    { group: "kuiper", prefixes: ["KUIPER"] },
+    { group: "guowang-qianfan", prefixes: ["QIANFAN", "HULIANWANG"] },
+    {
+        group: "phone-iot",
+        prefixes: [
+            "IRIDIUM",
+            "GLOBALSTAR",
+            "ORBCOMM",
+            "TIANQI",
+            "KINEIS",
+            "CENTISPACE",
+            "RASSVET",
+            "GONETS",
+            "SPACEMOBILE",
+            "BLUEBIRD",
+            "LYNK",
+            "ASTROCAST",
+            "APRIZESAT",
+        ],
+    },
+    {
+        group: "navigation",
+        prefixes: ["NAVSTAR", "GPS", "BEIDOU", "IRNSS", "QZS"],
+        // Galileo is "GSAT0101 (GALILEO-PFM)" and GLONASS is "COSMOS 2433 [GLONASS-M]".
+        patterns: [/^GSAT0\d{3}/, /\(GALILEO/, /[[(]GLONASS/],
+    },
+    {
+        group: "weather",
+        prefixes: [
+            "NOAA",
+            "GOES",
+            "EWS-G",
+            "METEOSAT",
+            "METEOR",
+            "METOP",
+            "FENGYUN",
+            "HIMAWARI",
+            "GEO-KOMPSAT",
+            "ELEKTRO",
+            "JPSS",
+            "DMSP",
+            "INSAT-3D",
+            "INSAT-3DR",
+            "INSAT-3DS",
+        ],
+    },
+    {
+        group: "imaging",
+        prefixes: [
+            "FLOCK",
+            "SKYSAT",
+            "ICEYE",
+            "JILIN",
+            "GAOFEN",
+            "SUPERVIEW",
+            "CAPELLA",
+            "SENTINEL",
+            "LANDSAT",
+            "WORLDVIEW",
+            "PLEIADES",
+            "GRUS",
+            "QPS",
+            "STRIX",
+            "UMBRA",
+            "NUSAT",
+            "PELICAN",
+            "YAOGAN",
+            "SPOT",
+            "KOMPSAT",
+            "ARIRANG",
+            "PIESAT",
+            "TIANHUI",
+            "ZIYUAN",
+            "CBERS",
+            "CARTOSAT",
+            "RESURS",
+            "KANOPUS",
+            "HAIYANG",
+            "BLACKSKY",
+            "GHGSAT",
+            "SIWEI",
+        ],
+    },
+];
+
 /** The group a satellite is drawn in, from its name. */
 export const satelliteGroup = (name: string): SatelliteGroup => {
-    if (startsWithWord(name, "STARLINK")) return "starlink";
-    if (startsWithWord(name, "ONEWEB")) return "oneweb";
-    if (CONSTELLATION_PREFIXES.some((prefix) => startsWithWord(name, prefix))) {
-        return "constellation";
-    }
+    const rule = RULES.find(
+        ({ prefixes, patterns = [] }) =>
+            prefixes.some((prefix) => startsWithWord(name, prefix)) ||
+            patterns.some((pattern) => pattern.test(name)),
+    );
 
-    return "other";
+    return rule?.group ?? "other";
 };

@@ -71,22 +71,39 @@ Deno.test("a number that isn't finite throws", () => {
     );
 });
 
-Deno.test("satellites are grouped by name prefix", () => {
-    assertEquals(satelliteGroup("STARLINK-1007"), "starlink");
-    assertEquals(satelliteGroup("STARLINK-32603 [DTC]"), "starlink");
-    assertEquals(satelliteGroup("ONEWEB-0012"), "oneweb");
-    assertEquals(satelliteGroup("KUIPER-00001"), "constellation");
-    assertEquals(satelliteGroup("TIANQI-12"), "constellation");
-    assertEquals(satelliteGroup("GONETS-M 21"), "constellation");
-    assertEquals(satelliteGroup("IRIDIUM 106"), "constellation");
-    assertEquals(satelliteGroup("HULIANWANG DIGUI-01"), "constellation");
-    assertEquals(satelliteGroup("ISS (ZARYA)"), "other");
+Deno.test("satellites are grouped by name", () => {
+    const groups: [string, string][] = [
+        ["STARLINK-1007", "starlink"],
+        ["STARLINK-32603 [DTC]", "starlink"],
+        ["ONEWEB-0012", "oneweb"],
+        ["KUIPER-00001", "kuiper"],
+        ["QIANFAN-12", "guowang-qianfan"],
+        ["HULIANWANG DIGUI-01", "guowang-qianfan"],
+        ["IRIDIUM 106", "phone-iot"],
+        ["TIANQI-12", "phone-iot"],
+        ["GONETS-M 21", "phone-iot"],
+        ["NAVSTAR 78 (USA 177)", "navigation"],
+        ["BEIDOU-3 M1", "navigation"],
+        ["GSAT0201 (GALILEO 5)", "navigation"],
+        ["COSMOS 2433 [GLONASS-M]", "navigation"],
+        ["NOAA 19", "weather"],
+        ["GEO-KOMPSAT-2A", "weather"],
+        ["KOMPSAT-3A", "imaging"],
+        ["FLOCK 4P 1", "imaging"],
+        ["COSMOS 2390", "other"],
+        ["ISS (ZARYA)", "other"],
+    ];
+
+    for (const [name, group] of groups) {
+        assertEquals(satelliteGroup(name), group, name);
+    }
 });
 
 Deno.test("a prefix followed by a letter isn't a match", () => {
     assertEquals(satelliteGroup("TIANQIN 1 (CAS-1)"), "other");
     assertEquals(satelliteGroup("STARLINKX"), "other");
-    assertEquals(satelliteGroup("IRIDIUM"), "constellation");
+    assertEquals(satelliteGroup("SPAINSAT NG-I"), "other");
+    assertEquals(satelliteGroup("IRIDIUM"), "phone-iot");
 });
 
 Deno.test("an epoch that isn't a date throws", () => {

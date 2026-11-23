@@ -7,7 +7,12 @@
 export const SATELLITE_GROUPS = [
     "starlink",
     "oneweb",
-    "constellation",
+    "kuiper",
+    "guowang-qianfan",
+    "phone-iot",
+    "navigation",
+    "imaging",
+    "weather",
     "other",
 ] as const;
 

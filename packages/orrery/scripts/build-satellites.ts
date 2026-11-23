@@ -1,7 +1,8 @@
 /// <reference types="deno" />
 /**
  * @module
- * Builds the Orrery's satellite snapshot: `src/assets/satellites.bin`.
+ * Builds the Orrery's satellite snapshot: `src/assets/satellites.bin`, and
+ * `src/catalogue-snapshot.ts` with its group counts by orbit class, and date.
  *
  * Source: CelesTrak's "active" group as OMM CSV, https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=csv
  *
@@ -15,12 +16,19 @@
  *   deno run --allow-read --allow-write packages/orrery/scripts/build-satellites.ts active.csv
  */
 
-import { CURATED_CATALOG_NUMBERS } from "@cpluspatch/orbit";
+import {
+    CURATED_CATALOG_NUMBERS,
+    type OrbitClass,
+    solarSystem,
+} from "@cpluspatch/orbit";
 import {
     type CatalogueEntry,
+    decodeCatalogue,
     encodeCatalogue,
     SATELLITE_GROUPS,
+    type SatelliteGroup,
 } from "../src/catalogue.ts";
+import { prepareSwarm } from "../src/swarm.ts";
 import { parseOmmCsv, satelliteGroup } from "./celestrak.ts";
 
 const [csv] = Deno.args;
@@ -56,11 +64,63 @@ if (entries.length === 0) {
 const path = new URL("satellites.bin", assets);
 await Deno.writeFile(path, encodeCatalogue(entries));
 
-for (const group of SATELLITE_GROUPS) {
-    const count = entries.filter((entry) => entry.group === group).length;
-    console.log(`${group}: ${count}`);
+// The view takes Earth's mu from the same scenario.
+const earthMu = solarSystem.bodies.find((body) => body.id === "earth")?.mu;
+if (earthMu === undefined) {
+    console.error("The solar system has no Earth.");
+    Deno.exit(1);
 }
+
+const CLASSES: OrbitClass[] = ["leo", "meo", "geo", "heo"];
+const counts = Object.fromEntries(
+    SATELLITE_GROUPS.map((group) => [
+        group,
+        Object.fromEntries(CLASSES.map((cls) => [cls, 0])),
+    ]),
+) as Record<SatelliteGroup, Record<OrbitClass, number>>;
+// Through the file, so float32 rounding can't move a satellite across a class boundary.
+const swarm = prepareSwarm(decodeCatalogue(encodeCatalogue(entries)), earthMu);
+for (let k = 0; k < swarm.count; k++) {
+    counts[SATELLITE_GROUPS[swarm.groups[k]]][swarm.classes[k]]++;
+}
+
+const total = (group: SatelliteGroup): number =>
+    CLASSES.reduce((sum, cls) => sum + counts[group][cls], 0);
+for (const group of SATELLITE_GROUPS) console.log(`${group}: ${total(group)}`);
+
+// The fetch day, not the header epoch: some epochs are predicted and run later.
+const today = new Date();
+// Not `toLocaleString`, as en-GB abbreviates September to "Sept".
+const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+const date = `${today.getUTCDate()} ${MONTHS[today.getUTCMonth()]} ${today.getUTCFullYear()}`;
 const epoch = Math.max(...entries.map((entry) => entry.epoch));
+const lines = SATELLITE_GROUPS.map(
+    (group) =>
+        `    ${JSON.stringify(group)}: { ${CLASSES.map((cls) => `${cls}: ${counts[group][cls]}`).join(", ")} },`,
+);
+await Deno.writeTextFile(
+    new URL("../src/catalogue-snapshot.ts", import.meta.url),
+    `/**
+ * @module
+ * What the satellite snapshot holds. Written by \`scripts/build-satellites.ts\`: don't edit by hand.
+ */
+
+import type { OrbitClass } from "@cpluspatch/orbit";
+import type { SatelliteGroup } from "./catalogue.ts";
+
+/** The satellites in each group of \`assets/satellites.bin\`, by orbit class. */
+export const GROUP_CLASSES: Record<SatelliteGroup, Record<OrbitClass, number>> = {
+${lines.join("\n")}
+};
+
+/** The day the snapshot was fetched from CelesTrak. */
+export const SNAPSHOT_DATE = "${date}";
+
+/** The latest element epoch in unix ms, which the ±1 year window is measured from. */
+export const SNAPSHOT_EPOCH = ${epoch};
+`,
+);
+
 console.log(`snapshot ${new Date(epoch).toISOString()}`);
 console.log(
     `${entries.length} satellites, ${(await Deno.stat(path)).size} bytes`,
