@@ -11,6 +11,10 @@ const TEXT = "input, select, textarea, [contenteditable], dialog";
 export type ShortcutActions = {
     /** Closes the keys card. Returns whether it was open. */
     closeKeys: () => boolean;
+    /** Clears the selected satellite. Returns whether there was one. */
+    clearSatellite: () => boolean;
+    /** Focuses the selected satellite. Returns whether there was one. */
+    focusSatellite: () => boolean;
     goLive: () => void;
     openSearch: () => void;
     toggleDate: () => void;
@@ -28,14 +32,22 @@ const shownUnit = (world: World): AUnit => {
 };
 
 /**
- * Binds Space, `[`, `]`, R, L and T to the clock of `world`, and F and Escape to its selection.
+ * Binds Space, `[`, `]`, R, L and T to the clock of `world`, and F and Escape to its selection,
+ * or to the selected satellite when no body is selected.
  * U switches the distance `units`, and `/` opens the search.
  * Escape closes the keys card first. Returns a function that unbinds them.
  */
 export const bindShortcuts = (
     world: World,
     units: Units,
-    { closeKeys, goLive, openSearch, toggleDate }: ShortcutActions,
+    {
+        closeKeys,
+        clearSatellite,
+        focusSatellite,
+        goLive,
+        openSearch,
+        toggleDate,
+    }: ShortcutActions,
 ): (() => void) => {
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.defaultPrevented || event.isComposing) return;
@@ -69,14 +81,12 @@ export const bindShortcuts = (
             }
 
             if (!closeKeys()) {
-                if (world.selected === null) return;
-
-                world.select(null);
+                if (world.selected !== null) world.select(null);
+                else if (!clearSatellite()) return;
             }
         } else if (event.key === "f" || event.key === "F") {
-            if (world.selected === null) return;
-
-            world.focus(world.selected);
+            if (world.selected !== null) world.focus(world.selected);
+            else if (!focusSatellite()) return;
         } else if (event.key === " ") {
             cue(clock.paused ? "play" : "pause");
             world.setClock({ paused: !clock.paused });

@@ -5,7 +5,7 @@
 
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
-import { announcement } from "./announce.ts";
+import { announcement, satelliteAnnouncement } from "./announce.ts";
 import { cue } from "./audio/cues.ts";
 import { createSound } from "./audio/sound.ts";
 import { Clock, DEFAULT_RATE } from "./clock.ts";
@@ -24,6 +24,7 @@ import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
+import { createSatelliteCard } from "./ui/satellite-card.ts";
 import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import { createScenarios } from "./ui/scenario-menu/scenario-menu.ts";
 import { createSearch, type Search } from "./ui/search.ts";
@@ -163,6 +164,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     let search: Search | null = null;
     // Replaced with the view on each scenario.
     let inspector: Inspector | null = null;
+    let currentView: View | null = null;
 
     const loading = createLoading(root);
 
@@ -207,6 +209,43 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         inspector = current;
         root.querySelector(".orrery__panel--right")?.append(current.element);
 
+        const card = createSatelliteCard(view.satellite, () =>
+            search?.toggle.focus(),
+        );
+        root.querySelector(".orrery__panel--right")?.append(card.element);
+
+        currentView = view;
+        const offSatellite = view.satellite.on((event) => {
+            const k = event.k;
+            const name =
+                k === null ? null : (view.satellite.facts(k)?.name ?? null);
+
+            if (event.type === "focus") {
+                crumbs.setSatellite(
+                    k === null || name === null
+                        ? null
+                        : { name, onClick: () => view.satellite.focus(k) },
+                );
+            }
+            if (event.type === "selection" && k !== null) {
+                cue("select");
+                // The keys card hides the orbit card, so a new pick would show nothing.
+                keys.close();
+            }
+
+            // A body pick clears the satellite, and the world's "Selected ..." follows or comes first.
+            if (
+                event.type === "selection" &&
+                k === null &&
+                world.selected !== null
+            ) {
+                return;
+            }
+
+            const message = satelliteAnnouncement(event, name);
+            if (message !== null) live.textContent = message;
+        });
+
         const hudSlot = root.querySelector<HTMLElement>(".orrery__panel--hud");
         const removeHud = hudSlot
             ? createHud(hudSlot, view, units, narrow)
@@ -217,6 +256,12 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             reveal: view.reveal,
             destroy: () => {
                 if (inspector === current) inspector = null;
+                if (currentView === view) {
+                    currentView = null;
+                    crumbs.setSatellite(null);
+                }
+                offSatellite();
+                card.destroy();
                 if (setSatellites === view.satelliteGroups) {
                     setSatellites = null;
                 }
@@ -304,6 +349,23 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     const unbind = bindShortcuts(world, units, {
         closeKeys: keys.close,
+        clearSatellite: () => {
+            const satellite = currentView?.satellite;
+            if (!satellite || satellite.selected() === null) return false;
+
+            satellite.select(null);
+
+            return true;
+        },
+        focusSatellite: () => {
+            const satellite = currentView?.satellite;
+            const k = satellite?.selected() ?? null;
+            if (!satellite || k === null) return false;
+
+            satellite.focus(k);
+
+            return true;
+        },
         goLive: timeBar.goLive,
         openSearch: search.open,
         toggleDate: timeBar.toggleDate,

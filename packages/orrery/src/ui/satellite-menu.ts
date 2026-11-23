@@ -35,7 +35,7 @@ export type SatelliteMenu = {
     destroy: () => void;
 };
 
-const LABELS: Record<SatelliteGroup, string> = {
+export const LABELS: Record<SatelliteGroup, string> = {
     starlink: "Starlink",
     oneweb: "OneWeb",
     kuiper: "Kuiper",

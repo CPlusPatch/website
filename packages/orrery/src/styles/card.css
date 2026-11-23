@@ -55,6 +55,28 @@
         }
     }
 
+    /* The selection ring of the scene, for a catalogue satellite. */
+    .orrery__satellite-ring,
+    .orrery__crumb-marker--satellite {
+        align-items: center;
+        justify-content: center;
+
+        &::before {
+            content: "";
+            box-sizing: border-box;
+            inline-size: 72%;
+            block-size: 72%;
+            border: 2px solid var(--orrery-pick);
+            border-radius: 50%;
+        }
+    }
+
+    .orrery__satellite-source {
+        margin: var(--space-sm) 0 0;
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-xs) / 1.4 var(--orrery-font-ui);
+    }
+
     .orrery__orbit-title {
         flex: 1;
         min-inline-size: 0;

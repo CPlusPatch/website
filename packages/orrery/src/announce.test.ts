@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 import { assertEquals } from "@std/assert";
-import { announcement } from "./announce.ts";
+import { announcement, satelliteAnnouncement } from "./announce.ts";
 
 const bodies = [
     { id: "earth", name: "Earth" },
@@ -31,4 +31,29 @@ Deno.test("focusing a body names it", () => {
 Deno.test("other events, like a rebuilt scenario, say nothing", () => {
     assertEquals(announcement({ type: "scenario" }, bodies), null);
     assertEquals(announcement({ type: "clock" }, bodies), null);
+});
+
+Deno.test("selecting a satellite names it", () => {
+    assertEquals(
+        satelliteAnnouncement({ type: "selection", k: 4 }, "ISS (ZARYA)"),
+        "Selected ISS (ZARYA).",
+    );
+});
+
+Deno.test("clearing a satellite selection says so", () => {
+    assertEquals(
+        satelliteAnnouncement({ type: "selection", k: null }, null),
+        "Selection cleared.",
+    );
+});
+
+Deno.test("focusing a satellite names it", () => {
+    assertEquals(
+        satelliteAnnouncement({ type: "focus", k: 4 }, "ISS (ZARYA)"),
+        "Focused on ISS (ZARYA).",
+    );
+});
+
+Deno.test("ending a satellite focus says nothing, as the world's focus event does", () => {
+    assertEquals(satelliteAnnouncement({ type: "focus", k: null }, null), null);
 });

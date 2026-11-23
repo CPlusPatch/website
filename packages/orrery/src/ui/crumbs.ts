@@ -7,6 +7,8 @@ import { h } from "./dom.ts";
 /** The crumbs' element and how to remove it. */
 export type Crumbs = {
     element: HTMLElement;
+    /** Ends the path with a followed satellite, or drops it with `null`. */
+    setSatellite: (crumb: { name: string; onClick: () => void } | null) => void;
     destroy: () => void;
 };
 
@@ -36,10 +38,33 @@ export const createCrumbs = (world: World): Crumbs => {
     );
 
     let shown = "";
+    let satellite: { name: string; onClick: () => void } | null = null;
+
+    // The id can't be a body's, so a body crumb never takes the satellite's place.
+    const SATELLITE_ID = "sat";
+
+    const satelliteItem = (name: string): HTMLElement => {
+        const marker = h("span", {
+            class: "orrery__crumb-marker orrery__crumb-marker--satellite",
+        });
+        const button = h(
+            "button",
+            {
+                type: "button",
+                class: "orrery__crumb",
+                "data-id": SATELLITE_ID,
+                "aria-current": "location",
+            },
+            marker,
+            h("span", { class: "orrery__crumb-label" }, name),
+        );
+
+        return h("li", {}, button);
+    };
 
     const render = () => {
         const path = focusPath(world.scenario.bodies, world.focused);
-        const key = JSON.stringify(
+        const key = JSON.stringify([
             path.map((body) => [
                 body.id,
                 body.name,
@@ -47,7 +72,8 @@ export const createCrumbs = (world: World): Crumbs => {
                 body.role,
                 colorOf(body),
             ]),
-        );
+            satellite?.name ?? null,
+        ]);
         if (key === shown) return;
         shown = key;
 
@@ -73,12 +99,13 @@ export const createCrumbs = (world: World): Crumbs => {
                     marker,
                     h("span", { class: "orrery__crumb-label" }, body.name),
                 );
-                if (body.id === world.focused) {
+                if (body.id === world.focused && !satellite) {
                     button.setAttribute("aria-current", "location");
                 }
 
                 return h("li", {}, button);
             }),
+            ...(satellite ? [satelliteItem(satellite.name)] : []),
         );
 
         if (had === undefined) return;
@@ -93,7 +120,8 @@ export const createCrumbs = (world: World): Crumbs => {
             event.target instanceof Element
                 ? event.target.closest<HTMLElement>("button")?.dataset.id
                 : undefined;
-        if (id !== undefined) world.focus(id);
+        if (id === SATELLITE_ID) satellite?.onClick();
+        else if (id !== undefined) world.focus(id);
     };
     list.addEventListener("click", onClick);
 
@@ -110,6 +138,10 @@ export const createCrumbs = (world: World): Crumbs => {
 
     return {
         element,
+        setSatellite: (crumb) => {
+            satellite = crumb;
+            render();
+        },
         destroy: () => {
             off();
             list.removeEventListener("click", onClick);
