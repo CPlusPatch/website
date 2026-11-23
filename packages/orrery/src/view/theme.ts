@@ -15,6 +15,8 @@ import { Color, SRGBColorSpace } from "three";
 export type Theme = {
     /** The colour of a body. */
     color: (body: Body) => Color;
+    /** The colour of an Earth satellite of an orbit class. */
+    classColor: (orbitClass: OrbitClass) => Color;
     /** The colour of the page behind the scene. */
     background: () => Color;
     /** The colour of the selected body's orbit and of an orbit being edited. */
@@ -131,6 +133,7 @@ export const createTheme = (container: HTMLElement): Theme => {
         background: () => resolve("var(--orrery-ground)"),
         pick: () => resolve("var(--orrery-pick)"),
         color: (body) => resolve(colorOf(body)),
+        classColor: (orbitClass) => resolve(ORBIT_CLASS_COLORS[orbitClass]),
         stop: () => probe.remove(),
     };
 };

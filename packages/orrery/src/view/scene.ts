@@ -1,5 +1,6 @@
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
+import type { SatelliteGroup } from "../catalogue.ts";
 import type { EditScene } from "../editing.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
@@ -13,6 +14,7 @@ import { type PickPoint, pickBody } from "./picking.ts";
 import { bindPointer } from "./pointer.ts";
 import { createReadouts } from "./readouts.ts";
 import { createSky } from "./sky.ts";
+import { createSwarm } from "./swarm.ts";
 import { createTheme } from "./theme.ts";
 import { neutralNoToe } from "./tone-mapping.ts";
 
@@ -27,6 +29,8 @@ export type View = EditScene & {
     fitFocus: () => void;
     /** The km one CSS pixel spans at the focus, or 0 before the view has a size. */
     kmPerPx: () => number;
+    /** Sets the satellite groups drawn around Earth. The first non-empty list loads the snapshot. */
+    satelliteGroups: (groups: readonly SatelliteGroup[]) => void;
     /** Marks the loading state as gone; a sky that arrives later fades in. */
     reveal: () => void;
     /** Resolves once the first frame is drawn and the sky and every map asked for by then have settled. Never rejects. */
@@ -136,6 +140,12 @@ export const createView = (
         },
     );
 
+    const earthMu = world.scenario.bodies.find(
+        (body) => body.id === "earth",
+    )?.mu;
+    const swarm = createSwarm(scene, theme, earthMu ?? 0);
+    const earthOffset = { x: 0, y: 0, z: 0 };
+
     const grips = createGrips(labels.domElement, units);
     const readouts = createReadouts(container, labels.domElement, world, units);
 
@@ -177,6 +187,7 @@ export const createView = (
         camera.updateProjectionMatrix();
         orbits.resize(width, height);
         bodies.resize(camera, width, height);
+        swarm.resize(renderer.getPixelRatio());
 
         // The view keeps fitting while the container changes size.
         if (!rig.moved()) rig.fit();
@@ -269,6 +280,19 @@ export const createView = (
             states,
             [...keepOut, ...rooms],
         );
+        const earth = states.get("earth")?.r;
+        if (earth) {
+            const origin = rig.origin();
+            earthOffset.x = (earth.x - origin.x) / 1000;
+            earthOffset.y = (earth.y - origin.y) / 1000;
+            earthOffset.z = (earth.z - origin.z) / 1000;
+        }
+        swarm.update(
+            camera,
+            world.clock.t,
+            earth && earthMu !== undefined ? earthOffset : null,
+            size.height,
+        );
         grips.placeNote(bodies.placed());
         if (!drawn) {
             drawn = true;
@@ -333,6 +357,7 @@ export const createView = (
         zoom: rig.zoom,
         fitFocus: rig.fitFocus,
         kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
+        satelliteGroups: swarm.groups,
         reveal: sky.reveal,
         ready,
         destroy: () => {
@@ -346,6 +371,7 @@ export const createView = (
             theme.stop();
             loading.abort();
             sky.dispose();
+            swarm.dispose();
             rig.dispose();
             orbits.dispose();
             bodies.dispose();
