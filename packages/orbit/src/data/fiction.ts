@@ -1,5 +1,7 @@
-import { AU } from "../constants.ts";
+import { AU, DAY, OBLIQUITY_J2000 } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
+import { meanMotion } from "../kepler.ts";
+import type { RotationModel } from "../orientation.ts";
 import type { Body, Scenario } from "../scenario.ts";
 
 const deg = (x: number): number => (x * Math.PI) / 180;
@@ -434,3 +436,68 @@ export const kerbol: Scenario = {
         ),
     ],
 };
+
+// Sidereal rotation periods in seconds, from the KSP wiki. The tidally locked bodies are in
+// `KERBOL_LOCKED` instead.
+const KERBOL_DAYS: Record<string, number> = {
+    kerbol: 432_000,
+    moho: 1_210_000,
+    eve: 80_500,
+    gilly: 28_255,
+    kerbin: 21_549.425,
+    minmus: 40_400,
+    dres: 34_800,
+    jool: 36_000,
+    eeloo: 19_460,
+};
+
+// Each locked body and the body it faces. Duna is locked to Ike, which orbits it.
+const KERBOL_LOCKED: Record<string, string> = {
+    mun: "kerbin",
+    ike: "duna",
+    duna: "ike",
+    laythe: "jool",
+    vall: "jool",
+    tylo: "jool",
+    bop: "jool",
+    pol: "jool",
+};
+
+/** Degrees per day for a turn every `seconds`. */
+const turnRate = (seconds: number): number => (360 * DAY) / seconds;
+
+const kerbolRotation = (): Record<string, RotationModel> => {
+    // KSP bodies have no axial tilt, so every pole is the ecliptic pole, in ICRF RA and Dec.
+    const ra = 270;
+    const dec = 90 - (OBLIQUITY_J2000 * 180) / Math.PI;
+    const byId = new Map(kerbol.bodies.map((body) => [body.id, body]));
+    const models: Record<string, RotationModel> = {};
+
+    for (const [id, seconds] of Object.entries(KERBOL_DAYS)) {
+        const rate = turnRate(seconds);
+        models[id] = (d) => ({ ra, dec, w: rate * d });
+    }
+
+    // A locked body turns at its moon's mean motion, with lon 0 on the mean longitude line. The
+    // orbits are near the ecliptic, so raan + argp + M stands in for the longitude.
+    for (const [id, partner] of Object.entries(KERBOL_LOCKED)) {
+        const moonId = byId.get(id)?.parent === partner ? id : partner;
+        const moon = byId.get(moonId);
+        const parent = moon?.parent ? byId.get(moon.parent) : undefined;
+        if (!moon?.elements || !parent)
+            throw new Error(`Kerbol has no orbit for ${moonId}.`);
+
+        const { raan, argp, m0 } = moon.elements;
+        const n = meanMotion(moon.elements, parent.mu + moon.mu);
+        const rate = (n * DAY * 180) / Math.PI;
+        // The moon faces back along its radius; its parent faces out along it.
+        const w0 =
+            ((raan + argp + m0) * 180) / Math.PI + (moonId === id ? 180 : 0);
+        models[id] = (d) => ({ ra, dec, w: w0 + rate * d });
+    }
+
+    return models;
+};
+
+/** Rotation models for the Kerbol bodies, keyed by body id like `ROTATION_MODELS`. */
+export const KERBOL_ROTATION = kerbolRotation();

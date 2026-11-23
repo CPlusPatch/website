@@ -1,7 +1,9 @@
 /// <reference types="deno" />
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
-import { period } from "../kepler.ts";
+import { period, stateAt } from "../kepler.ts";
+import { bodyOrientation } from "../orientation.ts";
 import { validateScenario } from "../scenario.ts";
+import { dot, length, scale } from "../vec.ts";
 import { builtInScenarios } from "./built-in.ts";
 import { gargantua, kerbol } from "./fiction.ts";
 
@@ -43,4 +45,34 @@ Deno.test("Kerbin goes round Kerbol in the game's 9,203,545 seconds", () => {
         9_203_545,
         100,
     );
+});
+
+const kerbolBody = (id: string) => {
+    const body = kerbol.bodies.find((b) => b.id === id);
+    assert(body);
+
+    return body;
+};
+
+Deno.test("the Mun's prime meridian faces Kerbin years after the epoch", () => {
+    const kerbin = kerbolBody("kerbin");
+    const mun = kerbolBody("mun");
+    const t = 30 * 365.25 * 86_400;
+    assert(mun.elements);
+
+    const { r } = stateAt(mun.elements, kerbin.mu + mun.mu, t);
+    const toKerbin = scale(r, -1 / length(r));
+    const orientation = bodyOrientation("mun", t);
+
+    assert(orientation);
+    assertAlmostEquals(dot(orientation.x, toKerbin), 1, 1e-6);
+});
+
+Deno.test("Kerbin turns once in the game's 21,549.425 seconds, about the ecliptic pole", () => {
+    const start = bodyOrientation("kerbin", 1e6);
+    const end = bodyOrientation("kerbin", 1e6 + 21_549.425);
+
+    assert(start && end);
+    assertAlmostEquals(dot(start.x, end.x), 1, 1e-9);
+    assertAlmostEquals(start.z.z, 1, 1e-12);
 });

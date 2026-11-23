@@ -1,4 +1,5 @@
 import type { RotationModel } from "../orientation.ts";
+import { KERBOL_ROTATION } from "./fiction.ts";
 
 const rad = (x: number): number => (x * Math.PI) / 180;
 
@@ -92,7 +93,7 @@ const series = (
 // Linear terms only, except for the Moon, Neptune and the moons with a surface map (Jupiter's,
 // Saturn's, Triton and Phobos have periodic terms). Mercury's and Jupiter's own periodic terms
 // are under 0.02°, so they are skipped.
-/** The rotation model of each body in `solarSystem` that has one, by body id. */
+/** The rotation model of each body in `solarSystem` that has one, and of the Kerbol bodies, by body id. */
 export const ROTATION_MODELS: Record<string, RotationModel> = {
     sun: (d) => ({ ra: 286.13, dec: 63.87, w: 84.176 + 14.1844 * d }),
     mercury: (d) => {
@@ -446,4 +447,5 @@ export const ROTATION_MODELS: Record<string, RotationModel> = {
     charon: (d) => ({ ra: 132.993, dec: -6.163, w: 122.695 + 56.3625225 * d }),
     ceres: (d) => ({ ra: 291.418, dec: 66.764, w: 170.65 + 952.1532 * d }),
     vesta: (d) => ({ ra: 309.031, dec: 42.235, w: 285.39 + 1617.3329428 * d }),
+    ...KERBOL_ROTATION,
 };
