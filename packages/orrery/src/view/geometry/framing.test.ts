@@ -11,6 +11,7 @@ import {
     keepSizeDistanceKm,
     minDistanceKm,
     openingReachKm,
+    pointFrameDistanceKm,
     reachKm,
 } from "./framing.ts";
 
@@ -265,5 +266,20 @@ Deno.test("a focus that keeps its size scales the distance by the radii's ratio"
     assertAlmostEquals(
         keepSizeDistanceKm(1000, 6371, 1737),
         (1000 * 1737) / 6371,
+    );
+});
+
+Deno.test("a point's sphere is framed with a 10% margin along the narrower field of view", () => {
+    const fov = (50 * Math.PI) / 180;
+
+    assertAlmostEquals(
+        pointFrameDistanceKm(1000, fov, 2),
+        1100 / Math.tan(fov / 2),
+        1e-6,
+    );
+    assertAlmostEquals(
+        pointFrameDistanceKm(1000, fov, 0.5),
+        1100 / (Math.tan(fov / 2) * 0.5),
+        1e-6,
     );
 });

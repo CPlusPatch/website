@@ -1,12 +1,18 @@
+import { EARTH_RADIUS } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import type { SatelliteGroup } from "../catalogue.ts";
 import type { EditScene } from "../editing.ts";
+import type { SatelliteFacts } from "../swarm.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 import { createBodies } from "./bodies/bodies.ts";
 import { createRig } from "./camera.ts";
-import { type Band, centreShift } from "./geometry/framing.ts";
+import {
+    type Band,
+    centreShift,
+    pointFrameDistanceKm,
+} from "./geometry/framing.ts";
 import type { Rect } from "./geometry/labels.ts";
 import { createGrips } from "./grips/grips.ts";
 import { createOrbits } from "./orbits/orbits.ts";
@@ -21,6 +27,19 @@ import { neutralNoToe } from "./tone-mapping.ts";
 /** How much brighter the mapped spheres are drawn, before tone mapping. */
 const EXPOSURE = 2.0;
 
+/** What a listener of `View.satellite` is told about. */
+export type SatelliteEvent =
+    | { type: "selection"; k: number | null }
+    | { type: "focus"; k: number | null };
+
+/** The pointer's id for satellite `k`, which can't clash with a body's. */
+const SATELLITE_PREFIX = "sat:";
+
+const satelliteIndex = (id: string): number | null =>
+    id.startsWith(SATELLITE_PREFIX)
+        ? Number(id.slice(SATELLITE_PREFIX.length))
+        : null;
+
 /** The 3D view drawn into a container. */
 export type View = EditScene & {
     /** Dollies in for a positive `steps`, out for a negative one. */
@@ -33,6 +52,17 @@ export type View = EditScene & {
     satelliteGroups: (groups: readonly SatelliteGroup[]) => void;
     /** Marks the loading state as gone; a sky that arrives later fades in. */
     reveal: () => void;
+    /** The catalogue satellite that is selected or focused, by index. Selecting one clears the world's selection. */
+    satellite: {
+        selected: () => number | null;
+        focused: () => number | null;
+        select: (k: number | null) => void;
+        /** Selects satellite `k` and follows it, framing its orbit. */
+        focus: (k: number) => void;
+        facts: (k: number) => SatelliteFacts | null;
+        /** Calls `fn` on every change. Returns a function that stops it. */
+        on: (fn: (e: SatelliteEvent) => void) => () => void;
+    };
     /** Resolves once the first frame is drawn and the sky and every map asked for by then have settled. Never rejects. */
     ready: Promise<void>;
     destroy: () => void;
@@ -146,6 +176,27 @@ export const createView = (
     const swarm = createSwarm(scene, theme, earthMu ?? 0);
     const earthOffset = { x: 0, y: 0, z: 0 };
 
+    let satelliteSelected: number | null = null;
+    let satelliteFocused: number | null = null;
+    // Set while the view's own `world.focus` runs, so its event isn't taken for a user's.
+    let focusingSatellite = false;
+    const satelliteListeners = new Set<(e: SatelliteEvent) => void>();
+    const emitSatellite = (event: SatelliteEvent) => {
+        for (const fn of satelliteListeners) fn(event);
+    };
+    const selectSatellite = (k: number | null) => {
+        if (k === satelliteSelected) return;
+
+        satelliteSelected = k;
+        swarm.select(k);
+        emitSatellite({ type: "selection", k });
+    };
+    // A satellite and a body are never selected together.
+    const pickSatellite = (k: number) => {
+        if (world.selected !== null) world.select(null);
+        selectSatellite(k);
+    };
+
     const grips = createGrips(labels.domElement, units);
     const readouts = createReadouts(container, labels.domElement, world, units);
 
@@ -187,7 +238,7 @@ export const createView = (
         camera.updateProjectionMatrix();
         orbits.resize(width, height);
         bodies.resize(camera, width, height);
-        swarm.resize(renderer.getPixelRatio());
+        swarm.resize(renderer.getPixelRatio(), width, height);
 
         // The view keeps fitting while the container changes size.
         if (!rig.moved()) rig.fit();
@@ -195,27 +246,83 @@ export const createView = (
 
     let points: PickPoint[] = [];
     const unbindPointer = bindPointer(canvas, {
-        // A visible label names its body, so it wins over a nearby marker.
-        pick: (x, y) =>
-            bodies.labelAt(x, y, canvas.getBoundingClientRect()) ??
-            pickBody(points, x, y),
-        select: (id) => world.select(id),
-        focus: (id) => world.focus(id),
-        hover: (id) => bodies.hover(id),
+        // A visible label names its body, so it wins over a nearby marker, and bodies win over satellites.
+        pick: (x, y) => {
+            const body =
+                bodies.labelAt(x, y, canvas.getBoundingClientRect()) ??
+                pickBody(points, x, y);
+            if (body) return body;
+
+            const k = swarm.pick(x, y, size.width, size.height);
+
+            return k === null ? null : `${SATELLITE_PREFIX}${k}`;
+        },
+        select: (id) => {
+            const k = id === null ? null : satelliteIndex(id);
+            if (k === null) {
+                selectSatellite(null);
+                world.select(id);
+            } else {
+                pickSatellite(k);
+            }
+        },
+        focus: (id) => {
+            const k = satelliteIndex(id);
+            if (k === null) world.focus(id);
+            else focusSatellite(k);
+        },
+        hover: (id) => {
+            const k = id === null ? null : satelliteIndex(id);
+            bodies.hover(k === null ? id : null);
+            swarm.hover(k);
+        },
     });
     orbits.highlight(world.selected);
 
     const rig = createRig(camera, canvas, () => world.scenario, world.states());
     resize();
 
-    const describe = () =>
+    const describe = () => {
+        const satellite =
+            satelliteFocused === null
+                ? null
+                : swarm.facts(satelliteFocused, world.clock.t);
+
         canvas.setAttribute(
             "aria-label",
-            `The solar system, centred on ${names.get(
-                rig.focusId(),
-            )}. Arrow keys rotate, plus and minus zoom, 0 fits the focus.`,
+            `The solar system, centred on ${
+                satellite?.name ?? names.get(rig.focusId())
+            }. Arrow keys rotate, plus and minus zoom, 0 fits the focus.`,
         );
+    };
     describe();
+
+    const focusSatellite = (k: number) => {
+        pickSatellite(k);
+
+        const facts = swarm.facts(k, world.clock.t);
+        if (!facts) return;
+
+        focusingSatellite = true;
+        world.focus("earth");
+        focusingSatellite = false;
+
+        const fov = (camera.fov * Math.PI) / 180;
+        const apogeeKm = facts.apogeeKm + EARTH_RADIUS / 1000;
+        rig.focusPoint(
+            () => {
+                const earth = world.states().get("earth")?.r ?? rig.origin();
+
+                return swarm.positionOf(k, world.clock.t, earth) ?? earth;
+            },
+            pointFrameDistanceKm(apogeeKm, fov, camera.aspect),
+        );
+
+        // Emitted even on a refocus, so its announcement follows Earth's.
+        satelliteFocused = k;
+        emitSatellite({ type: "focus", k });
+        describe();
+    };
 
     const sky = createSky();
     const loading = new AbortController();
@@ -252,6 +359,14 @@ export const createView = (
 
         world.clock.tick(dt);
         const states = world.states();
+
+        // A satellite leaves when its group is turned off or the clock leaves the snapshot.
+        if (satelliteFocused !== null && !swarm.available(satelliteFocused)) {
+            world.focus("earth");
+        }
+        if (satelliteSelected !== null && !swarm.available(satelliteSelected)) {
+            selectSatellite(null);
+        }
 
         offset(free);
         rig.update(dt, states);
@@ -334,8 +449,13 @@ export const createView = (
     const unsubscribe = world.on((event) => {
         if (event.type === "selection") {
             orbits.highlight(event.id);
+            if (event.id !== null) selectSatellite(null);
         } else if (event.type === "focus") {
             rig.focus(event.id);
+            if (!focusingSatellite && satelliteFocused !== null) {
+                satelliteFocused = null;
+                emitSatellite({ type: "focus", k: null });
+            }
             describe();
         } else if (event.type === "body") {
             const body = world.scenario.bodies.find((b) => b.id === event.id);
@@ -358,6 +478,21 @@ export const createView = (
         fitFocus: rig.fitFocus,
         kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
         satelliteGroups: swarm.groups,
+        satellite: {
+            selected: () => satelliteSelected,
+            focused: () => satelliteFocused,
+            select: (k) =>
+                k === null ? selectSatellite(null) : pickSatellite(k),
+            focus: focusSatellite,
+            facts: (k) => swarm.facts(k, world.clock.t),
+            on: (fn) => {
+                satelliteListeners.add(fn);
+
+                return () => {
+                    satelliteListeners.delete(fn);
+                };
+            },
+        },
         reveal: sky.reveal,
         ready,
         destroy: () => {

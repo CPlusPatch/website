@@ -105,6 +105,21 @@ export const frameDistanceKm = (
     return (Math.max(...children.map(apoapsisKm)) * FIT_MARGIN) / tanNarrow;
 };
 
+/**
+ * The camera distance in km at which a sphere of `radiusKm` spans the view with a 10% margin,
+ * along the narrower of the vertical and horizontal fields of view.
+ */
+export const pointFrameDistanceKm = (
+    radiusKm: number,
+    fovRad: number,
+    aspect: number,
+): number => {
+    const tanVertical = Math.tan(fovRad / 2);
+    const tanNarrow = Math.min(tanVertical, tanVertical * aspect);
+
+    return (radiusKm * FIT_MARGIN) / tanNarrow;
+};
+
 /** The camera distance from a body of radius `rNew` that shows it as big as one of `rOld` at `distance`. */
 export const keepSizeDistanceKm = (
     distance: number,

@@ -3,25 +3,39 @@
  * The satellite snapshot drawn as one layer of points around Earth.
  */
 
-import type { Vec3 } from "@cpluspatch/orbit";
+import { EARTH_RADIUS, type Vec3 } from "@cpluspatch/orbit";
 import {
     BufferAttribute,
     BufferGeometry,
     DynamicDrawUsage,
+    InterleavedBufferAttribute,
     type PerspectiveCamera,
     Points,
     type Scene,
     ShaderMaterial,
 } from "three";
-import { decodeCatalogue, type SatelliteGroup } from "../catalogue.ts";
+import { Line2 } from "three/addons/lines/Line2.js";
+import { LineGeometry } from "three/addons/lines/LineGeometry.js";
+import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+import {
+    decodeCatalogue,
+    SATELLITE_GROUPS,
+    type SatelliteGroup,
+} from "../catalogue.ts";
 import {
     inSnapshotWindow,
     prepareSwarm,
+    type SatelliteFacts,
     type Swarm,
+    satelliteFacts,
+    satelliteOrbit,
     selectShown,
     writePositions,
 } from "../swarm.ts";
 import { projectedRadiusPx } from "./geometry/visibility.ts";
+import { SELECTED_LINE_PX } from "./orbits/line-geometry.ts";
+import { pickNearest } from "./picking.ts";
 import type { Theme } from "./theme.ts";
 
 const SATELLITES_URL = new URL("../assets/satellites.bin", import.meta.url);
@@ -37,6 +51,15 @@ const FADE_TO_PX = 300;
 const DOT_PX = 2;
 
 const OPACITY = 0.7;
+
+/** The diameter of the selected satellite's ring in CSS px. */
+const RING_PX = 10;
+
+/** A satellite is picked within this many CSS px of the pointer. */
+const PICK_PX = 6;
+
+/** The points on the selected satellite's orbit line. */
+const ORBIT_SAMPLES = 256;
 
 /** The radius in km of the low Earth orbit shell, where most of the snapshot sits. */
 const LEO_RADIUS_KM = 7_000;
@@ -62,12 +85,32 @@ export type SwarmLayer = {
         earthOffsetKm: Vec3 | null,
         viewportHeight: number,
     ) => void;
-    resize: (pixelRatio: number) => void;
+    /** The index of the satellite nearest to (`x`, `y`) in px of the canvas, or `null`. */
+    pick: (
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+    ) => number | null;
+    /** Rings satellite `k` and draws its orbit, or clears them for `null`. */
+    select: (k: number | null) => void;
+    /** Labels satellite `k` with its name, or clears the label for `null`. */
+    hover: (k: number | null) => void;
+    /**
+     * The world position in metres of satellite `k` at `t`, given Earth's `earth`, or `null` if
+     * it isn't placed.
+     */
+    positionOf: (k: number, t: number, earth: Vec3) => Vec3 | null;
+    /** What the info panel says about satellite `k` at `t`, or `null` before the snapshot loads. */
+    facts: (k: number, t: number) => SatelliteFacts | null;
+    /** Whether satellite `k` is in a group that's on and the clock is within the snapshot. */
+    available: (k: number) => boolean;
+    resize: (pixelRatio: number, width: number, height: number) => void;
     dispose: () => void;
 };
 
 // The log depth chunks make the points hide behind Earth under `logarithmicDepthBuffer`.
-const VERTEX = /* glsl */ `
+const vertex = (px: number) => /* glsl */ `
 #include <common>
 #include <logdepthbuf_pars_vertex>
 attribute vec3 color;
@@ -76,7 +119,7 @@ varying vec3 vColor;
 
 void main() {
     vColor = color;
-    gl_PointSize = ${DOT_PX.toFixed(1)} * pixelRatio;
+    gl_PointSize = ${px.toFixed(1)} * pixelRatio;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     #include <logdepthbuf_vertex>
 }
@@ -97,6 +140,73 @@ void main() {
 }
 `;
 
+const RING_FRAGMENT = /* glsl */ `
+#include <logdepthbuf_pars_fragment>
+varying vec3 vColor;
+
+void main() {
+    #include <logdepthbuf_fragment>
+    float r = length(gl_PointCoord - 0.5) * 2.0;
+    float alpha = smoothstep(0.6, 0.7, r) * (1.0 - smoothstep(0.9, 1.0, r));
+    if (alpha <= 0.0) discard;
+    gl_FragColor = vec4(vColor, alpha);
+    #include <colorspace_fragment>
+}
+`;
+
+/**
+ * Writes the px in a canvas of `width` by `height` of the scene point (`x`, `y`, `z`) into `out`
+ * at `o`. Returns the point's clip w, which is 0 or less behind the camera.
+ */
+const toPx = (
+    view: ArrayLike<number>,
+    projection: ArrayLike<number>,
+    x: number,
+    y: number,
+    z: number,
+    width: number,
+    height: number,
+    out: Float32Array,
+    o: number,
+): number => {
+    const vx =
+        (view[0] as number) * x +
+        (view[4] as number) * y +
+        (view[8] as number) * z +
+        (view[12] as number);
+    const vy =
+        (view[1] as number) * x +
+        (view[5] as number) * y +
+        (view[9] as number) * z +
+        (view[13] as number);
+    const vz =
+        (view[2] as number) * x +
+        (view[6] as number) * y +
+        (view[10] as number) * z +
+        (view[14] as number);
+    const w =
+        (projection[3] as number) * vx +
+        (projection[7] as number) * vy +
+        (projection[11] as number) * vz +
+        (projection[15] as number);
+    if (w <= 0) return w;
+
+    const cx =
+        (projection[0] as number) * vx +
+        (projection[4] as number) * vy +
+        (projection[8] as number) * vz +
+        (projection[12] as number);
+    const cy =
+        (projection[1] as number) * vx +
+        (projection[5] as number) * vy +
+        (projection[9] as number) * vz +
+        (projection[13] as number);
+    out[o] = (cx / w / 2 + 0.5) * width;
+    out[o + 1] = (0.5 - cy / w / 2) * height;
+
+    return w;
+};
+
 const smoothstep = (from: number, to: number, x: number): number => {
     const k = Math.min(Math.max((x - from) / (to - from), 0), 1);
 
@@ -110,6 +220,14 @@ type Loaded = {
     colors: BufferAttribute;
     geometry: BufferGeometry;
     material: ShaderMaterial;
+    // Where each shown satellite is on screen, in px, for picking.
+    screen: Float32Array;
+    ring: Points<BufferGeometry, ShaderMaterial>;
+    ringColor: BufferAttribute;
+    orbit: Line2;
+    orbitSegments: InterleavedBufferAttribute;
+    label: CSS2DObject;
+    labelName: HTMLElement;
 };
 
 /**
@@ -123,6 +241,8 @@ export const createSwarm = (
 ): SwarmLayer => {
     const loading = new AbortController();
     const uniforms = { pixelRatio: { value: 1 }, fade: { value: 0 } };
+    // The ring shares the pixel ratio and has no fade.
+    const ringUniforms = { pixelRatio: uniforms.pixelRatio };
     let wanted = new Set<SatelliteGroup>();
     let started = false;
     let loaded: Loaded | null = null;
@@ -131,6 +251,43 @@ export const createSwarm = (
     let stale = true;
     // The time the positions were written for, so a paused clock isn't propagated again.
     let writtenAt: number | null = null;
+    let camera: PerspectiveCamera | null = null;
+    let lastT = 0;
+    let selected: number | null = null;
+    let hovered: number | null = null;
+    let viewport = { width: 1, height: 1 };
+    // The time and satellite the orbit line was sampled for.
+    let sampled: { t: number; k: number } | null = null;
+    let named: number | null = null;
+    // Scratch for one satellite's position and its index.
+    const local = new Float32Array(3);
+    const earthPx = new Float32Array(2);
+    const one = new Uint32Array(1);
+
+    const available = (k: number): boolean => {
+        if (!loaded || k >= loaded.swarm.count) return false;
+
+        const group = SATELLITE_GROUPS[loaded.swarm.groups[k] ?? 0];
+
+        return (
+            group !== undefined &&
+            wanted.has(group) &&
+            inSnapshotWindow(loaded.swarm, lastT)
+        );
+    };
+
+    // Km from Earth's centre, in `local`.
+    const locate = (swarm: Swarm, k: number, t: number) => {
+        one[0] = k;
+        writePositions(swarm, one, t, local);
+    };
+
+    const paint = ({ ringColor, orbit }: Loaded) => {
+        const color = theme.pick();
+        color.toArray(ringColor.array);
+        ringColor.needsUpdate = true;
+        orbit.material.color.copy(color);
+    };
 
     const load = async () => {
         try {
@@ -162,7 +319,7 @@ export const createSwarm = (
 
             const material = new ShaderMaterial({
                 uniforms,
-                vertexShader: VERTEX,
+                vertexShader: vertex(DOT_PX),
                 fragmentShader: FRAGMENT,
                 transparent: true,
                 depthWrite: false,
@@ -171,7 +328,61 @@ export const createSwarm = (
             const points = new Points(geometry, material);
             points.frustumCulled = false;
             points.visible = false;
-            scene.add(points);
+
+            const ringGeometry = new BufferGeometry();
+            ringGeometry.setAttribute(
+                "position",
+                new BufferAttribute(new Float32Array(3), 3),
+            );
+            const ringColor = new BufferAttribute(new Float32Array(3), 3);
+            ringGeometry.setAttribute("color", ringColor);
+            const ring = new Points(
+                ringGeometry,
+                new ShaderMaterial({
+                    uniforms: ringUniforms,
+                    vertexShader: vertex(RING_PX),
+                    fragmentShader: RING_FRAGMENT,
+                    transparent: true,
+                    depthWrite: false,
+                    toneMapped: false,
+                }),
+            );
+            ring.frustumCulled = false;
+            ring.visible = false;
+
+            const orbitGeometry = new LineGeometry();
+            orbitGeometry.setPositions(
+                new Float32Array((ORBIT_SAMPLES + 1) * 3),
+            );
+            const orbitSegments = orbitGeometry.getAttribute("instanceStart");
+            if (!(orbitSegments instanceof InterleavedBufferAttribute)) {
+                throw new Error("The orbit's attributes aren't interleaved.");
+            }
+            const orbit = new Line2(
+                orbitGeometry,
+                new LineMaterial({
+                    linewidth: SELECTED_LINE_PX,
+                    transparent: true,
+                    depthWrite: false,
+                    toneMapped: false,
+                }),
+            );
+            orbit.material.resolution.set(viewport.width, viewport.height);
+            // The segments move each frame, so the bounds would be stale.
+            orbit.frustumCulled = false;
+            orbit.visible = false;
+
+            const text = document.createElement("div");
+            text.className = "orrery__label orrery__label--hover";
+            const labelName = document.createElement("span");
+            labelName.className = "orrery__label-name";
+            text.append(labelName);
+            const label = new CSS2DObject(text);
+            // Its left edge sits on the satellite, as a body's label does.
+            label.center.set(0, 0.5);
+            label.visible = false;
+
+            scene.add(points, ring, orbit, label);
 
             loaded = {
                 swarm,
@@ -180,7 +391,15 @@ export const createSwarm = (
                 colors,
                 geometry,
                 material,
+                screen: new Float32Array(swarm.count * 2),
+                ring,
+                ringColor,
+                orbit,
+                orbitSegments,
+                label,
+                labelName,
             };
+            paint(loaded);
             stale = true;
         } catch (error) {
             if (loading.signal.aborted) return;
@@ -201,9 +420,11 @@ export const createSwarm = (
                 void load();
             }
         },
-        update: (camera, t, earthOffsetKm, viewportHeight) => {
+        update: (frameCamera, t, earthOffsetKm, viewportHeight) => {
             if (!loaded) return;
 
+            camera = frameCamera;
+            lastT = t;
             const { swarm, points, positions, colors, geometry } = loaded;
             let fade = 0;
             let density = 1;
@@ -248,6 +469,9 @@ export const createSwarm = (
             points.visible = fade > 0;
             if (fade === 0) {
                 writtenAt = null;
+                loaded.ring.visible = false;
+                loaded.orbit.visible = false;
+                loaded.label.visible = false;
 
                 return;
             }
@@ -274,17 +498,154 @@ export const createSwarm = (
                 positions.needsUpdate = true;
                 writtenAt = t;
             }
+
+            const { ring, orbit, label, labelName } = loaded;
+            ring.visible = selected !== null && available(selected);
+            orbit.visible = ring.visible;
+            if (selected !== null && ring.visible) {
+                locate(swarm, selected, t);
+                ring.position.set(
+                    points.position.x + (local[0] as number),
+                    points.position.y + (local[1] as number),
+                    points.position.z + (local[2] as number),
+                );
+                orbit.position.copy(points.position);
+
+                if (sampled?.t !== t || sampled.k !== selected) {
+                    const loop = satelliteOrbit(
+                        swarm,
+                        selected,
+                        t,
+                        ORBIT_SAMPLES,
+                    );
+                    const array = loaded.orbitSegments.data
+                        .array as Float32Array;
+                    for (let n = 0; n < ORBIT_SAMPLES; n++) {
+                        array.set(loop.subarray(n * 3, n * 3 + 6), n * 6);
+                    }
+                    loaded.orbitSegments.data.needsUpdate = true;
+                    sampled = { t, k: selected };
+                }
+            }
+
+            label.visible = hovered !== null && available(hovered);
+            if (hovered !== null && label.visible) {
+                locate(swarm, hovered, t);
+                label.position.set(
+                    points.position.x + (local[0] as number),
+                    points.position.y + (local[1] as number),
+                    points.position.z + (local[2] as number),
+                );
+                if (named !== hovered) {
+                    labelName.textContent = swarm.names[hovered] ?? "";
+                    named = hovered;
+                }
+            }
         },
-        resize: (pixelRatio) => {
+        pick: (x, y, width, height) => {
+            if (!loaded?.points.visible || !camera) return null;
+
+            const { points, positions, screen } = loaded;
+            const view = camera.matrixWorldInverse.elements;
+            const projection = camera.projectionMatrix.elements;
+            const centre = points.position;
+
+            // Earth's disc hides what is farther than its centre.
+            const earthDistance = camera.position.distanceTo(centre);
+            const earthRadiusPx = projectedRadiusPx(
+                EARTH_RADIUS / 1000,
+                earthDistance,
+                (camera.fov * Math.PI) / 180,
+                height,
+            );
+            const earthW = toPx(
+                view,
+                projection,
+                centre.x,
+                centre.y,
+                centre.z,
+                width,
+                height,
+                earthPx,
+                0,
+            );
+            const earthSquared = earthDistance ** 2;
+            const eye = camera.position;
+
+            const array = positions.array;
+            for (let slot = 0; slot < shown.length; slot++) {
+                const px = centre.x + (array[slot * 3] as number);
+                const py = centre.y + (array[slot * 3 + 1] as number);
+                const pz = centre.z + (array[slot * 3 + 2] as number);
+                const o = slot * 2;
+
+                const w = toPx(
+                    view,
+                    projection,
+                    px,
+                    py,
+                    pz,
+                    width,
+                    height,
+                    screen,
+                    o,
+                );
+                const hidden =
+                    earthW > 0 &&
+                    (px - eye.x) ** 2 + (py - eye.y) ** 2 + (pz - eye.z) ** 2 >
+                        earthSquared &&
+                    Math.hypot(
+                        (screen[o] as number) - (earthPx[0] as number),
+                        (screen[o + 1] as number) - (earthPx[1] as number),
+                    ) < earthRadiusPx;
+                if (w <= 0 || hidden) screen[o] = Number.NaN;
+            }
+
+            const slot = pickNearest(screen, shown.length, x, y, PICK_PX);
+
+            return slot === -1 ? null : (shown[slot] ?? null);
+        },
+        select: (k) => {
+            selected = k;
+            if (loaded) paint(loaded);
+        },
+        hover: (k) => {
+            hovered = k;
+        },
+        positionOf: (k, t, earth) => {
+            if (!loaded || k >= loaded.swarm.count) return null;
+            if (!inSnapshotWindow(loaded.swarm, t)) return null;
+
+            locate(loaded.swarm, k, t);
+
+            return {
+                x: earth.x + (local[0] as number) * 1000,
+                y: earth.y + (local[1] as number) * 1000,
+                z: earth.z + (local[2] as number) * 1000,
+            };
+        },
+        facts: (k, t) =>
+            loaded && k < loaded.swarm.count
+                ? satelliteFacts(loaded.swarm, k, t)
+                : null,
+        available,
+        resize: (pixelRatio, width, height) => {
             uniforms.pixelRatio.value = pixelRatio;
+            viewport = { width, height };
+            loaded?.orbit.material.resolution.set(width, height);
         },
         dispose: () => {
             loading.abort();
             if (!loaded) return;
 
-            scene.remove(loaded.points);
+            const { points, ring, orbit, label } = loaded;
+            scene.remove(points, ring, orbit, label);
             loaded.geometry.dispose();
             loaded.material.dispose();
+            ring.geometry.dispose();
+            ring.material.dispose();
+            orbit.geometry.dispose();
+            orbit.material.dispose();
             loaded = null;
         },
     };

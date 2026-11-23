@@ -27,8 +27,13 @@ export type Rig = {
     moved: () => boolean;
     /** Takes the scenario's new reach: it sets the farthest zoom, and refits if the camera hasn't moved. */
     rescale: () => void;
-    /** Moves the view to a body, keeping the view direction. A body that is big on screen keeps its size, else it is framed. */
+    /** Moves the view to a body, keeping the view direction. A body that is big on screen keeps its size, else it is framed. Ends `focusPoint`. */
     focus: (id: string) => void;
+    /**
+     * Moves the view to a moving point and follows it, `distanceKm` away. `position` gives world
+     * metres. `focusId` keeps the last focused body.
+     */
+    focusPoint: (position: () => Vec3, distanceKm: number) => void;
     /** Glides in for a positive `steps`, out for a negative one, by the factor of the zoom keys. Presses add up. */
     zoom: (steps: number) => void;
     /** Glides to the focus's framing distance, keeping the view direction. */
@@ -64,8 +69,12 @@ const PINCH_ZOOM_SPEED = 1;
 /** A body at least this many CSS px across keeps its size when it takes the focus. */
 const KEEP_SIZE_PX = 20;
 const START_ELEVATION = Math.PI / 6;
+/** The closest the camera may get to a followed point, in km. A point has no size to keep out of. */
+const POINT_MIN_KM = 1;
 
-type Move = { from: Pose; id: string; distance: number; elapsed: number };
+/** Where the camera looks, in world metres, and the closest it may get. */
+type Target = { position: () => Vec3; min: () => number };
+type Move = { from: Pose; target: Target; distance: number; elapsed: number };
 type Zoom = { to: number };
 
 /** A camera that starts above the ecliptic and looks at the root. */
@@ -128,6 +137,8 @@ export const createRig = (
         touched = true;
     });
     let move: Move | null = null;
+    // Set while the camera follows a point instead of the focused body.
+    let following: { target: Target; distance: number } | null = null;
     let zoomMove: Zoom | null = null;
     const origin: Vec3 = { ...positionOf(root.id) };
 
@@ -156,9 +167,10 @@ export const createRig = (
     };
     fit();
 
-    const settle = (id: string) => {
-        controls.minDistance = minDistanceKm(bodyOf(id), fovRad);
-    };
+    const bodyTarget = (id: string): Target => ({
+        position: () => positionOf(id),
+        min: () => minDistanceKm(bodyOf(id), fovRad),
+    });
 
     const zoom = (steps: number) => {
         touched = true;
@@ -194,15 +206,15 @@ export const createRig = (
         zoomMove = { to };
     };
 
-    // Eases the camera to `distance` from `id`, or jumps there under reduced motion.
-    const glide = (id: string, distance: number) => {
+    // Eases the camera to `distance` from `target`, or jumps there under reduced motion.
+    const glide = (target: Target, distance: number) => {
         zoomMove = null;
 
         if (reducedMotion()) {
             move = null;
-            Object.assign(origin, positionOf(id));
+            Object.assign(origin, target.position());
             setDistance(distance);
-            settle(id);
+            controls.minDistance = target.min();
 
             return;
         }
@@ -212,15 +224,12 @@ export const createRig = (
                 distance: camera.position.length(),
                 position: { ...origin },
             },
-            id,
+            target,
             distance,
             elapsed: 0,
         };
         // The old minimum must not stop the camera on its way in.
-        controls.minDistance = Math.min(
-            controls.minDistance,
-            minDistanceKm(bodyOf(id), fovRad),
-        );
+        controls.minDistance = Math.min(controls.minDistance, target.min());
     };
 
     // Where the camera goes to frame a body, in km.
@@ -237,7 +246,16 @@ export const createRig = (
 
     const fitFocus = () => {
         touched = true;
-        glide(focused, clampDistance(focused, frameDistance(focused)));
+        if (following) {
+            glide(following.target, following.distance);
+
+            return;
+        }
+
+        glide(
+            bodyTarget(focused),
+            clampDistance(focused, frameDistance(focused)),
+        );
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -294,8 +312,11 @@ export const createRig = (
         focus: (id) => {
             const old = bodyOf(focused);
             const body = bodyOf(id);
+            // The camera's distance from a followed point says nothing about the old body's size.
+            const fromPoint = following !== null;
             touched = true;
             focused = id;
+            following = null;
 
             const distance = camera.position.length();
             const oldKm = old.radius / 1000;
@@ -305,11 +326,22 @@ export const createRig = (
                       kmPerPx(distance, fovRad, canvas.clientHeight)
                     : 0;
             const target =
-                px >= KEEP_SIZE_PX
+                px >= KEEP_SIZE_PX && !fromPoint
                     ? keepSizeDistanceKm(distance, old.radius, body.radius)
                     : frameDistance(id);
 
-            glide(id, clampDistance(id, target));
+            glide(bodyTarget(id), clampDistance(id, target));
+        },
+        focusPoint: (position, distanceKm) => {
+            const distance = Math.min(
+                Math.max(distanceKm, POINT_MIN_KM),
+                controls.maxDistance,
+            );
+            const target: Target = { position, min: () => POINT_MIN_KM };
+            touched = true;
+            following = { target, distance };
+
+            glide(target, distance);
         },
         update: (dt, latest) => {
             states = latest;
@@ -320,7 +352,10 @@ export const createRig = (
                 const s = Math.min(move.elapsed / FOCUS_SECONDS, 1);
                 const pose = focusTween(
                     move.from,
-                    { distance: move.distance, position: positionOf(move.id) },
+                    {
+                        distance: move.distance,
+                        position: move.target.position(),
+                    },
                     s,
                     Math.tan(fovRad / 2),
                 );
@@ -328,11 +363,16 @@ export const createRig = (
                 setDistance(pose.distance);
 
                 if (s === 1) {
-                    settle(move.id);
+                    controls.minDistance = move.target.min();
                     move = null;
                 }
             } else {
-                Object.assign(origin, positionOf(focused));
+                Object.assign(
+                    origin,
+                    following
+                        ? following.target.position()
+                        : positionOf(focused),
+                );
             }
 
             if (zoomMove && !move) {
