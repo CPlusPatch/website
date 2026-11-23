@@ -32,6 +32,7 @@ import {
 import { READOUT_BLOCK_PX, READOUTS_MIN_ORBIT_PX } from "../geometry/notes.ts";
 import {
     type Anchor,
+    coronaDiameter,
     culledByParent,
     foldOrbits,
     hiddenBehindSpheres,
@@ -46,15 +47,10 @@ import {
 import { createMaps } from "../maps.ts";
 import { type LabelRect, type PickPoint, pickLabel } from "../picking.ts";
 import { spinMatrix } from "../spin.ts";
+import { coronaTexture } from "./corona.ts";
 import { createEntry, type Entry } from "./entry.ts";
 import { CENTERS, createLabels } from "./labels.ts";
-import {
-    HALO_SCALE,
-    markerPx,
-    markerTexture,
-    SHAPES,
-    type Shape,
-} from "./markers.ts";
+import { markerPx, markerTexture, SHAPES, type Shape } from "./markers.ts";
 import { disposeModel } from "./spacecraft.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
@@ -123,7 +119,7 @@ export const createBodies = (
     const textures = Object.fromEntries(
         SHAPES.map((shape) => [shape, markerTexture(shape)]),
     ) as Record<Shape, CanvasTexture>;
-    const haloTexture = markerTexture("halo");
+    const glowTexture = coronaTexture();
     const entries: Entry[] = [];
     const maps = createMaps(options.anisotropy, options.onMaps);
     const spin = new Matrix4();
@@ -135,7 +131,7 @@ export const createBodies = (
             color,
             sphereGeometry,
             textures,
-            haloTexture,
+            glowTexture,
         );
         scene.add(entry.group);
         entries.push(entry);
@@ -261,7 +257,7 @@ export const createBodies = (
             drawn = null;
 
             for (const entry of entries) {
-                const { body, group, sphere, model, marker, halo, label } =
+                const { body, group, sphere, model, marker, corona, label } =
                     entry;
                 const r = states.get(body.id)?.r;
                 if (!r) continue;
@@ -270,7 +266,7 @@ export const createBodies = (
                     sphere.visible = false;
                     if (model) model.visible = false;
                     marker.visible = false;
-                    if (halo) halo.visible = false;
+                    if (corona) corona.visible = false;
                     continue;
                 }
 
@@ -331,7 +327,16 @@ export const createBodies = (
                 if (big && entry.mapped)
                     entry.extras.update(camera, sphere.geometry);
                 marker.visible = !big;
-                if (halo) halo.visible = !big;
+                if (corona) {
+                    corona.visible = true;
+                    const diameter = coronaDiameter(
+                        body.radius / 1000,
+                        depth,
+                        fov,
+                        size.height,
+                    );
+                    corona.scale.set(diameter, diameter, 1);
+                }
 
                 // Pushes the label from the disc's or marker's centre to its edge.
                 const offset =
@@ -464,7 +469,7 @@ export const createBodies = (
             placed.clear();
             bareHidden.clear();
             for (const entry of entries) {
-                const { body, marker, halo, label } = entry;
+                const { body, sphere, marker, corona, label } = entry;
                 const placement = placements.get(body.id) ?? "hidden";
                 const box = boxes.get(body.id);
                 if (box && placement !== "hidden") {
@@ -489,7 +494,8 @@ export const createBodies = (
                     bareHidden.has(body.id)
                 ) {
                     marker.visible = false;
-                    if (halo) halo.visible = false;
+                    // The disc, when drawn, still glows.
+                    if (corona && !sphere.visible) corona.visible = false;
                 }
             }
 
@@ -549,14 +555,9 @@ export const createBodies = (
             size = { width, height };
             const scale = (pixels: number) =>
                 (pixels * 2 * Math.tan((camera.fov * Math.PI) / 360)) / height;
-            for (const { body, marker, halo } of entries) {
+            for (const { body, marker } of entries) {
                 const markerScale = scale(markerPx(body));
                 marker.scale.set(markerScale, markerScale, 1);
-                halo?.scale.set(
-                    markerScale * HALO_SCALE,
-                    markerScale * HALO_SCALE,
-                    1,
-                );
             }
 
             styling.measureAll();
@@ -577,7 +578,6 @@ export const createBodies = (
             const next = color(body);
             entry.sphere.material.color.copy(next);
             entry.marker.material.color.copy(next);
-            entry.halo?.material.color.copy(next);
         },
         dispose: () => {
             disposed = true;
@@ -586,7 +586,7 @@ export const createBodies = (
                 sphere,
                 model,
                 marker,
-                halo,
+                corona,
                 label,
                 extras,
             } of entries) {
@@ -596,7 +596,7 @@ export const createBodies = (
                 group.removeFromParent();
                 sphere.material.dispose();
                 marker.material.dispose();
-                halo?.material.dispose();
+                corona?.material.dispose();
             }
             styling.dispose();
             sun.removeFromParent();
@@ -604,7 +604,7 @@ export const createBodies = (
             sphereGeometry.dispose();
             fineGeometry.dispose();
             for (const texture of Object.values(textures)) texture.dispose();
-            haloTexture.dispose();
+            glowTexture.dispose();
             maps.dispose();
         },
     };

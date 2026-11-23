@@ -1,6 +1,9 @@
 /// <reference types="deno" />
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
+    CORONA_MIN_PX,
+    CORONA_RADII,
+    coronaDiameter,
     culledByParent,
     foldOrbits,
     hiddenBehindSpheres,
@@ -147,4 +150,18 @@ Deno.test("a parent's culled children are counted by parent, without the folded 
             ["mars", ["phobos", "mro"]],
         ],
     );
+});
+
+Deno.test("a far star's corona projects to the px floor", () => {
+    const diameter = coronaDiameter(700_000, 1e12, 0.8, 600);
+
+    assertAlmostEquals(
+        projectedRadiusPx(diameter / 2, 1e12, 0.8, 600) * 2,
+        CORONA_MIN_PX,
+    );
+});
+
+Deno.test("a near star's corona is its radius times CORONA_RADII across", () => {
+    assertAlmostEquals(coronaDiameter(700_000, 2e6, 0.8, 600), 6 * 700_000);
+    assertEquals(CORONA_RADII, 3);
 });

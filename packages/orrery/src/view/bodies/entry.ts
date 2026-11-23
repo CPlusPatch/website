@@ -12,9 +12,10 @@ import {
 } from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Placement } from "../geometry/labels.ts";
+import { createCorona } from "./corona.ts";
 import { createExtras } from "./extras.ts";
 import { CENTERS } from "./labels.ts";
-import { HALO_OPACITY, type Shape, shapeOf } from "./markers.ts";
+import { type Shape, shapeOf } from "./markers.ts";
 import type { Extra } from "./patches.ts";
 import { createSpacecraftModel } from "./spacecraft.ts";
 import { createStarMaterial } from "./star.ts";
@@ -26,8 +27,8 @@ export type Entry = {
     /** A spacecraft's model, which stands in for its sphere. */
     model: Group | null;
     marker: Sprite;
-    /** The root's glow, drawn with its marker. */
-    halo: Sprite | null;
+    /** A star's glow, drawn with its disc or its marker. */
+    corona: Sprite | null;
     label: CSS2DObject;
     /** The label's name and the "+N" count of the bodies folded into it. */
     name: HTMLElement;
@@ -46,13 +47,13 @@ export type Entry = {
     mapped: boolean;
 };
 
-/** A body's group, with its sphere, marker, halo and label made but not added to the scene. */
+/** A body's group, with its sphere, marker, corona and label made but not added to the scene. */
 export const createEntry = (
     body: Body,
     color: (body: Body) => Color,
     geometry: SphereGeometry,
     textures: Record<Shape, CanvasTexture>,
-    haloTexture: CanvasTexture,
+    coronaTexture: CanvasTexture,
 ): Entry => {
     const group = new Group();
 
@@ -79,19 +80,8 @@ export const createEntry = (
             toneMapped: false,
         }),
     );
-    const halo =
-        body.parent === null
-            ? new Sprite(
-                  new SpriteMaterial({
-                      sizeAttenuation: false,
-                      map: haloTexture,
-                      color: color(body),
-                      opacity: HALO_OPACITY,
-                      depthWrite: false,
-                      toneMapped: false,
-                  }),
-              )
-            : null;
+    const corona =
+        body.kind === "star" ? createCorona(coronaTexture, color(body)) : null;
 
     const text = document.createElement("div");
     text.className = "orrery__label";
@@ -114,7 +104,7 @@ export const createEntry = (
     }
 
     group.add(sphere, marker, label);
-    if (halo) group.add(halo);
+    if (corona) group.add(corona);
     const extras = createExtras(body, group, sphere);
 
     return {
@@ -123,7 +113,7 @@ export const createEntry = (
         sphere,
         model,
         marker,
-        halo,
+        corona,
         label,
         name,
         count,

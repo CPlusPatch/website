@@ -17,6 +17,27 @@ export const projectedRadiusPx = (
 ): number =>
     (radius / (distance * Math.tan(fovRad / 2))) * (viewportHeightPx / 2);
 
+/** A star's corona reaches this many star radii from its centre. */
+export const CORONA_RADII = 3;
+
+/** The corona's diameter on screen never drops under this many px, so a far star still glows. */
+export const CORONA_MIN_PX = 30;
+
+/** The world diameter of a star's corona seen from `distance`, in the same unit as `radius`. */
+export const coronaDiameter = (
+    radius: number,
+    distance: number,
+    fovRad: number,
+    viewportHeightPx: number,
+): number =>
+    Math.max(
+        2 * CORONA_RADII * radius,
+        (CORONA_MIN_PX / viewportHeightPx) *
+            2 *
+            distance *
+            Math.tan(fovRad / 2),
+    );
+
 /** An orbit whose semi-major axis shows under this many px is left out, as its parent's rings. */
 export const ORBIT_MIN_PX = 16;
 

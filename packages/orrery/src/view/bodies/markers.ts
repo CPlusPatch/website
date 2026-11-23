@@ -2,9 +2,6 @@ import type { Body, BodyKind } from "@cpluspatch/orbit";
 import { CanvasTexture, SRGBColorSpace } from "three";
 import { ROLE_ICONS, type RoleKey, roleOf } from "./role-icons.ts";
 
-export const HALO_SCALE = 2.5;
-export const HALO_OPACITY = 0.22;
-
 type RoleShape = `role-${RoleKey}`;
 
 export type Shape =
@@ -87,7 +84,7 @@ const teardrop = (context: CanvasRenderingContext2D, reach: number): void => {
     context.fill();
 };
 
-export const markerTexture = (shape: Shape | "halo"): CanvasTexture => {
+export const markerTexture = (shape: Shape): CanvasTexture => {
     const canvas = document.createElement("canvas");
     canvas.width = TEXTURE_PX;
     canvas.height = TEXTURE_PX;
@@ -100,13 +97,7 @@ export const markerTexture = (shape: Shape | "halo"): CanvasTexture => {
     context.fillStyle = "white";
     context.strokeStyle = "white";
 
-    if (shape === "halo") {
-        const glow = context.createRadialGradient(mid, mid, 0, mid, mid, mid);
-        glow.addColorStop(0, "white");
-        glow.addColorStop(1, "rgba(255, 255, 255, 0)");
-        context.fillStyle = glow;
-        context.fillRect(0, 0, TEXTURE_PX, TEXTURE_PX);
-    } else if (shape === "disc") {
+    if (shape === "disc") {
         context.beginPath();
         context.arc(mid, mid, reach, 0, 2 * Math.PI);
         context.fill();
