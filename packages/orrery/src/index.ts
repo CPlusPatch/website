@@ -16,13 +16,12 @@ import { cue } from "./audio/cues.ts";
 import { createSound } from "./audio/sound.ts";
 import { Clock, DEFAULT_RATE } from "./clock.ts";
 import {
-    decodeScenario,
     hashPayload,
     openScenario,
     type SavedStorage,
     startTime,
-    writeSaved,
 } from "./persistence.ts";
+import { createSession } from "./session.ts";
 import { createCrumbs } from "./ui/crumbs.ts";
 import { h, NARROW_QUERY } from "./ui/dom.ts";
 import { createHud } from "./ui/hud.ts";
@@ -50,9 +49,6 @@ export type Orrery = {
     select: (id: string | null) => void;
     destroy: () => void;
 };
-
-/** How long the autosave waits for more changes, in ms. */
-const SAVE_DELAY_MS = 500;
 
 /** How long after mounting the loading state gives way, whatever is still loading, in ms. */
 const REVEAL_AFTER_MS = 8000;
@@ -425,33 +421,18 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         },
     });
 
-    const save = () => {
-        writeSaved(storage, { ...world.scenario, time: world.clock.t });
-    };
-
-    let saveTimer: ReturnType<typeof setTimeout> | undefined;
-    const saveNow = () => {
-        clearTimeout(saveTimer);
-        saveTimer = undefined;
-        save();
-    };
-    const saveSoon = () => {
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(saveNow, SAVE_DELAY_MS);
-    };
-
-    // A running clock emits nothing, so its time is saved when the page goes.
-    const onVisibility = () => {
-        if (document.visibilityState === "hidden") saveNow();
-    };
-
-    // Each load takes an id, so a decode that finishes late can tell it's stale.
-    let loadId = 0;
-
-    const off = world.on((event) => {
-        if (event.type === "scenario") {
-            // Any new scenario, even an Import or Reset, cancels a pending link.
-            loadId++;
+    const session = createSession({
+        world,
+        storage,
+        notices,
+        page: {
+            hash: () => location.hash,
+            stripHash,
+            hidden: () => document.visibilityState === "hidden",
+            window,
+            document,
+        },
+        rebuild: () => {
             parts?.destroy();
             parts = build();
             satellites.setAvailable(hasEarth());
@@ -461,7 +442,10 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             if (!parts) {
                 notices.show("destructive", "The model can't be drawn.");
             }
-        }
+        },
+    });
+
+    const off = world.on((event) => {
         if (event.type === "selection" && event.id !== null) cue("select");
         // The keys card hides the orbit card, so a new pick would show nothing.
         if (event.type === "selection" && event.id !== null) keys.close();
@@ -469,41 +453,11 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         // A rebuilt scenario isn't announced, as its view is new.
         const message = announcement(event, world.scenario.bodies);
         if (message !== null) live.textContent = message;
-
-        // Neither is saved, so they don't need a write.
-        if (event.type !== "selection" && event.type !== "focus") saveSoon();
     });
 
     let destroyed = false;
-    const loadHash = async () => {
-        const payload = hashPayload(location.hash);
-        if (payload === null) return;
 
-        stripHash();
-
-        const id = ++loadId;
-        const result = await decodeScenario(payload);
-        if (destroyed || id !== loadId) return;
-
-        if (!result.ok) {
-            notices.show(
-                "destructive",
-                "The shared link isn't a valid scenario, so nothing changed.",
-            );
-            return;
-        }
-
-        cue("load");
-        world.load(result.scenario, startTime(result.scenario));
-        saveNow();
-    };
-    const onHashChange = () => void loadHash();
-
-    window.addEventListener("hashchange", onHashChange);
-    window.addEventListener("pagehide", saveNow);
-    document.addEventListener("visibilitychange", onVisibility);
-
-    if (opened.source === "link") saveNow();
+    if (opened.source === "link") session.saveNow();
     if (opened.notice) notices.show("warning", opened.notice);
 
     let revealed = false;
@@ -535,10 +489,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             container.inert = false;
             for (const panel of panels) panel.inert = false;
             loading.destroy();
-            if (saveTimer !== undefined) saveNow();
-            window.removeEventListener("hashchange", onHashChange);
-            window.removeEventListener("pagehide", saveNow);
-            document.removeEventListener("visibilitychange", onVisibility);
+            session.destroy();
             off();
             measure.disconnect();
             root.style.removeProperty("--orrery-top-space");
