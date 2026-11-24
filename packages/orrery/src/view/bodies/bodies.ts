@@ -17,6 +17,7 @@ import {
     SphereGeometry,
     Vector3,
 } from "three";
+import type { Assets } from "../assets.ts";
 import { lvlhMatrix } from "../geometry/attitude.ts";
 import { projectedBox } from "../geometry/footprint.ts";
 import {
@@ -98,6 +99,8 @@ const LABEL_HOLD_MS = 500;
 export type BodyOptions = {
     /** Whether to load the maps. */
     maps: boolean;
+    /** The image of a map, or null when there's none. */
+    images: Assets["map"];
     /** The anisotropy of each map. */
     anisotropy: number;
     /** Hears each map request and each map that settles, as done of total. */
@@ -121,7 +124,7 @@ export const createBodies = (
     ) as Record<Shape, CanvasTexture>;
     const glowTexture = coronaTexture();
     const entries: Entry[] = [];
-    const maps = createMaps(options.anisotropy, options.onMaps);
+    const maps = createMaps(options.images, options.anisotropy, options.onMaps);
     const spin = new Matrix4();
     const styling = createLabels(host, entries);
 

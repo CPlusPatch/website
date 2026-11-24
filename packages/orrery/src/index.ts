@@ -37,6 +37,7 @@ import { createSearch, type Search } from "./ui/search.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
 import { createUnits } from "./units.ts";
+import { createAssets } from "./view/assets.ts";
 import type { Band } from "./view/geometry/framing.ts";
 import type { Rect } from "./view/geometry/labels.ts";
 import { createView, type View } from "./view/scene.ts";
@@ -176,6 +177,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const hasEarth = () =>
         world.scenario.bodies.some((body) => body.id === "earth");
 
+    // Outlives the views, so a rebuilt one doesn't fetch the sky, maps and satellites again.
+    const assets = createAssets();
+
     // The view and the panels that depend on the scenario. Only the first build reports loading.
     const build = (
         onLoading?: (done: number, total: number, fill: number) => void,
@@ -190,6 +194,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             blocked,
             band,
             units,
+            assets,
             onLoading,
         );
         if (!view) return null;
@@ -553,6 +558,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             keys.destroy();
             notices.destroy();
             parts?.destroy();
+            assets.dispose();
             for (const panel of panels) panel.hidden = true;
         },
     };

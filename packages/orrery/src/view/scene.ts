@@ -6,6 +6,7 @@ import type { EditScene } from "../editing.ts";
 import type { SatelliteFacts } from "../swarm.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
+import type { Assets } from "./assets.ts";
 import { createBodies } from "./bodies/bodies.ts";
 import { createRig } from "./camera.ts";
 import {
@@ -90,6 +91,7 @@ export type View = EditScene & {
  * `units` sets the unit of the distances in the notes.
  * `onLoading` hears the files done of the files started, for the sky and the maps, and how full the bar is, from 0 to 1.
  * The sky counts as one file, and fills the bar by the bytes it has received.
+ * `assets` holds the sky, maps and satellites, which are fetched once for every view built on it.
  */
 export const createView = (
     container: HTMLElement,
@@ -97,6 +99,7 @@ export const createView = (
     blocked: () => Rect[],
     band: () => Band,
     units: Units,
+    assets: Assets,
     onLoading?: (done: number, total: number, fill: number) => void,
 ): View | null => {
     let renderer: WebGLRenderer;
@@ -120,6 +123,7 @@ export const createView = (
             blocked,
             band,
             units,
+            assets,
             onLoading,
         );
     } catch (error) {
@@ -138,6 +142,7 @@ const assemble = (
     blocked: () => Rect[],
     band: () => Band,
     units: Units,
+    assets: Assets,
     onLoading?: (done: number, total: number, fill: number) => void,
 ): View => {
     cleanup.push(() => {
@@ -219,6 +224,7 @@ const assemble = (
         theme.color,
         {
             maps: !plain,
+            images: assets.map,
             anisotropy: renderer.capabilities.getMaxAnisotropy(),
             onMaps: (done, total) => {
                 mapsDone = done;
@@ -232,7 +238,7 @@ const assemble = (
     const earthMu = world.scenario.bodies.find(
         (body) => body.id === "earth",
     )?.mu;
-    const swarm = createSwarm(scene, theme, earthMu ?? 0);
+    const swarm = createSwarm(scene, theme, () => assets.swarm(earthMu ?? 0));
     cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };
     // Passed as Earth's position, which gives a satellite's position relative to Earth.
@@ -444,16 +450,18 @@ const assemble = (
 
     const sky = createSky();
     cleanup.push(sky.dispose);
-    const loading = new AbortController();
-    cleanup.push(() => loading.abort());
     report();
     if (!plain) {
-        sky.load(loading.signal, (fraction) => {
-            skyFraction = fraction;
-            report();
-        })
+        assets
+            .sky((fraction) => {
+                skyFraction = fraction;
+                report();
+            })
+            .then((data) => {
+                if (!destroyed) sky.show(data);
+            })
             .catch((error: unknown) => {
-                if (loading.signal.aborted) return;
+                if (destroyed) return;
 
                 console.warn("The Orrery couldn't load the sky.", error);
             })
@@ -648,7 +656,6 @@ const assemble = (
             cancelAnimationFrame(frame);
             observer.disconnect();
             theme.stop();
-            loading.abort();
             sky.dispose();
             swarm.dispose();
             rig.dispose();

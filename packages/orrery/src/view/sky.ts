@@ -11,6 +11,7 @@ import {
     BufferAttribute,
     BufferGeometry,
     Color,
+    ImageLoader,
     LinearFilter,
     Mesh,
     type Object3D,
@@ -21,8 +22,7 @@ import {
     ShaderMaterial,
     SphereGeometry,
     SRGBColorSpace,
-    type Texture,
-    TextureLoader,
+    Texture,
     type WebGLRenderer,
 } from "three";
 import {
@@ -51,19 +51,19 @@ const MILKY_WAY_URL = new URL("../assets/milky-way.webp", import.meta.url);
 
 type Disposable = { dispose: () => void };
 
+/** The decoded stars and the Milky Way image, which every sky of a page is built from. */
+export type SkyData = {
+    stars: Star[];
+    milkyWay: HTMLImageElement;
+};
+
 /** The sky, drawn before the scene. */
 export type Sky = {
-    /**
-     * Fetches the stars and the Milky Way. Rejects if `signal` aborts or a fetch fails.
-     * `onProgress` hears the fraction of the bytes received, when both files give their length.
-     */
-    load: (
-        signal: AbortSignal,
-        onProgress?: (fraction: number) => void,
-    ) => Promise<void>;
+    /** Builds the sky from `data`. */
+    show: (data: SkyData) => void;
     /** Marks the loading state as gone. A sky that arrives later fades in. */
     reveal: () => void;
-    /** Draws the sky as seen by `camera`. Does nothing until `load` has finished. */
+    /** Draws the sky as seen by `camera`. Does nothing until `show` has run. */
     render: (renderer: WebGLRenderer, camera: PerspectiveCamera) => void;
     /** Whether `render` draws anything yet. */
     shown: () => boolean;
@@ -291,7 +291,59 @@ const readBytes = async (
     return out;
 };
 
-/** A sky that draws nothing until it's loaded. */
+/**
+ * Fetches the stars and the Milky Way. Rejects if `signal` aborts or a fetch fails.
+ * `onProgress` hears the fraction of the bytes received, when both files give their length.
+ */
+export const fetchSky = async (
+    signal: AbortSignal,
+    onProgress?: (fraction: number) => void,
+): Promise<SkyData> => {
+    // Aborted when either file fails, so the other doesn't keep downloading.
+    const failed = new AbortController();
+    const both = AbortSignal.any([signal, failed.signal]);
+    let starsBytes: Uint8Array<ArrayBuffer>;
+    let milkyWayBytes: Uint8Array<ArrayBuffer>;
+    try {
+        const [starsResponse, milkyWayResponse] = await Promise.all([
+            fetch(STARS_URL, { signal: both }),
+            fetch(MILKY_WAY_URL, { signal: both }),
+        ]);
+        checkResponse(starsResponse, "star");
+        checkResponse(milkyWayResponse, "Milky Way");
+
+        const total = totalLength([starsResponse, milkyWayResponse]);
+        let received = 0;
+        const count = (bytes: number) => {
+            received += bytes;
+            if (total !== null) onProgress?.(Math.min(received / total, 1));
+        };
+        [starsBytes, milkyWayBytes] = await Promise.all([
+            readBytes(starsResponse, count),
+            readBytes(milkyWayResponse, count),
+        ]);
+    } catch (error) {
+        failed.abort();
+        throw error;
+    }
+    signal.throwIfAborted();
+
+    const stars = decodeStars(starsBytes);
+    const objectUrl = URL.createObjectURL(
+        new Blob([milkyWayBytes], { type: "image/webp" }),
+    );
+    let milkyWay: HTMLImageElement;
+    try {
+        milkyWay = await new ImageLoader().loadAsync(objectUrl);
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
+    signal.throwIfAborted();
+
+    return { stars, milkyWay };
+};
+
+/** A sky that draws nothing until it's shown. */
 export const createSky = (): Sky => {
     const scene = new Scene();
     // The main camera can be ~1e10 km from the origin, too far for float32. This one stays put.
@@ -305,54 +357,13 @@ export const createSky = (): Sky => {
     let revealed = false;
 
     return {
-        load: async (signal, onProgress) => {
-            // Aborted when either file fails, so the other doesn't keep downloading.
-            const failed = new AbortController();
-            const both = AbortSignal.any([signal, failed.signal]);
-            let starsBytes: Uint8Array<ArrayBuffer>;
-            let milkyWayBytes: Uint8Array<ArrayBuffer>;
+        show: (data) => {
+            const texture = new Texture(data.milkyWay);
+            texture.needsUpdate = true;
             try {
-                const [starsResponse, milkyWayResponse] = await Promise.all([
-                    fetch(STARS_URL, { signal: both }),
-                    fetch(MILKY_WAY_URL, { signal: both }),
-                ]);
-                checkResponse(starsResponse, "star");
-                checkResponse(milkyWayResponse, "Milky Way");
-
-                const total = totalLength([starsResponse, milkyWayResponse]);
-                let received = 0;
-                const count = (bytes: number) => {
-                    received += bytes;
-                    if (total !== null)
-                        onProgress?.(Math.min(received / total, 1));
-                };
-                [starsBytes, milkyWayBytes] = await Promise.all([
-                    readBytes(starsResponse, count),
-                    readBytes(milkyWayResponse, count),
-                ]);
-            } catch (error) {
-                failed.abort();
-                throw error;
-            }
-            signal.throwIfAborted();
-
-            const stars = decodeStars(starsBytes);
-            const objectUrl = URL.createObjectURL(
-                new Blob([milkyWayBytes], { type: "image/webp" }),
-            );
-            let texture: Texture;
-            try {
-                texture = await new TextureLoader().loadAsync(objectUrl);
-            } finally {
-                URL.revokeObjectURL(objectUrl);
-            }
-
-            try {
-                signal.throwIfAborted();
-
                 pixelRatio = { value: 1 };
                 const milkyWay = buildMilkyWay(texture, fade);
-                const points = buildStars(stars, pixelRatio, fade);
+                const points = buildStars(data.stars, pixelRatio, fade);
 
                 scene.add(milkyWay.object, points.object);
                 disposables = [

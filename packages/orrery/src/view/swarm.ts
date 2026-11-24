@@ -19,13 +19,13 @@ import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import {
+    type Catalogue,
     decodeCatalogue,
     SATELLITE_GROUPS,
     type SatelliteGroup,
 } from "../catalogue.ts";
 import {
     inSnapshotWindow,
-    prepareSwarm,
     type SatelliteFacts,
     type Swarm,
     satelliteFacts,
@@ -39,6 +39,22 @@ import { pickNearest } from "./picking.ts";
 import type { Theme } from "./theme.ts";
 
 const SATELLITES_URL = new URL("../assets/satellites.bin", import.meta.url);
+
+/** Fetches and decodes the satellite file. Rejects if `signal` aborts or the fetch fails. */
+export const fetchCatalogue = async (
+    signal: AbortSignal,
+): Promise<Catalogue> => {
+    const response = await fetch(SATELLITES_URL, { signal });
+    if (!response.ok) {
+        throw new Error(
+            `The satellite file gave ${response.status} ${response.statusText}.`,
+        );
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    signal.throwIfAborted();
+
+    return decodeCatalogue(bytes);
+};
 
 /** The radius of the geostationary ring in km. Its size on screen says how far Earth is zoomed. */
 const GEO_RADIUS_KM = 42_164;
@@ -231,15 +247,15 @@ type Loaded = {
 };
 
 /**
- * The satellite layer in `scene`. Nothing is fetched until a group is turned on.
- * `earthMu` is Earth's gravitational parameter in m³/s², which turns mean motion into an orbit size.
+ * The satellite layer in `scene`. `load` isn't called until a group is turned on.
+ * It gives the prepared swarm, which is shared with the other views of the page.
  */
 export const createSwarm = (
     scene: Scene,
     theme: Theme,
-    earthMu: number,
+    load: () => Promise<Swarm>,
 ): SwarmLayer => {
-    const loading = new AbortController();
+    let disposed = false;
     const uniforms = { pixelRatio: { value: 1 }, fade: { value: 0 } };
     // The ring shares the pixel ratio and has no fade.
     const ringUniforms = { pixelRatio: uniforms.pixelRatio };
@@ -289,20 +305,11 @@ export const createSwarm = (
         orbit.material.color.copy(color);
     };
 
-    const load = async () => {
+    const show = async () => {
         try {
-            const response = await fetch(SATELLITES_URL, {
-                signal: loading.signal,
-            });
-            if (!response.ok) {
-                throw new Error(
-                    `The satellite file gave ${response.status} ${response.statusText}.`,
-                );
-            }
-            const bytes = new Uint8Array(await response.arrayBuffer());
-            loading.signal.throwIfAborted();
+            const swarm = await load();
+            if (disposed) return;
 
-            const swarm = prepareSwarm(decodeCatalogue(bytes), earthMu);
             const positions = new BufferAttribute(
                 new Float32Array(swarm.count * 3),
                 3,
@@ -402,7 +409,7 @@ export const createSwarm = (
             paint(loaded);
             stale = true;
         } catch (error) {
-            if (loading.signal.aborted) return;
+            if (disposed) return;
 
             // Let the next group change try again.
             started = false;
@@ -417,7 +424,7 @@ export const createSwarm = (
 
             if (wanted.size > 0 && !started) {
                 started = true;
-                void load();
+                void show();
             }
         },
         update: (frameCamera, t, earthOffsetKm, viewportHeight) => {
@@ -635,7 +642,7 @@ export const createSwarm = (
             loaded?.orbit.material.resolution.set(width, height);
         },
         dispose: () => {
-            loading.abort();
+            disposed = true;
             if (!loaded) return;
 
             const { points, ring, orbit, label } = loaded;

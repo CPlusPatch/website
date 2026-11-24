@@ -3,12 +3,7 @@
  * The surface maps of the bodies, fetched when a body is first shown as a sphere.
  */
 
-import {
-    NoColorSpace,
-    SRGBColorSpace,
-    type Texture,
-    TextureLoader,
-} from "three";
+import { ImageLoader, NoColorSpace, SRGBColorSpace, Texture } from "three";
 
 /** Vite only bundles an asset whose `new URL` is a literal, so each map is spelt out. */
 const MAPS: Record<string, string> = {
@@ -63,6 +58,21 @@ const MAPS: Record<string, string> = {
         .href,
 };
 
+/** The image of map `id`, or `null` when there's no such map. */
+export const loadMapImage = (
+    id: string,
+    signal: AbortSignal,
+): Promise<HTMLImageElement> | null => {
+    if (!Object.hasOwn(MAPS, id)) return null;
+
+    // `ImageLoader` can't be aborted, so a late image is dropped here.
+    return new ImageLoader().loadAsync(MAPS[id]).then((image) => {
+        signal.throwIfAborted();
+
+        return image;
+    });
+};
+
 /** Maps that hold data, not colour. */
 const LINEAR = new Set(["earth-clouds"]);
 
@@ -74,12 +84,12 @@ export type Maps = {
     dispose: () => void;
 };
 
-/** Maps that load on demand, with `anisotropy` set on each. `onChange` hears each start and settle. */
+/** Maps that load on demand from `images`, with `anisotropy` set on each. `onChange` hears each start and settle. */
 export const createMaps = (
+    images: (id: string) => Promise<HTMLImageElement> | null,
     anisotropy: number,
     onChange?: (done: number, total: number) => void,
 ): Maps => {
-    const loader = new TextureLoader();
     const started = new Set<string>();
     const loaded: Texture[] = [];
     let disposed = false;
@@ -92,22 +102,23 @@ export const createMaps = (
 
     return {
         load: (id, onLoad) => {
-            const url = Object.hasOwn(MAPS, id) ? MAPS[id] : undefined;
-            if (url === undefined || started.has(id)) return;
+            if (started.has(id)) return;
+
+            const pending = images(id);
+            if (pending === null) return;
 
             started.add(id);
             onChange?.(settled, started.size);
-            loader.loadAsync(url).then(
-                (texture) => {
-                    if (disposed) {
-                        texture.dispose();
-                        return;
-                    }
+            pending.then(
+                (image) => {
+                    if (disposed) return;
 
+                    const texture = new Texture(image);
                     texture.colorSpace = LINEAR.has(id)
                         ? NoColorSpace
                         : SRGBColorSpace;
                     texture.anisotropy = anisotropy;
+                    texture.needsUpdate = true;
                     loaded.push(texture);
                     onLoad(texture);
                     settle();
