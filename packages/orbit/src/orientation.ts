@@ -1,4 +1,4 @@
-import { DAY } from "./constants.ts";
+import { DAY, deg } from "./constants.ts";
 import { ROTATION_MODELS } from "./data/rotation.ts";
 import { rotateEquatorialToEcliptic } from "./frames.ts";
 import type { Vec3 } from "./vec.ts";
@@ -52,9 +52,8 @@ export const bodyOrientation = (id: string, t: number): Orientation | null => {
 
     // `t` is UTC-based but IAU models use TDB. The ~69 s offset turns Earth by ~0.3°, which is fine here.
     const { ra, dec, w } = model(t / DAY);
-    const rad = Math.PI / 180;
 
-    return orientationFromPole(ra * rad, dec * rad, w * rad);
+    return orientationFromPole(deg(ra), deg(dec), deg(w));
 };
 
 /** The rate of the prime-meridian angle of `model` in °/day at `t`, signed. */

@@ -1,11 +1,8 @@
-import { km } from "./constants.ts";
+import { EARTH_RADIUS, km } from "./constants.ts";
 import type { Elements } from "./kepler.ts";
 
 /** An Earth orbit band: low, medium, geostationary or highly elliptical. */
 export type OrbitClass = "leo" | "meo" | "geo" | "heo";
-
-// WGS 84 equatorial radius, to turn the apoapsis radius into an altitude.
-const EARTH_RADIUS = km(6378.137);
 
 // The usual LEO ceiling.
 const LEO_CEILING = km(2000);

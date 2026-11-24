@@ -1,11 +1,9 @@
-import { DAY, km } from "../constants.ts";
+import { DAY, deg, km } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
 import { bodyOrientation } from "../orientation.ts";
 import { j2Precession } from "../precession.ts";
 import type { Body } from "../scenario.ts";
 import type { Vec3 } from "../vec.ts";
-
-const deg = (x: number): number => (x * Math.PI) / 180;
 
 // 2026-11-23 00:00 TDB is JD 2461367.5. The ~69 s from UTC is ignored, as in `orientation.ts`.
 const EPOCH = (2461367.5 - 2451545.0) * DAY;

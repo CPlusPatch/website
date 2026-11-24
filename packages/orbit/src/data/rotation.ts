@@ -1,7 +1,6 @@
+import { deg } from "../constants.ts";
 import type { RotationModel } from "../orientation.ts";
 import { KERBOL_ROTATION } from "./fiction.ts";
-
-const rad = (x: number): number => (x * Math.PI) / 180;
 
 /** [constant, rate per Julian century, rate per century squared] in degrees. */
 type Angle = [number, number, number?];
@@ -84,7 +83,7 @@ const series = (
         (sum, [e0, rate, quadratic = 0], k) =>
             sum +
             (coefficients[k] ?? 0) *
-                trig(rad(e0 + rate * T + quadratic * T * T)),
+                trig(deg(e0 + rate * T + quadratic * T * T)),
         0,
     );
 
@@ -146,7 +145,7 @@ export const ROTATION_MODELS: Record<string, RotationModel> = {
     uranus: (d) => ({ ra: 257.311, dec: -15.175, w: 203.81 - 501.1600928 * d }),
     neptune: (d) => {
         const T = d / 36525;
-        const N = rad(357.85 + 52.316 * T);
+        const N = deg(357.85 + 52.316 * T);
 
         return {
             ra: 299.36 + 0.7 * Math.sin(N),

@@ -1,4 +1,4 @@
-import { AU, DAY, G, km } from "../constants.ts";
+import { AU, DAY, deg, G, km } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
 import { wrapAngle } from "../kepler.ts";
 import type { Body, Scenario } from "../scenario.ts";
@@ -7,7 +7,6 @@ import { probes } from "./probes.ts";
 import { satellites } from "./satellites.ts";
 import { smallBodies } from "./small-bodies.ts";
 
-const deg = (x: number): number => (x * Math.PI) / 180;
 const au = (x: number): number => x * AU;
 
 type Table1Row = {
@@ -122,7 +121,7 @@ const ORBITS: Record<string, Table1Row> = {
 
 // JPL, planetary physical parameters: mass in 10^24 kg and mean radius in km.
 // https://ssd.jpl.nasa.gov/planets/phys_par.html
-const PHYSICAL: Record<string, { mass: number; radius: number }> = {
+const PHYSICAL = {
     mercury: { mass: 0.330103, radius: 2439.4 },
     venus: { mass: 4.86731, radius: 6051.8 },
     earth: { mass: 5.97217, radius: 6371.0084 },
@@ -132,9 +131,13 @@ const PHYSICAL: Record<string, { mass: number; radius: number }> = {
     uranus: { mass: 86.8099, radius: 25362 },
     neptune: { mass: 102.4092, radius: 24622 },
     pluto: { mass: 0.0130246, radius: 1188.3 },
-};
+} satisfies Record<string, { mass: number; radius: number }>;
 
-const planet = (id: string, name: string, kind: "planet" | "dwarf"): Body => {
+const planet = (
+    id: keyof typeof PHYSICAL,
+    name: string,
+    kind: "planet" | "dwarf",
+): Body => {
     const { mass, radius } = PHYSICAL[id];
 
     return {
@@ -171,7 +174,7 @@ const MOON: Elements = {
 /** The gravitational parameter of each planet and Pluto, for the moons' orbits. */
 const PARENT_MU = Object.fromEntries(
     Object.entries(PHYSICAL).map(([id, { mass }]) => [id, G * mass * 1e24]),
-);
+) as Record<keyof typeof PHYSICAL, number>;
 
 const SUN_MU = 1.32712440041e20;
 

@@ -1,11 +1,8 @@
-import { AU, DAY, OBLIQUITY_J2000 } from "../constants.ts";
+import { AU, DAY, deg, km, OBLIQUITY_J2000 } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
 import { meanMotion } from "../kepler.ts";
 import type { RotationModel } from "../orientation.ts";
 import type { Body, Scenario } from "../scenario.ts";
-
-const deg = (x: number): number => (x * Math.PI) / 180;
-const km = (x: number): number => x * 1000;
 
 // JPL astrodynamic parameters: https://ssd.jpl.nasa.gov/astro_par.html
 const GM_SUN = 1.32712440041e20;

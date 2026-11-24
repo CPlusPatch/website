@@ -1,4 +1,4 @@
-import { DAY } from "../constants.ts";
+import { DAY, deg, km } from "../constants.ts";
 import { elementsFromState } from "../elements.ts";
 import { rotateEquatorialToEcliptic } from "../frames.ts";
 import type { Elements } from "../kepler.ts";
@@ -8,18 +8,17 @@ import type { Vec3 } from "../vec.ts";
 import { add, cross, normalize, scale } from "../vec.ts";
 import { ROTATION_MODELS } from "./rotation.ts";
 
-const deg = (x: number): number => (x * Math.PI) / 180;
-const km = (x: number): number => x * 1000;
-
 /** The north pole of a reference plane in ICRF, in degrees. */
 export type Pole = { ra: number; dec: number };
+
+type Parent = "mars" | "jupiter" | "saturn" | "uranus" | "neptune" | "pluto";
 
 /** One row of the JPL satellite tables: mean elements and physical parameters. */
 export type MoonRow = {
     id: string;
     name: string;
     /** The id of the planet it orbits. */
-    parent: string;
+    parent: Parent;
     /** The mean semi-major axis in km. Only used as a check, see `moonElements`. */
     a: number;
     e: number;
@@ -492,7 +491,9 @@ export const moonElements = (row: MoonRow, parentMu: number): Elements => {
 };
 
 /** The moons of the planets in `parentMu`, a gravitational parameter in m³/s² by planet id. */
-export const moonBodies = (parentMu: Record<string, number>): Body[] =>
+export const moonBodies = (
+    parentMu: Record<MoonRow["parent"], number>,
+): Body[] =>
     MOON_ROWS.map((row) => {
         const { nodeRate, argpRate } = precessionRates(row);
         const body: Body = {

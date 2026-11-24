@@ -1,17 +1,13 @@
-import { DAY, km } from "../constants.ts";
+import { DAY, deg, EARTH_RADIUS } from "../constants.ts";
 import { equatorialToEcliptic, rotateEquatorialToEcliptic } from "../frames.ts";
 import type { Elements } from "../kepler.ts";
 import { j2Precession } from "../precession.ts";
 import type { Body, SpacecraftRole } from "../scenario.ts";
 import { unixMsToJ2000s } from "../time.ts";
 
-const deg = (x: number): number => (x * Math.PI) / 180;
-
 // From WGS 84 / EGM2008.
 /** The J2 of Earth's geopotential. */
 export const EARTH_J2 = 1.08262668e-3;
-/** Earth's equatorial radius in metres. */
-export const EARTH_RADIUS = km(6378.137);
 
 /** Converts a TLE to ecliptic elements around a parent with gravitational parameter `mu`. */
 const fromTle = (line1: string, line2: string, mu: number): Elements => {

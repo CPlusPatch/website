@@ -5,14 +5,20 @@
 
 export type { Burn } from "./burn.ts";
 export { applyBurn } from "./burn.ts";
-export { AU, DAY, G, J2000_UNIX_MS, OBLIQUITY_J2000 } from "./constants.ts";
+export {
+    AU,
+    DAY,
+    EARTH_RADIUS,
+    G,
+    J2000_UNIX_MS,
+    OBLIQUITY_J2000,
+} from "./constants.ts";
 export { builtInScenarios } from "./data/built-in.ts";
 export { eridani, gargantua, kerbol, tauCeti } from "./data/fiction.ts";
 export {
     CURATED_CATALOG_NUMBERS,
     CURATED_NAMES,
     EARTH_J2,
-    EARTH_RADIUS,
 } from "./data/satellites.ts";
 export { solarSystem } from "./data/solar-system.ts";
 export type { ElementsResult } from "./elements.ts";
