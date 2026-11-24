@@ -79,9 +79,23 @@ export const formatPlateDistance = (m: number, unit: AUnit): string => {
 
     const km = m / 1000;
 
-    return km >= 1e6
-        ? `${MILLION_KM.format(km / 1e6)}M km`
-        : `${KM.format(km)} km`;
+    // Short forms keep the value inside the plate's legend column.
+    if (km >= 1e6) return `${MILLION_KM.format(km / 1e6)}M km`;
+    if (km >= 1e4) return `${MILLION_KM.format(km / 1e3)}k km`;
+
+    return `${KM.format(km)} km`;
+};
+
+/** The length of a plate's scale bar as a number: `0.2` AU, `20M`, `200k` or `5,000` km. */
+export const formatScaleLength = (m: number, unit: AUnit): string => {
+    if (unit === "AU") return String(+(m / AU).toPrecision(6));
+
+    const km = m / 1000;
+
+    if (km >= 1e6) return `${+(km / 1e6).toPrecision(6)}M`;
+    if (km >= 1e4) return `${+(km / 1e3).toPrecision(6)}k`;
+
+    return KM.format(km);
 };
 
 /** The unit one list shares: `chosen`, else the unit of its largest distance (km when empty). */

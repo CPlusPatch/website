@@ -15,6 +15,7 @@ const earth: PlateInput = {
     parentRadius: 6.957e8,
     box: BOX,
     scaleMaxPx: 80,
+    unitMetres: 1000,
 };
 
 const dist = (p: { x: number; y: number }, q: { x: number; y: number }) =>
@@ -273,4 +274,19 @@ Deno.test("the scale bar is the largest 1, 2 or 5 × 10^k that fits", () => {
         assert(scaleBar.px <= scaleMaxPx);
         assert(next[mantissa] * 10 ** exponent * scale > scaleMaxPx);
     }
+});
+
+Deno.test("the scale bar is a 1, 2 or 5 multiple of the shown unit", () => {
+    const au = plateGeometry({ ...earth, unitMetres: AU }).scaleBar;
+    const km = plateGeometry(earth).scaleBar;
+    const mantissa = (n: number) => n / 10 ** Math.floor(Math.log10(n));
+
+    const inAu = au.metres / AU;
+    assert([1, 2, 5].some((m) => Math.abs(mantissa(inAu) - m) < 1e-9));
+    assert(au.px <= earth.scaleMaxPx);
+    assert(au.px > earth.scaleMaxPx / 2.5);
+
+    const inKm = km.metres / 1000;
+    assert([1, 2, 5].some((m) => Math.abs(mantissa(inKm) - m) < 1e-9));
+    assert(km.px <= earth.scaleMaxPx);
 });

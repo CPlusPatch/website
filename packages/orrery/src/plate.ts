@@ -14,6 +14,8 @@ export type PlateInput = Pick<Elements, "a" | "e" | "raan" | "argp"> & {
     box: { x: number; y: number; width: number; height: number };
     /** The longest the scale bar may be, in px. */
     scaleMaxPx: number;
+    /** The metres in the unit the scale bar is read in: 1000 for km, `AU` for AU. */
+    unitMetres: number;
 };
 
 export type Plate = {
@@ -32,17 +34,18 @@ export type Plate = {
     /** The unit vector of the body's direction of motion. */
     heading: Point;
     bounds: { left: number; top: number; right: number; bottom: number };
+    /** A bar of 1, 2 or 5 × 10^k of the input's `unitMetres`. */
     scaleBar: { metres: number; px: number; y: number };
 };
 
-/** The largest 1, 2 or 5 × 10^k metres that is at most `maxMetres` long. */
-const niceLength = (maxMetres: number): number => {
-    const top = Math.floor(Math.log10(maxMetres)) + 1;
+/** The largest 1, 2 or 5 × 10^k that is at most `max`, in whatever unit `max` is in. */
+const niceLength = (max: number): number => {
+    const top = Math.floor(Math.log10(max)) + 1;
 
     // Start one decade high so a rounding error in log10 can't hide the answer.
     for (let k = top; ; k--) {
         for (const step of [5, 2, 1]) {
-            if (step * 10 ** k <= maxMetres) return step * 10 ** k;
+            if (step * 10 ** k <= max) return step * 10 ** k;
         }
     }
 };
@@ -92,7 +95,9 @@ export const plateGeometry = (input: PlateInput): Plate => {
         right: centre.x + halfWidth * scale,
         bottom: centre.y + halfHeight * scale,
     };
-    const metres = niceLength(scaleMaxPx / scale);
+    // Round in the shown unit, or the bar would read as 0.334 AU.
+    const metres =
+        niceLength(scaleMaxPx / scale / input.unitMetres) * input.unitMetres;
 
     return {
         scale,

@@ -15,6 +15,7 @@ import {
     formatPlateDistance,
     formatRadius,
     formatRange,
+    formatScaleLength,
     formatSoon,
     formatSpeed,
     listUnit,
@@ -214,7 +215,24 @@ Deno.test("formatPlateDistance writes millions of km from 1e6 km", () => {
     assertEquals(formatPlateDistance(1e9, "km"), "1.0M km");
 });
 
-Deno.test("formatPlateDistance groups whole km below 1e6 km", () => {
+Deno.test("formatPlateDistance writes thousands of km from 1e4 km", () => {
+    assertEquals(formatPlateDistance(384_400_000, "km"), "384.4k km");
+    assertEquals(formatPlateDistance(10_000_000, "km"), "10.0k km");
+});
+
+Deno.test("formatPlateDistance groups whole km below 1e4 km", () => {
     assertEquals(formatPlateDistance(6_790_000, "km"), "6,790 km");
-    assertEquals(formatPlateDistance(384_400_000, "km"), "384,400 km");
+});
+
+Deno.test("formatScaleLength writes AU without trailing zeros", () => {
+    assertEquals(formatScaleLength(0.2 * AU, "AU"), "0.2");
+    assertEquals(formatScaleLength(5 * AU, "AU"), "5");
+    assertEquals(formatScaleLength(0.005 * AU, "AU"), "0.005");
+});
+
+Deno.test("formatScaleLength writes M from 1e6 km, k from 1e4 km, else grouped km", () => {
+    assertEquals(formatScaleLength(1e9, "km"), "1M");
+    assertEquals(formatScaleLength(2e10, "km"), "20M");
+    assertEquals(formatScaleLength(2e8, "km"), "200k");
+    assertEquals(formatScaleLength(5e6, "km"), "5,000");
 });
