@@ -1,4 +1,5 @@
 import { deg } from "../constants.ts";
+import type { Model } from "../models.ts";
 import type { RotationModel } from "../orientation.ts";
 import { KERBOL_ROTATION } from "./fiction.ts";
 
@@ -92,8 +93,8 @@ const series = (
 // Linear terms only, except for the Moon, Neptune and the moons with a surface map (Jupiter's,
 // Saturn's, Triton and Phobos have periodic terms). Mercury's and Jupiter's own periodic terms
 // are under 0.02°, so they are skipped.
-/** The rotation model of each body in `solarSystem` that has one, and of the Kerbol bodies, by body id. */
-export const ROTATION_MODELS: Record<string, RotationModel> = {
+/** The rotation of each model that has one: the solar system bodies and the Kerbol bodies. */
+export const ROTATION_MODELS: Partial<Record<Model, RotationModel>> = {
     sun: (d) => ({ ra: 286.13, dec: 63.87, w: 84.176 + 14.1844 * d }),
     mercury: (d) => {
         const T = d / 36525;

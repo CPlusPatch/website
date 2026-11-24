@@ -3,7 +3,7 @@
  * Low-poly models of the Earth satellites, at true size.
  */
 
-import type { Body } from "@cpluspatch/orbit";
+import type { Body, Model } from "@cpluspatch/orbit";
 import {
     Box3,
     BoxGeometry,
@@ -310,8 +310,8 @@ const bus = (group: Group, m: Palette, config: Bus): void => {
     }
 };
 
-// Each spacecraft's bus, by id.
-const BUSES: Record<string, Bus> = {
+// Each spacecraft's bus, by model.
+const BUSES: Partial<Record<Model, Bus>> = {
     "landsat-9": {
         size: [3, 2.4, 4.3],
         wings: 1,
@@ -420,6 +420,9 @@ const GENERIC: Bus = {
     wingWidth: 1.5,
 };
 
+const busOf = (model: Model | undefined): Bus =>
+    (model === undefined ? undefined : BUSES[model]) ?? GENERIC;
+
 /**
  * A model of `body` in km, nadir-pointing when it's turned by `lvlhMatrix`.
  *
@@ -431,12 +434,14 @@ export const createSpacecraftModel = (body: Body): Group => {
     const amber = material(0xc99a2e, 0.35);
     amber.metalness = 0.5;
 
-    if (body.id === "iss") iss(parts, m, amber);
-    else if (body.id === "hubble") hubble(parts, m);
-    else if (body.id === "tiangong") tiangong(parts, m);
-    else if (body.id === "parisat") parisat(parts, m);
-    else if (body.id === "juno") juno(parts, m);
-    else bus(parts, m, BUSES[body.id] ?? GENERIC);
+    const { model } = body;
+
+    if (model === "iss") iss(parts, m, amber);
+    else if (model === "hubble") hubble(parts, m);
+    else if (model === "tiangong") tiangong(parts, m);
+    else if (model === "parisat") parisat(parts, m);
+    else if (model === "juno") juno(parts, m);
+    else bus(parts, m, busOf(model));
 
     // The group's origin is the body's position, so the bounding box is centred on it.
     const box = new Box3().setFromObject(parts);
@@ -447,8 +452,9 @@ export const createSpacecraftModel = (body: Body): Group => {
 
     // A spacecraft without a model of its own is drawn at the size it declares.
     const known =
-        body.id in BUSES ||
-        ["iss", "hubble", "tiangong", "parisat", "juno"].includes(body.id);
+        model !== undefined &&
+        (Object.hasOwn(BUSES, model) ||
+            ["iss", "hubble", "tiangong", "parisat", "juno"].includes(model));
     const radius = known
         ? 1
         : body.radius / box.getBoundingSphere(new Sphere()).radius;

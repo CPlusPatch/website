@@ -22,8 +22,12 @@ export const bodyMarker = (body: Body): string =>
         ? roleMarker(roleOf(body))
         : `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">${PATHS[body.kind]}</svg>`;
 
-/** Draws a body's marker into `element`, in the body's colour. */
-export const showBodyMarker = (element: HTMLElement, body: Body): void => {
+/** Draws a body's marker into `element`, in the body's colour. `parent` is the body it orbits. */
+export const showBodyMarker = (
+    element: HTMLElement,
+    body: Body,
+    parent: Body | undefined,
+): void => {
     element.innerHTML = bodyMarker(body);
-    element.style.color = colorOf(body);
+    element.style.color = colorOf(body, parent);
 };

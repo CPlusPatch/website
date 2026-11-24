@@ -1,5 +1,6 @@
 import { DAY, deg, km } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
+import type { Model } from "../models.ts";
 import { bodyOrientation } from "../orientation.ts";
 import { j2Precession } from "../precession.ts";
 import type { Body } from "../scenario.ts";
@@ -185,7 +186,7 @@ const OBLATENESS: Record<
 };
 
 /** The pole of `parent` in ecliptic J2000. A missing rotation model throws. */
-const poleOf = (parent: string): Vec3 => {
+const poleOf = (parent: Model): Vec3 => {
     const orientation = bodyOrientation(parent, EPOCH);
 
     if (!orientation) {

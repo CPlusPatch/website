@@ -65,12 +65,12 @@ export const createCrumbs = (world: World): Crumbs => {
     const render = () => {
         const path = focusPath(world.scenario.bodies, world.focused);
         const key = JSON.stringify([
-            path.map((body) => [
+            path.map((body, at) => [
                 body.id,
                 body.name,
                 body.kind,
                 body.role,
-                colorOf(body),
+                colorOf(body, path[at - 1]),
             ]),
             satellite?.name ?? null,
         ]);
@@ -85,9 +85,9 @@ export const createCrumbs = (world: World): Crumbs => {
                 : undefined;
 
         list.replaceChildren(
-            ...path.map((body) => {
+            ...path.map((body, at) => {
                 const marker = h("span", { class: "orrery__crumb-marker" });
-                showBodyMarker(marker, body);
+                showBodyMarker(marker, body, path[at - 1]);
 
                 const button = h(
                     "button",

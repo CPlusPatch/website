@@ -52,7 +52,9 @@ export type MoonRow = {
 const URANUS_POLE: Pole = { ra: 77.311, dec: 15.175 };
 const PLUTO_POLE: Pole = { ra: 132.993, dec: -6.163 };
 // Triton's frame is Neptune's equator at J2000, taken from the IAU model so it can't drift from it.
-const NEPTUNE_POLE: Pole = ROTATION_MODELS.neptune(0);
+const neptune = ROTATION_MODELS.neptune;
+if (!neptune) throw new Error("Neptune has no rotation model.");
+const NEPTUNE_POLE: Pole = neptune(0);
 
 // JPL, Planetary Satellite Mean Elements, epoch 2000-01-01.5 TDB (J2000, so the epoch is 0):
 // https://ssd.jpl.nasa.gov/sats/elem/

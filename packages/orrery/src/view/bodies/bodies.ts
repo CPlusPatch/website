@@ -340,17 +340,20 @@ export const createBodies = (
                 if (big) {
                     if (options.maps && !entry.mapped && !model) {
                         entry.mapped = true;
-                        maps.load(body.id, (map) => {
-                            sphere.material.map = map;
-                            sphere.material.color.set(0xffffff);
-                            // The Sun is its own light, so it keeps its colours.
-                            sphere.material.toneMapped = body.kind !== "star";
-                            sphere.material.needsUpdate = true;
-                        });
+                        if (body.model !== undefined) {
+                            maps.load(body.model, (map) => {
+                                sphere.material.map = map;
+                                sphere.material.color.set(0xffffff);
+                                // The Sun is its own light, so it keeps its colours.
+                                sphere.material.toneMapped =
+                                    body.kind !== "star";
+                                sphere.material.needsUpdate = true;
+                            });
+                        }
                         entry.extras.load(maps);
                     }
 
-                    const orientation = bodyOrientation(body.id, t);
+                    const orientation = bodyOrientation(body.model, t);
                     if (orientation) {
                         spin.fromArray(spinMatrix(orientation));
                         sphere.quaternion.setFromRotationMatrix(spin);
@@ -625,7 +628,8 @@ export const createBodies = (
         },
         remove: (id) => {
             const at = entries.findIndex((entry) => entry.body.id === id);
-            if (at !== -1) disposeEntry(entries.splice(at, 1)[0] as Entry);
+            const removed = at === -1 ? undefined : entries.splice(at, 1)[0];
+            if (removed) disposeEntry(removed);
             sortMarkers();
 
             placements.delete(id);
@@ -636,9 +640,13 @@ export const createBodies = (
             if (hoverId === id) hoverId = null;
             if (drawn?.id === id) drawn = null;
 
-            maps.release(id);
-            // Saturn's rings are a map of their own, which a later Saturn needs again.
-            if (id === "saturn") maps.release("saturn-ring");
+            // Two bodies can share a model, so its map stays while another body has it.
+            const model = removed?.body.model;
+            if (model && !entries.some((entry) => entry.body.model === model)) {
+                maps.release(model);
+                // Saturn's rings are a map of their own, which a later Saturn needs again.
+                if (model === "saturn") maps.release("saturn-ring");
+            }
         },
         dispose: () => {
             disposed = true;

@@ -11,7 +11,7 @@ import {
 
 Deno.test("a body without an atmosphere has no shell", () => {
     assertEquals(shellFor("moon", 1737), null);
-    assertEquals(shellFor("nowhere", 1000), null);
+    assertEquals(shellFor(undefined, 1000), null);
 });
 
 Deno.test("the shell's top is the exaggerated height over the radius", () => {
@@ -35,9 +35,12 @@ Deno.test("colours are 6-digit hex, and rim and haze are between 0 and 1", () =>
 });
 
 Deno.test("every atmosphere belongs to a built-in body", () => {
-    const ids = new Set(
-        builtInScenarios.flatMap(({ bodies }) => bodies.map(({ id }) => id)),
+    const models = new Set<string | undefined>(
+        builtInScenarios.flatMap(({ bodies }) =>
+            bodies.map(({ model }) => model),
+        ),
     );
 
-    for (const id of Object.keys(ATMOSPHERES)) assert(ids.has(id), id);
+    for (const model of Object.keys(ATMOSPHERES))
+        assert(models.has(model), model);
 });

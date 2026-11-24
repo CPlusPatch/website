@@ -42,11 +42,18 @@ const CHEVRON =
 export const optionId = (pane: Pane, id: string): string =>
     `orrery-search-${pane}-${id}`;
 
-const marker = (body: Body, size: "row" | "head"): HTMLElement => {
+const parentOf = (ctx: SystemsContext, body: Body): Body | undefined =>
+    ctx.bodies.find((candidate) => candidate.id === body.parent);
+
+const marker = (
+    ctx: SystemsContext,
+    body: Body,
+    size: "row" | "head",
+): HTMLElement => {
     const element = h("span", {
         class: `orrery__search-marker orrery__search-marker--${size}`,
     });
-    showBodyMarker(element, body);
+    showBodyMarker(element, body, parentOf(ctx, body));
 
     return element;
 };
@@ -103,9 +110,7 @@ const row = (
         if (role)
             middle.push(h("span", { class: "orrery__search-role" }, role));
     } else {
-        const parent = ctx.bodies.find(
-            (candidate) => candidate.id === body.parent,
-        );
+        const parent = parentOf(ctx, body);
         const role = body.kind === "spacecraft" && body.role;
         const kind = role
             ? `${ROLE_LABELS[role]} craft`
@@ -127,7 +132,7 @@ const row = (
             "data-id": body.id,
             "aria-selected": String(options.active),
         },
-        marker(body, "row"),
+        marker(ctx, body, "row"),
         ...middle,
         ...pickedDot(ctx, body),
         h("span", { class: "orrery__search-range" }, ctx.range(body.id)),
@@ -175,7 +180,7 @@ export const headRows = (ctx: SystemsContext, body: Body): HTMLElement[] => {
     const title = h(
         "div",
         { class: "orrery__search-title" },
-        marker(body, "head"),
+        marker(ctx, body, "head"),
         h("h2", {}, body.name),
         ...pickedDot(ctx, body),
         h("span", { class: "orrery__search-kind" }, KIND_LABELS[body.kind]),
@@ -277,7 +282,10 @@ export const railRows = (
     }
 
     const primary = h("i", { class: "orrery__search-rail-primary" });
-    primary.style.setProperty("--orrery-rail-colour", colorOf(body));
+    primary.style.setProperty(
+        "--orrery-rail-colour",
+        colorOf(body, parentOf(ctx, body)),
+    );
 
     const track = h(
         "div",
@@ -288,7 +296,7 @@ export const railRows = (
             const mark = railItem(
                 `orrery__search-rail-mark${child.kind === "spacecraft" ? " orrery__search-rail-mark--craft" : ""}`,
                 at,
-                colorOf(child),
+                colorOf(child, body),
             );
             if (child.id === active) mark.dataset.active = "";
 

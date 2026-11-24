@@ -6,6 +6,8 @@ import { solarSystem } from "./data/solar-system.ts";
 import { assertVecClose } from "./fixture.ts";
 import { rotateEquatorialToEcliptic } from "./frames.ts";
 import { stateAt } from "./kepler.ts";
+import type { Model } from "./models.ts";
+import { MODELS } from "./models.ts";
 import type { Orientation } from "./orientation.ts";
 import {
     bodyOrientation,
@@ -27,10 +29,10 @@ const find = (id: string) => {
     return { ...body, elements: body.elements };
 };
 
-const orientationOf = (id: string, t: number): Orientation => {
-    const orientation = bodyOrientation(id, t);
+const orientationOf = (model: Model | undefined, t: number): Orientation => {
+    const orientation = bodyOrientation(model, t);
 
-    assert(orientation, `no orientation for ${id}`);
+    assert(orientation, `no orientation for ${model}`);
 
     return orientation;
 };
@@ -46,9 +48,9 @@ const inverse = (v: Vec3): Vec3 => {
 };
 
 Deno.test("the axes are unit length, orthogonal and right-handed for every model", () => {
-    for (const id of Object.keys(ROTATION_MODELS)) {
+    for (const model of MODELS.filter((m) => ROTATION_MODELS[m])) {
         for (const days of [-9000, 0, 1234.5, 8000]) {
-            const { x, y, z } = orientationOf(id, days * DAY);
+            const { x, y, z } = orientationOf(model, days * DAY);
 
             assertAlmostEquals(length(x), 1, 1e-12);
             assertAlmostEquals(length(y), 1, 1e-12);
@@ -104,20 +106,21 @@ Deno.test("a body's pole is tilted from its orbit normal by its obliquity", () =
             z: Math.cos(i),
         };
 
-        const angle = angleBetween(orientationOf(id, 0).z, normal) / RAD;
+        const angle =
+            angleBetween(orientationOf(find(id).model, 0).z, normal) / RAD;
 
         assertAlmostEquals(angle, degrees, 0.3, `${id} obliquity ${angle}`);
     }
 });
 
 Deno.test("a body's sidereal rotation period comes from its rotation model", () => {
-    const hours = (id: string) => (rotationPeriod(id, 0) ?? 0) / 3600;
+    const hours = (model: Model) => (rotationPeriod(model, 0) ?? 0) / 3600;
 
     assertAlmostEquals(rotationPeriod("earth", 0) ?? 0, 86164.1, 1);
     assertAlmostEquals(hours("moon") / 24, 27.32, 0.01);
     assertAlmostEquals(hours("jupiter"), 9.925, 0.01);
     assertAlmostEquals(hours("venus") / 24, 243.0, 0.1);
-    assertEquals(rotationPeriod("no-such-body", 0), null);
+    assertEquals(rotationPeriod(undefined, 0), null);
 });
 
 Deno.test("the spin axis is tilted from the orbit normal by the usual obliquity", () => {
@@ -134,7 +137,7 @@ Deno.test("the spin axis is tilted from the orbit normal by the usual obliquity"
             y: -Math.sin(i) * Math.cos(raan),
             z: Math.cos(i),
         };
-        const axis = spinAxis(id, 0);
+        const axis = spinAxis(find(id).model, 0);
         assert(axis, `no spin axis for ${id}`);
 
         const angle = angleBetween(axis, normal) / RAD;
@@ -142,7 +145,7 @@ Deno.test("the spin axis is tilted from the orbit normal by the usual obliquity"
         assertAlmostEquals(angle, degrees, 0.3, `${id} obliquity ${angle}`);
     }
 
-    assertEquals(spinAxis("no-such-body", 0), null);
+    assertEquals(spinAxis(undefined, 0), null);
 });
 
 // The Earth rotation angle counts from the CIO, which stays on the ICRF axes, unlike GMST.
@@ -232,7 +235,7 @@ Deno.test("a tidally locked moon keeps one face to its parent", () => {
             const elements = elementsAt(moon, t);
 
             const { r } = stateAt(elements, parent.mu + moon.mu, t);
-            const { x, y, z } = orientationOf(id, t);
+            const { x, y, z } = orientationOf(moon.model, t);
             const toParent = scale(r, -1 / length(r));
             const local = {
                 x: dot(toParent, x),
@@ -265,7 +268,7 @@ Deno.test("Ceres and Vesta have their pck pole at d = 0", () => {
     };
 
     for (const [id, { ra, dec }] of Object.entries(poles)) {
-        const { z } = orientationOf(id, 0);
+        const { z } = orientationOf(find(id).model, 0);
         const expected = rotateEquatorialToEcliptic({
             x: Math.cos(dec * RAD) * Math.cos(ra * RAD),
             y: Math.cos(dec * RAD) * Math.sin(ra * RAD),
@@ -278,5 +281,5 @@ Deno.test("Ceres and Vesta have their pck pole at d = 0", () => {
 
 Deno.test("a body with no rotation model has no orientation", () => {
     assertEquals(bodyOrientation("iss", 0), null);
-    assertEquals(bodyOrientation("toString", 0), null);
+    assertEquals(bodyOrientation(undefined, 0), null);
 });

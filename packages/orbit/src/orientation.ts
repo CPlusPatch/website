@@ -1,6 +1,7 @@
 import { DAY, deg } from "./constants.ts";
 import { ROTATION_MODELS } from "./data/rotation.ts";
 import { rotateEquatorialToEcliptic } from "./frames.ts";
+import type { Model } from "./models.ts";
 import type { Vec3 } from "./vec.ts";
 import { add, cross, normalize, scale } from "./vec.ts";
 
@@ -38,20 +39,23 @@ export const orientationFromPole = (
     };
 };
 
-/** The rotation model of body `id`, or undefined if it has none. */
-const modelOf = (id: string): RotationModel | undefined =>
-    Object.hasOwn(ROTATION_MODELS, id) ? ROTATION_MODELS[id] : undefined;
+/** The rotation model of `model`, or undefined if there's none. */
+const rotationOf = (model: Model | undefined): RotationModel | undefined =>
+    model === undefined ? undefined : ROTATION_MODELS[model];
 
-/** The orientation of body `id` at `t` seconds since J2000, or null if it has no rotation model. */
-export const bodyOrientation = (id: string, t: number): Orientation | null => {
-    const model = modelOf(id);
+/** The orientation of a body with `model` at `t` seconds since J2000, or null if it has no rotation model. */
+export const bodyOrientation = (
+    model: Model | undefined,
+    t: number,
+): Orientation | null => {
+    const rotation = rotationOf(model);
 
-    if (!model) {
+    if (!rotation) {
         return null;
     }
 
     // `t` is UTC-based but IAU models use TDB. The ~69 s offset turns Earth by ~0.3°, which is fine here.
-    const { ra, dec, w } = model(t / DAY);
+    const { ra, dec, w } = rotation(t / DAY);
 
     return orientationFromPole(deg(ra), deg(dec), deg(w));
 };
@@ -64,26 +68,29 @@ const spinRate = (model: RotationModel, t: number): number => {
     return model(d + 0.5).w - model(d - 0.5).w;
 };
 
-/** The sidereal rotation period of body `id` in seconds at `t`, or null if it has no model or doesn't spin. */
-export const rotationPeriod = (id: string, t: number): number | null => {
-    const model = modelOf(id);
-    if (!model) {
+/** The sidereal rotation period of a body with `model` in seconds at `t`, or null if it has no rotation model or doesn't spin. */
+export const rotationPeriod = (
+    model: Model | undefined,
+    t: number,
+): number | null => {
+    const rotation = rotationOf(model);
+    if (!rotation) {
         return null;
     }
 
-    const rate = Math.abs(spinRate(model, t));
+    const rate = Math.abs(spinRate(rotation, t));
 
     return rate === 0 ? null : (360 / rate) * DAY;
 };
 
-/** The unit spin axis (angular momentum direction) of body `id` in the ecliptic J2000 frame, or null. */
-export const spinAxis = (id: string, t: number): Vec3 | null => {
-    const model = modelOf(id);
-    const orientation = bodyOrientation(id, t);
-    if (!model || !orientation) {
+/** The unit spin axis (angular momentum direction) of a body with `model` in the ecliptic J2000 frame, or null. */
+export const spinAxis = (model: Model | undefined, t: number): Vec3 | null => {
+    const rotation = rotationOf(model);
+    const orientation = bodyOrientation(model, t);
+    if (!rotation || !orientation) {
         return null;
     }
 
     // A retrograde body's IAU north pole is on the orbit-normal side of its equator.
-    return spinRate(model, t) < 0 ? scale(orientation.z, -1) : orientation.z;
+    return spinRate(rotation, t) < 0 ? scale(orientation.z, -1) : orientation.z;
 };

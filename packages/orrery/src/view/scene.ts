@@ -1,4 +1,4 @@
-import { EARTH_RADIUS } from "@cpluspatch/orbit";
+import { type Body, EARTH_RADIUS } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import type { SatelliteGroup } from "../catalogue.ts";
@@ -173,10 +173,15 @@ const assemble = (
 
     const theme = createTheme(container);
     cleanup.push(theme.stop);
+    const colorOf = (body: Body) =>
+        theme.color(
+            body,
+            world.scenario.bodies.find((other) => other.id === body.parent),
+        );
     const orbits = createOrbits(
         scene,
         world.order,
-        theme.color,
+        colorOf,
         theme.background(),
         theme.pick(),
     );
@@ -219,7 +224,7 @@ const assemble = (
         scene,
         labels.domElement,
         world.order,
-        theme.color,
+        colorOf,
         {
             maps: !plain,
             images: assets.map,
@@ -233,10 +238,11 @@ const assemble = (
     );
     cleanup.push(bodies.dispose);
 
-    const earthMu = world.scenario.bodies.find(
-        (body) => body.id === "earth",
-    )?.mu;
-    const swarm = createSwarm(scene, theme, () => assets.swarm(earthMu ?? 0));
+    // The scene is rebuilt when a body with model "earth" comes or goes, so the host is fixed here.
+    const host = world.scenario.hasSatellites
+        ? world.scenario.bodies.find((body) => body.model === "earth")
+        : undefined;
+    const swarm = createSwarm(scene, theme, () => assets.swarm(host?.mu ?? 0));
     cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };
     // Passed as Earth's position, which gives a satellite's position relative to Earth.
@@ -398,17 +404,17 @@ const assemble = (
         pickSatellite(k);
 
         const facts = swarm.facts(k, world.clock.t);
-        if (!facts) return;
+        if (!facts || !host) return;
 
         focusingSatellite = true;
-        world.focus("earth");
+        world.focus(host.id);
         focusingSatellite = false;
 
         const fov = (camera.fov * Math.PI) / 180;
         const apogeeKm = facts.apogeeKm + EARTH_RADIUS / 1000;
         rig.focusPoint(
             () => {
-                const earth = world.states().get("earth")?.r ?? rig.origin();
+                const earth = world.states().get(host.id)?.r ?? rig.origin();
 
                 return swarm.positionOf(k, world.clock.t, earth) ?? earth;
             },
@@ -490,8 +496,12 @@ const assemble = (
         const states = world.states();
 
         // A satellite leaves when its group is turned off or the clock leaves the snapshot.
-        if (satelliteFocused !== null && !swarm.available(satelliteFocused)) {
-            world.focus("earth");
+        if (
+            host &&
+            satelliteFocused !== null &&
+            !swarm.available(satelliteFocused)
+        ) {
+            world.focus(host.id);
         }
         if (satelliteSelected !== null && !swarm.available(satelliteSelected)) {
             selectSatellite(null);
@@ -524,7 +534,7 @@ const assemble = (
             states,
             [...keepOut, ...rooms],
         );
-        const earth = states.get("earth")?.r;
+        const earth = host && states.get(host.id)?.r;
         if (earth) {
             const origin = rig.origin();
             earthOffset.x = (earth.x - origin.x) / 1000;
@@ -534,7 +544,7 @@ const assemble = (
         swarm.update(
             camera,
             world.clock.t,
-            earth && earthMu !== undefined ? earthOffset : null,
+            earth ? earthOffset : null,
             size.height,
         );
         grips.placeNote(bodies.placed());

@@ -3,10 +3,14 @@
  * The surface maps of the bodies, fetched when a body is first shown as a sphere.
  */
 
+import type { Model } from "@cpluspatch/orbit";
 import { ImageLoader, NoColorSpace, SRGBColorSpace, Texture } from "three";
 
+/** The name of a map: a body's model, or one of the extra maps some bodies add. */
+type MapName = Model | "earth-night" | "earth-clouds" | "saturn-ring";
+
 /** Vite only bundles an asset whose `new URL` is a literal, so each map is spelt out. */
-const MAPS: Record<string, string> = {
+const MAPS: Partial<Record<MapName, string>> = {
     sun: new URL("../assets/maps/sun.webp", import.meta.url).href,
     mercury: new URL("../assets/maps/mercury.webp", import.meta.url).href,
     venus: new URL("../assets/maps/venus.webp", import.meta.url).href,
@@ -58,15 +62,18 @@ const MAPS: Record<string, string> = {
         .href,
 };
 
+const isMap = (id: string): id is MapName => Object.hasOwn(MAPS, id);
+
 /** The image of map `id`, or `null` when there's no such map. */
 export const loadMapImage = (
     id: string,
     signal: AbortSignal,
 ): Promise<HTMLImageElement> | null => {
-    if (!Object.hasOwn(MAPS, id)) return null;
+    const url = isMap(id) ? MAPS[id] : undefined;
+    if (url === undefined) return null;
 
     // `ImageLoader` can't be aborted, so a late image is dropped here.
-    return new ImageLoader().loadAsync(MAPS[id]).then((image) => {
+    return new ImageLoader().loadAsync(url).then((image) => {
         signal.throwIfAborted();
 
         return image;
@@ -80,7 +87,7 @@ const LINEAR = new Set(["earth-clouds"]);
 export type Maps = {
     /** Fetches the map of a body once and hands it to `onLoad`. Ignores a body with no map. */
     load: (id: string, onLoad: (texture: Texture) => void) => void;
-    /** Frees the map of body `id`, so a body added later with the same id loads it again. */
+    /** Frees map `id`, so a body added later with the same model loads it again. */
     release: (id: string) => void;
     /** Frees every loaded map, and any that arrives later. */
     dispose: () => void;

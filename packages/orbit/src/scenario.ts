@@ -1,5 +1,7 @@
 import type { Elements } from "./kepler.ts";
 import { wrapAngle } from "./kepler.ts";
+import type { Model } from "./models.ts";
+import { isModel } from "./models.ts";
 import type { Precession } from "./precession.ts";
 import { MAX_TIME, MAX_YEAR, MIN_TIME, MIN_YEAR } from "./time.ts";
 import { length } from "./vec.ts";
@@ -38,6 +40,8 @@ type BodyBase = {
     color?: string;
     /** What a spacecraft does. Absent means other. Only spacecraft have one. */
     role?: SpacecraftRole;
+    /** The built-in look: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
+    model?: Model;
 };
 
 /** The body at the root of the tree, which orbits nothing. */
@@ -63,14 +67,24 @@ export type Body = RootBody | OrbitingBody;
 /** A set of bodies in one tree, with an optional start time. */
 export type Scenario = {
     /** Format version. */
-    version: 1;
+    version: 2;
     /** The display name. */
     name: string;
     /** The initial time in seconds since J2000. Absent means now. */
     time?: number;
+    /** Draws the Earth satellite catalogue around the body with model `"earth"`. Absent means no. */
+    hasSatellites?: true;
     /** The bodies, in any order. Exactly one has no parent. */
     bodies: Body[];
 };
+
+/** The bodies with `model` set to the id wherever the id is a known model and no model is given. */
+export const fillModels = (bodies: Body[]): Body[] =>
+    bodies.map((body) =>
+        isModel(body.id) && body.model === undefined
+            ? { ...body, model: body.id }
+            : body,
+    );
 
 /** The scenario, or every reason the input isn't one. */
 export type ScenarioResult =
@@ -283,6 +297,7 @@ const validatePrecession = (
 const validateBody = (
     index: number,
     input: unknown,
+    version: 1 | 2,
     ids: Set<string>,
     errors: string[],
 ): Body | null => {
@@ -304,6 +319,7 @@ const validateBody = (
         precession,
         color,
         role,
+        model,
     } = input;
     const validId = typeof id === "string" && SLUG.test(id) ? id : null;
     const label = validId ?? `bodies[${index}]`;
@@ -389,6 +405,15 @@ const validateBody = (
         }
     }
 
+    // Version 1 has no models. They're filled in from the ids afterwards.
+    const validModel = version === 2 && isModel(model) ? model : undefined;
+
+    if (version === 2 && model !== undefined && validModel === undefined) {
+        errors.push(
+            `${label}.model: must be one of the known models (got ${show(model)})`,
+        );
+    }
+
     let parsed: Elements | null = null;
 
     if (parent === null) {
@@ -437,6 +462,7 @@ const validateBody = (
         radius: validRadius,
         ...(validColor === undefined ? {} : { color: validColor }),
         ...(validRole === undefined ? {} : { role: validRole }),
+        ...(validModel === undefined ? {} : { model: validModel }),
     };
 
     if (validParent === null) {
@@ -524,10 +550,21 @@ export const validateScenario = (input: unknown): ScenarioResult => {
     }
 
     const errors: string[] = [];
-    const { version, name, time, bodies: inputs } = input;
+    const { version, name, time, hasSatellites, bodies: inputs } = input;
+    const validVersion = version === 1 || version === 2 ? version : null;
 
-    if (version !== 1) {
-        errors.push(`version: must be 1 (got ${show(version)})`);
+    if (validVersion === null) {
+        errors.push(`version: must be 1 or 2 (got ${show(version)})`);
+    }
+
+    if (
+        validVersion === 2 &&
+        hasSatellites !== undefined &&
+        hasSatellites !== true
+    ) {
+        errors.push(
+            `hasSatellites: must be true when set (got ${show(hasSatellites)})`,
+        );
     }
 
     let validName: string | null = null;
@@ -567,7 +604,13 @@ export const validateScenario = (input: unknown): ScenarioResult => {
         const ids = new Set<string>();
 
         for (const [index, body] of inputs.entries()) {
-            const valid = validateBody(index, body, ids, errors);
+            const valid = validateBody(
+                index,
+                body,
+                validVersion ?? 2,
+                ids,
+                errors,
+            );
 
             if (valid) {
                 bodies.push(valid);
@@ -581,13 +624,20 @@ export const validateScenario = (input: unknown): ScenarioResult => {
         return { ok: false, errors };
     }
 
+    // A version 1 file had no models, so Earth's id stood for them and for the satellites.
+    const satellites =
+        validVersion === 1
+            ? bodies.some((body) => body.id === "earth")
+            : hasSatellites === true;
+
     return {
         ok: true,
         scenario: {
-            version: 1,
+            version: 2,
             name: validName,
             ...(validTime === undefined ? {} : { time: validTime }),
-            bodies,
+            ...(satellites ? { hasSatellites: true } : {}),
+            bodies: validVersion === 1 ? fillModels(bodies) : bodies,
         },
     };
 };

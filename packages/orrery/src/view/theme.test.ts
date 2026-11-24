@@ -1,9 +1,13 @@
 /// <reference types="deno" />
-import { type Body, solarSystem } from "@cpluspatch/orbit";
+import { type Body, type Model, solarSystem } from "@cpluspatch/orbit";
 import { assert, assertEquals } from "@std/assert";
 import { BODY_COLORS, colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 
-const body = (id: string, kind: Body["kind"], color?: string): Body => ({
+const body = (
+    id: string,
+    kind: Body["kind"],
+    options: { color?: string; model?: Model } = {},
+): Body => ({
     id,
     name: id,
     kind,
@@ -11,22 +15,42 @@ const body = (id: string, kind: Body["kind"], color?: string): Body => ({
     mu: 1,
     radius: 1,
     elements: null,
-    ...(color === undefined ? {} : { color }),
+    ...options,
 });
 
-Deno.test("an explicit colour wins over the id and the kind", () => {
-    assertEquals(colorOf(body("earth", "planet", "gold")), "gold");
+Deno.test("an explicit colour wins over the model and the kind", () => {
+    const earth = body("earth", "planet", { color: "gold", model: "earth" });
+
+    assertEquals(colorOf(earth, undefined), "gold");
 });
 
-Deno.test("a known id wins over the kind", () => {
-    assertEquals(colorOf(body("earth", "planet")), BODY_COLORS.earth);
+Deno.test("a known model wins over the kind", () => {
+    const earth = body("earth", "planet", { model: "earth" });
+
+    assertEquals(colorOf(earth, undefined), BODY_COLORS.earth);
 });
 
-Deno.test("an unknown id takes its kind's colour", () => {
-    assertEquals(colorOf(body("comet", "dwarf")), "var(--orrery-muted)");
-    assertEquals(colorOf(body("comet", "star")), "var(--orrery-signal)");
-    assertEquals(colorOf(body("rock", "asteroid")), "var(--orrery-dim)");
-    assertEquals(colorOf(body("rock", "comet")), "var(--orrery-dim)");
+Deno.test("a body without a model takes its kind's colour, whatever its id", () => {
+    assertEquals(
+        colorOf(body("earth", "planet"), undefined),
+        "var(--orrery-text)",
+    );
+    assertEquals(
+        colorOf(body("comet", "dwarf"), undefined),
+        "var(--orrery-muted)",
+    );
+    assertEquals(
+        colorOf(body("comet", "star"), undefined),
+        "var(--orrery-signal)",
+    );
+    assertEquals(
+        colorOf(body("rock", "asteroid"), undefined),
+        "var(--orrery-dim)",
+    );
+    assertEquals(
+        colorOf(body("rock", "comet"), undefined),
+        "var(--orrery-dim)",
+    );
 });
 
 Deno.test("the Sun and every planet have a colour of their own", () => {
@@ -34,24 +58,38 @@ Deno.test("the Sun and every planet have a colour of their own", () => {
         ({ kind }) => kind === "star" || kind === "planet",
     );
 
-    for (const { id } of named) assert(id in BODY_COLORS, id);
+    for (const { id, model } of named) {
+        assert(model !== undefined && model in BODY_COLORS, id);
+    }
 });
 
-const satellite = (parent: string, color?: string): Body => ({
-    ...body("sat", "spacecraft", color),
-    parent,
+const satellite = (color?: string): Body => ({
+    ...body("sat", "spacecraft", color === undefined ? {} : { color }),
+    parent: "host",
     // 7,000 km and circular: low Earth orbit.
     elements: { a: 7e6, e: 0, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
 });
 
-Deno.test("an Earth spacecraft takes its orbit class's colour", () => {
-    assertEquals(colorOf(satellite("earth")), ORBIT_CLASS_COLORS.leo);
+Deno.test("a spacecraft around a body with model earth takes its orbit class's colour", () => {
+    const host = body("home", "planet", { model: "earth" });
+
+    assertEquals(colorOf(satellite(), host), ORBIT_CLASS_COLORS.leo);
+});
+
+Deno.test("a spacecraft around a body named earth without the model keeps its kind's colour", () => {
+    const host = body("earth", "planet");
+
+    assertEquals(colorOf(satellite(), host), "var(--orrery-text)");
 });
 
 Deno.test("a spacecraft around another body keeps its kind's colour", () => {
-    assertEquals(colorOf(satellite("mars")), "var(--orrery-text)");
+    const host = body("mars", "planet", { model: "mars" });
+
+    assertEquals(colorOf(satellite(), host), "var(--orrery-text)");
 });
 
-Deno.test("an Earth spacecraft's own colour wins over its orbit class", () => {
-    assertEquals(colorOf(satellite("earth", "gold")), "gold");
+Deno.test("a spacecraft's own colour wins over its orbit class", () => {
+    const host = body("home", "planet", { model: "earth" });
+
+    assertEquals(colorOf(satellite("gold"), host), "gold");
 });

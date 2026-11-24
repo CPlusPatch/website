@@ -174,8 +174,13 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         // `timeBar` is made below, and the menu only calls this once it's open.
         { now: () => world.clock.t, goLive: () => timeBar.goLive() },
     );
-    const hasEarth = () =>
-        world.scenario.bodies.some((body) => body.id === "earth");
+    // The body the satellites orbit, which is the first with model "earth".
+    const satelliteHost = () =>
+        world.scenario.hasSatellites
+            ? world.scenario.bodies.find((body) => body.model === "earth")?.id
+            : undefined;
+    // The host the current view was built with.
+    let builtHost: string | undefined;
 
     // Outlives the views, so a rebuilt one doesn't fetch the sky, maps and satellites again.
     const assets = createAssets();
@@ -188,6 +193,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         reveal: () => void;
         destroy: () => void;
     } | null => {
+        builtHost = satelliteHost();
         const view = createView(
             container,
             world,
@@ -392,7 +398,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         keys.toggle,
         notices.element,
     );
-    satellites.setAvailable(hasEarth());
+    satellites.setAvailable(satelliteHost() !== undefined);
     root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
     const measure = new ResizeObserver(() => {
@@ -476,7 +482,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         parts?.destroy();
         parts = null;
         parts = build();
-        satellites.setAvailable(hasEarth());
+        satellites.setAvailable(satelliteHost() !== undefined);
         // A view built after the reveal has no loading state, so a sky that comes later fades in.
         if (revealed) parts?.reveal();
         else if (parts) revealWhenReady(parts);
@@ -498,13 +504,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         },
         rebuild,
         update: (change) => {
-            // The satellite swarm, Earth's mu and the satellite menu are set once per build.
+            // The satellite swarm, its host's mu and the satellite menu are set once per build.
             const view = currentView;
-            if (
-                !view ||
-                change.added.includes("earth") ||
-                change.removed.includes("earth")
-            ) {
+            if (!view || satelliteHost() !== builtHost) {
                 rebuild();
             } else {
                 view.patch(change);

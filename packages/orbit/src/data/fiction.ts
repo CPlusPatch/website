@@ -1,8 +1,11 @@
 import { AU, DAY, deg, km, OBLIQUITY_J2000 } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
 import { meanMotion } from "../kepler.ts";
+import type { Model } from "../models.ts";
+import { isModel } from "../models.ts";
 import type { RotationModel } from "../orientation.ts";
 import type { Body, Scenario } from "../scenario.ts";
+import { fillModels } from "../scenario.ts";
 
 // JPL astrodynamic parameters: https://ssd.jpl.nasa.gov/astro_par.html
 const GM_SUN = 1.32712440041e20;
@@ -62,7 +65,7 @@ const MILLER_PERIOD = 1.7 * 3600;
 
 /** Interstellar's Gargantua. Mann's and Edmunds' orbits aren't given in the film or book, so they're made up. */
 export const gargantua: Scenario = {
-    version: 1,
+    version: 2,
     name: "Gargantua (Interstellar)",
     bodies: [
         {
@@ -118,7 +121,7 @@ export const gargantua: Scenario = {
  * Feng et al. 2017 (AJ 154, 135); the masses are minimum masses.
  */
 export const tauCeti: Scenario = {
-    version: 1,
+    version: 2,
     name: "Tau Ceti (Project Hail Mary)",
     bodies: [
         {
@@ -172,7 +175,7 @@ export const tauCeti: Scenario = {
  * (Ma et al. 2018, MNRAS 480, 2411). Star data is from Wikipedia's 40 Eridani page.
  */
 export const eridani: Scenario = {
-    version: 1,
+    version: 2,
     name: "40 Eridani (Project Hail Mary)",
     bodies: [
         {
@@ -258,9 +261,9 @@ const ksp = (
  * calls Dres and Eeloo planets, so they're planets here too.
  */
 export const kerbol: Scenario = {
-    version: 1,
+    version: 2,
     name: "Kerbol (Kerbal Space Program)",
-    bodies: [
+    bodies: fillModels([
         {
             id: "kerbol",
             name: "Kerbol",
@@ -431,7 +434,7 @@ export const kerbol: Scenario = {
             kspOrbit(90_118_820_000, 0.26, 6.15, 50, 260, 3.14),
             "#e8e8e0",
         ),
-    ],
+    ]),
 };
 
 // Sidereal rotation periods in seconds, from the KSP wiki. The tidally locked bodies are in
@@ -463,16 +466,22 @@ const KERBOL_LOCKED: Record<string, string> = {
 /** Degrees per day for a turn every `seconds`. */
 const turnRate = (seconds: number): number => (360 * DAY) / seconds;
 
-const kerbolRotation = (): Record<string, RotationModel> => {
+const modelOf = (id: string): Model => {
+    if (!isModel(id)) throw new Error(`"${id}" isn't a model.`);
+
+    return id;
+};
+
+const kerbolRotation = (): Partial<Record<Model, RotationModel>> => {
     // KSP bodies have no axial tilt, so every pole is the ecliptic pole, in ICRF RA and Dec.
     const ra = 270;
     const dec = 90 - (OBLIQUITY_J2000 * 180) / Math.PI;
     const byId = new Map(kerbol.bodies.map((body) => [body.id, body]));
-    const models: Record<string, RotationModel> = {};
+    const models: Partial<Record<Model, RotationModel>> = {};
 
     for (const [id, seconds] of Object.entries(KERBOL_DAYS)) {
         const rate = turnRate(seconds);
-        models[id] = (d) => ({ ra, dec, w: rate * d });
+        models[modelOf(id)] = (d) => ({ ra, dec, w: rate * d });
     }
 
     // A locked body turns at its moon's mean motion, with lon 0 on the mean longitude line. The
@@ -490,11 +499,11 @@ const kerbolRotation = (): Record<string, RotationModel> => {
         // The moon faces back along its radius; its parent faces out along it.
         const w0 =
             ((raan + argp + m0) * 180) / Math.PI + (moonId === id ? 180 : 0);
-        models[id] = (d) => ({ ra, dec, w: w0 + rate * d });
+        models[modelOf(id)] = (d) => ({ ra, dec, w: w0 + rate * d });
     }
 
     return models;
 };
 
-/** Rotation models for the Kerbol bodies, keyed by body id like `ROTATION_MODELS`. */
+/** Rotation models for the Kerbol bodies, keyed by model like `ROTATION_MODELS`. */
 export const KERBOL_ROTATION = kerbolRotation();

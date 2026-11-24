@@ -31,7 +31,8 @@ Deno.test("a satellite's radius is its model's bounding radius, within 10%", () 
 });
 
 Deno.test("a spacecraft without a model of its own is scaled to its radius", () => {
-    const body = { ...satellites[0], id: "user-sat", radius: 25 };
+    const { model: _model, ...first } = satellites[0];
+    const body = { ...first, id: "user-sat", radius: 25 };
     const model = createSpacecraftModel(body);
     const { radius } = new Box3()
         .setFromObject(model)

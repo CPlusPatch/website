@@ -6,6 +6,7 @@
 import {
     type Body,
     type BodyKind,
+    type Model,
     type OrbitClass,
     orbitClass,
 } from "@cpluspatch/orbit";
@@ -13,8 +14,8 @@ import { Color, SRGBColorSpace } from "three";
 
 /** The colours of a scene, which come from the `--orrery-*` tokens. */
 export type Theme = {
-    /** The colour of a body. */
-    color: (body: Body) => Color;
+    /** The colour of a body, given the body it orbits. */
+    color: (body: Body, parent: Body | undefined) => Color;
     /** The colour of an Earth satellite of an orbit class. */
     classColor: (orbitClass: OrbitClass) => Color;
     /** The colour of the page behind the scene. */
@@ -25,8 +26,8 @@ export type Theme = {
     stop: () => void;
 };
 
-/** CSS colours by body id, for the bodies of the solar system scenario. */
-export const BODY_COLORS: Record<string, string> = {
+/** CSS colours by model, for the bodies of the solar system scenario. */
+export const BODY_COLORS: Partial<Record<Model, string>> = {
     sun: "#ffd27a",
     mercury: "#b9b2a6",
     venus: "#e9cf98",
@@ -72,19 +73,22 @@ export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     heo: "var(--orrery-orbit-heo)",
 };
 
-/** The CSS colour of a body: its own, its orbit class's, its id's, then its kind's. */
-export const colorOf = (body: Body): string => {
+/** The CSS colour of a body: its own, its orbit class's, its model's, then its kind's. */
+export const colorOf = (body: Body, parent: Body | undefined): string => {
     if (body.color !== undefined) return body.color;
 
     if (
         body.kind === "spacecraft" &&
-        body.parent === "earth" &&
+        parent?.model === "earth" &&
         body.elements
     ) {
         return ORBIT_CLASS_COLORS[orbitClass(body.elements)];
     }
 
-    return BODY_COLORS[body.id] ?? KIND_COLORS[body.kind];
+    return (
+        (body.model === undefined ? undefined : BODY_COLORS[body.model]) ??
+        KIND_COLORS[body.kind]
+    );
 };
 
 /** Colours for `container`. */
@@ -135,7 +139,8 @@ export const createTheme = (container: HTMLElement): Theme => {
     return {
         background: () => resolve("var(--orrery-ground)"),
         pick: () => resolve("var(--orrery-pick)"),
-        color: (body) => resolve(colorOf(body), KIND_COLORS[body.kind]),
+        color: (body, parent) =>
+            resolve(colorOf(body, parent), KIND_COLORS[body.kind]),
         classColor: (orbitClass) => resolve(ORBIT_CLASS_COLORS[orbitClass]),
         stop: () => probe.remove(),
     };

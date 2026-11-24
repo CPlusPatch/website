@@ -1,3 +1,4 @@
+import type { Body } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -222,16 +223,16 @@ export const createInspector = (
             ?.focus();
     };
 
-    const around = (id: string, name: string): HTMLElement | null => {
+    const around = (centre: Body): HTMLElement | null => {
         const children = world.scenario.bodies.filter(
-            (candidate) => candidate.parent === id,
+            (candidate) => candidate.parent === centre.id,
         );
         if (children.length === 0) return null;
 
         return h(
             "section",
             { class: "orrery__orbit-around" },
-            h("h3", {}, `Around ${name}`),
+            h("h3", {}, `Around ${centre.name}`),
             h(
                 "ul",
                 {},
@@ -242,7 +243,7 @@ export const createInspector = (
                     const icon = h("span", {
                         class: "orrery__orbit-chip-marker",
                     });
-                    showBodyMarker(icon, child);
+                    showBodyMarker(icon, child, centre);
                     chip.prepend(icon);
 
                     return h("li", {}, chip);
@@ -308,7 +309,7 @@ export const createInspector = (
         }
         if (!form) mode = "card";
 
-        showBodyMarker(marker, body);
+        showBodyMarker(marker, body, parent);
         marker.hidden = mode !== "card";
         setHead(mode !== "card");
         grip.hidden = mode !== "card";
@@ -347,7 +348,7 @@ export const createInspector = (
         );
         if (stats) content.append(stats);
 
-        const chips = parent ? around(body.id, body.name) : null;
+        const chips = parent ? around(body) : null;
         if (chips) content.append(chips);
         content.append(
             createActions(

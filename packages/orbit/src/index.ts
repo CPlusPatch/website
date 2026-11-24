@@ -39,6 +39,8 @@ export {
     trueAnomalyAt,
     wrapAngle,
 } from "./kepler.ts";
+export type { Model } from "./models.ts";
+export { isModel, MODELS } from "./models.ts";
 export type { OrbitClass } from "./orbit-class.ts";
 export { orbitClass } from "./orbit-class.ts";
 export type { Orientation, RotationModel } from "./orientation.ts";
@@ -65,6 +67,7 @@ export type {
     SpacecraftRole,
 } from "./scenario.ts";
 export {
+    fillModels,
     MAX_BODIES,
     MAX_NAME,
     sortByDepth,

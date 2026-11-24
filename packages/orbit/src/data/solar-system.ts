@@ -2,6 +2,7 @@ import { AU, DAY, deg, G, km } from "../constants.ts";
 import type { Elements } from "../kepler.ts";
 import { wrapAngle } from "../kepler.ts";
 import type { Body, Scenario } from "../scenario.ts";
+import { fillModels } from "../scenario.ts";
 import { moonBodies } from "./moons.ts";
 import { probes } from "./probes.ts";
 import { satellites } from "./satellites.ts";
@@ -184,9 +185,10 @@ const SUN_MU = 1.32712440041e20;
  * the Moon, Jupiter and the Sun.
  */
 export const solarSystem: Scenario = {
-    version: 1,
+    version: 2,
     name: "Solar System",
-    bodies: [
+    hasSatellites: true,
+    bodies: fillModels([
         {
             id: "sun",
             name: "Sun",
@@ -224,5 +226,5 @@ export const solarSystem: Scenario = {
             sun: SUN_MU,
         }),
         ...moonBodies(PARENT_MU),
-    ],
+    ]),
 };
