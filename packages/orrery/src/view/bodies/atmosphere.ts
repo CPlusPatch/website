@@ -28,6 +28,9 @@ const RIM_POWER = 5;
 /** A tuning knob: the extra glow when the Sun is behind the body. */
 const FORWARD = 3;
 
+/** A tuning knob: the most the backlight adds, as a share of the way from the glow to 1. */
+const BACKLIT_MAX = 0.4;
+
 /** After Earth's clouds, which draw at 0, and before Saturn's rings, at 1. */
 const RENDER_ORDER = 0.5;
 
@@ -54,6 +57,7 @@ const float STRENGTH = ${STRENGTH.toFixed(2)};
 const float GLOW_FALLOFF = ${GLOW_FALLOFF.toFixed(2)};
 const float RIM_POWER = ${RIM_POWER.toFixed(2)};
 const float FORWARD = ${FORWARD.toFixed(2)};
+const float BACKLIT_MAX = ${BACKLIT_MAX.toFixed(2)};
 const vec3 WARM = vec3(1.0, 0.72, 0.45);
 
 uniform vec3 uCamera;
@@ -113,8 +117,12 @@ void main() {
     // Twilight colour only near the rim, so the terminator isn't a stripe across the disc.
     colour = mix(uDay, colour, rim);
     // Outside \`lit\`: seen from behind, the limb's air is lit from the far side.
-    float backlit = FORWARD * pow(max(dot(dir, uSun), 0.0), 6.0) * glow * rim;
-    gl_FragColor = vec4((colour * glow * lit + uTwilight * backlit) * STRENGTH, 1.0);
+    float backlit = FORWARD * pow(max(dot(dir, uSun), 0.0), 6.0) * glow * rim * rim;
+    float base = glow * lit;
+    // One colour, brightened up to BACKLIT_MAX. Adding the twilight colour on top summed Mars's
+    // orange and blue to white, and lit the whole night-side ring orange.
+    float level = base + (1.0 - base) * BACKLIT_MAX * (1.0 - exp(-backlit));
+    gl_FragColor = vec4(colour * level * STRENGTH, 1.0);
 
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
