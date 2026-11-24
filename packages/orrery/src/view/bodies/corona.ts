@@ -9,9 +9,9 @@ import {
 
 const TEXTURE_PX = 128;
 const STOPS = 16;
-// The disc fills a third of the sprite, and this leaves 0.44 of the glow at its limb.
-const FALLOFF = 2;
-const OPACITY = 0.3;
+// The disc fills a third of the sprite, and this leaves 0.36 of the glow at its limb.
+const FALLOFF = 2.5;
+const OPACITY = 0.45;
 
 /** A white glow that is brightest at the centre and fades to nothing at the edge. */
 export const coronaTexture = (): CanvasTexture => {
