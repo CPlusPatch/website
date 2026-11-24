@@ -226,14 +226,12 @@ const validatePrecession = (
         errors.push(`${path}.pole: must be an object (got ${show(pole)})`);
     } else {
         const { x, y, z } = pole;
-        const ok = [
-            finite(`${path}.pole.x`, x, errors),
-            finite(`${path}.pole.y`, y, errors),
-            finite(`${path}.pole.z`, z, errors),
-        ];
+        const px = finite(`${path}.pole.x`, x, errors) ? x : null;
+        const py = finite(`${path}.pole.y`, y, errors) ? y : null;
+        const pz = finite(`${path}.pole.z`, z, errors) ? z : null;
 
-        if (ok.every(Boolean)) {
-            const v = { x: x as number, y: y as number, z: z as number };
+        if (px !== null && py !== null && pz !== null) {
+            const v = { x: px, y: py, z: pz };
             const len = length(v);
 
             if (Math.abs(len - 1) > 1e-6) {
@@ -250,18 +248,21 @@ const validatePrecession = (
         }
     }
 
-    finite(`${path}.nodeRate`, nodeRate, errors);
-    finite(`${path}.argpRate`, argpRate, errors);
+    const node = finite(`${path}.nodeRate`, nodeRate, errors) ? nodeRate : null;
+    const apsis = finite(`${path}.argpRate`, argpRate, errors)
+        ? argpRate
+        : null;
 
-    if (errors.length > before || unit === null) {
+    if (
+        errors.length > before ||
+        unit === null ||
+        node === null ||
+        apsis === null
+    ) {
         return null;
     }
 
-    return {
-        pole: unit,
-        nodeRate: nodeRate as number,
-        argpRate: argpRate as number,
-    };
+    return { pole: unit, nodeRate: node, argpRate: apsis };
 };
 
 /** Checks a body's own fields. Links between bodies are checked later. */
@@ -290,16 +291,18 @@ const validateBody = (
         color,
         role,
     } = input;
-    const validId = typeof id === "string" && SLUG.test(id);
-    const label = validId ? id : `bodies[${index}]`;
+    const validId = typeof id === "string" && SLUG.test(id) ? id : null;
+    const label = validId ?? `bodies[${index}]`;
 
-    if (!validId) {
+    if (validId === null) {
         errors.push(`${label}.id: must match ${SLUG} (got ${show(id)})`);
-    } else if (ids.has(id)) {
+    } else if (ids.has(validId)) {
         errors.push(`${label}.id: must be unique (got ${show(id)})`);
     } else {
-        ids.add(id);
+        ids.add(validId);
     }
+
+    let validName: string | null = null;
 
     if (typeof name !== "string") {
         errors.push(`${label}.name: must be a string (got ${show(name)})`);
@@ -307,27 +310,42 @@ const validateBody = (
         errors.push(
             `${label}.name: must be at most ${MAX_NAME} characters (got ${name.length})`,
         );
+    } else {
+        validName = name;
     }
 
-    if (!KINDS.includes(kind as BodyKind)) {
+    const validKind = KINDS.find((k) => k === kind);
+
+    if (validKind === undefined) {
         errors.push(
             `${label}.kind: must be one of ${KINDS.join(", ")} (got ${show(kind)})`,
         );
     }
 
-    if (parent !== null && typeof parent !== "string") {
+    const validParent =
+        parent === null || typeof parent === "string" ? parent : undefined;
+
+    if (validParent === undefined) {
         errors.push(
             `${label}.parent: must be a string or null (got ${show(parent)})`,
         );
     }
 
-    if (finite(`${label}.mu`, mu, errors)) {
-        inRange(`${label}.mu`, mu, mu >= 0, ">= 0", errors);
+    const validMu = finite(`${label}.mu`, mu, errors) ? mu : null;
+
+    if (validMu !== null) {
+        inRange(`${label}.mu`, validMu, validMu >= 0, ">= 0", errors);
     }
 
-    if (finite(`${label}.radius`, radius, errors)) {
-        inRange(`${label}.radius`, radius, radius > 0, "> 0", errors);
+    const validRadius = finite(`${label}.radius`, radius, errors)
+        ? radius
+        : null;
+
+    if (validRadius !== null) {
+        inRange(`${label}.radius`, validRadius, validRadius > 0, "> 0", errors);
     }
+
+    let validColor: string | undefined;
 
     if (color !== undefined) {
         if (typeof color !== "string") {
@@ -338,11 +356,15 @@ const validateBody = (
             errors.push(
                 `${label}.color: must be a #rgb or #rrggbb colour (got ${show(color)})`,
             );
+        } else {
+            validColor = color;
         }
     }
 
+    const validRole = ROLES.find((r) => r === role);
+
     if (role !== undefined) {
-        if (!ROLES.includes(role as SpacecraftRole)) {
+        if (validRole === undefined) {
             errors.push(
                 `${label}.role: must be one of ${ROLES.join(", ")} (got ${show(role)})`,
             );
@@ -381,21 +403,29 @@ const validateBody = (
         }
     }
 
-    if (errors.length > before) {
+    if (
+        errors.length > before ||
+        validId === null ||
+        validName === null ||
+        validKind === undefined ||
+        validParent === undefined ||
+        validMu === null ||
+        validRadius === null
+    ) {
         return null;
     }
 
     return {
-        id: id as string,
-        name: name as string,
-        kind: kind as BodyKind,
-        parent: parent as string | null,
-        mu: mu as number,
-        radius: radius as number,
+        id: validId,
+        name: validName,
+        kind: validKind,
+        parent: validParent,
+        mu: validMu,
+        radius: validRadius,
         elements: parsed,
         ...(parsedPrecession ? { precession: parsedPrecession } : {}),
-        ...(color === undefined ? {} : { color: color as string }),
-        ...(role === undefined ? {} : { role: role as SpacecraftRole }),
+        ...(validColor === undefined ? {} : { color: validColor }),
+        ...(validRole === undefined ? {} : { role: validRole }),
     };
 };
 
@@ -473,15 +503,22 @@ export const validateScenario = (input: unknown): ScenarioResult => {
         errors.push(`version: must be 1 (got ${show(version)})`);
     }
 
+    let validName: string | null = null;
+
     if (typeof name !== "string") {
         errors.push(`name: must be a string (got ${show(name)})`);
     } else if (name.length > MAX_NAME) {
         errors.push(
             `name: must be at most ${MAX_NAME} characters (got ${name.length})`,
         );
+    } else {
+        validName = name;
     }
 
+    let validTime: number | undefined;
+
     if (time !== undefined && finite("time", time, errors)) {
+        validTime = time;
         inRange(
             "time",
             time,
@@ -513,7 +550,7 @@ export const validateScenario = (input: unknown): ScenarioResult => {
         validateTree(inputs, errors);
     }
 
-    if (errors.length > 0) {
+    if (errors.length > 0 || validName === null) {
         return { ok: false, errors };
     }
 
@@ -521,8 +558,8 @@ export const validateScenario = (input: unknown): ScenarioResult => {
         ok: true,
         scenario: {
             version: 1,
-            name: name as string,
-            ...(time === undefined ? {} : { time: time as number }),
+            name: validName,
+            ...(validTime === undefined ? {} : { time: validTime }),
             bodies,
         },
     };
