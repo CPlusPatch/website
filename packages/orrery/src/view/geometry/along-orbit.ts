@@ -104,3 +104,17 @@ export const trailBack = (
     direction > 0
         ? (index - sample + count) % count
         : (sample - index + count) % count;
+
+/**
+ * How many of `count` samples behind the body an anomaly `offset` radians from it is, unrounded.
+ * Just ahead of the body is the trail's tail, so it stops at `count - 1` instead of wrapping to 0.
+ */
+export const trailBackAt = (
+    offset: number,
+    count: number,
+    direction: number,
+): number =>
+    Math.min(
+        (wrapAngle(direction > 0 ? -offset : offset) / (2 * Math.PI)) * count,
+        count - 1,
+    );

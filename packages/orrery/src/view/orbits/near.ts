@@ -3,9 +3,8 @@ import {
     eccentricAnomalyOf,
     elementsAt,
     orbitPointsAt,
-    wrapAngle,
 } from "@cpluspatch/orbit";
-import { nearAnomalies, trailBack } from "../geometry/along-orbit.ts";
+import { nearAnomalies, trailBackAt } from "../geometry/along-orbit.ts";
 import { SAMPLES, setVertex } from "./line-geometry.ts";
 import type { Orbit, Paint } from "./types.ts";
 
@@ -43,18 +42,19 @@ export const rebuildNear = (
         paintRamp(orbit, next.picked, dim);
     }
 
-    const index = (anomaly: number): number =>
-        Math.round((wrapAngle(anomaly) / (2 * Math.PI)) * SAMPLES) % SAMPLES;
-    const bodyIndex = index(center);
     for (let vertex = 0; vertex <= SAMPLES; vertex++) {
-        const back =
-            3 *
-            trailBack(
-                index(anomalies[vertex] ?? 0),
-                bodyIndex,
-                SAMPLES,
-                next.direction,
-            );
+        // Rounding to the trail's steps would paint every point near the body as its head.
+        const back = trailBackAt(
+            (anomalies[vertex] ?? 0) - center,
+            SAMPLES,
+            next.direction,
+        );
+        const from = Math.floor(back);
+        const to = Math.min(from + 1, SAMPLES - 1);
+        const k = back - from;
+        const mix = (channel: number): number =>
+            (orbit.ramp[3 * from + channel] ?? 0) * (1 - k) +
+            (orbit.ramp[3 * to + channel] ?? 0) * k;
         setVertex(
             orbit.segments.array,
             vertex,
@@ -62,13 +62,16 @@ export const rebuildNear = (
             (parentR.y - origin.y + (points[3 * vertex + 1] ?? 0)) / 1000,
             (parentR.z - origin.z + (points[3 * vertex + 2] ?? 0)) / 1000,
         );
-        setVertex(
-            orbit.colors.array,
-            vertex,
-            orbit.ramp[back] ?? 0,
-            orbit.ramp[back + 1] ?? 0,
-            orbit.ramp[back + 2] ?? 0,
-        );
+        setVertex(orbit.colors.array, vertex, mix(0), mix(1), mix(2));
+    }
+    // The segment ahead of the body is long when zoomed in, and blending head into tail smears it.
+    const half = SAMPLES / 2;
+    const ahead = next.direction > 0 ? 6 * half : 6 * (half - 1);
+    const [head, tail] =
+        next.direction > 0 ? [ahead, ahead + 3] : [ahead + 3, ahead];
+    for (let channel = 0; channel < 3; channel++) {
+        orbit.colors.array[head + channel] =
+            orbit.colors.array[tail + channel] ?? 0;
     }
     orbit.segments.needsUpdate = true;
     orbit.colors.needsUpdate = true;

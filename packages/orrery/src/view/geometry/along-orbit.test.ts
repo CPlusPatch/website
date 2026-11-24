@@ -6,6 +6,7 @@ import {
     nearestPoint,
     trailAlpha,
     trailBack,
+    trailBackAt,
 } from "./along-orbit.ts";
 
 Deno.test("the nearest point is the one closest to the position, among the first count", () => {
@@ -61,4 +62,15 @@ Deno.test("near anomalies run once round the orbit, growing from the body", () =
     for (let k = 1; k <= count; k++) {
         assert((anomalies[k] ?? 0) > (anomalies[k - 1] ?? 0));
     }
+});
+
+Deno.test("points near the body sit at the trail's head behind it and its tail ahead", () => {
+    const step = (2 * Math.PI) / 100;
+
+    assertAlmostEquals(trailBackAt(-step / 4, 100, 1), 0.25);
+    assertAlmostEquals(trailBackAt(-3 * step, 100, 1), 3);
+    assertAlmostEquals(trailBackAt(step / 4, 100, 1), 99);
+    assertAlmostEquals(trailBackAt(2 * step, 100, 1), 98);
+    assertAlmostEquals(trailBackAt(step / 4, 100, -1), 0.25);
+    assertAlmostEquals(trailBackAt(-step / 4, 100, -1), 99);
 });
