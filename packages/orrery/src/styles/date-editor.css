@@ -64,7 +64,7 @@
         caret-color: var(--orrery-go);
 
         &[data-part="y"] {
-            inline-size: calc(4ch + 6px);
+            inline-size: calc(5ch + 6px);
         }
 
         &:focus {

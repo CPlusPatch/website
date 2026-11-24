@@ -1,6 +1,6 @@
 import { j2000sToUnixMs } from "@cpluspatch/orbit";
 import { type Clock, RATES } from "./clock.ts";
-import type { PartName } from "./date-parts.ts";
+import { formatYear, type PartName } from "./date-parts.ts";
 
 const RATE_WORDS = ["sec", "min", "hour", "day", "week", "month", "year"];
 
@@ -108,7 +108,7 @@ const textParts = (t: number): Record<PartName, string> | null => {
     const year = date.getUTCFullYear();
 
     return {
-        y: (year < 0 ? "-" : "") + pad(Math.abs(year), 4),
+        y: formatYear(year),
         mo: pad(date.getUTCMonth() + 1, 2),
         d: pad(date.getUTCDate(), 2),
         h: pad(date.getUTCHours(), 2),

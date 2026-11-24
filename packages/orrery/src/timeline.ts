@@ -6,14 +6,23 @@ import {
     MIN_YEAR,
     MONTHS,
     toParts,
+    formatYear as year,
 } from "./date-parts.ts";
 import type { Readouts } from "./readouts.ts";
 
 /** What a labelled tick shows: a time of day, a day, a month or a year. */
 export type TickKind = "time" | "day" | "month" | "year";
 
-const MIN_T = fromParts({ y: MIN_YEAR, mo: 1, d: 1, h: 0, mi: 0, s: 0 });
-const MAX_T = fromParts({ y: MAX_YEAR, mo: 12, d: 31, h: 23, mi: 59, s: 59 });
+/** The first and last time the date editor accepts, in seconds since J2000. */
+export const MIN_T = fromParts({ y: MIN_YEAR, mo: 1, d: 1, h: 0, mi: 0, s: 0 });
+export const MAX_T = fromParts({
+    y: MAX_YEAR,
+    mo: 12,
+    d: 31,
+    h: 23,
+    mi: 59,
+    s: 59,
+});
 
 const UNIX_AT_J2000 = j2000sToUnixMs(0) / 1000;
 
@@ -142,9 +151,6 @@ export const ticks = (
 };
 
 const pad = (n: number, width = 2): string => String(n).padStart(width, "0");
-
-// Not toISOString, which writes years past 9999 as +010000.
-const year = (y: number): string => (y < 0 ? `-${pad(-y, 4)}` : pad(y, 4));
 
 const shortMonth = (mo: number): string => {
     const name = MONTHS[mo - 1];

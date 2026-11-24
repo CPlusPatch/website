@@ -47,6 +47,10 @@ const daysIn = (y: number, mo: number): number =>
     new Date(new Date(0).setUTCFullYear(y, mo, 0)).getUTCDate();
 
 /** The parts of a time in seconds since J2000, rounded to the second. */
+/** A year in astronomical numbering as a sign and 4 digits, like `-0043`. */
+export const formatYear = (y: number): string =>
+    (y < 0 ? "-" : "") + String(Math.abs(y)).padStart(4, "0");
+
 export const toParts = (t: number): DateParts => {
     const date = new Date(Math.round(j2000sToUnixMs(t) / 1000) * 1000);
 
@@ -76,7 +80,10 @@ export const partsProblem = (
     const { y, mo, d, h, mi, s } = parts;
 
     if (!(y >= MIN_YEAR && y <= MAX_YEAR)) {
-        return { part: "y", message: "Year must be 1 to 9999." };
+        return {
+            part: "y",
+            message: `Year must be ${MIN_YEAR} to ${MAX_YEAR}.`,
+        };
     }
     if (!(mo >= 1 && mo <= 12)) {
         return { part: "mo", message: "Month must be 1 to 12." };
@@ -102,7 +109,7 @@ export const partsProblem = (
     return null;
 };
 
-/** The parts after moving `part` by `by` steps, or `null` if that leaves years 1 to 9999 or `parts` is invalid. */
+/** The parts after moving `part` by `by` steps, or `null` if that leaves years -9999 to 9999 or `parts` is invalid. */
 export const stepPart = (
     parts: DateParts,
     part: PartName,
@@ -126,9 +133,9 @@ export const stepPart = (
 };
 
 const PASTED =
-    /^(\d{1,4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?(?:\.\d+)?Z?$/;
+    /^(-?\d{1,4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?(?:\.\d+)?Z?$/;
 
-/** The parts of pasted `YYYY-MM-DD`, with an optional `THH:MM` or ` HH:MM:SS`, or `null`. */
+/** The parts of pasted `YYYY-MM-DD` (a year before 0 is `-YYYY`), with an optional `THH:MM` or ` HH:MM:SS`, or `null`. */
 export const parsePasted = (text: string): DateParts | null => {
     const match = PASTED.exec(text.trim());
     if (!match) return null;

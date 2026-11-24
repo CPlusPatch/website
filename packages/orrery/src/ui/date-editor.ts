@@ -3,6 +3,7 @@ import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import {
     type DateParts,
+    formatYear,
     fromParts,
     PART_NAMES,
     type PartName,
@@ -22,7 +23,7 @@ export type DateEditor = {
     destroy: () => void;
 };
 
-/** What each part is called, and how many digits it takes. */
+/** What each part is called, and how many digits it takes. The year may also have a leading minus. */
 const SEGMENTS: Record<PartName, { label: string; digits: number }> = {
     y: { label: "Year", digits: 4 },
     mo: { label: "Month", digits: 2 },
@@ -34,6 +35,17 @@ const SEGMENTS: Record<PartName, { label: string; digits: number }> = {
 
 /** Keys that move on to the next part, as they do when typing a date. */
 const NEXT_KEYS = ["-", ":", " ", "/"];
+
+// A minus at the start of the year is a sign, not a separator.
+const isSign = (
+    key: string,
+    name: PartName,
+    input: HTMLInputElement,
+): boolean =>
+    key === "-" &&
+    name === "y" &&
+    input.selectionStart === 0 &&
+    (input.selectionEnd !== 0 || !input.value.startsWith("-"));
 
 const J2000_TEXT = "2000-01-01 12:00";
 
@@ -51,8 +63,9 @@ export const createDateEditor = (
             class: "orrery__date-part",
             "data-part": name,
             "aria-label": label,
-            inputmode: "numeric",
-            maxlength: String(digits),
+            // The numeric keypad on iOS has no minus.
+            inputmode: name === "y" ? "text" : "numeric",
+            maxlength: String(name === "y" ? digits + 1 : digits),
             autocomplete: "off",
         });
     }
@@ -179,12 +192,12 @@ export const createDateEditor = (
     const fill = (parts: DateParts) => {
         for (const name of PART_NAMES) {
             const input = segments[name];
-            const text = String(parts[name]);
+            const value = parts[name];
 
             input.value =
-                parts[name] >= 0
-                    ? text.padStart(SEGMENTS[name].digits, "0")
-                    : text;
+                name === "y"
+                    ? formatYear(value)
+                    : String(value).padStart(SEGMENTS[name].digits, "0");
             input.removeAttribute("aria-invalid");
         }
         error.hidden = true;
@@ -192,7 +205,7 @@ export const createDateEditor = (
 
     const read = (): DateParts => {
         const number = (name: PartName) =>
-            /^\d+$/.test(segments[name].value)
+            (name === "y" ? /^-?\d+$/ : /^\d+$/).test(segments[name].value)
                 ? Number(segments[name].value)
                 : Number.NaN;
 
@@ -281,16 +294,24 @@ export const createDateEditor = (
             ) {
                 event.preventDefault();
                 before.focus();
-            } else if (NEXT_KEYS.includes(event.key) && !last) {
+            } else if (
+                NEXT_KEYS.includes(event.key) &&
+                !last &&
+                !isSign(event.key, name, input)
+            ) {
                 event.preventDefault();
                 after.focus();
             }
         });
         input.addEventListener("input", () => {
-            input.value = input.value.replace(/\D/g, "");
+            input.value = input.value.replace(
+                name === "y" ? /(?!^)-|[^\d-]/g : /\D/g,
+                "",
+            );
             input.removeAttribute("aria-invalid");
             error.hidden = true;
-            if (input.value.length === input.maxLength && !last) after.focus();
+            const typed = input.value.replace("-", "").length;
+            if (typed === SEGMENTS[name].digits && !last) after.focus();
         });
         input.addEventListener("paste", (event) => {
             const parts = parsePasted(

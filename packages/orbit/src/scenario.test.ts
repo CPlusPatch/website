@@ -659,7 +659,7 @@ Deno.test("a scenario time outside the year bounds is rejected", () => {
 
         assertEquals(errors.length, 1);
         assert(
-            at(errors, 0).startsWith("time: must be in years 1 to 9999"),
+            at(errors, 0).startsWith("time: must be in years -9999 to 9999"),
             at(errors, 0),
         );
     }
@@ -682,7 +682,7 @@ Deno.test("an element epoch outside the year bounds is rejected", () => {
         assertEquals(errors.length, 1);
         assert(
             at(errors, 0).startsWith(
-                "earth.elements.epoch: must be in years 1 to 9999",
+                "earth.elements.epoch: must be in years -9999 to 9999",
             ),
             at(errors, 0),
         );

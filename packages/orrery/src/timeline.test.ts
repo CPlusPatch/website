@@ -7,6 +7,8 @@ import {
     apsisMarks,
     clampT,
     isFree,
+    MAX_T,
+    MIN_T,
     nowFlagLeft,
     tickLabel,
     ticks,
@@ -77,9 +79,9 @@ Deno.test("the Now flag gives way to Go live when it would clash with the date t
     assertEquals(nowFlagLeft(640, 60, 1000, 70, 6), 610);
 });
 
-Deno.test("clamping keeps a time inside years 1 to 9999", () => {
+Deno.test("clamping keeps a time inside years -9999 to 9999", () => {
     assertEquals(clampT(0), 0);
-    assertEquals(toParts(clampT(-1e15)).y, 1);
+    assertEquals(toParts(clampT(-1e15)).y, -9999);
     assertEquals(toParts(clampT(-1e15)).mo, 1);
     assertEquals(toParts(clampT(1e15)).y, 9999);
     assertEquals(
@@ -158,6 +160,26 @@ Deno.test("year ticks before year 100 don't read as the 1900s", () => {
         ["0100"],
     );
     assertEquals(toParts(result.ticks[0] ?? 0).y, 100);
+});
+
+Deno.test("year ticks run across year 0 into negative years", () => {
+    const result = ticks(at(-150, 6, 1), at(150, 6, 1), 6);
+
+    assertEquals(result.kind, "year");
+    assertEquals(
+        result.ticks.map((t) => tickLabel(t, "year")),
+        ["-0100", "-0050", "0000", "0050", "0100", "0150"],
+    );
+});
+
+Deno.test("a window around year -1 has ticks on round negative years", () => {
+    const result = ticks(at(-12, 1, 1), at(8, 1, 1), 11);
+
+    assertEquals(result.kind, "year");
+    assertEquals(
+        result.ticks.map((t) => toParts(t).y),
+        [-12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8],
+    );
 });
 
 Deno.test("a window past the last year ends instead of looping", () => {

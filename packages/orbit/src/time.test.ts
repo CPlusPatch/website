@@ -14,10 +14,10 @@ Deno.test("a time round-trips through J2000 seconds", () => {
     assertEquals(j2000sToUnixMs(unixMsToJ2000s(ms)), ms);
 });
 
-Deno.test("the time bounds are the first and last second of years 1 and 9999", () => {
+Deno.test("the time bounds are the first and last second of years -9999 and 9999", () => {
     assertEquals(
         new Date(j2000sToUnixMs(MIN_TIME)).toISOString(),
-        "0001-01-01T00:00:00.000Z",
+        "-009999-01-01T00:00:00.000Z",
     );
     assertEquals(
         new Date(j2000sToUnixMs(MAX_TIME)).toISOString(),
