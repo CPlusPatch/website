@@ -25,7 +25,10 @@ export const parseBsc5 = (bytes: Uint8Array): Star[] => {
         const at = HEADER_BYTES + i * ENTRY_BYTES;
         const ra = view.getFloat64(at + 4, true);
         const dec = view.getFloat64(at + 12, true);
-        const type = String.fromCharCode(bytes[at + 20], bytes[at + 21]);
+        const type = String.fromCharCode(
+            bytes[at + 20] ?? 0,
+            bytes[at + 21] ?? 0,
+        );
         // The catalogue marks a deleted star with no position and a blank type.
         if (ra === 0 && dec === 0 && type.trim() === "") continue;
 

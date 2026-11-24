@@ -83,10 +83,16 @@ export const prepareSwarm = (catalogue: Catalogue, earthMu: number): Swarm => {
     };
 
     for (let k = 0; k < count; k++) {
-        const [dt, n, e, i, raan, argp, m0] = catalogue.elements.subarray(
-            k * 7,
-            k * 7 + 7,
-        );
+        // NaN is what reading past the end used to give.
+        const [
+            dt = Number.NaN,
+            n = Number.NaN,
+            e = Number.NaN,
+            i = Number.NaN,
+            raan = Number.NaN,
+            argp = Number.NaN,
+            m0 = Number.NaN,
+        ] = catalogue.elements.subarray(k * 7, k * 7 + 7);
         const elements = {
             a: (earthMu / n ** 2) ** (1 / 3),
             e,

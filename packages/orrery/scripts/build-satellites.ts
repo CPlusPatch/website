@@ -81,7 +81,13 @@ const counts = Object.fromEntries(
 // Through the file, so float32 rounding can't move a satellite across a class boundary.
 const swarm = prepareSwarm(decodeCatalogue(encodeCatalogue(entries)), earthMu);
 for (let k = 0; k < swarm.count; k++) {
-    counts[SATELLITE_GROUPS[swarm.groups[k]]][swarm.classes[k]]++;
+    const index = swarm.groups[k];
+    const group = index === undefined ? undefined : SATELLITE_GROUPS[index];
+    const cls = swarm.classes[k];
+    if (group === undefined || cls === undefined)
+        throw new Error(`Satellite ${k} has no group or class.`);
+
+    counts[group][cls]++;
 }
 
 const total = (group: SatelliteGroup): number =>

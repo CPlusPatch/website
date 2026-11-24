@@ -32,17 +32,19 @@ const RADIANS = Math.PI / 180;
 
 /** The records of an OMM CSV, in file order. Columns are found by their header name. */
 export const parseOmmCsv = (text: string): OmmRecord[] => {
-    const lines = text.split(/\r?\n/).filter((line) => line !== "");
-    if (lines.length === 0) throw new Error("The CSV is empty.");
+    const [headerLine, ...rows] = text
+        .split(/\r?\n/)
+        .filter((line) => line !== "");
+    if (headerLine === undefined) throw new Error("The CSV is empty.");
 
-    const header = lines[0].split(",");
+    const header = headerLine.split(",");
     const at = new Map(header.map((name, i) => [name, i]));
     for (const column of COLUMNS) {
         if (!at.has(column))
             throw new Error(`The CSV has no ${column} column.`);
     }
 
-    return lines.slice(1).map((line, row) => {
+    return rows.map((line, row) => {
         // Line 1 is the header, so the first record is on line 2.
         const where = `line ${row + 2}`;
         if (line.includes('"')) {
@@ -55,7 +57,13 @@ export const parseOmmCsv = (text: string): OmmRecord[] => {
             );
         }
 
-        const field = (column: string): string => fields[at.get(column) ?? 0];
+        const field = (column: string): string => {
+            const value = fields[at.get(column) ?? 0];
+            if (value === undefined)
+                throw new Error(`There is no ${column} field (${where}).`);
+
+            return value;
+        };
         const number = (column: string): number => {
             const text = field(column).trim();
             const value = text === "" ? Number.NaN : Number(text);

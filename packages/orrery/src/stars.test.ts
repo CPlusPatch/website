@@ -3,6 +3,7 @@ import {
     assert,
     assertAlmostEquals,
     assertEquals,
+    assertExists,
     assertThrows,
 } from "@std/assert";
 import {
@@ -33,10 +34,13 @@ Deno.test("a star survives encoding within the file's resolution", () => {
 
     assertEquals(decoded.length, stars.length);
     stars.forEach((star, i) => {
-        assertAlmostEquals(decoded[i].ra, star.ra, 0.0001);
-        assertAlmostEquals(decoded[i].dec, star.dec, 0.0001);
-        assertAlmostEquals(decoded[i].mag, star.mag, 0.03);
-        assertEquals(decoded[i].class, star.class);
+        const got = decoded[i];
+
+        assertExists(got);
+        assertAlmostEquals(got.ra, star.ra, 0.0001);
+        assertAlmostEquals(got.dec, star.dec, 0.0001);
+        assertAlmostEquals(got.mag, star.mag, 0.03);
+        assertEquals(got.class, star.class);
     });
 });
 
@@ -45,12 +49,23 @@ Deno.test("a right ascension that rounds up to a full turn wraps to zero", () =>
         encodeStars([{ ...SIRIUS, ra: 2 * Math.PI - 1e-9 }]),
     );
 
+    assertExists(star);
     assertEquals(star.ra, 0);
 });
 
 Deno.test("a star file of a length that isn't a multiple of 6 is rejected", () => {
     assertThrows(() => decodeStars(new Uint8Array(7)), Error, "multiple of 6");
 });
+
+const directionOf = (star: Star) => {
+    const [x, y, z] = starDirections([star]);
+
+    assertExists(x);
+    assertExists(y);
+    assertExists(z);
+
+    return { x, y, z };
+};
 
 Deno.test("a star's direction is its equatorial vector turned into the ecliptic frame", () => {
     const cosDec = Math.cos(SIRIUS.dec);
@@ -60,7 +75,7 @@ Deno.test("a star's direction is its equatorial vector turned into the ecliptic 
         z: Math.sin(SIRIUS.dec),
     });
 
-    const [x, y, z] = starDirections([SIRIUS]);
+    const { x, y, z } = directionOf(SIRIUS);
 
     assertAlmostEquals(x, expected.x, 1e-6);
     assertAlmostEquals(y, expected.y, 1e-6);
@@ -68,9 +83,12 @@ Deno.test("a star's direction is its equatorial vector turned into the ecliptic 
 });
 
 Deno.test("the north celestial pole is tilted from the ecliptic pole by the obliquity", () => {
-    const [x, y, z] = starDirections([
-        { ra: 0, dec: Math.PI / 2, mag: 2, class: "A" },
-    ]);
+    const { x, y, z } = directionOf({
+        ra: 0,
+        dec: Math.PI / 2,
+        mag: 2,
+        class: "A",
+    });
 
     assertAlmostEquals(x, 0, 1e-6);
     assertAlmostEquals(y, Math.sin(OBLIQUITY_J2000), 1e-6);
@@ -93,11 +111,8 @@ Deno.test("brighter stars get brighter points, between 0.06 and 0.5", () => {
     assertAlmostEquals(starBrightness(6.5), 0.06, 1e-9);
 });
 
-const unit = (ra: number, dec: number) => {
-    const [x, y, z] = starDirections([{ ra, dec, mag: 2, class: "A" }]);
-
-    return { x, y, z };
-};
+const unit = (ra: number, dec: number) =>
+    directionOf({ ra, dec, mag: 2, class: "A" });
 
 Deno.test("the sky's centre lookup is the middle of the texture", () => {
     const { u, v } = skyUv(unit(0, 0));

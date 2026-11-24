@@ -384,7 +384,7 @@ const buildFilled = async (
 
     const isDark = (x: number, y: number): boolean => {
         for (let c = 0; c < channels; c++) {
-            if (data[(y * width + x) * channels + c] >= UNIMAGED_BELOW)
+            if ((data[(y * width + x) * channels + c] ?? 0) >= UNIMAGED_BELOW)
                 return false;
         }
 

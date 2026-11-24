@@ -1,4 +1,9 @@
-import { assertAlmostEquals, assertEquals, assertThrows } from "@std/assert";
+import {
+    assertAlmostEquals,
+    assertEquals,
+    assertExists,
+    assertThrows,
+} from "@std/assert";
 import { parseBsc5 } from "./bsc5.ts";
 
 type Entry = { ra: number; dec: number; type: string; mag: number };
@@ -29,10 +34,14 @@ Deno.test("a catalogue entry gives its position, magnitude and spectral class", 
     const stars = parseBsc5(buffer([{ ra, dec, type: "A1", mag: -1.46 }]));
 
     assertEquals(stars.length, 1);
-    assertAlmostEquals(stars[0].ra, ra, 1e-12);
-    assertAlmostEquals(stars[0].dec, dec, 1e-12);
-    assertAlmostEquals(stars[0].mag, -1.46, 1e-9);
-    assertEquals(stars[0].class, "A");
+
+    const [star] = stars;
+
+    assertExists(star);
+    assertAlmostEquals(star.ra, ra, 1e-12);
+    assertAlmostEquals(star.dec, dec, 1e-12);
+    assertAlmostEquals(star.mag, -1.46, 1e-9);
+    assertEquals(star.class, "A");
 });
 
 Deno.test("a deleted entry is skipped", () => {
@@ -52,7 +61,7 @@ Deno.test("a deleted entry is skipped", () => {
 Deno.test("a type that isn't O to M is the other class", () => {
     const stars = parseBsc5(buffer([{ ra: 1, dec: 0.5, type: "N ", mag: 5 }]));
 
-    assertEquals(stars[0].class, "other");
+    assertEquals(stars[0]?.class, "other");
 });
 
 Deno.test("a file with another entry size is rejected", () => {

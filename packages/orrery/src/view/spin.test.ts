@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 import { bodyOrientation, type Vec3 } from "@cpluspatch/orbit";
-import { assert, assertAlmostEquals } from "@std/assert";
+import { assert, assertAlmostEquals, assertExists } from "@std/assert";
 import { spinMatrix } from "./spin.ts";
 
 const T = 7.5e8;
@@ -12,12 +12,28 @@ const orientation = () => {
     return o;
 };
 
+const column = (m: number[], at: number): Vec3 => {
+    const [x, y, z] = m.slice(at, at + 3);
+
+    assertExists(x);
+    assertExists(y);
+    assertExists(z);
+
+    return { x, y, z };
+};
+
 // Applies a column-major matrix to a vector.
-const apply = (m: number[], v: Vec3): Vec3 => ({
-    x: m[0] * v.x + m[4] * v.y + m[8] * v.z,
-    y: m[1] * v.x + m[5] * v.y + m[9] * v.z,
-    z: m[2] * v.x + m[6] * v.y + m[10] * v.z,
-});
+const apply = (m: number[], v: Vec3): Vec3 => {
+    const a = column(m, 0);
+    const b = column(m, 4);
+    const c = column(m, 8);
+
+    return {
+        x: a.x * v.x + b.x * v.y + c.x * v.z,
+        y: a.y * v.x + b.y * v.y + c.y * v.z,
+        z: a.z * v.x + b.z * v.y + c.z * v.z,
+    };
+};
 
 const assertVec = (actual: Vec3, expected: Vec3) => {
     assertAlmostEquals(actual.x, expected.x, 1e-12);
@@ -36,11 +52,10 @@ Deno.test("the geometry's +x, +y and -z land on the body's prime meridian, pole 
 
 Deno.test("the spin is a proper rotation", () => {
     const m = spinMatrix(orientation());
-    const columns = [0, 4, 8].map((i) => ({
-        x: m[i],
-        y: m[i + 1],
-        z: m[i + 2],
-    }));
+    const a = column(m, 0);
+    const b = column(m, 4);
+    const c = column(m, 8);
+    const columns = [a, b, c];
     const dot = (a: Vec3, b: Vec3) => a.x * b.x + a.y * b.y + a.z * b.z;
 
     for (const [i, a] of columns.entries()) {
@@ -49,7 +64,6 @@ Deno.test("the spin is a proper rotation", () => {
         }
     }
 
-    const [a, b, c] = columns;
     const determinant =
         a.x * (b.y * c.z - b.z * c.y) -
         b.x * (a.y * c.z - a.z * c.y) +

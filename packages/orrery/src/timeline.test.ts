@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { fromParts, toParts } from "./date-parts.ts";
 import {
     apsides,
@@ -65,7 +65,12 @@ Deno.test("day ticks fall on UTC midnight", () => {
         const { h, mi, s } = toParts(t);
         assertEquals([h, mi, s], [0, 0, 0]);
     }
-    assertEquals(result.ticks[1] - (result.ticks[0] ?? 0), 2 * DAY);
+
+    const [first, second] = result.ticks;
+
+    assertExists(first);
+    assertExists(second);
+    assertEquals(second - first, 2 * DAY);
 });
 
 Deno.test("ticks stay inside the range and start on their own grid", () => {

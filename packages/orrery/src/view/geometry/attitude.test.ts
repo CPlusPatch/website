@@ -1,12 +1,22 @@
 /// <reference types="deno" />
 import { cross, dot, length, type Vec3 } from "@cpluspatch/orbit";
-import { assertAlmostEquals } from "@std/assert";
+import { assertAlmostEquals, assertExists } from "@std/assert";
 import { lvlhMatrix } from "./attitude.ts";
 
+const column = (m: number[], at: number): Vec3 => {
+    const [x, y, z] = m.slice(at, at + 3);
+
+    assertExists(x);
+    assertExists(y);
+    assertExists(z);
+
+    return { x, y, z };
+};
+
 const axes = (m: number[]): [Vec3, Vec3, Vec3] => [
-    { x: m[0], y: m[1], z: m[2] },
-    { x: m[4], y: m[5], z: m[6] },
-    { x: m[8], y: m[9], z: m[10] },
+    column(m, 0),
+    column(m, 4),
+    column(m, 8),
 ];
 
 const r = { x: 6.8e6, y: 1e6, z: -2e6 };

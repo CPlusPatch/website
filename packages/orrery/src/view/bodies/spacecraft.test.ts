@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 import { solarSystem } from "@cpluspatch/orbit";
-import { assert, assertAlmostEquals } from "@std/assert";
+import { assert, assertAlmostEquals, assertExists } from "@std/assert";
 import { Box3, Sphere } from "three";
 import { createSpacecraftModel, disposeModel } from "./spacecraft.ts";
 
@@ -31,8 +31,12 @@ Deno.test("a satellite's radius is its model's bounding radius, within 10%", () 
 });
 
 Deno.test("a spacecraft without a model of its own is scaled to its radius", () => {
-    const { model: _model, ...first } = satellites[0];
-    const body = { ...first, id: "user-sat", radius: 25 };
+    const [satellite] = satellites;
+
+    assertExists(satellite);
+
+    const { model: _model, ...rest } = satellite;
+    const body = { ...rest, id: "user-sat", radius: 25 };
     const model = createSpacecraftModel(body);
     const { radius } = new Box3()
         .setFromObject(model)

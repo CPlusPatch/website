@@ -1,6 +1,11 @@
 /// <reference types="deno" />
 import { G, solarSystem } from "@cpluspatch/orbit";
-import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
+import {
+    assert,
+    assertAlmostEquals,
+    assertEquals,
+    assertExists,
+} from "@std/assert";
 import {
     type AddInput,
     addErrors,
@@ -59,6 +64,9 @@ Deno.test("the subtree of a planet holds its moons", () => {
 
 Deno.test("the subtree of a moon of a moon is reached through the moon", () => {
     const [sun] = solarSystem.bodies;
+
+    assertExists(sun);
+
     const body = (id: string, parent: string) => ({
         ...newBody(
             {

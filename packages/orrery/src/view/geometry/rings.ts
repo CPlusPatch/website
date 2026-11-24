@@ -25,7 +25,7 @@ export const ringUvs = (
 ): Float32Array => {
     const uvs = new Float32Array((positions.length / 3) * 2);
     for (let i = 0; i < positions.length / 3; i++) {
-        const r = Math.hypot(positions[i * 3], positions[i * 3 + 1]);
+        const r = Math.hypot(positions[i * 3] ?? 0, positions[i * 3 + 1] ?? 0);
         uvs[i * 2] = ringU(r, inner, outer);
         uvs[i * 2 + 1] = 0.5;
     }

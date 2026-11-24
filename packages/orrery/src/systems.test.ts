@@ -73,7 +73,7 @@ Deno.test("a system lists the moons with their craft nested, then its own craft"
     assertEquals(rows(groups[0]).slice(0, 2), ["Moon", "> LRO"]);
     assert(rows(groups[0]).includes("> Danuri"));
     assertEquals(rows(groups[1]).includes("ISS"), true);
-    assert(groups[1].rows.every((row) => !row.nested));
+    assert(groups[1]?.rows.every((row) => !row.nested));
 });
 
 Deno.test("the root's system groups its children, with their moons nested", () => {
@@ -156,8 +156,8 @@ Deno.test("a rail ticks a power of ten that sits on an end", () => {
         result?.ticks.map((tick) => tick.distance),
         [1e9, 1e10, 1e11],
     );
-    assertEquals(result?.ticks[0].at, 0);
-    assertEquals(result?.ticks[2].at, 1);
+    assertEquals(result?.ticks[0]?.at, 0);
+    assertEquals(result?.ticks[2]?.at, 1);
 });
 
 Deno.test("a rail with one distance puts every child in the middle with no ticks", () => {
@@ -180,7 +180,7 @@ Deno.test("a rail uses the size of a hyperbolic orbit", () => {
     );
 
     assertEquals(result?.lo, 2e9);
-    assertEquals(result?.marks[0].at, 0);
+    assertEquals(result?.marks[0]?.at, 0);
 });
 
 Deno.test("a rail in AU ticks at powers of ten of an AU", () => {

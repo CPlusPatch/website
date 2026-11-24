@@ -109,17 +109,19 @@ export const formatMass = (kg: number): string => {
     return `${mantissa} × 10${digits} kg`;
 };
 
-const DURATIONS: [limit: number, size: number, format: Intl.NumberFormat][] = [
+type Duration = [limit: number, size: number, format: Intl.NumberFormat];
+
+const DURATIONS: Duration[] = [
     [2 * 3600, 60, unit("minute", 1)],
     [2 * 86400, 3600, unit("hour", 1)],
     [2 * 31557600, 86400, unit("day", 1)],
-    [Infinity, 31557600, unit("year", 1)],
 ];
+
+const YEARS: Duration = [Infinity, 31557600, unit("year", 1)];
 
 /** A duration in seconds in the unit that suits it, like `92.7 min` or `1.9 yrs`. */
 export const formatDuration = (s: number): string => {
-    const [, size, format] =
-        DURATIONS.find(([limit]) => s < limit) ?? DURATIONS[3];
+    const [, size, format] = DURATIONS.find(([limit]) => s < limit) ?? YEARS;
 
     return format.format(s / size);
 };

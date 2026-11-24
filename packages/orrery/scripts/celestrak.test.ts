@@ -1,4 +1,9 @@
-import { assertAlmostEquals, assertEquals, assertThrows } from "@std/assert";
+import {
+    assertAlmostEquals,
+    assertEquals,
+    assertExists,
+    assertThrows,
+} from "@std/assert";
 import { parseOmmCsv, satelliteGroup } from "./celestrak.ts";
 
 const HEADER =
@@ -10,6 +15,8 @@ const rad = (degrees: number): number => (degrees * Math.PI) / 180;
 
 Deno.test("a row gives its elements in radians and its epoch in unix ms", () => {
     const [record] = parseOmmCsv(`${HEADER}\n${ROW}\n`);
+
+    assertExists(record);
 
     assertEquals(record.name, "CALSPHERE 1");
     assertEquals(record.norad, 900);
@@ -29,6 +36,8 @@ Deno.test("columns are found by name, in any order", () => {
     ].join("\r\n");
 
     const [record] = parseOmmCsv(text);
+
+    assertExists(record);
 
     assertEquals(record.name, "ISS (ZARYA)");
     assertEquals(record.norad, 25544);

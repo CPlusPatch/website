@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertThrows } from "@std/assert";
+import { assert, assertEquals, assertExists, assertThrows } from "@std/assert";
 import {
     duotone,
     encodePnm,
@@ -55,6 +55,10 @@ Deno.test("the fill covers 2 px around an unimaged pixel, then fades out by 8 px
             const mirror = pixels[(height - 1 - y) * width + x];
             const got = out[y * width + x];
             const label = `pixel ${x},${y}`;
+
+            assertExists(mirror, label);
+            assertExists(got, label);
+
             if (distance <= 2) assertEquals(got, mirror, label);
             else if (distance >= 9) assertEquals(got, 100, label);
             else if (distance <= 7) assert(got > 100 && got < mirror, label);
@@ -71,9 +75,15 @@ Deno.test("the fade is the same on every side of the unimaged area", () => {
     pixels[30 * width + 15] = 0;
 
     const out = mirrorFill(pixels, width, height);
-    const blend = (x: number, y: number): number =>
-        (out[y * width + x] - 100) /
-        (pixels[(height - 1 - y) * width + x] - 100);
+    const blend = (x: number, y: number): number => {
+        const got = out[y * width + x];
+        const mirror = pixels[(height - 1 - y) * width + x];
+
+        assertExists(got);
+        assertExists(mirror);
+
+        return (got - 100) / (mirror - 100);
+    };
 
     assertEquals(blend(15 + 5, 30) > 0 && blend(15 + 5, 30) < 1, true);
     assertEquals(blend(15 - 5, 30), blend(15 + 5, 30));

@@ -36,14 +36,17 @@ Deno.test("a catalogue survives encoding within float32 precision", () => {
     assertEquals(Array.from(decoded.groups), [8, 0, 4]);
     assertEquals(decoded.elements.length, 21);
     ENTRIES.forEach((e, i) => {
-        const at = i * 7;
-        assertEquals(decoded.elements[at], (e.epoch - decoded.epoch) / 1000);
-        assertAlmostEquals(decoded.elements[at + 1], e.meanMotion, 1e-9);
-        assertAlmostEquals(decoded.elements[at + 2], e.eccentricity, 1e-9);
-        assertAlmostEquals(decoded.elements[at + 3], e.inclination, 1e-6);
-        assertAlmostEquals(decoded.elements[at + 4], e.raan, 1e-6);
-        assertAlmostEquals(decoded.elements[at + 5], e.argp, 1e-6);
-        assertAlmostEquals(decoded.elements[at + 6], e.m0, 1e-6);
+        // NaN fails every assertion, so a missing element can't pass.
+        const element = (j: number): number =>
+            decoded.elements[i * 7 + j] ?? Number.NaN;
+
+        assertEquals(element(0), (e.epoch - decoded.epoch) / 1000);
+        assertAlmostEquals(element(1), e.meanMotion, 1e-9);
+        assertAlmostEquals(element(2), e.eccentricity, 1e-9);
+        assertAlmostEquals(element(3), e.inclination, 1e-6);
+        assertAlmostEquals(element(4), e.raan, 1e-6);
+        assertAlmostEquals(element(5), e.argp, 1e-6);
+        assertAlmostEquals(element(6), e.m0, 1e-6);
     });
 });
 

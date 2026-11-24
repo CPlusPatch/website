@@ -102,7 +102,13 @@ const pad = (n: number, width = 2): string => String(n).padStart(width, "0");
 // Not toISOString, which writes years past 9999 as +010000.
 const year = (y: number): string => (y < 0 ? `-${pad(-y, 4)}` : pad(y, 4));
 
-const shortMonth = (mo: number): string => MONTHS[mo - 1].slice(0, 3);
+const shortMonth = (mo: number): string => {
+    const name = MONTHS[mo - 1];
+
+    if (name === undefined) throw new Error(`No month ${mo}.`);
+
+    return name.slice(0, 3);
+};
 
 /** `HH:MM`, `Jan 19`, `Mar` (the year on January) or `YYYY`, in UTC. */
 export const tickLabel = (t: number, kind: TickKind): string => {

@@ -21,7 +21,14 @@ Deno.test("the group classes match the snapshot file", async () => {
         ]),
     );
     for (let k = 0; k < swarm.count; k++) {
-        counts[SATELLITE_GROUPS[swarm.groups[k]]][swarm.classes[k]]++;
+        const index = swarm.groups[k];
+        const group = index === undefined ? undefined : SATELLITE_GROUPS[index];
+        const tally = group === undefined ? undefined : counts[group];
+        const cls = swarm.classes[k];
+        if (tally === undefined || cls === undefined)
+            throw new Error(`Satellite ${k} has no group or class.`);
+
+        tally[cls]++;
     }
 
     assertEquals(counts, GROUP_CLASSES);

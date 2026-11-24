@@ -18,7 +18,8 @@ const isSpace = (byte: number): boolean =>
 
 /** Parses an 8-bit binary PGM (P5) or PPM (P6). */
 export const parsePnm = (bytes: Uint8Array): Pnm => {
-    const magic = String.fromCharCode(bytes[0], bytes[1]);
+    const byteAt = (i: number): number => bytes[i] ?? 0;
+    const magic = String.fromCharCode(byteAt(0), byteAt(1));
     if (magic !== "P5" && magic !== "P6") {
         throw new Error(`Expected a P5 or P6 file, got "${magic}".`);
     }
@@ -26,9 +27,9 @@ export const parsePnm = (bytes: Uint8Array): Pnm => {
     const numbers: number[] = [];
     let at = 2;
     while (numbers.length < 3) {
-        while (at < bytes.length && isSpace(bytes[at])) at++;
+        while (at < bytes.length && isSpace(byteAt(at))) at++;
         const start = at;
-        while (at < bytes.length && bytes[at] >= 0x30 && bytes[at] <= 0x39)
+        while (at < bytes.length && byteAt(at) >= 0x30 && byteAt(at) <= 0x39)
             at++;
         if (start === at) throw new Error("The PNM header is malformed.");
         numbers.push(
@@ -39,6 +40,8 @@ export const parsePnm = (bytes: Uint8Array): Pnm => {
     at++;
 
     const [width, height, maxval] = numbers;
+    if (width === undefined || height === undefined)
+        throw new Error("The PNM header is malformed.");
     if (maxval !== 255)
         throw new Error(`Expected a maxval of 255, got ${maxval}.`);
 
@@ -128,7 +131,8 @@ const blur = (
             let sum = 0;
             for (let d = -radius; d <= radius; d++) {
                 sum +=
-                    mask[y * width + Math.min(width - 1, Math.max(0, x + d))];
+                    mask[y * width + Math.min(width - 1, Math.max(0, x + d))] ??
+                    0;
             }
             across[y * width + x] = sum / side;
         }
@@ -140,7 +144,9 @@ const blur = (
             let sum = 0;
             for (let d = -radius; d <= radius; d++) {
                 sum +=
-                    across[Math.min(rows - 1, Math.max(0, y + d)) * width + x];
+                    across[
+                        Math.min(rows - 1, Math.max(0, y + d)) * width + x
+                    ] ?? 0;
             }
             out[y * width + x] = sum / side;
         }
@@ -172,7 +178,7 @@ export const mirrorFill = (
             const at = ((first + y) * width + x) * channels;
             let unimaged = true;
             for (let c = 0; c < channels; c++) {
-                if (pixels[at + c] >= UNIMAGED_BELOW) unimaged = false;
+                if ((pixels[at + c] ?? 0) >= UNIMAGED_BELOW) unimaged = false;
             }
             if (unimaged) dark[y * width + x] = 1;
         }
@@ -185,13 +191,14 @@ export const mirrorFill = (
     const out = pixels.slice();
     for (let y = first; y < end; y++) {
         for (let x = 0; x < width; x++) {
-            const weight = alpha[(y - first) * width + x];
+            const weight = alpha[(y - first) * width + x] ?? 0;
             if (weight === 0) continue;
             const from = ((height - 1 - y) * width + x) * channels;
             const to = (y * width + x) * channels;
             for (let c = 0; c < channels; c++) {
                 out[to + c] = Math.round(
-                    pixels[to + c] * (1 - weight) + pixels[from + c] * weight,
+                    (pixels[to + c] ?? 0) * (1 - weight) +
+                        (pixels[from + c] ?? 0) * weight,
                 );
             }
         }
@@ -228,9 +235,11 @@ export const tint = (
 ): Uint8Array => {
     const out = new Uint8Array(grey.length * 3);
     for (let i = 0; i < grey.length; i++) {
-        out[i * 3] = Math.round(grey[i] * r);
-        out[i * 3 + 1] = Math.round(grey[i] * g);
-        out[i * 3 + 2] = Math.round(grey[i] * b);
+        const value = grey[i] ?? 0;
+
+        out[i * 3] = Math.round(value * r);
+        out[i * 3 + 1] = Math.round(value * g);
+        out[i * 3 + 2] = Math.round(value * b);
     }
 
     return out;
@@ -242,12 +251,15 @@ export const duotone = (
     dark: [number, number, number],
     light: [number, number, number],
 ): Uint8Array => {
+    const [r0, g0, b0] = dark;
+    const [r1, g1, b1] = light;
     const out = new Uint8Array(grey.length * 3);
     for (let i = 0; i < grey.length; i++) {
-        const t = grey[i] / 255;
-        for (let c = 0; c < 3; c++) {
-            out[i * 3 + c] = Math.round(dark[c] + (light[c] - dark[c]) * t);
-        }
+        const t = (grey[i] ?? 0) / 255;
+
+        out[i * 3] = Math.round(r0 + (r1 - r0) * t);
+        out[i * 3 + 1] = Math.round(g0 + (g1 - g0) * t);
+        out[i * 3 + 2] = Math.round(b0 + (b1 - b0) * t);
     }
 
     return out;
@@ -257,26 +269,32 @@ export const duotone = (
 export const saturate = (rgb: Uint8Array, factor: number): Uint8Array => {
     const out = new Uint8Array(rgb.length);
     for (let i = 0; i < rgb.length; i += 3) {
-        const max = Math.max(rgb[i], rgb[i + 1], rgb[i + 2]);
-        const min = Math.min(rgb[i], rgb[i + 1], rgb[i + 2]);
+        const r = rgb[i] ?? 0;
+        const g = rgb[i + 1] ?? 0;
+        const b = rgb[i + 2] ?? 0;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
         // Scaling each channel's distance from the max scales the saturation and keeps the hue.
         // The cap stops the smallest channel going below 0.
         const ratio = max === min ? 1 : Math.min(factor, max / (max - min));
         for (let c = 0; c < 3; c++) {
-            out[i + c] = Math.round(max - (max - rgb[i + c]) * ratio);
+            out[i + c] = Math.round(max - (max - (rgb[i + c] ?? 0)) * ratio);
         }
     }
 
     return out;
 };
 
-const LUMA = [0.299, 0.587, 0.114];
+const LUMA: [number, number, number] = [0.299, 0.587, 0.114];
 
 /** The mean luminance of interleaved RGB, from 0 to 1, on the encoded values. */
 export const luminanceMean = (rgb: Uint8Array): number => {
     let sum = 0;
     for (let i = 0; i < rgb.length; i += 3) {
-        sum += LUMA[0] * rgb[i] + LUMA[1] * rgb[i + 1] + LUMA[2] * rgb[i + 2];
+        sum +=
+            LUMA[0] * (rgb[i] ?? 0) +
+            LUMA[1] * (rgb[i + 1] ?? 0) +
+            LUMA[2] * (rgb[i + 2] ?? 0);
     }
 
     return sum / (rgb.length / 3) / 255;
@@ -297,10 +315,17 @@ export const scaleToMean = (rgb: Uint8Array, target: number): Uint8Array => {
     const gain = target / mean;
     const pixels = rgb.length / 3;
     let clipped = 0;
-    const histograms = [0, 1, 2].map(() => new Float64Array(256));
+    // One 256-bin histogram per channel, back to back.
+    const histograms = new Float64Array(3 * 256);
     for (let i = 0; i < rgb.length; i += 3) {
-        if (Math.max(rgb[i], rgb[i + 1], rgb[i + 2]) * gain >= 254.5) clipped++;
-        for (let c = 0; c < 3; c++) histograms[c][rgb[i + c]]++;
+        const r = rgb[i] ?? 0;
+        const g = rgb[i + 1] ?? 0;
+        const b = rgb[i + 2] ?? 0;
+        if (Math.max(r, g, b) * gain >= 254.5) clipped++;
+
+        histograms[r] = (histograms[r] ?? 0) + 1;
+        histograms[256 + g] = (histograms[256 + g] ?? 0) + 1;
+        histograms[512 + b] = (histograms[512 + b] ?? 0) + 1;
     }
 
     const lut = new Uint8Array(256);
@@ -312,7 +337,9 @@ export const scaleToMean = (rgb: Uint8Array, target: number): Uint8Array => {
             let sum = 0;
             for (let c = 0; c < 3; c++) {
                 for (let v = 0; v < 256; v++) {
-                    sum += LUMA[c] * histograms[c][v] * (v / 255) ** gamma;
+                    const count = histograms[c * 256 + v] ?? 0;
+
+                    sum += (LUMA[c] ?? 0) * count * (v / 255) ** gamma;
                 }
             }
 
@@ -332,7 +359,7 @@ export const scaleToMean = (rgb: Uint8Array, target: number): Uint8Array => {
     }
 
     const out = new Uint8Array(rgb.length);
-    for (let i = 0; i < rgb.length; i++) out[i] = lut[rgb[i]];
+    for (let i = 0; i < rgb.length; i++) out[i] = lut[rgb[i] ?? 0] ?? 0;
 
     return out;
 };
