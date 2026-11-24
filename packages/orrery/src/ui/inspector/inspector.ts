@@ -73,12 +73,17 @@ export const createInspector = (
 
     const marker = h("span", { class: "orrery__orbit-marker" });
     const titleText = h("span");
-    const title = h("h2", { id: "orrery-orbit-title" }, marker, titleText);
+    const title = h(
+        "h2",
+        { id: "orrery-orbit-title", class: "orrery__inspector-title" },
+        marker,
+        titleText,
+    );
     // Under the title, so the form heads keep the kind and parent in view too.
     const meta = h("p", { class: "orrery__orbit-meta" });
     const head = h(
         "div",
-        { class: "orrery__inspector-head" },
+        { class: "orrery__inspector-head orrery__inspector-head--ruled" },
         h("div", { class: "orrery__inspector-titles" }, title, meta),
         close,
     );
@@ -138,16 +143,6 @@ export const createInspector = (
         if (event.detail === 0) setSheet(!open);
     });
 
-    // Only the card shows the body's name big, with a rule under it.
-    const setHead = (small: boolean) => {
-        title.className = small
-            ? "orrery__panel-title"
-            : "orrery__inspector-title";
-        head.classList.toggle("orrery__inspector-head--panel", small);
-        head.classList.toggle("orrery__inspector-head--ruled", !small);
-    };
-    setHead(false);
-
     let headline: Headline | null = null;
     let plate: Plate | null = null;
     let foot: HTMLElement | null = null;
@@ -170,6 +165,8 @@ export const createInspector = (
 
     const refresh = () => {
         burn?.refresh();
+        // A form that draws its draft in the plate.
+        const form = editor ?? burn;
 
         const id = world.selected;
         if (!id) return;
@@ -197,15 +194,15 @@ export const createInspector = (
             unit: units.get(),
         };
 
-        // The edit form draws its draft, without the times, as they'd be of the saved orbit.
-        if (editor) {
-            const draft = editor.elements();
+        // A form draws its draft, without the times, as they'd be of the saved orbit.
+        const draft = form?.elements();
+        if (form && draft) {
             refreshPlate(plate, {
                 a: draft.a,
                 e: draft.e,
                 raan: draft.raan,
                 argp: draft.argp,
-                trueAnomaly: trueAnomalyAt(draft, editor.mu, world.clock.t),
+                trueAnomaly: trueAnomalyAt(draft, form.mu, world.clock.t),
                 periapsisAltitude: periapsis(draft) - parent.radius,
                 apoapsisAltitude: apoapsis(draft) - parent.radius,
                 ...drawn,
@@ -318,11 +315,12 @@ export const createInspector = (
         grip.hidden = adding;
         if (adding) {
             element.removeAttribute("data-peek");
-            setHead(true);
             meta.hidden = true;
             titleText.textContent = "Add a body";
             adder = createBodyAdder(world, units, addName, cancelAdd);
             content.append(adder.element);
+            foot = adder.foot;
+            element.append(foot);
 
             return;
         }
@@ -345,17 +343,18 @@ export const createInspector = (
             );
             form = editor?.element ?? null;
         } else if (mode === "burn") {
-            burn = createBurnEditor(world, units, body.id, scene.ghost, () =>
-                closeForm("burn"),
+            burn = createBurnEditor(
+                world,
+                body.id,
+                scene.ghost,
+                () => closeForm("burn"),
+                refresh,
             );
             form = burn?.element ?? null;
         }
         if (!form) mode = "card";
 
         showBodyMarker(marker, body, parent);
-        // The edit form keeps the card's head, with its plate under it.
-        marker.hidden = mode === "burn";
-        setHead(mode === "burn");
         grip.hidden = mode !== "card";
         element.toggleAttribute("data-peek", !open && mode === "card");
         titleText.textContent =
@@ -368,17 +367,19 @@ export const createInspector = (
                   world.select(parent.id),
               )
             : null;
-        meta.hidden = mode === "edit";
+        meta.hidden = mode !== "card";
         meta.replaceChildren(
             `${KIND_LABELS[body.kind]} `,
             ...(link ? ["around ", link] : ["at the centre"]),
         );
         if (form) {
             content.append(form);
-            if (editor && parent) {
+            // The forms keep the card's head, with the plate under it.
+            const active = editor ?? burn;
+            if (active && parent) {
                 plate = createPlate(units, body.name, parent.name);
                 head.after(plate.element);
-                foot = editor.foot;
+                foot = active.foot;
                 element.append(foot);
                 refresh();
             }

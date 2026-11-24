@@ -11,6 +11,8 @@ import { createForm, createStepper } from "./form.ts";
 /** The Add body form's element and how to use it. */
 export type BodyAdder = {
     element: HTMLFormElement;
+    /** The Cancel and Add row, for the card to pin below the form. */
+    foot: HTMLElement;
     /** Puts `name` in the Name field. */
     setName: (name: string) => void;
     /** Moves the focus to the Name field. */
@@ -384,10 +386,12 @@ export const createBodyAdder = (
         submit,
         done,
         "Add",
+        "orrery-add-form",
     );
 
     return {
         element: form.element,
+        foot: form.actions,
         setName: (next) => {
             nameRow.control.value = next.slice(0, NAME_MAX);
             live();
