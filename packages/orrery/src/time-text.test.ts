@@ -2,7 +2,13 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { assertEquals } from "@std/assert";
 import { RATES } from "./clock.ts";
-import { isLive, offsetText, rateText, stampParts } from "./time-text.ts";
+import {
+    dateText,
+    isLive,
+    offsetText,
+    rateText,
+    stampParts,
+} from "./time-text.ts";
 
 const at = (...args: Parameters<typeof Date.UTC>): number =>
     unixMsToJ2000s(Date.UTC(...args));
@@ -126,4 +132,11 @@ Deno.test("stampParts marks the parts that change faster than twice a second", (
 
 Deno.test("stampParts doesn't mark a part that changes twice a second", () => {
     assertEquals(fast(0, 7200), ["mi", "s"]);
+});
+
+Deno.test("dateText pads the year, and shows dashes for a time that isn't a date", () => {
+    assertEquals(dateText(at(2026, 10, 24, 13)), "2026-11-24");
+    assertEquals(dateText(atYear(5)), "0005-01-01");
+    assertEquals(dateText(1e30), "----------");
+    assertEquals(dateText(Number.NaN), "----------");
 });

@@ -1,5 +1,6 @@
-import { j2000sToUnixMs, type Scenario } from "@cpluspatch/orbit";
+import type { Scenario } from "@cpluspatch/orbit";
 import { type SavedScenario, startTime } from "../../persistence.ts";
+import { dateText } from "../../time-text.ts";
 import { h } from "../dom.ts";
 import { button } from "./buttons.ts";
 
@@ -9,11 +10,7 @@ const bodyCount = ({ bodies }: Scenario): string =>
 
 /** The meta line of a saved scenario, like "12 bodies · 2026-11-22". */
 const meta = ({ savedAt, scenario }: SavedScenario): string => {
-    const date = new Date(j2000sToUnixMs(startTime(scenario, savedAt)))
-        .toISOString()
-        .slice(0, 10);
-
-    return `${bodyCount(scenario)} · ${date}`;
+    return `${bodyCount(scenario)} · ${dateText(startTime(scenario, savedAt))}`;
 };
 
 /** One row of a scenario list: its name, meta line and buttons. */

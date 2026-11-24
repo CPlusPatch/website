@@ -3,6 +3,8 @@ import { cue } from "../../audio/cues.ts";
 import {
     encodeScenario,
     HASH_PREFIX,
+    MAX_INFLATED_BYTES,
+    MAX_PAYLOAD_CHARS,
     nameProblem,
     parseScenarioJson,
     readList,
@@ -17,6 +19,9 @@ import { createArming } from "./buttons.ts";
 import { createScenarioDialog } from "./dialog.ts";
 import { current, download, fileName } from "./files.ts";
 import { renderBuiltIn, renderSaved } from "./saved-list.ts";
+
+/** The most import errors the dialog lists. */
+const MAX_SHOWN_ERRORS = 20;
 
 /** The Scenarios dialog, the top bar button that opens it and how to remove them. */
 export type Scenarios = {
@@ -76,6 +81,13 @@ export const createScenarios = (
         encodeScenario(current(world)).then(
             (payload) => {
                 if (id !== linkId) return;
+
+                if (payload.length > MAX_PAYLOAD_CHARS) {
+                    setStatus(
+                        "The scenario is too big to share as a link. Use Export instead.",
+                    );
+                    return;
+                }
 
                 const { origin, pathname, search } = location;
                 linkInput.value = `${origin}${pathname}${search}${HASH_PREFIX}${payload}`;
@@ -171,6 +183,11 @@ export const createScenarios = (
 
         let text: string;
         try {
+            if (chosen.size > MAX_INFLATED_BYTES) {
+                setStatus("The file is too big to be a scenario.");
+                return;
+            }
+
             text = await chosen.text();
         } catch {
             setStatus("The file couldn't be read.");
@@ -182,12 +199,16 @@ export const createScenarios = (
 
         const result = parseScenarioJson(text);
         if (!result.ok) {
+            const shown = result.errors.slice(0, MAX_SHOWN_ERRORS);
+            const more = result.errors.length - shown.length;
+
             setStatus(
                 h("p", {}, "The file isn't a valid scenario:"),
                 h(
                     "ul",
                     {},
-                    ...result.errors.map((error) => h("li", {}, error)),
+                    ...shown.map((error) => h("li", {}, error)),
+                    ...(more > 0 ? [h("li", {}, `and ${more} more`)] : []),
                 ),
             );
             return;

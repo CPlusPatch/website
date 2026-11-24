@@ -77,25 +77,47 @@ const FAST_PER_S = 2;
 const pad = (n: number, width: number): string =>
     String(n).padStart(width, "0");
 
+// Rounds like `toParts`, so the date editor opens on the second shown.
+const textParts = (t: number): Record<PartName, string> | null => {
+    const date = new Date(Math.round(j2000sToUnixMs(t) / 1000) * 1000);
+    if (Number.isNaN(date.getTime())) return null;
+
+    const year = date.getUTCFullYear();
+
+    return {
+        y: (year < 0 ? "-" : "") + pad(Math.abs(year), 4),
+        mo: pad(date.getUTCMonth() + 1, 2),
+        d: pad(date.getUTCDate(), 2),
+        h: pad(date.getUTCHours(), 2),
+        mi: pad(date.getUTCMinutes(), 2),
+        s: pad(date.getUTCSeconds(), 2),
+    };
+};
+
+const NO_PARTS: Record<PartName, string> = {
+    y: "----",
+    mo: "--",
+    d: "--",
+    h: "--",
+    mi: "--",
+    s: "--",
+};
+
+/** The date of a time as `YYYY-MM-DD`, or dashes when the time isn't a date. */
+export const dateText = (t: number): string => {
+    const { y, mo, d } = textParts(t) ?? NO_PARTS;
+
+    return `${y}-${mo}-${d}`;
+};
+
 /** The parts of a time as text, each with whether it changes faster than twice a second at `rate`. */
 export const stampParts = (
     t: number,
     rate: number,
 ): Record<PartName, StampPart> => {
-    // Rounds like `toParts`, so the date editor opens on the second shown.
-    const date = new Date(Math.round(j2000sToUnixMs(t) / 1000) * 1000);
-    const valid = !Number.isNaN(date.getTime());
-    const year = date.getUTCFullYear();
-    const text: Record<PartName, string> = valid
-        ? {
-              y: (year < 0 ? "-" : "") + pad(Math.abs(year), 4),
-              mo: pad(date.getUTCMonth() + 1, 2),
-              d: pad(date.getUTCDate(), 2),
-              h: pad(date.getUTCHours(), 2),
-              mi: pad(date.getUTCMinutes(), 2),
-              s: pad(date.getUTCSeconds(), 2),
-          }
-        : { y: "----", mo: "--", d: "--", h: "--", mi: "--", s: "--" };
+    const parts = textParts(t);
+    const valid = parts !== null;
+    const text = parts ?? NO_PARTS;
 
     const part = (name: PartName): StampPart => ({
         text: text[name],
