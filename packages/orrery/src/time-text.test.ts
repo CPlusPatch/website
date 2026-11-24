@@ -71,26 +71,31 @@ Deno.test("offsetText writes minutes, hours, days and years", () => {
     assertEquals(offsetText(5 * 60), {
         full: "5m",
         short: "5m",
+        spoken: "5 minutes",
         word: "ahead",
     });
     assertEquals(offsetText(3 * 3600 + 5 * 60), {
         full: "3h 05m",
         short: "3h",
+        spoken: "3 hours",
         word: "ahead",
     });
     assertEquals(offsetText(2 * 86400 + 14 * 3600), {
         full: "2d 14h",
         short: "2d",
+        spoken: "2 days",
         word: "ahead",
     });
     assertEquals(offsetText(31557600 + 12 * 86400), {
         full: "1y 12d",
         short: "1y",
+        spoken: "1 year",
         word: "ahead",
     });
     assertEquals(offsetText(4 * 31557600), {
         full: "4y",
         short: "4y",
+        spoken: "4 years",
         word: "ahead",
     });
 });

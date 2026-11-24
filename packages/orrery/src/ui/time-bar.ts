@@ -1,7 +1,6 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { cue } from "../audio/cues.ts";
-import type { Sound } from "../audio/sound.ts";
 import { RATES } from "../clock.ts";
 import { PART_NAMES, type PartName } from "../date-parts.ts";
 import type { SavedStorage } from "../persistence.ts";
@@ -9,7 +8,6 @@ import { isLive, offsetText, rateText, stampParts } from "../time-text.ts";
 import type { World } from "../world.ts";
 import { createDateEditor } from "./date-editor.ts";
 import { h, setText } from "./dom.ts";
-import { createSoundMenu } from "./sound-menu.ts";
 import { createTimeline } from "./timeline/timeline.ts";
 
 /** The time bar's element and how to drive it. */
@@ -32,18 +30,25 @@ const presetOf = (rate: number): number =>
         0,
     );
 
-/**
- * The run and rate controls, the date, the live status, the sound menu and the timeline of a
- * world's clock.
- */
-export const createTimeBar = (
-    world: World,
-    storage: SavedStorage,
-    sound: Sound,
-): TimeBar => {
+// Rewind: two triangles pointing left.
+const REVERSE_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="currentColor"><path d="M8 3v10L2 8zM14 3v10L8 8z"/></svg>';
+
+/** The run, reverse and rate controls, Go live, and the timeline with the date over it. */
+export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     const { clock } = world;
 
     const run = h("button", { type: "button", class: "orrery__run" });
+
+    const reverse = h("button", {
+        type: "button",
+        class: "orrery__reverse",
+        "aria-pressed": "false",
+        "aria-keyshortcuts": "R",
+        "aria-label": "Reverse",
+        title: "Reverse the clock (R)",
+    });
+    reverse.innerHTML = REVERSE_ICON;
 
     const rateLabel = h("span", { class: "orrery__rate-label" });
     const rateButton = h(
@@ -78,16 +83,9 @@ export const createTimeBar = (
     const rateItems = RATES.map((preset) =>
         menuItem("menuitemradio", h("span", {}, rateText(preset))),
     );
-    const reverseItem = menuItem(
-        "menuitemcheckbox",
-        h("span", { class: "orrery__rate-word" }, "Reverse"),
-        h("span", { class: "orrery__rate-key", "aria-hidden": "true" }, "R"),
-    );
-    reverseItem.setAttribute("aria-keyshortcuts", "R");
 
     // The fastest rate is at the top.
-    const fastestFirst = rateItems.toReversed();
-    const menuItems = [...fastestFirst, reverseItem];
+    const menuItems = rateItems.toReversed();
     const rateMenu = h(
         "div",
         {
@@ -96,9 +94,7 @@ export const createTimeBar = (
             role: "menu",
             "aria-label": "Time warp",
         },
-        ...fastestFirst,
-        h("div", { class: "orrery__rate-rule", role: "separator" }),
-        reverseItem,
+        ...menuItems,
     );
     rateMenu.hidden = true;
 
@@ -131,6 +127,12 @@ export const createTimeBar = (
             h("span", { class: "orrery__utc" }, " UTC"),
         ),
     );
+    const liveChip = h(
+        "span",
+        { class: "orrery__date-live", "aria-hidden": "true" },
+        "Live",
+    );
+    liveChip.hidden = true;
     const date = h(
         "button",
         {
@@ -140,6 +142,7 @@ export const createTimeBar = (
             "aria-expanded": "false",
             "aria-controls": "orrery-date-editor",
         },
+        liveChip,
         // The name holds the visible date, so voice control can say what's shown.
         h("span", { class: "visually-hidden" }, "Set the date, "),
         time,
@@ -148,38 +151,23 @@ export const createTimeBar = (
     const liveFull = h("span", { class: "orrery__live-full" });
     const liveShort = h("span", { class: "orrery__live-short" });
     const liveWord = h("span", { class: "orrery__live-word" });
+    const liveOffset = h("span", {}, " · ", liveFull, liveShort, " ", liveWord);
     const goLiveButton = h(
         "button",
         {
             type: "button",
             class: "orrery__go-live",
+            "aria-keyshortcuts": "L",
             title: "Real time at 1 sec/s (L)",
         },
         "Go live",
+        liveOffset,
     );
-    const live = h(
-        "div",
-        { class: "orrery__live" },
-        h(
-            "span",
-            { class: "orrery__live-state", role: "status" },
-            h("span", { class: "orrery__live-dot", "aria-hidden": "true" }),
-            h("span", { class: "orrery__live-on" }, "Live"),
-            h(
-                "span",
-                // At fast rates this changes every refresh, so only Live is announced.
-                { class: "orrery__live-offset", "aria-live": "off" },
-                liveFull,
-                liveShort,
-                " ",
-                liveWord,
-            ),
-        ),
-        goLiveButton,
-    );
-
-    const soundMenu = createSoundMenu(sound);
-    live.append(soundMenu.element);
+    // A status says Live once. The offset changes too often to announce.
+    const liveStatus = h("span", {
+        class: "visually-hidden",
+        role: "status",
+    });
 
     const editor = createDateEditor(world, date);
     const timeline = createTimeline(world, storage);
@@ -187,11 +175,25 @@ export const createTimeBar = (
     const element = h(
         "div",
         { class: "orrery__clock", role: "group", "aria-label": "Time" },
-        h("div", { class: "orrery__split" }, run, rateButton, rateMenu),
-        date,
-        live,
-        timeline.element,
-        editor.element,
+        h(
+            "div",
+            { class: "orrery__transport" },
+            run,
+            h(
+                "div",
+                { class: "orrery__ratebox" },
+                reverse,
+                h("div", { class: "orrery__rate-wrap" }, rateButton, rateMenu),
+            ),
+            h("div", { class: "orrery__live-slot" }, goLiveButton, liveStatus),
+        ),
+        h(
+            "div",
+            { class: "orrery__stage" },
+            timeline.element,
+            date,
+            editor.element,
+        ),
     );
 
     const goLive = () => {
@@ -213,7 +215,8 @@ export const createTimeBar = (
         if (shownPaused === clock.paused) return;
 
         shownPaused = clock.paused;
-        run.innerHTML = iconSvg(clock.paused ? "pause" : "play");
+        // The glyph is the action, as on a media player.
+        run.innerHTML = iconSvg(clock.paused ? "play" : "pause");
     };
 
     const showRate = () => {
@@ -224,7 +227,7 @@ export const createTimeBar = (
         rateItems.forEach((item, k) => {
             item.setAttribute("aria-checked", String(k === current));
         });
-        reverseItem.setAttribute("aria-checked", String(clock.rate < 0));
+        reverse.setAttribute("aria-pressed", String(clock.rate < 0));
     };
 
     const showTime = () => {
@@ -243,12 +246,19 @@ export const createTimeBar = (
         const on = isLive(clock, nowT);
         const offset = on ? null : offsetText(clock.t - nowT);
 
-        live.classList.toggle("orrery__live--on", on);
-        live.classList.toggle("orrery__live--bare", !on && offset === null);
+        liveChip.hidden = !on;
+        setText(liveStatus, on ? "Live" : "");
+        liveOffset.hidden = offset === null;
         if (offset) {
             setText(liveFull, offset.full);
             setText(liveShort, offset.short);
             setText(liveWord, offset.word);
+        }
+        const label = offset
+            ? `Go live, the clock is ${offset.spoken} ${offset.word}`
+            : "Go live";
+        if (goLiveButton.getAttribute("aria-label") !== label) {
+            goLiveButton.setAttribute("aria-label", label);
         }
         // Hiding the button would drop focus to <body>.
         if (on && document.activeElement === goLiveButton) date.focus();
@@ -282,7 +292,7 @@ export const createTimeBar = (
             closeRateMenu(true);
         });
     });
-    reverseItem.addEventListener("click", () => {
+    reverse.addEventListener("click", () => {
         cue("rate");
         world.setClock({ rate: -clock.rate });
     });
@@ -368,7 +378,6 @@ export const createTimeBar = (
             document.removeEventListener("pointerdown", onPointerDown);
             editor.destroy();
             timeline.destroy();
-            soundMenu.destroy();
             element.remove();
         },
     };

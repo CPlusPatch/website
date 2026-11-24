@@ -3,7 +3,7 @@
 
     /* The room the top and bottom panels leave for the side panels. */
     --orrery-top-space: 3rem;
-    --orrery-bottom-space: 6rem;
+    --orrery-bottom-space: 4rem;
     --orrery-side-width: 19rem;
     /* The gap between the top bar, the HUD and the card and the canvas edge. */
     --orrery-inset: 0.625rem;
@@ -40,6 +40,11 @@
     /* For text on a pick fill, like the selection's label. */
     --orrery-pick-ink: #2a0716;
     --orrery-abort: #ff6b5e;
+
+    /* The date tag is the one light block, so its text and its faded and muted digits are dark. All pass 4.5:1 on the text colour. */
+    --orrery-tag-ink: var(--orrery-ground);
+    --orrery-tag-muted: #4c4a44;
+    --orrery-tag-fade: #6a675f;
 
     /* Earth satellites by orbit class. */
     --orrery-orbit-leo: #8fd694;

@@ -35,6 +35,7 @@ import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import { createScenarios } from "./ui/scenario-menu/scenario-menu.ts";
 import { createSearch, type Search } from "./ui/search.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
+import { createSoundMenu } from "./ui/sound-menu.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
 import { createUnits } from "./units.ts";
 import { createAssets } from "./view/assets.ts";
@@ -378,7 +379,10 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     container.inert = true;
 
     const sound = createSound(storage);
-    const timeBar = createTimeBar(world, storage, sound);
+    // The views come and go, and the sound menu stays in the HUD panel beside them.
+    const soundMenu = createSoundMenu(sound);
+    root.querySelector(".orrery__panel--hud")?.append(soundMenu.element);
+    const timeBar = createTimeBar(world, storage);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
     // The page has the spacer between them. The notices come last.
     const crumbs = createCrumbs(world);
@@ -570,6 +574,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             satellites.destroy();
             search?.destroy();
             timeBar.destroy();
+            soundMenu.destroy();
             sound.destroy();
             crumbs.destroy();
             keys.destroy();

@@ -6,34 +6,42 @@
     .orrery__sound-button {
         display: grid;
         place-items: center;
-        inline-size: var(--orrery-clock-control);
-        block-size: var(--orrery-clock-control);
+        inline-size: var(--orrery-control);
+        block-size: var(--orrery-control);
         padding: 0;
         border: 0;
         background: none;
-        color: var(--orrery-muted);
+        color: var(--orrery-text);
         cursor: pointer;
 
-        &:hover,
         &[aria-expanded="true"] {
             background-color: var(--orrery-panel-raised);
         }
 
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--orrery-panel-raised);
+            }
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 2px;
+        }
+
         svg {
-            inline-size: 12px;
-            block-size: 12px;
+            inline-size: 16px;
+            block-size: 16px;
         }
     }
 
     .orrery__sound-menu {
         position: absolute;
         z-index: 4;
-        inset-inline-end: 0;
-        /* Above the capsule: its padding and frame, and 8px. */
-        inset-block-end: calc(100% + var(--space-sm) + 1px + 8px);
+        inset-inline-start: 0;
+        /* Over the HUD, which is at the bottom left. */
+        inset-block-end: calc(100% + 8px);
         inline-size: 200px;
-        /* The live readout around it doesn't wrap. */
-        white-space: normal;
         padding: 4px 0;
         border: 1px solid var(--orrery-frame);
         background-color: var(--orrery-panel-solid);
@@ -46,5 +54,18 @@
         color: var(--orrery-muted);
         font: 400 var(--orrery-size-xs) var(--orrery-font-ui);
         overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 720px) {
+        .orrery__sound-button {
+            inline-size: var(--control-height-md);
+            block-size: var(--control-height-md);
+        }
+
+        /* The button is at the top right, so the menu opens down and stays on screen. */
+        .orrery__sound-menu {
+            inset-inline: auto 0;
+            inset-block: calc(100% + 8px) auto;
+        }
     }
 }

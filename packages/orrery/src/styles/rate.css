@@ -1,29 +1,15 @@
 .orrery {
     .orrery__rate {
-        position: relative;
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 4px;
-        block-size: var(--orrery-clock-control);
-        padding: 0 8px;
-        border: 0;
-        background: none;
-        color: var(--orrery-text);
+        /* The width stays the same whatever the label says. */
+        min-inline-size: 7.75rem;
+        padding: 0 0.625rem;
         font: 500 var(--orrery-size-sm) var(--orrery-font-data);
         white-space: nowrap;
-        cursor: pointer;
 
-        /* The divider is shorter than the button. */
-        &::before {
-            content: "";
-            position: absolute;
-            inset-inline-start: 0;
-            inset-block-start: 7px;
-            block-size: 16px;
-            border-inline-start: 1px solid var(--orrery-rule);
-        }
-
-        &:hover,
         &[aria-expanded="true"] {
             background-color: var(--orrery-panel-raised);
         }
@@ -36,22 +22,21 @@
         }
     }
 
-    /* The minimum keeps the button's width from changing with the rate. */
-    .orrery__rate-label {
-        min-inline-size: 8ch;
-        text-align: start;
-    }
+    .orrery__clock--reverse {
+        .orrery__rate {
+            border-color: var(--orrery-hold);
+        }
 
-    .orrery__clock--reverse .orrery__rate-label {
-        color: var(--orrery-hold);
+        .orrery__rate-label {
+            color: var(--orrery-hold);
+        }
     }
 
     .orrery__rate-menu {
         position: absolute;
         z-index: 4;
-        inset-inline-start: var(--orrery-clock-control);
-        /* Above the capsule: its padding and frame, and 8px. */
-        inset-block-end: calc(100% + var(--space-sm) + 1px + 8px);
+        inset-inline-start: 0;
+        inset-block-end: calc(100% + 6px);
         min-inline-size: 170px;
         padding: 4px 0;
         border: 1px solid var(--orrery-frame);
@@ -64,7 +49,7 @@
         align-items: center;
         gap: 8px;
         inline-size: 100%;
-        block-size: var(--orrery-clock-control);
+        block-size: var(--orrery-control-lg);
         padding: 0 var(--orrery-pad);
         border: 0;
         background: none;
@@ -94,18 +79,19 @@
         }
     }
 
-    /* A word in the menu is sans, and only the rates are figures. */
+    /* A word in the sound menu is sans, and only the rates are figures. */
     .orrery__rate-word {
         font-family: var(--orrery-font-ui);
     }
 
-    .orrery__rate-key {
-        color: var(--orrery-muted);
-        font: 400 var(--orrery-size-xs) var(--orrery-font-data);
-    }
+    @media (max-width: 720px) {
+        .orrery__rate {
+            min-inline-size: 7rem;
+            padding: 0 0.5rem;
+        }
 
-    .orrery__rate-rule {
-        margin-block: 4px;
-        border-block-start: 1px solid var(--orrery-rule);
+        .orrery__rate-item {
+            block-size: var(--control-height-md);
+        }
     }
 }

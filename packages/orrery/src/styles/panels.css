@@ -26,7 +26,8 @@
                 .orrery__notices,
                 .orrery__crumbs,
                 .orrery__spacer,
-                .orrery__hud-scale
+                .orrery__hud-scale,
+                .orrery__clock
             ),
         .orrery__notices > * {
             border: 1px solid var(--orrery-frame);
@@ -56,24 +57,24 @@
         align-items: flex-start;
     }
 
+    /* The time bar is docked, so it has no inset. */
     .orrery__panel--bottom {
         inset-block-end: 0;
         inset-inline: 0;
         flex-wrap: wrap;
         align-items: flex-end;
+        gap: 0;
+        padding: 0;
     }
 
-    /* Over the scene's bottom left, beside the time bar, which keeps 130px clear of the corners. */
+    /* Over the scene, above the time bar's top left. The rows are the buttons, then the scale. */
     .orrery__panel--hud {
-        inset-block-end: 0;
+        inset-block-end: var(--orrery-bottom-space);
         inset-inline-start: 0;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-sm);
-        padding-block-end: max(
-            var(--orrery-inset),
-            env(safe-area-inset-bottom, 0px)
-        );
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        justify-content: start;
+        align-items: start;
         padding-inline-start: max(
             var(--orrery-inset),
             env(safe-area-inset-left, 0px)
@@ -103,14 +104,21 @@
             inline-size: auto;
         }
 
-        /* A row under the top bar. */
+        /*
+         * Zoom and the scale are at the bottom left, above the time bar. Fit, chase and sound are
+         * at the top right, under the top bar.
+         */
         .orrery__panel--hud {
-            inset-block: var(--orrery-top-space) auto;
-            flex-direction: row;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.875rem;
-            padding-block-end: var(--orrery-inset);
+            inset: 0;
+            grid-template-columns: auto minmax(0, 1fr) auto auto;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            justify-content: stretch;
+            padding-block: calc(var(--orrery-top-space) + var(--orrery-inset))
+                calc(var(--orrery-bottom-space) + var(--orrery-inset));
+            padding-inline-end: max(
+                var(--orrery-inset),
+                env(safe-area-inset-right, 0px)
+            );
         }
 
         /* The crumbs get the first row, and the buttons the next. */

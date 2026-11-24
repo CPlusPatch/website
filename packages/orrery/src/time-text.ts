@@ -28,8 +28,13 @@ export const isLive = (
 export type Offset = {
     full: string;
     short: string;
+    /** The largest unit in words, for a screen reader. */
+    spoken: string;
     word: "ahead" | "behind";
 };
+
+const spell = (n: number, unit: string): string =>
+    `${n} ${unit}${n === 1 ? "" : "s"}`;
 
 /** The offset of the clock from now in seconds as text, or `null` under a minute either way. */
 export const offsetText = (offsetS: number): Offset | null => {
@@ -44,18 +49,36 @@ export const offsetText = (offsetS: number): Offset | null => {
     const word = offsetS > 0 ? "ahead" : "behind";
 
     if (y) {
-        return { full: d ? `${y}y ${d}d` : `${y}y`, short: `${y}y`, word };
+        return {
+            full: d ? `${y}y ${d}d` : `${y}y`,
+            short: `${y}y`,
+            spoken: spell(y, "year"),
+            word,
+        };
     }
-    if (d) return { full: `${d}d ${h}h`, short: `${d}d`, word };
+    if (d) {
+        return {
+            full: `${d}d ${h}h`,
+            short: `${d}d`,
+            spoken: spell(d, "day"),
+            word,
+        };
+    }
     if (h) {
         return {
             full: `${h}h ${String(m).padStart(2, "0")}m`,
             short: `${h}h`,
+            spoken: spell(h, "hour"),
             word,
         };
     }
 
-    return { full: `${m}m`, short: `${m}m`, word };
+    return {
+        full: `${m}m`,
+        short: `${m}m`,
+        spoken: spell(m, "minute"),
+        word,
+    };
 };
 
 /** One part of the date as text, and whether it changes too fast to read. */

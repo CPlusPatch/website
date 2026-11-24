@@ -33,7 +33,7 @@ const button = (label: string, icon: string, onClick: () => void) => {
 };
 
 /**
- * Fills the HUD panel `slot` with the zoom and chase buttons and the scale bar of `view`.
+ * Fills the HUD panel `slot` with the zoom, fit and chase buttons and the scale bar of `view`.
  * `narrow` picks the bar's target length. Returns a function that removes it all.
  */
 export const createHud = (
@@ -56,9 +56,13 @@ export const createHud = (
     const offChase = view.onChase(showChase);
     const zoom = h(
         "div",
-        { class: "orrery__hud-zoom", role: "group", "aria-label": "View" },
+        { class: "orrery__hud-zoom", role: "group", "aria-label": "Zoom" },
         button("Zoom in", PLUS_ICON, () => view.zoom(1)),
         button("Zoom out", MINUS_ICON, () => view.zoom(-1)),
+    );
+    const extra = h(
+        "div",
+        { class: "orrery__hud-extra", role: "group", "aria-label": "View" },
         button("Fit the focus", FIT_ICON, () => view.fitFocus()),
         chase,
     );
@@ -68,7 +72,8 @@ export const createHud = (
         bar,
         label,
     );
-    slot.append(zoom, scale);
+    // Ahead of the sound menu, which stays in the slot across rebuilds.
+    slot.prepend(zoom, extra, scale);
 
     let width = -1;
     const update = () => {
@@ -100,6 +105,7 @@ export const createHud = (
         cancelAnimationFrame(frame);
         offChase();
         zoom.remove();
+        extra.remove();
         scale.remove();
     };
 };
