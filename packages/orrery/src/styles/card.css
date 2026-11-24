@@ -19,6 +19,11 @@
         padding: var(--space-sm) var(--orrery-pad);
     }
 
+    /* The body inspector's head: a rule under it, as the headline and the scroll area follow. */
+    .orrery__inspector-head--ruled {
+        border-block-end: 1px solid var(--orrery-rule);
+    }
+
     .orrery__inspector-body {
         display: flex;
         flex-direction: column;
@@ -94,6 +99,21 @@
         letter-spacing: 0.02em;
     }
 
+    /* The marker and the name share a line, so the marker needs no offset. */
+    .orrery__inspector-title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin: 0;
+        overflow-wrap: anywhere;
+        font: 600 var(--orrery-size-lg) / 1.75rem var(--orrery-font-ui);
+        letter-spacing: 0.02em;
+
+        .orrery__orbit-marker {
+            margin-block-start: 0;
+        }
+    }
+
     .orrery__panel-title {
         flex: 1;
         min-inline-size: 0;
@@ -106,6 +126,15 @@
         margin: 0 0 calc(var(--space-md) - var(--space-xs) / 2);
         color: var(--orrery-muted);
         font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__inspector-titles {
+        flex: 1;
+        min-inline-size: 0;
+
+        .orrery__orbit-meta {
+            margin: 0;
+        }
     }
 
     .orrery__orbit-link {
@@ -123,29 +152,51 @@
         }
     }
 
-    /* The short form of the readouts. The list below has the full set. */
-    .orrery__orbit-line {
-        margin: 0 0 calc(var(--space-sm) + var(--space-xs));
-        color: var(--orrery-muted);
-        font: 400 var(--orrery-size-xs) / 1.5 var(--orrery-font-data);
-        font-variant-numeric: tabular-nums;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0 var(--space-sm);
+    /* The numbers that matter most, above the scroll area. */
+    .orrery__inspector-headline {
+        flex: none;
+        padding: var(--space-sm) var(--orrery-pad);
 
-        /* The dot ends the item before it, so a wrapped line can't start with one. */
-        span {
-            white-space: nowrap;
-
-            &:not(:last-child)::after {
-                content: " ·";
-            }
+        p {
+            font: 400 var(--orrery-size-sm) / 1.2 var(--orrery-font-ui);
         }
     }
 
-    /* The scene draws these numbers on the orbit while it's big on screen. */
-    &:has(.orrery__canvas[data-readouts]) .orrery__orbit-line {
-        display: none;
+    .orrery__headline-now {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 2px var(--space-sm);
+        color: var(--orrery-text);
+    }
+
+    .orrery__headline-distance {
+        font: 500 var(--orrery-size-lg) / 1.2 var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .orrery__headline-from {
+        color: var(--orrery-muted);
+    }
+
+    .orrery__headline-speed {
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-sm) / 1.2 var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+
+        &::before {
+            content: "· ";
+        }
+    }
+
+    .orrery__headline-sub {
+        margin-block-start: var(--space-xs);
+        color: var(--orrery-muted);
+
+        span {
+            font: 400 var(--orrery-size-sm) var(--orrery-font-data);
+            font-variant-numeric: tabular-nums;
+        }
     }
 
     .orrery__orbit-around,
@@ -174,8 +225,9 @@
         }
     }
 
-    /* The root has no readouts, and the two margins don't collapse in the scroll body. */
-    .orrery__orbit-meta + .orrery__body-stats {
+    /* The scroll body has its own top padding. */
+    .orrery__inspector-body
+        > :is(.orrery__body-stats, .orrery__orbit-around):first-child {
         margin-block-start: 0;
     }
 
@@ -322,15 +374,11 @@
             }
         }
 
-        /* Peeked: the name, the line and the chips stay. */
+        /* Peeked: the grip, the head and the headline stay. */
         .orrery__inspector[data-peek] {
-            .orrery__orbit-line {
-                margin-block-end: 0;
-            }
-
             .orrery__orbit-meta,
-            .orrery__readouts,
-            .orrery__body-stats {
+            .orrery__inspector-body,
+            .orrery__inspector-foot {
                 display: none;
             }
         }

@@ -15,11 +15,7 @@ import { createElementEditor, type ElementEditor } from "../element-editor.ts";
 import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";
 import { type ActionButtons, button, createActions } from "./actions.ts";
-import {
-    createReadoutRows,
-    type ReadoutRows,
-    refreshReadoutRows,
-} from "./readouts.ts";
+import { createHeadline, type Headline, refreshHeadline } from "./readouts.ts";
 import { createStatsSection } from "./stats.ts";
 
 /** The inspector's element and how to remove it. */
@@ -68,12 +64,14 @@ export const createInspector = (
     });
 
     const marker = h("span", { class: "orrery__orbit-marker" });
-    const title = h("h2", { id: "orrery-orbit-title" });
+    const titleText = h("span");
+    const title = h("h2", { id: "orrery-orbit-title" }, marker, titleText);
+    // Under the title, so the form heads keep the kind and parent in view too.
+    const meta = h("p", { class: "orrery__orbit-meta" });
     const head = h(
         "div",
         { class: "orrery__inspector-head" },
-        marker,
-        title,
+        h("div", { class: "orrery__inspector-titles" }, title, meta),
         close,
     );
     // Scrolls under the head, as a scrolling card left a blank band in Chromium's canvas.
@@ -107,7 +105,7 @@ export const createInspector = (
 
         // The actions are about to be hidden, which would drop the focus.
         const held = document.activeElement?.closest(
-            ".orrery__orbit-meta, .orrery__orbit-actions",
+            ".orrery__orbit-meta, .orrery__inspector-body, .orrery__inspector-foot",
         );
         if (!open && held && element.contains(held)) grip.focus();
     };
@@ -134,12 +132,16 @@ export const createInspector = (
 
     // Only the card shows the body's name big, with a rule under it.
     const setHead = (small: boolean) => {
-        title.className = small ? "orrery__panel-title" : "orrery__orbit-title";
+        title.className = small
+            ? "orrery__panel-title"
+            : "orrery__inspector-title";
         head.classList.toggle("orrery__inspector-head--panel", small);
+        head.classList.toggle("orrery__inspector-head--ruled", !small);
     };
     setHead(false);
 
-    let rows: ReadoutRows | null = null;
+    let headline: Headline | null = null;
+    let foot: HTMLElement | null = null;
     let stats: HTMLElement | null = null;
     let shown: string | null = null;
     let mode: Mode = "card";
@@ -153,17 +155,14 @@ export const createInspector = (
 
         const on = world.focused === shown;
         buttons.focus.setAttribute("aria-pressed", String(on));
-        const label = buttons.focus.querySelector(
-            ".orrery__orbit-button-label",
-        );
-        if (label) setText(label, on ? "Focused" : "Focus");
+        setText(buttons.focus, on ? "Focused" : "Focus");
     };
 
     const refresh = () => {
         burn?.refresh();
 
         const id = world.selected;
-        if (!id || !rows) return;
+        if (!id || !headline) return;
 
         const current = readouts(
             world.scenario,
@@ -173,7 +172,7 @@ export const createInspector = (
         );
         if (!current) return;
 
-        refreshReadoutRows(rows, current, units.get());
+        refreshHeadline(headline, current, units.get());
     };
 
     // The card re-renders, so what had focus moves to the first thing a reader can pick next.
@@ -267,7 +266,10 @@ export const createInspector = (
             "aria-label",
             adding ? "Add a body" : "Selected body",
         );
-        rows = null;
+        headline?.element.remove();
+        headline = null;
+        foot?.remove();
+        foot = null;
         stats = null;
         buttons.focus = null;
         content.replaceChildren();
@@ -282,7 +284,8 @@ export const createInspector = (
         if (adding) {
             element.removeAttribute("data-peek");
             setHead(true);
-            title.textContent = "Add a body";
+            meta.hidden = true;
+            titleText.textContent = "Add a body";
             adder = createBodyAdder(world, units, addName, cancelAdd);
             content.append(adder.element);
 
@@ -314,7 +317,7 @@ export const createInspector = (
         setHead(mode !== "card");
         grip.hidden = mode !== "card";
         element.toggleAttribute("data-peek", !open && mode === "card");
-        title.textContent =
+        titleText.textContent =
             mode === "card"
                 ? body.name
                 : `${mode === "edit" ? "Edit" : "Burn"} ${body.name}`;
@@ -324,13 +327,10 @@ export const createInspector = (
                   world.select(parent.id),
               )
             : null;
-        content.append(
-            h(
-                "p",
-                { class: "orrery__orbit-meta" },
-                `${KIND_LABELS[body.kind]} `,
-                ...(link ? ["around ", link] : ["at the centre"]),
-            ),
+        meta.hidden = false;
+        meta.replaceChildren(
+            `${KIND_LABELS[body.kind]} `,
+            ...(link ? ["around ", link] : ["at the centre"]),
         );
         if (form) {
             content.append(form);
@@ -339,8 +339,8 @@ export const createInspector = (
 
         // A body with no parent has no orbit to read.
         if (parent) {
-            rows = createReadoutRows(parent.name, units);
-            content.append(...rows.elements);
+            headline = createHeadline(parent.name);
+            head.after(headline.element);
         }
 
         stats = createStatsSection(
@@ -350,15 +350,14 @@ export const createInspector = (
 
         const chips = parent ? around(body) : null;
         if (chips) content.append(chips);
-        content.append(
-            createActions(
-                { world, element, buttons, syncFocus, openForm },
-                body.id,
-                body.name,
-                parent !== undefined,
-                hasOrbit,
-            ),
+        foot = createActions(
+            { world, element, buttons, syncFocus, openForm },
+            body.id,
+            body.name,
+            parent !== undefined,
+            hasOrbit,
         );
+        element.append(foot);
         refresh();
 
         // Focus was on something this render replaced.
@@ -399,9 +398,7 @@ export const createInspector = (
                 // An edit can give a body its first row, so the section goes before the chips.
                 content.insertBefore(
                     next,
-                    content.querySelector(
-                        ".orrery__orbit-around, .orrery__orbit-actions",
-                    ),
+                    content.querySelector(".orrery__orbit-around"),
                 );
             }
             stats = next;

@@ -9,12 +9,6 @@ const SVG = (body: string) =>
 export const FOCUS_ICON = SVG(
     '<g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="4"/><path d="M8 0.5V3.5M8 12.5V15.5M0.5 8H3.5M12.5 8H15.5"/></g>',
 );
-const EDIT_ICON = SVG(
-    '<path d="M10.5 2.5l3 3-8 8H2.5v-3z" fill="none" stroke="currentColor" stroke-width="1.5"/>',
-);
-const BURN_ICON = SVG(
-    '<path d="M8 13V3M4 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6"/>',
-);
 
 /** A button with `label` that calls `onClick`. */
 export const button = (
@@ -59,7 +53,7 @@ export type ActionsContext = {
     openForm: (mode: "edit" | "burn") => void;
 };
 
-/** The row of Focus, Edit, Burn and Remove for a body, with the Remove confirm. */
+/** The pinned footer of a card: Focus, Edit, Burn and Remove, with the Remove confirm. */
 export const createActions = (
     { world, element, buttons: kept, syncFocus, openForm }: ActionsContext,
     id: string,
@@ -67,40 +61,36 @@ export const createActions = (
     hasParent: boolean,
     hasOrbit: boolean,
 ): HTMLElement => {
-    const row = h("div", { class: "orrery__orbit-actions" });
-    // Remove goes under this row, so the three buttons keep the card's width.
-    const buttons = h("div", { class: "orrery__orbit-buttons" });
-    const base = "orrery__orbit-button";
+    const foot = h("div", { class: "orrery__inspector-foot" });
+    const base = "orrery__foot-button";
+    let confirming = false;
 
     const showRow = () => {
-        kept.focus = iconButton(
-            "Focus",
-            `${base} orrery__orbit-focus`,
-            FOCUS_ICON,
-            () => world.focus(id),
+        confirming = false;
+        foot.className = "orrery__inspector-foot";
+        foot.removeAttribute("role");
+        foot.removeAttribute("aria-labelledby");
+
+        kept.focus = button("Focus", `${base} orrery__orbit-focus`, () =>
+            world.focus(id),
         );
         syncFocus();
-        buttons.replaceChildren(kept.focus);
-        row.replaceChildren(buttons);
+        foot.replaceChildren(kept.focus);
         kept.edit = null;
         kept.burn = null;
         if (hasOrbit) {
-            kept.edit = iconButton("Edit", base, EDIT_ICON, () =>
-                openForm("edit"),
-            );
-            kept.burn = iconButton("Burn", base, BURN_ICON, () =>
-                openForm("burn"),
-            );
-            buttons.append(kept.edit, kept.burn);
+            kept.edit = button("Edit", base, () => openForm("edit"));
+            kept.burn = button("Burn", base, () => openForm("burn"));
+            foot.append(kept.edit, kept.burn);
         }
         if (hasParent) {
-            row.append(button("Remove", "orrery__orbit-quiet", showConfirm));
+            foot.append(button("Remove", "orrery__foot-remove", showConfirm));
         }
     };
 
     const back = () => {
         showRow();
-        row.querySelector<HTMLElement>(".orrery__orbit-quiet")?.focus();
+        foot.querySelector<HTMLElement>(".orrery__foot-remove")?.focus();
     };
 
     const showConfirm = () => {
@@ -108,7 +98,7 @@ export const createActions = (
         const cancel = button("Cancel", base, back);
         const remove = button(
             "Remove",
-            `${base} orrery__orbit-button--danger`,
+            `${base} orrery__foot-button--danger`,
             () => {
                 const root = element.closest<HTMLElement>(".orrery");
                 const parent = world.scenario.bodies.find(
@@ -125,40 +115,40 @@ export const createActions = (
                 )?.focus();
             },
         );
-        const group = h(
+        const question = h(
             "div",
-            {
-                class: "orrery__orbit-confirm",
-                role: "group",
-                "aria-labelledby": "orrery-orbit-confirm-title",
-            },
+            { class: "orrery__foot-question" },
             h(
                 "p",
                 {
-                    class: "orrery__orbit-confirm-title",
+                    class: "orrery__foot-question-title",
                     id: "orrery-orbit-confirm-title",
                 },
                 `Remove ${name}?`,
             ),
             ...(note
-                ? [h("p", { class: "orrery__orbit-confirm-note" }, note)]
+                ? [h("p", { class: "orrery__foot-question-note" }, note)]
                 : []),
-            h("div", { class: "orrery__orbit-row" }, cancel, remove),
         );
-        group.addEventListener("keydown", (event) => {
-            if (event.key !== "Escape") return;
-
-            // The shortcut that clears the selection skips a handled key.
-            event.preventDefault();
-            event.stopPropagation();
-            back();
-        });
+        confirming = true;
+        foot.className =
+            "orrery__inspector-foot orrery__inspector-foot--confirm";
+        foot.setAttribute("role", "group");
+        foot.setAttribute("aria-labelledby", "orrery-orbit-confirm-title");
         kept.focus = null;
-        row.replaceChildren(group);
+        foot.replaceChildren(question, cancel, remove);
         cancel.focus();
     };
 
+    foot.addEventListener("keydown", (event) => {
+        if (!confirming || event.key !== "Escape") return;
+
+        // The shortcut that clears the selection skips a handled key.
+        event.preventDefault();
+        event.stopPropagation();
+        back();
+    });
     showRow();
 
-    return row;
+    return foot;
 };
