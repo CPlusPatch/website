@@ -25,13 +25,13 @@ export const createStatsSection = (stats: BodyStats): HTMLElement | null => {
     if (stats.tilt !== null) rows.push(["Axial tilt", formatAngle(stats.tilt)]);
     if (rows.length === 0) return null;
 
-    const list = h("dl", { class: "orrery__readouts" });
-    for (const [label, value] of rows) {
-        list.append(
-            h("dt", {}, label),
-            h("dd", { class: "orrery__readout" }, value),
-        );
-    }
+    const list = h(
+        "dl",
+        { class: "orrery__stats-grid" },
+        ...rows.map(([label, value]) =>
+            h("div", {}, h("dt", {}, label), h("dd", {}, value)),
+        ),
+    );
 
     return h(
         "section",

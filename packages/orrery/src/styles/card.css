@@ -298,24 +298,10 @@
         margin-block-start: var(--orrery-pad);
 
         h3 {
-            margin: 0 0 var(--space-sm);
+            margin: 0 0 6px;
             color: var(--orrery-muted);
-            font-size: var(--orrery-size-sm);
+            font-size: var(--orrery-size-label);
             font-weight: 500;
-        }
-
-        /* A grid, so every row shares its columns. */
-        ul {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
-            gap: var(--orrery-chip-gap);
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        li {
-            display: flex;
         }
     }
 
@@ -325,23 +311,51 @@
         margin-block-start: 0;
     }
 
-    .orrery__orbit-chip {
-        flex: 1;
+    /* One row. The fit hides the chips that don't leave room for "+N more". */
+    .orrery__orbit-chips {
         display: flex;
+        flex-wrap: nowrap;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        list-style: none;
+
+        &[data-expanded] {
+            flex-wrap: wrap;
+        }
+
+        li {
+            display: flex;
+            flex: none;
+        }
+
+        > [hidden] {
+            display: none;
+        }
+    }
+
+    .orrery__orbit-chip {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: var(--space-xs);
-        block-size: var(--orrery-control);
-        padding: 0 var(--space-sm);
+        block-size: 1.5rem;
+        padding: 0 6px;
         border: 1px solid var(--orrery-rule);
-        background-color: var(--orrery-panel-raised);
+        background: transparent;
         color: var(--orrery-text);
-        font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+        font: 500 var(--orrery-size-label) var(--orrery-font-ui);
+        white-space: nowrap;
         cursor: pointer;
 
         &:hover {
-            border-color: var(--orrery-muted);
+            background: var(--orrery-panel-raised);
         }
+    }
+
+    .orrery__orbit-chip--more {
+        color: var(--orrery-muted);
     }
 
     .orrery__orbit-chip-marker {
@@ -353,6 +367,28 @@
         svg {
             inline-size: 100%;
             block-size: 100%;
+        }
+    }
+
+    .orrery__stats-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+        gap: 10px var(--space-sm);
+        margin: 0;
+
+        div {
+            min-inline-size: 0;
+        }
+
+        dt {
+            color: var(--orrery-muted);
+            font-size: var(--orrery-size-label);
+        }
+
+        dd {
+            margin: 0;
+            font: 400 var(--orrery-size-sm) / 1.4 var(--orrery-font-data);
+            font-variant-numeric: tabular-nums;
         }
     }
 

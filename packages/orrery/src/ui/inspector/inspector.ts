@@ -1,4 +1,4 @@
-import { type Body, elementsAt } from "@cpluspatch/orbit";
+import { elementsAt } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -16,6 +16,7 @@ import { createElementEditor, type ElementEditor } from "../element-editor.ts";
 import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";
 import { type ActionButtons, button, createActions } from "./actions.ts";
+import { type ChildrenSection, createChildrenSection } from "./children.ts";
 import { createPlate, type Plate, refreshPlate } from "./plate.ts";
 import { createHeadline, type Headline, refreshHeadline } from "./readouts.ts";
 import { createStatsSection } from "./stats.ts";
@@ -146,6 +147,7 @@ export const createInspector = (
     let plate: Plate | null = null;
     let foot: HTMLElement | null = null;
     let stats: HTMLElement | null = null;
+    let children: ChildrenSection | null = null;
     let shown: string | null = null;
     let mode: Mode = "card";
     let editor: ElementEditor | null = null;
@@ -209,8 +211,9 @@ export const createInspector = (
     // The card re-renders, so what had focus moves to the first thing a reader can pick next.
     const focusFirst = () => {
         const next =
-            element.querySelector<HTMLElement>(".orrery__orbit-chip") ??
-            element.querySelector<HTMLElement>(".orrery__orbit-link");
+            element.querySelector<HTMLElement>(
+                "li:not([hidden]) > .orrery__orbit-chip",
+            ) ?? element.querySelector<HTMLElement>(".orrery__orbit-link");
         (next ?? close).focus();
     };
 
@@ -253,35 +256,6 @@ export const createInspector = (
             ?.focus();
     };
 
-    const around = (centre: Body): HTMLElement | null => {
-        const children = world.scenario.bodies.filter(
-            (candidate) => candidate.parent === centre.id,
-        );
-        if (children.length === 0) return null;
-
-        return h(
-            "section",
-            { class: "orrery__orbit-around" },
-            h("h3", {}, `Around ${centre.name}`),
-            h(
-                "ul",
-                {},
-                ...children.map((child) => {
-                    const chip = button(child.name, "orrery__orbit-chip", () =>
-                        world.select(child.id),
-                    );
-                    const icon = h("span", {
-                        class: "orrery__orbit-chip-marker",
-                    });
-                    showBodyMarker(icon, child, centre);
-                    chip.prepend(icon);
-
-                    return h("li", {}, chip);
-                }),
-            ),
-        );
-    };
-
     const render = () => {
         const id = world.selected;
         const body = world.scenario.bodies.find((b) => b.id === id);
@@ -304,6 +278,8 @@ export const createInspector = (
         foot?.remove();
         foot = null;
         stats = null;
+        children?.destroy();
+        children = null;
         buttons.focus = null;
         content.replaceChildren();
         editor?.destroy();
@@ -380,13 +356,13 @@ export const createInspector = (
             headline?.element.after(plate.element);
         }
 
+        children = parent ? createChildrenSection(world, body) : null;
+        if (children) content.append(children.element);
+
         stats = createStatsSection(
             bodyStats(world.scenario, body.id, world.clock.t),
         );
         if (stats) content.append(stats);
-
-        const chips = parent ? around(body) : null;
-        if (chips) content.append(chips);
         foot = createActions(
             { world, element, buttons, syncFocus, openForm },
             body.id,
@@ -431,13 +407,8 @@ export const createInspector = (
             );
             if (stats && next) stats.replaceWith(next);
             else if (stats) stats.remove();
-            else if (next) {
-                // An edit can give a body its first row, so the section goes before the chips.
-                content.insertBefore(
-                    next,
-                    content.querySelector(".orrery__orbit-around"),
-                );
-            }
+            // An edit can give a body its first row. The stats come last, so it goes at the end.
+            else if (next) content.append(next);
             stats = next;
         }
     });
@@ -450,6 +421,7 @@ export const createInspector = (
             off();
             offUnits();
             clearInterval(interval);
+            children?.destroy();
             editor?.destroy();
             burn?.destroy();
             adder?.destroy();
