@@ -6,16 +6,16 @@ import { hex } from "./oklch.ts";
 
 /** Relative luminance, straight from the WCAG 2.x definition. */
 export const luminance = (hexColor: string): number => {
-    const [r, g, b] = [1, 3, 5].map((i) => {
+    const linear = (i: number) => {
         const s = Number.parseInt(hexColor.slice(i, i + 2), 16) / 255;
         return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    return 0.2126 * linear(1) + 0.7152 * linear(3) + 0.0722 * linear(5);
 };
 
 export const contrast = (a: string, b: string): number => {
-    const [lo, hi] = [luminance(a), luminance(b)].sort((x, y) => x - y);
-    return (hi + 0.05) / (lo + 0.05);
+    const [la, lb] = [luminance(a), luminance(b)];
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 };
 
 /**

@@ -87,6 +87,8 @@ const fetchVideo = async (): Promise<[path: string, done: () => void]> => {
         source,
     ]);
     const [file] = [...Deno.readDirSync(dir)];
+    if (!file) throw new Error(`yt-dlp downloaded nothing from ${source}`);
+
     return [
         `${dir}/${file.name}`,
         () => Deno.removeSync(dir, { recursive: true }),

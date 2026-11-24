@@ -59,6 +59,8 @@ const requests = readUrls(sources).map((line) => {
     const [url, title, artist, album] = line
         .split("|")
         .map((part) => part.trim());
+    if (url === undefined) throw new Error(`No URL in "${line}"`);
+
     return {
         url,
         title: title || undefined,

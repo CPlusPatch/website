@@ -31,7 +31,8 @@ export const updateStylesheet = (
     const lines = css.split("\n");
     const start = lines.findIndex((line) => line.includes(START_MARKER));
     const end = lines.findIndex((line) => line.includes(END_MARKER));
-    if (start === -1 || end < start) {
+    const endLine = lines[end];
+    if (start === -1 || end < start || endLine === undefined) {
         throw new Error(
             `expected /* ${START_MARKER} */ ... /* ${END_MARKER} */ markers`,
         );
@@ -42,12 +43,16 @@ export const updateStylesheet = (
     const seen = new Set<string>();
 
     for (const line of lines.slice(start + 1, end)) {
-        const match = line.match(DECLARATION);
-        if (!match) {
+        const [, indent, name, current] = line.match(DECLARATION) ?? [];
+        if (
+            indent === undefined ||
+            name === undefined ||
+            current === undefined
+        ) {
             region.push(line);
             continue;
         }
-        const [, indent, name, current] = match;
+
         const pair = tokens.get(name);
         if (!pair) {
             changes.push(`- --color-${name}`);
@@ -61,7 +66,7 @@ export const updateStylesheet = (
         region.push(`${indent}--color-${name}: ${value};`);
     }
 
-    const indent = lines[end].match(/^\s*/)?.[0] ?? "";
+    const indent = endLine.match(/^\s*/)?.[0] ?? "";
     for (const [name, pair] of tokens) {
         if (seen.has(name)) continue;
         changes.push(`+ --color-${name}`);

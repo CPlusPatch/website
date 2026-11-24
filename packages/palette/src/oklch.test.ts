@@ -12,11 +12,12 @@ Deno.test("hex clips out-of-gamut colours instead of overflowing", () => {
 });
 
 Deno.test("maxChroma lands on the sRGB gamut boundary", () => {
-    for (const [l, h] of [
+    const cases: [number, number][] = [
         [0.45, 3.8],
         [0.78, 84],
         [0.72, 303.7],
-    ]) {
+    ];
+    for (const [l, h] of cases) {
         const c = maxChroma(l, h);
         assert(inGamut(l, c, h), `L=${l} H=${h} C=${c} in gamut`);
         assert(!inGamut(l, c + 0.005, h), `L=${l} H=${h} past boundary`);
