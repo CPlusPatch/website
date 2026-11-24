@@ -1,4 +1,9 @@
-import { j2000sToUnixMs, unixMsToJ2000s } from "@cpluspatch/orbit";
+import {
+    j2000sToUnixMs,
+    MAX_YEAR,
+    MIN_YEAR,
+    unixMsToJ2000s,
+} from "@cpluspatch/orbit";
 
 /** A UTC date and time as numbers, with the month from 1. */
 export type DateParts = {
@@ -32,9 +37,7 @@ export const MONTHS = [
     "December",
 ];
 
-/** The first and last year the date can be set to. */
-export const MIN_YEAR = 1;
-export const MAX_YEAR = 9999;
+export { MAX_YEAR, MIN_YEAR };
 
 /** The seconds one step of a part below a month moves the date by. */
 const STEP_SECONDS = { d: 86400, h: 3600, mi: 60, s: 1 } as const;

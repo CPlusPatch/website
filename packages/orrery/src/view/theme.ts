@@ -102,15 +102,18 @@ export const createTheme = (container: HTMLElement): Theme => {
 
     const cache = new Map<string, Color>();
 
-    const resolve = (css: string): Color => {
+    const resolve = (css: string, fallback?: string): Color => {
         const cached = cache.get(css);
         if (cached) return cached;
 
         // An invalid value is ignored, which would keep the last body's colour.
         probe.style.color = "";
         probe.style.color = css;
-        if (probe.style.color === "")
+        if (probe.style.color === "") {
+            if (fallback !== undefined) return resolve(fallback);
+
             throw new Error(`"${css}" isn't a colour.`);
+        }
 
         // The computed colour may be `oklch()`, which three.js can't parse.
         context.clearRect(0, 0, 1, 1);
@@ -132,7 +135,7 @@ export const createTheme = (container: HTMLElement): Theme => {
     return {
         background: () => resolve("var(--orrery-ground)"),
         pick: () => resolve("var(--orrery-pick)"),
-        color: (body) => resolve(colorOf(body)),
+        color: (body) => resolve(colorOf(body), KIND_COLORS[body.kind]),
         classColor: (orbitClass) => resolve(ORBIT_CLASS_COLORS[orbitClass]),
         stop: () => probe.remove(),
     };

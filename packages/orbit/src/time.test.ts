@@ -1,7 +1,7 @@
 /// <reference types="deno" />
 import { assertEquals } from "@std/assert";
 import { J2000_UNIX_MS } from "./constants.ts";
-import { j2000sToUnixMs, unixMsToJ2000s } from "./time.ts";
+import { j2000sToUnixMs, MAX_TIME, MIN_TIME, unixMsToJ2000s } from "./time.ts";
 
 Deno.test("the J2000 epoch is zero seconds, and zero seconds is the J2000 epoch", () => {
     assertEquals(unixMsToJ2000s(J2000_UNIX_MS), 0);
@@ -12,4 +12,15 @@ Deno.test("a time round-trips through J2000 seconds", () => {
     const ms = Date.UTC(2026, 10, 21, 8, 30, 15, 250);
 
     assertEquals(j2000sToUnixMs(unixMsToJ2000s(ms)), ms);
+});
+
+Deno.test("the time bounds are the first and last second of years 1 and 9999", () => {
+    assertEquals(
+        new Date(j2000sToUnixMs(MIN_TIME)).toISOString(),
+        "0001-01-01T00:00:00.000Z",
+    );
+    assertEquals(
+        new Date(j2000sToUnixMs(MAX_TIME)).toISOString(),
+        "9999-12-31T23:59:59.000Z",
+    );
 });

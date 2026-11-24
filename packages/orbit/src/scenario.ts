@@ -1,6 +1,7 @@
 import type { Elements } from "./kepler.ts";
 import { wrapAngle } from "./kepler.ts";
 import type { Precession } from "./precession.ts";
+import { MAX_TIME, MAX_YEAR, MIN_TIME, MIN_YEAR } from "./time.ts";
 import { length } from "./vec.ts";
 
 /** What a body is. The view colours bodies by kind. */
@@ -82,6 +83,14 @@ const KINDS: readonly BodyKind[] = [
 
 const SLUG = /^[a-z0-9-]+$/;
 
+const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/** The longest name, in characters, for a body or a scenario. */
+export const MAX_NAME = 100;
+
+/** The most bodies a scenario can have. */
+export const MAX_BODIES = 500;
+
 const ELEMENT_FIELDS = ["a", "e", "i", "raan", "argp", "m0", "epoch"] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -145,6 +154,16 @@ const validateElements = (
     }
 
     const { a, e, i, raan, argp, m0, epoch } = values;
+
+    if (epoch !== undefined) {
+        inRange(
+            `${path}.epoch`,
+            epoch,
+            epoch >= MIN_TIME && epoch <= MAX_TIME,
+            `in years ${MIN_YEAR} to ${MAX_YEAR}`,
+            errors,
+        );
+    }
 
     if (a !== undefined) {
         inRange(`${path}.a`, a, a > 0, "> 0", errors);
@@ -284,6 +303,10 @@ const validateBody = (
 
     if (typeof name !== "string") {
         errors.push(`${label}.name: must be a string (got ${show(name)})`);
+    } else if (name.length > MAX_NAME) {
+        errors.push(
+            `${label}.name: must be at most ${MAX_NAME} characters (got ${name.length})`,
+        );
     }
 
     if (!KINDS.includes(kind as BodyKind)) {
@@ -306,8 +329,16 @@ const validateBody = (
         inRange(`${label}.radius`, radius, radius > 0, "> 0", errors);
     }
 
-    if (color !== undefined && typeof color !== "string") {
-        errors.push(`${label}.color: must be a string (got ${show(color)})`);
+    if (color !== undefined) {
+        if (typeof color !== "string") {
+            errors.push(
+                `${label}.color: must be a string (got ${show(color)})`,
+            );
+        } else if (!HEX_COLOR.test(color)) {
+            errors.push(
+                `${label}.color: must be a #rgb or #rrggbb colour (got ${show(color)})`,
+            );
+        }
     }
 
     if (role !== undefined) {
@@ -432,16 +463,30 @@ export const validateScenario = (input: unknown): ScenarioResult => {
 
     if (typeof name !== "string") {
         errors.push(`name: must be a string (got ${show(name)})`);
+    } else if (name.length > MAX_NAME) {
+        errors.push(
+            `name: must be at most ${MAX_NAME} characters (got ${name.length})`,
+        );
     }
 
-    if (time !== undefined) {
-        finite("time", time, errors);
+    if (time !== undefined && finite("time", time, errors)) {
+        inRange(
+            "time",
+            time,
+            time >= MIN_TIME && time <= MAX_TIME,
+            `in years ${MIN_YEAR} to ${MAX_YEAR}`,
+            errors,
+        );
     }
 
     const bodies: Body[] = [];
 
     if (!Array.isArray(inputs) || inputs.length === 0) {
         errors.push("bodies: must be a non-empty array");
+    } else if (inputs.length > MAX_BODIES) {
+        errors.push(
+            `bodies: must have at most ${MAX_BODIES} bodies (got ${inputs.length})`,
+        );
     } else {
         const ids = new Set<string>();
 

@@ -56,8 +56,20 @@ export type {
     ScenarioResult,
     SpacecraftRole,
 } from "./scenario.ts";
-export { sortByDepth, validateScenario } from "./scenario.ts";
+export {
+    MAX_BODIES,
+    MAX_NAME,
+    sortByDepth,
+    validateScenario,
+} from "./scenario.ts";
 export { worldStates } from "./system.ts";
-export { j2000sToUnixMs, unixMsToJ2000s } from "./time.ts";
+export {
+    j2000sToUnixMs,
+    MAX_TIME,
+    MAX_YEAR,
+    MIN_TIME,
+    MIN_YEAR,
+    unixMsToJ2000s,
+} from "./time.ts";
 export type { Vec3 } from "./vec.ts";
 export { add, cross, dot, length, normalize, scale, sub } from "./vec.ts";

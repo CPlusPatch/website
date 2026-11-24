@@ -2,7 +2,13 @@
 import { assert, assertEquals } from "@std/assert";
 import { solarSystem } from "./data/solar-system.ts";
 import type { Scenario } from "./scenario.ts";
-import { sortByDepth, validateScenario } from "./scenario.ts";
+import {
+    MAX_BODIES,
+    MAX_NAME,
+    sortByDepth,
+    validateScenario,
+} from "./scenario.ts";
+import { MAX_TIME, MIN_TIME } from "./time.ts";
 
 const valid: Scenario = {
     version: 1,
@@ -278,14 +284,14 @@ Deno.test("time and color are kept only when present", () => {
     const withBoth = structuredClone(valid);
 
     withBoth.time = 5;
-    withBoth.bodies[0].color = "gold";
+    withBoth.bodies[0].color = "#ffd700";
 
     const kept = validateScenario(withBoth);
     const plain = validateScenario(valid);
 
     assert(kept.ok && plain.ok);
     assertEquals(kept.scenario.time, 5);
-    assertEquals(kept.scenario.bodies[0].color, "gold");
+    assertEquals(kept.scenario.bodies[0].color, "#ffd700");
     assert(!("time" in plain.scenario));
     assert(!("color" in plain.scenario.bodies[0]));
 });
@@ -413,4 +419,108 @@ Deno.test("a body without precession has no precession key", () => {
 
     assert(result.ok);
     assert(!("precession" in result.scenario.bodies[1]));
+});
+
+Deno.test("a colour that isn't #rgb or #rrggbb is rejected", () => {
+    for (const color of [
+        "gold",
+        "#12",
+        "#12345",
+        "#ggg",
+        "rgb(0 0 0)",
+        "var(--x)",
+    ]) {
+        const errors = errorsAfter((s) => {
+            planet(s).color = color;
+        });
+
+        assertEquals(errors, [
+            `earth.color: must be a #rgb or #rrggbb colour (got ${JSON.stringify(color)})`,
+        ]);
+    }
+});
+
+Deno.test("#rgb and #rrggbb colours are accepted in either case", () => {
+    for (const color of ["#abc", "#AABBCC"]) {
+        const scenario = structuredClone(valid);
+
+        scenario.bodies[0].color = color;
+
+        const result = validateScenario(scenario);
+
+        assert(result.ok, color);
+        assertEquals(result.scenario.bodies[0].color, color);
+    }
+});
+
+Deno.test("a body name over the limit is rejected", () => {
+    const errors = errorsAfter((s) => {
+        planet(s).name = "x".repeat(MAX_NAME + 1);
+    });
+
+    assertEquals(errors, [
+        `earth.name: must be at most ${MAX_NAME} characters (got ${MAX_NAME + 1})`,
+    ]);
+});
+
+Deno.test("a scenario name over the limit is rejected, and one at the limit is kept", () => {
+    const errors = errorsAfter((s) => {
+        s.name = "x".repeat(MAX_NAME + 1);
+    });
+    const atLimit = validateScenario({ ...valid, name: "x".repeat(MAX_NAME) });
+
+    assertEquals(errors, [
+        `name: must be at most ${MAX_NAME} characters (got ${MAX_NAME + 1})`,
+    ]);
+    assert(atLimit.ok);
+});
+
+Deno.test("more bodies than the limit are rejected with one error", () => {
+    const errors = errorsAfter((s) => {
+        s.bodies = Array.from({ length: MAX_BODIES + 1 }, () =>
+            structuredClone(s.bodies[0]),
+        );
+    });
+
+    assertEquals(errors, [
+        `bodies: must have at most ${MAX_BODIES} bodies (got ${MAX_BODIES + 1})`,
+    ]);
+});
+
+Deno.test("a scenario time outside the year bounds is rejected", () => {
+    for (const time of [MIN_TIME - 1, MAX_TIME + 1]) {
+        const errors = errorsAfter((s) => {
+            s.time = time;
+        });
+
+        assertEquals(errors.length, 1);
+        assert(
+            errors[0].startsWith("time: must be in years 1 to 9999"),
+            errors[0],
+        );
+    }
+
+    const scenario = { ...structuredClone(valid), time: MAX_TIME };
+
+    assert(validateScenario(scenario).ok);
+});
+
+Deno.test("an element epoch outside the year bounds is rejected", () => {
+    for (const epoch of [MIN_TIME - 1, MAX_TIME + 1]) {
+        const errors = errorsAfter((s) => {
+            const elements = planet(s).elements;
+
+            if (elements) {
+                elements.epoch = epoch;
+            }
+        });
+
+        assertEquals(errors.length, 1);
+        assert(
+            errors[0].startsWith(
+                "earth.elements.epoch: must be in years 1 to 9999",
+            ),
+            errors[0],
+        );
+    }
 });
