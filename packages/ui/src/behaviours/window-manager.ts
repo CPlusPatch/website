@@ -584,7 +584,14 @@ const windowManager = behaviour(".window-manager", (root, signal) => {
             floor: floorOf(id),
         }));
         const placed = arrange(sizes, placing(), cascade);
-        for (const [i, id] of order.entries()) add(id, placed[i], sizes[i]);
+        for (const [i, id] of order.entries()) {
+            const rect = placed[i];
+            const size = sizes[i];
+            if (!rect || !size)
+                throw new Error(`No placement for window ${id}`);
+
+            add(id, rect, size);
+        }
     };
     arrangeFirst();
     opened = [...first];

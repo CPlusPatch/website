@@ -38,10 +38,13 @@ export const bindTrack = (track: HTMLElement, signal: AbortSignal): Track => {
     const clamp = (i: number) => Math.max(0, Math.min(i, count - 1));
     // Distance between snap points. Slides are all one width, so the first
     // pair stands for every pair, and this stays right across resizes.
-    const step = () =>
-        count > 1
-            ? Math.abs(slides[1].offsetLeft - slides[0].offsetLeft)
+    const step = () => {
+        const [first, second] = slides;
+
+        return first && second
+            ? Math.abs(second.offsetLeft - first.offsetLeft)
             : track.clientWidth;
+    };
     // Nearest snap point wins, so mid-swipe there is always exactly one
     // current slide.
     const fromScroll = () =>

@@ -83,15 +83,16 @@ export const playVideo =
                     [1, y + 1, "--bottom"],
                 ] as const) {
                     const p = (row * columns + x) * 4;
-                    const rgb =
-                        (data[p] << 16) | (data[p + 1] << 8) | data[p + 2];
+                    const [r, g, b] = [data[p], data[p + 1], data[p + 2]];
+                    // An odd-height video has no pixel under its last row.
+                    if (r === undefined || g === undefined || b === undefined)
+                        continue;
+
+                    const rgb = (r << 16) | (g << 8) | b;
                     // Only what changed, which is most of a still shot.
                     if (shown[i * 2 + half] === rgb) continue;
                     shown[i * 2 + half] = rgb;
-                    cell.style.setProperty(
-                        name,
-                        `rgb(${data[p]} ${data[p + 1]} ${data[p + 2]})`,
-                    );
+                    cell.style.setProperty(name, `rgb(${r} ${g} ${b})`);
                 }
             }
         };

@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { assert, assertEquals, assertThrows } from "@std/assert";
+import { assert, assertEquals, assertExists, assertThrows } from "@std/assert";
 import { behaviour } from "./behaviour.ts";
 
 // init() only keys on the root, so any object stands in for an element.
@@ -30,11 +30,15 @@ Deno.test("cleanup aborts the signal, tears down once, and frees the root", () =
     const cleanup = b.init(root);
     cleanup();
     cleanup();
-    assert(calls.signals[0].aborted);
+    const [first] = calls.signals;
+    assertExists(first);
+    assert(first.aborted);
     assertEquals(calls.teardown, 1);
     b.init(root);
     assertEquals(calls.setup, 2, "bound again after cleanup");
-    assert(!calls.signals[1].aborted);
+    const [, second] = calls.signals;
+    assertExists(second);
+    assert(!second.aborted);
 });
 
 Deno.test("init keeps each root separate", () => {
@@ -44,7 +48,9 @@ Deno.test("init keeps each root separate", () => {
     one();
     assertEquals(calls.setup, 2);
     assertEquals(calls.teardown, 1);
-    assert(!calls.signals[1].aborted);
+    const [, second] = calls.signals;
+    assertExists(second);
+    assert(!second.aborted);
 });
 
 Deno.test("a setup that throws leaves the root unbound", () => {

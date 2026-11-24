@@ -65,7 +65,7 @@ const sidebarNav = behaviour(".sidebar-nav", (nav, signal) => {
         tops.forEach((top, i) => {
             if (top <= line || (atBottom && top < innerHeight)) index = i;
         });
-        const next = index >= 0 ? entries[index].link : null;
+        const next = entries[index]?.link ?? null;
         if (next === active) return;
 
         if (active?.getAttribute("aria-current") === "location")

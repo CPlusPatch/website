@@ -31,7 +31,7 @@ const heatmap = behaviour(".heatmap[data-life]", (root) => {
 
     const draw = (frame: Uint8Array) => {
         for (const [i, cell] of cells.entries()) {
-            const level = frame[i];
+            const level = frame[i] ?? 0;
             if (level === shown[i]) continue;
             shown[i] = level;
             if (level) cell.dataset.level = String(level);

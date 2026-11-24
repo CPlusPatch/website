@@ -79,6 +79,8 @@ export const playWhileVisible = (
     const mutations = new MutationObserver(play);
     mutations.observe(root, { attributeFilter: ["data-paused"] });
     const intersections = new IntersectionObserver(([entry]) => {
+        if (!entry) return;
+
         visible = entry.isIntersecting;
         play();
     });

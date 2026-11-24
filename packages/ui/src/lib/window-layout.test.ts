@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertExists } from "@std/assert";
 import {
     arrange,
     type Cascade,
@@ -615,16 +615,20 @@ const naturalHeights = [691, 379, 372, 663, 255, 779, 651, 264];
 const openEight = (desk: Size, cascade: Cascade) => {
     const width = Math.round(Math.min(Math.max(0.4 * desk.width, 576), 832));
     const sizes = naturalHeights.map((height) => ({ width, height }));
+    const [readme, terminal, ...later] = sizes;
+    assertExists(readme);
+    assertExists(terminal);
+
     // README is on top, so Terminal goes first.
-    const open = arrange([sizes[1], sizes[0]], desk, cascade);
+    const open = arrange([terminal, readme], desk, cascade);
     const placed = [...open];
 
-    for (const natural of sizes.slice(2)) {
+    for (const natural of later) {
         // The top window is the last one.
         placed.push(place(natural, desk, placed, cascade));
     }
 
-    return { sizes: [sizes[1], sizes[0], ...sizes.slice(2)], placed };
+    return { sizes: [terminal, readme, ...later], placed };
 };
 
 const origin16 = { ...DEFAULT_CASCADE, origin: { x: 16, y: 16 } };
@@ -662,12 +666,13 @@ for (const desk of deskSizes) {
         const { sizes, placed } = openEight(desk, origin16);
 
         for (const [i, rect] of placed.entries()) {
+            const size = sizes[i];
+            assertExists(size);
+
             // A window can be shrunk by a quarter to line up or to fit.
             assertEquals(
                 rect.width >=
-                    Math.ceil(
-                        0.75 * Math.min(sizes[i].width, 0.6 * desk.width),
-                    ) ||
+                    Math.ceil(0.75 * Math.min(size.width, 0.6 * desk.width)) ||
                     // The pair is narrowed to fit side by side.
                     i < 2,
                 true,
@@ -675,9 +680,7 @@ for (const desk of deskSizes) {
             );
             assertEquals(
                 rect.height >=
-                    Math.ceil(
-                        0.75 * Math.min(sizes[i].height, 0.6 * desk.height),
-                    ),
+                    Math.ceil(0.75 * Math.min(size.height, 0.6 * desk.height)),
                 true,
                 `window ${i} is ${rect.height} tall`,
             );
@@ -711,10 +714,13 @@ for (const desk of deskSizes) {
 Deno.test("the windows arranged at load start at the margin, and the next one opens in the free room under the second", () => {
     const desk = { width: 1280, height: 739 };
     const { placed } = openEight(desk, origin16);
+    const [readme, terminal] = placed;
+    assertExists(readme);
+    assertExists(terminal);
 
-    assertEquals(placed[1].x, 16);
+    assertEquals(terminal.x, 16);
     // The pair's room left over is on the right: 16 + 576 + 16 + 576 = 1184
-    assertEquals(placed[0].x + placed[0].width, 16 + 576 + 16 + 576);
+    assertEquals(readme.x + readme.width, 16 + 576 + 16 + 576);
     // Under Terminal, a gap away, with the room there: 739 - 411 - 16 = 312
     assertEquals(placed[2], { x: 608, y: 411, width: 576, height: 312 });
 });
@@ -732,7 +738,10 @@ Deno.test("windows are narrowed beside each other only to three quarters of thei
             [169, 576],
         ],
     );
-    assertEquals(overlapped[1].y > overlapped[0].y, true);
+    const [back, front] = overlapped;
+    assertExists(back);
+    assertExists(front);
+    assertEquals(front.y > back.y, true);
 
     // 1024: 992 of room, so they narrow evenly, above the floor of 432
     const beside = arrange(pair, { width: 1024, height: 600 }, origin16);
@@ -752,7 +761,9 @@ Deno.test("a window isn't narrowed below its content's floor", () => {
     // 1024: 992 of room. Evenly they'd be 488 each, under the second's floor.
     const rects = arrange(pair, { width: 1024, height: 600 }, origin16);
 
-    assertEquals(rects[1].width >= 520, true);
+    const [, second] = rects;
+    assertExists(second);
+    assertEquals(second.width >= 520, true);
     assertEquals(
         rects.map((r) => [r.x, r.width]),
         [
@@ -772,7 +783,10 @@ Deno.test("windows whose floors don't fit side by side overlap instead of narrow
         rects.map((r) => r.width),
         [576, 576],
     );
-    assertEquals(rects[1].y > rects[0].y, true);
+    const [first, second] = rects;
+    assertExists(first);
+    assertExists(second);
+    assertEquals(second.y > first.y, true);
 });
 
 Deno.test("windows of one width are narrowed to one width, with the spare pixel on the right", () => {
@@ -790,6 +804,9 @@ Deno.test("windows of one width are narrowed to one width, with the spare pixel 
         [356, 356],
     );
     // The top window is the last, and on the left
-    assertEquals(rects[1].x, 16);
-    assertEquals(rects[0].x + rects[0].width <= 761 - 16, true);
+    const [first, second] = rects;
+    assertExists(first);
+    assertExists(second);
+    assertEquals(second.x, 16);
+    assertEquals(first.x + first.width <= 761 - 16, true);
 });

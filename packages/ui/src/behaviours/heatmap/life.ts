@@ -49,7 +49,7 @@ export const life = (
 ) => {
     const levels = Uint8Array.from(start);
     let alive = levels.map((level) => (level >= ALIVE - 1 ? 1 : 0));
-    if (rows === SEED.length && columns === SEED[0].length) {
+    if (rows === SEED.length && columns === SEED[0]?.length) {
         alive = Uint8Array.from(SEED.join(""), (char) =>
             char === "O" ? 1 : 0,
         );
@@ -68,13 +68,15 @@ export const life = (
                     if (!dr && !dc) continue;
                     const r = (row + dr + rows) % rows;
                     const c = (column + dc + columns) % columns;
-                    neighbours += alive[r * columns + c];
+                    neighbours += alive[r * columns + c] ?? 0;
                 }
             }
             return neighbours === 3 || (neighbours === 2 && cell) ? 1 : 0;
         });
 
-        changes.push(next.reduce((sum, cell, i) => sum + (cell ^ alive[i]), 0));
+        changes.push(
+            next.reduce((sum, cell, i) => sum + (cell ^ (alive[i] ?? 0)), 0),
+        );
         if (changes.length > WINDOW) changes.shift();
         const calm =
             changes.length === WINDOW &&
@@ -82,7 +84,7 @@ export const life = (
         const flat =
             next.reduce(
                 (sum, cell, i) =>
-                    sum + (cell ^ next[(i + columns) % next.length]),
+                    sum + (cell ^ (next[(i + columns) % next.length] ?? 0)),
                 0,
             ) < FLAT;
 
@@ -100,7 +102,7 @@ export const life = (
     return () => {
         alive = generation();
         for (const [i, cell] of alive.entries()) {
-            levels[i] = cell ? ALIVE : Math.max(0, levels[i] - 1);
+            levels[i] = cell ? ALIVE : Math.max(0, (levels[i] ?? 0) - 1);
         }
         return levels;
     };

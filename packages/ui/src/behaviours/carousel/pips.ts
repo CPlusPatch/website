@@ -28,7 +28,10 @@ export const bindPips = (
     // the current pip centred.
     const reveal = () => {
         const from = row.getBoundingClientRect();
-        const to = pips[track.current].getBoundingClientRect();
+        const pip = pips[track.current];
+        if (!pip) return;
+
+        const to = pip.getBoundingClientRect();
         row.scrollTo({
             left:
                 row.scrollLeft +

@@ -282,7 +282,8 @@ export const place = (
     const from = opener === undefined ? undefined : open[opener];
     if (from) cascadeOff(from);
     for (let i = open.length - 1; i >= 0; i--) {
-        if (i !== opener) cascadeOff(open[i]);
+        const rect = open[i];
+        if (rect && i !== opener) cascadeOff(rect);
     }
     const xs = [
         ...new Set([
@@ -411,6 +412,12 @@ export const arrange = (
             desktop.width,
         ),
     );
+    const sizeOf = (i: number): Floored => {
+        const size = sizes[i];
+        if (!size) throw new Error(`No size for window ${i}`);
+
+        return size;
+    };
     // The window at `y`, as tall as the room below it allows.
     const rectAt = (i: number, x: number, y: number, width: number): Rect => ({
         x,
@@ -418,7 +425,7 @@ export const arrange = (
         width,
         height: Math.min(
             Math.max(
-                Math.min(sizes[i].height, desktop.height - y - origin.y),
+                Math.min(sizeOf(i).height, desktop.height - y - origin.y),
                 min.height,
             ),
             desktop.height,
@@ -429,9 +436,9 @@ export const arrange = (
         const rects: Rect[] = [];
         let x = left;
 
-        for (let i = widths.length - 1; i >= 0; i--) {
-            rects[i] = rectAt(i, x, origin.y, widths[i]);
-            x += widths[i] + origin.x;
+        for (const [i, width] of [...widths.entries()].reverse()) {
+            rects[i] = rectAt(i, x, origin.y, width);
+            x += width + origin.x;
         }
 
         return rects;
@@ -442,22 +449,27 @@ export const arrange = (
     if (used <= room.width) return row(natural, origin.x);
 
     const available = room.width - gaps;
-    const floors = natural.map((width, i) =>
-        Math.min(
+    const limits = natural.map((width, i) => {
+        const size = sizeOf(i);
+
+        return {
             width,
-            Math.max(
-                min.width,
-                Math.ceil(NARROWEST * sizes[i].width),
-                sizes[i].floor ?? 0,
+            floor: Math.min(
+                width,
+                Math.max(
+                    min.width,
+                    Math.ceil(NARROWEST * size.width),
+                    size.floor ?? 0,
+                ),
             ),
-        ),
-    );
-    if (floors.reduce((sum, width) => sum + width, 0) <= available) {
+        };
+    });
+    if (limits.reduce((sum, { floor }) => sum + floor, 0) <= available) {
         // The widest level every window is cut to, but not below its floor.
         // Windows of one width and floor get one width.
         const at = (level: number) =>
-            natural.map((width, i) =>
-                Math.min(width, Math.max(floors[i], level)),
+            limits.map(({ width, floor }) =>
+                Math.min(width, Math.max(floor, level)),
             );
         const total = (widths: number[]) =>
             widths.reduce((sum, width) => sum + width, 0);
@@ -473,21 +485,24 @@ export const arrange = (
     const farEdge = desktop.width - origin.x;
     const last = natural.length - 1;
     const span = farEdge - (natural.at(-1) ?? 0) - origin.x;
-    const xs = natural.map((width, i) =>
-        Math.max(
+    const spread = natural.map((width, i) => ({
+        width,
+        x: Math.max(
             origin.x,
             Math.min(
                 Math.round(origin.x + (i * span) / Math.max(1, last)),
                 farEdge - width,
             ),
         ),
-    );
-    const grips = natural.every(
-        (width, i) => i === last || xs[i + 1] - xs[i] >= Math.min(GRIP, width),
-    );
+    }));
+    const grips = spread.every(({ width, x }, i) => {
+        const next = spread[i + 1];
+
+        return !next || next.x - x >= Math.min(GRIP, width);
+    });
     if (grips) {
-        return natural.map((width, i) =>
-            rectAt(i, xs[i], origin.y + i * step, width),
+        return spread.map(({ width, x }, i) =>
+            rectAt(i, x, origin.y + i * step, width),
         );
     }
 

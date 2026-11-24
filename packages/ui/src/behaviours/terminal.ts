@@ -124,10 +124,13 @@ const terminal = behaviour<HTMLElement, TerminalOptions>(
                         break;
                     }
                     case "ArrowUp": {
-                        if (state.cursor === 0) return;
+                        const previous = state.history[state.cursor - 1];
+                        if (previous === undefined) return;
+
                         if (state.cursor === state.history.length)
                             state.draft = field.value;
-                        field.value = state.history[--state.cursor];
+                        state.cursor--;
+                        field.value = previous;
                         e.preventDefault(); // Keeps the caret at the end
                         break;
                     }
@@ -135,9 +138,7 @@ const terminal = behaviour<HTMLElement, TerminalOptions>(
                         if (state.cursor >= state.history.length) return;
                         state.cursor++;
                         field.value =
-                            state.cursor === state.history.length
-                                ? state.draft
-                                : state.history[state.cursor];
+                            state.history[state.cursor] ?? state.draft;
                         e.preventDefault();
                         break;
                     }

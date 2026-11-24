@@ -44,6 +44,13 @@ interface Props {
 }
 
 const { id, effects, size, collapseBelow, class: className } = Astro.props;
+
+const overrides = OVERRIDES.map((override) => {
+    const [first] = override.options;
+    if (!first) throw new Error(`Override ${override.name} has no options`);
+
+    return { ...override, initial: first.value };
+});
 ---
 
 <Dropdown
@@ -64,13 +71,13 @@ const { id, effects, size, collapseBelow, class: className } = Astro.props;
         <ThemePicker />
     </fieldset>
 
-    {OVERRIDES.map((override) => (
+    {overrides.map((override) => (
         <DisplayRow label={override.label} key={override.key} data-persist>
             <SegmentedControl
                 name={override.name}
                 label={override.label}
                 options={overrideOptions(override)}
-                value={override.options[0].value}
+                value={override.initial}
                 size="sm"
                 variant="subtle"
             />

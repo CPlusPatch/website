@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { ICONS, iconSvg, isIconName } from "./icons.ts";
 
 Deno.test("iconSvg draws a sized, hidden, hookable svg", () => {
@@ -29,8 +29,12 @@ Deno.test("every lucide icon the Astro components name is built in", async () =>
             if (entry.isDirectory) await walk(new URL(`${entry.name}/`, dir));
             else if (entry.name.endsWith(".astro")) {
                 const source = await Deno.readTextFile(url);
-                for (const m of source.matchAll(/"lucide:([a-z0-9-]+)"/g))
-                    used.add(m[1]);
+                for (const [, name] of source.matchAll(
+                    /"lucide:([a-z0-9-]+)"/g,
+                )) {
+                    assertExists(name);
+                    used.add(name);
+                }
             }
         }
     };

@@ -70,11 +70,12 @@ const months = (() => {
         { length: columns },
         (_, column) => new Date(last - (columns - 1 - column) * 7 * DAY),
     );
-    const starts = weeks.flatMap((week, column) =>
-        column > 0 && week.getUTCMonth() === weeks[column - 1].getUTCMonth()
+    const starts = weeks.flatMap((week, column) => {
+        const previous = weeks[column - 1];
+        return previous && week.getUTCMonth() === previous.getUTCMonth()
             ? []
-            : [{ column, name: month.format(week) }],
-    );
+            : [{ column, name: month.format(week) }];
+    });
     // As GitHub does, drop a month with too few weeks shown to fit its name.
     return starts.filter(
         (start, i) => (starts[i + 1]?.column ?? columns) - start.column >= 3,
