@@ -58,8 +58,8 @@ export const createBurnEditor = (
     id: string,
     /** Draws the orbit after the burn, or none with `null`. */
     ghost: (id: string, elements: Elements | null) => void,
-    /** Called when the form is done, with whether it burned. */
-    done: (applied: boolean) => void,
+    /** Called when the form is done, whether it burned or was cancelled. */
+    done: () => void,
 ): BurnEditor | null => {
     // The scenario is replaced on every edit, so read it again each time.
     const context = () => {
@@ -297,14 +297,14 @@ export const createBurnEditor = (
 
             cue("edit");
             resume();
-            done(true);
+            done();
         },
         () => {
             for (const input of Object.values(inputs)) input.value = "0";
             wasNonzero = false;
             update();
             resume();
-            done(false);
+            done();
         },
     );
     form.apply.disabled = true;

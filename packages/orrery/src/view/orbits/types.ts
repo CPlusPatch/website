@@ -4,16 +4,21 @@ import type { Line2 } from "three/addons/lines/Line2.js";
 import type { LineFade } from "./fade-material.ts";
 
 export type Paint = {
+    /** The loop point nearest the body, where the trail starts. */
     index: number;
-    direction: number;
+    /** The way the clock runs: 1 forward, -1 backward, which flips the trail to the other side. */
+    direction: -1 | 1;
     picked: boolean;
+    /** A picked orbit's trail alpha: `GHOST_DIM` while a ghost shows, else 1. */
     dim: number;
 };
 
 export type Orbit = {
     body: Body;
     parent: string;
+    /** The orbit's coloured line. */
     line: Line2;
+    /** A wider dark line drawn under `line`, so it shows over bright backgrounds. */
     casing: Line2;
     /** The line's depth and size fade. */
     fade: LineFade;

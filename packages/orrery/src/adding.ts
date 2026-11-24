@@ -57,7 +57,7 @@ export const newBody = (input: NewBodyInput, t: number): Body => ({
     elements: {
         a: input.aKm * 1000,
         e: input.e,
-        i: (input.iDeg * Math.PI) / 180,
+        i: input.iDeg / DEGREES,
         raan: 0,
         argp: 0,
         m0: 0,
@@ -122,9 +122,12 @@ export const addErrors = (
     if (!Number.isFinite(input.massKg)) errors.mass = "Enter a number.";
     else if (input.massKg <= 0) errors.mass = "Mass must be above 0 kg.";
 
-    const a = fieldError("a", input.aMetres, aMin(parent.radius), input.unit);
-    const e = fieldError("e", input.e, aMin(parent.radius));
-    const i = fieldError("i", input.iDeg / DEGREES, aMin(parent.radius));
+    const a = fieldError("a", input.aMetres, {
+        aMin: aMin(parent.radius),
+        unit: input.unit,
+    });
+    const e = fieldError("e", input.e);
+    const i = fieldError("i", input.iDeg / DEGREES);
     if (a !== null) errors.a = a;
     if (e !== null) errors.e = e;
     if (i !== null) errors.i = i;

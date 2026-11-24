@@ -58,6 +58,7 @@ const warnOnce = (message: string, error: unknown) => {
     if (warned) return;
 
     warned = true;
+    // The only report of a failed optional asset, and the project has no logger.
     console.warn(message, error);
 };
 
@@ -85,7 +86,7 @@ class Track {
                 await response.arrayBuffer(),
             );
         } catch (error) {
-            warnOnce(`The Orrery couldn't load ${this.sound.url}.`, error);
+            warnOnce(`Couldn't load ${this.sound.url}.`, error);
 
             return null;
         }
@@ -109,7 +110,7 @@ class Track {
             source.start();
             this.source = source;
         } catch (error) {
-            warnOnce("The Orrery couldn't play a sound.", error);
+            warnOnce("Couldn't play a sound.", error);
         }
     }
 }
@@ -147,7 +148,7 @@ export const createEffects = (): Effects => {
             tracks = made;
         } catch (error) {
             broken = true;
-            warnOnce("The Orrery couldn't start its sounds.", error);
+            warnOnce("Couldn't start the sounds.", error);
         }
     };
 

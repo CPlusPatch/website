@@ -18,6 +18,7 @@ import {
     toMetres,
 } from "./editing.ts";
 
+const A = { aMin: 7e6, unit: "km" } as const;
 const MU = 3.986004418e14;
 const T = 5e6;
 const EL: Elements = {
@@ -133,22 +134,22 @@ Deno.test("a draft applies each change it holds and no other", () => {
 
 Deno.test("a value that isn't a number is an error for every field", () => {
     for (const field of ["a", "e", "i", "raan", "argp", "m"] as const) {
-        assertEquals(fieldError(field, Number.NaN, 7e6), "Enter a number.");
-        assertEquals(fieldError(field, Infinity, 7e6), "Enter a number.");
+        assertEquals(fieldError(field, Number.NaN, A), "Enter a number.");
+        assertEquals(fieldError(field, Infinity, A), "Enter a number.");
     }
 });
 
 Deno.test("a must be between its limits, which the message gives in the unit", () => {
     const min = aMin(6.371e6);
 
-    assertEquals(fieldError("a", min, min), null);
-    assertEquals(fieldError("a", A_MAX, min), null);
+    assertEquals(fieldError("a", min, { aMin: min, unit: "km" }), null);
+    assertEquals(fieldError("a", A_MAX, { aMin: min, unit: "km" }), null);
     assertEquals(
-        fieldError("a", min - 1, min, "km"),
+        fieldError("a", min - 1, { aMin: min, unit: "km" }),
         "Must be between 6,435 and 14,959,787,070 km.",
     );
     assertEquals(
-        fieldError("a", A_MAX * 2, 0.5 * AU, "AU"),
+        fieldError("a", A_MAX * 2, { aMin: 0.5 * AU, unit: "AU" }),
         "Must be between 0.5 and 100 AU.",
     );
 });
@@ -156,25 +157,25 @@ Deno.test("a must be between its limits, which the message gives in the unit", (
 Deno.test("e must be from 0 to 0.99", () => {
     const message = "Must be at least 0 and at most 0.99.";
 
-    assertEquals(fieldError("e", 0, 7e6), null);
-    assertEquals(fieldError("e", 0.99, 7e6), null);
-    assertEquals(fieldError("e", -0.01, 7e6), message);
-    assertEquals(fieldError("e", 0.991, 7e6), message);
+    assertEquals(fieldError("e", 0), null);
+    assertEquals(fieldError("e", 0.99), null);
+    assertEquals(fieldError("e", -0.01), message);
+    assertEquals(fieldError("e", 0.991), message);
 });
 
 Deno.test("i must be from 0 to 180 degrees, given in radians", () => {
     const message = "Must be between 0° and 180°.";
 
-    assertEquals(fieldError("i", 0, 7e6), null);
-    assertEquals(fieldError("i", 180 / DEGREES, 7e6), null);
-    assertEquals(fieldError("i", -0.1, 7e6), message);
-    assertEquals(fieldError("i", 180.5 / DEGREES, 7e6), message);
+    assertEquals(fieldError("i", 0), null);
+    assertEquals(fieldError("i", 180 / DEGREES), null);
+    assertEquals(fieldError("i", -0.1), message);
+    assertEquals(fieldError("i", 180.5 / DEGREES), message);
 });
 
 Deno.test("the node, the periapsis and the mean anomaly take any number", () => {
     for (const field of ["raan", "argp", "m"] as const) {
-        assertEquals(fieldError(field, -50, 7e6), null);
-        assertEquals(fieldError(field, 50, 7e6), null);
+        assertEquals(fieldError(field, -50), null);
+        assertEquals(fieldError(field, 50), null);
     }
 });
 

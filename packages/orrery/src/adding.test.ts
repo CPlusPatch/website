@@ -229,7 +229,10 @@ Deno.test("the orbit's limits read as they do in the edit form", () => {
         unit: "km",
     });
 
-    assertEquals(errors.a, fieldError("a", 1000, aMin(earth.radius), "km"));
+    assertEquals(
+        errors.a,
+        fieldError("a", 1000, { aMin: aMin(earth.radius), unit: "km" }),
+    );
     assertEquals(errors.e, "Must be at least 0 and at most 0.99.");
     assertEquals(errors.i, "Must be between 0° and 180°.");
 });

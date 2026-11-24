@@ -21,8 +21,10 @@ export type Colors = {
     fontData: string;
 };
 
+/** An apsis flag's x range in px, and the time it marks. */
 export type Hit = { from: number; to: number; t: number };
 
+/** A saved scenario's marker: its x in px and its name. */
 export type Square = { x: number; name: string };
 
 /** A saved scenario's start time and name. */

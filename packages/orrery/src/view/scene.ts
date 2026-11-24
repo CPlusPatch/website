@@ -385,7 +385,7 @@ const assemble = (
 
         canvas.setAttribute(
             "aria-label",
-            `The solar system, centred on ${
+            `${world.scenario.name}, centred on ${
                 satellite?.name ??
                 world.scenario.bodies.find((body) => body.id === rig.focusId())
                     ?.name
@@ -463,7 +463,8 @@ const assemble = (
             .catch((error: unknown) => {
                 if (destroyed) return;
 
-                console.warn("The Orrery couldn't load the sky.", error);
+                // The only report of a failed optional asset, and the project has no logger.
+                console.warn("Couldn't load the sky.", error);
             })
             .finally(() => {
                 skyDone = skyTotal;

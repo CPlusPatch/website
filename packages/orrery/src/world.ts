@@ -178,7 +178,7 @@ export class World {
         if (body.parent === null)
             throw new Error(`"${id}" has no parent to orbit.`);
 
-        this.#scenario = {
+        this.#replace({
             ...this.#scenario,
             bodies: this.#scenario.bodies.map((candidate) => {
                 if (candidate !== body) return candidate;
@@ -187,9 +187,7 @@ export class World {
 
                 return { ...fixed, elements: el };
             }),
-        };
-        this.#order = sortByDepth(this.#scenario);
-        this.#cache = null;
+        });
         this.#emit({ type: "body", id });
     }
 

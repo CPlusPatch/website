@@ -413,7 +413,8 @@ export const createSwarm = (
 
             // Let the next group change try again.
             started = false;
-            console.warn("The Orrery couldn't load the satellites.", error);
+            // The only report of a failed optional asset, and the project has no logger.
+            console.warn("Couldn't load the satellites.", error);
         }
     };
 

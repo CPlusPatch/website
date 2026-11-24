@@ -93,10 +93,9 @@ export const createScenarios = (
                 linkInput.value = `${origin}${pathname}${search}${HASH_PREFIX}${payload}`;
                 copy.disabled = false;
             },
-            (error) => {
+            () => {
                 if (id !== linkId) return;
 
-                console.warn("The Orrery couldn't make the link.", error);
                 setStatus("The link couldn't be made.");
             },
         );
@@ -223,8 +222,7 @@ export const createScenarios = (
         try {
             await navigator.clipboard.writeText(linkInput.value);
             setStatus("Copied the link.");
-        } catch (error) {
-            console.warn("The Orrery couldn't copy the link.", error);
+        } catch {
             linkInput.select();
             setStatus(
                 "Couldn't copy. The link is selected, so copy it with your keyboard.",

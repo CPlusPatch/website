@@ -98,17 +98,20 @@ const limit = (x: number, decimals: number): string =>
 
 /**
  * Why `value` is wrong for `field`, or `null` if it's fine. `value` is in metres or radians.
- * The limits of `a` are shown in `unit`.
+ * The limits of `a` are shown in `a.unit`, and `a` is required for the `"a"` field only.
  */
 export const fieldError = (
     field: Field,
     value: number,
-    aMin: number,
-    unit: AUnit = "km",
+    a?: { aMin: number; unit: AUnit },
 ): string | null => {
     if (!Number.isFinite(value)) return "Enter a number.";
 
-    if (field === "a" && (value < aMin || value > A_MAX)) {
+    if (field === "a") {
+        if (!a) throw new Error(`The limits of "a" are missing.`);
+        if (value >= a.aMin && value <= A_MAX) return null;
+
+        const { aMin, unit } = a;
         const decimals = unit === "km" ? 0 : 4;
         const scale = 10 ** decimals;
         // Rounded inwards, so the limits shown are values the field accepts.

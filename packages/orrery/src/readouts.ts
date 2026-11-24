@@ -65,6 +65,7 @@ export const readouts = (
 
     const mu = parent.mu + body.mu;
 
+    // Precession only turns `i`, `raan` and `argp`, and these read only `a`, `e`, `m0` and `epoch`.
     return {
         distance: length(sub(state.r, parentState.r)),
         speed: length(sub(state.v, parentState.v)),

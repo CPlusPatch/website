@@ -20,6 +20,7 @@ import type { Extra } from "./patches.ts";
 import { createSpacecraftModel } from "./spacecraft.ts";
 import { createStarMaterial } from "./star.ts";
 
+/** Everything one body has in the scene: its group, the parts of it, and its label. */
 export type Entry = {
     body: Body;
     group: Group;

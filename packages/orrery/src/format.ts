@@ -29,7 +29,7 @@ const THREE_SIGNIFICANT = new Intl.NumberFormat("en", {
     maximumSignificantDigits: 3,
 });
 const KM_PER_S = unit("kilometer-per-second", 2);
-const DEGREES = unit("degree", 1, "narrow");
+const DEGREE_FORMAT = unit("degree", 1, "narrow");
 
 /**
  * A distance in metres as its number and its unit, like `["6,790", "km"]`, with a true minus sign.
@@ -129,7 +129,7 @@ export const formatAngle = (rad: number): string => {
     const degrees = Math.round(((rad * 180) / Math.PI) * 10) / 10;
 
     // 359.96 rounds up to a full turn.
-    return DEGREES.format(degrees % 360);
+    return DEGREE_FORMAT.format(degrees % 360);
 };
 
 const SHORT_YEARS = new Intl.NumberFormat("en", {

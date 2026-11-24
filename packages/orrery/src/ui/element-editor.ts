@@ -79,8 +79,8 @@ export const createElementEditor = (
     id: string,
     /** What the form draws in the scene: the ghost orbit and the grips. */
     scene: EditScene,
-    /** Called when the form is done, with whether it changed the orbit. */
-    done: (applied: boolean) => void,
+    /** Called when the form is done, whether it changed the orbit or was cancelled. */
+    done: () => void,
 ): ElementEditor | null => {
     const body = world.scenario.bodies.find((candidate) => candidate.id === id);
     const parent = world.scenario.bodies.find(
@@ -145,7 +145,7 @@ export const createElementEditor = (
         const errors = new Map(
             changes().map(([field, si]) => [
                 field,
-                fieldError(field, si, min, unit),
+                fieldError(field, si, { aMin: min, unit }),
             ]),
         );
         let ok = true;
@@ -303,7 +303,7 @@ export const createElementEditor = (
 
         scene.ghost(id, null);
         scene.grips(null);
-        done(true);
+        done();
     };
 
     const form = createForm(
@@ -321,7 +321,7 @@ export const createElementEditor = (
         () => {
             scene.ghost(id, null);
             scene.grips(null);
-            done(false);
+            done();
         },
     );
 

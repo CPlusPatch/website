@@ -38,6 +38,7 @@ type RowOptions = {
 const CHEVRON =
     '<svg viewBox="0 0 8 12" aria-hidden="true" focusable="false"><path d="M1.5 1.5 6.5 6l-5 4.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
+/** The DOM id of a body's option, which the search box names in `aria-activedescendant`. */
 export const optionId = (pane: Pane, id: string): string =>
     `orrery-search-${pane}-${id}`;
 

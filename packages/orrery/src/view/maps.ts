@@ -134,10 +134,8 @@ export const createMaps = (
                     settle();
                 },
                 (error: unknown) => {
-                    console.warn(
-                        `The Orrery couldn't load the map of ${id}.`,
-                        error,
-                    );
+                    // The only report of a failed optional asset, and the project has no logger.
+                    console.warn(`Couldn't load the map of ${id}.`, error);
                     settle();
                 },
             );
