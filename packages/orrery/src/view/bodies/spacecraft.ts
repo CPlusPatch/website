@@ -44,21 +44,28 @@ type Bus = {
 
 const MAST = 0.6;
 
-// A fill from the camera's upper left, so unlit faces aren't black. A flat emissive hid the edges.
+// A fill from the camera's upper left, so unlit faces aren't black. The emissive sets its
+// strength and the albedo its colour: a flat tint made every part the same blue-grey. The
+// grey mixed in keeps dark arrays from going black.
 const fill = (shader: { fragmentShader: string }): void => {
     shader.fragmentShader = shader.fragmentShader.replace(
         "#include <emissivemap_fragment>",
         `#include <emissivemap_fragment>
-        totalEmissiveRadiance *= 0.3 + 1.1 * max(dot(normal, normalize(vec3(-0.5, 0.6, 0.6))), 0.0);`,
+        totalEmissiveRadiance *= mix(vec3(0.3), diffuseColor.rgb, 0.8) * (0.15 + 0.85 * max(dot(normal, normalize(vec3(-0.5, 0.6, 0.6))), 0.0));`,
     );
 };
 
-const material = (color: number, roughness: number): MeshStandardMaterial => {
+// Dark parts get a stronger fill, or their back faces drop to the sky's black.
+const material = (
+    color: number,
+    roughness: number,
+    emissive = 0x4d4d4d,
+): MeshStandardMaterial => {
     const made = new MeshStandardMaterial({
         color,
         roughness,
         metalness: 0,
-        emissive: 0x30343e,
+        emissive,
         emissiveIntensity: 1,
     });
     made.onBeforeCompile = fill;
@@ -69,9 +76,9 @@ const material = (color: number, roughness: number): MeshStandardMaterial => {
 const palette = (): Palette => ({
     white: material(0xe6e6e8, 0.5),
     grey: material(0x8e9299, 0.6),
-    dark: material(0x25262b, 0.8),
+    dark: material(0x25262b, 0.8, 0xb3b3b3),
     gold: material(0xb8903a, 0.6),
-    array: material(0x1f2838, 0.5),
+    array: material(0x1f2838, 0.85, 0xb3b3b3),
 });
 
 const box = (
@@ -423,8 +430,6 @@ export const createSpacecraftModel = (body: Body): Group => {
     const m = palette();
     const amber = material(0xc99a2e, 0.35);
     amber.metalness = 0.5;
-    // A brighter floor than the rest, so the arrays still show in Earth's shadow.
-    amber.emissive.set(0x2a2010);
 
     if (body.id === "iss") iss(parts, m, amber);
     else if (body.id === "hubble") hubble(parts, m);
