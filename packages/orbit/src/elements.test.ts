@@ -74,6 +74,17 @@ Deno.test("hyperbolic and parabolic states have no elliptic elements", () => {
     });
 });
 
+Deno.test("a NaN mu is not turned into elements", () => {
+    const result = elementsFromState(
+        { x: 7e6, y: 0, z: 0 },
+        { x: 0, y: 7500, z: 0 },
+        Number.NaN,
+        0,
+    );
+
+    assertEquals(result, { ok: false, reason: "escape" });
+});
+
 Deno.test("a purely radial velocity is degenerate", () => {
     assertEquals(
         elementsFromState(

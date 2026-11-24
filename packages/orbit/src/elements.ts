@@ -32,7 +32,8 @@ export const elementsFromState = (
     const e = length(eVec);
     const energy = v2 / 2 - mu / rLen;
 
-    if (energy >= 0 || e >= 1 - 1e-9) {
+    // Written as a negation so that a NaN `mu` is rejected too.
+    if (!(energy < 0 && e < 1 - 1e-9)) {
         return { ok: false, reason: "escape" };
     }
 
