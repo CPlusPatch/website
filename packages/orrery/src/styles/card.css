@@ -160,6 +160,11 @@
         p {
             font: 400 var(--orrery-size-sm) / 1.2 var(--orrery-font-ui);
         }
+
+        /* Nested to beat the stats grid's own margin reset. */
+        .orrery__headline-grid {
+            margin-block-start: var(--space-sm);
+        }
     }
 
     .orrery__headline-now {
@@ -177,26 +182,6 @@
 
     .orrery__headline-from {
         color: var(--orrery-muted);
-    }
-
-    .orrery__headline-speed {
-        color: var(--orrery-muted);
-        font: 400 var(--orrery-size-sm) / 1.2 var(--orrery-font-data);
-        font-variant-numeric: tabular-nums;
-
-        &::before {
-            content: "· ";
-        }
-    }
-
-    .orrery__headline-sub {
-        margin-block-start: var(--space-xs);
-        color: var(--orrery-muted);
-
-        span {
-            font: 400 var(--orrery-size-sm) var(--orrery-font-data);
-            font-variant-numeric: tabular-nums;
-        }
     }
 
     /*

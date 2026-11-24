@@ -26,7 +26,7 @@ export type Headline = {
 export const createHeadline = (parentName: string): Headline => {
     const [distance, speed, period, anomaly] = [
         h("span", { class: "orrery__headline-distance" }),
-        h("span", { class: "orrery__headline-speed" }),
+        h("span"),
         h("span"),
         h("span"),
     ];
@@ -48,15 +48,19 @@ export const createHeadline = (parentName: string): Headline => {
                     { class: "orrery__headline-from" },
                     `from ${parentName}`,
                 ),
-                speed,
             ),
             h(
-                "p",
-                { class: "orrery__headline-sub" },
-                "Period ",
-                period,
-                " · True anomaly ",
-                anomaly,
+                "dl",
+                { class: "orrery__stats-grid orrery__headline-grid" },
+                ...(
+                    [
+                        ["Speed", speed],
+                        ["Period", period],
+                        ["True anomaly", anomaly],
+                    ] as const
+                ).map(([label, value]) =>
+                    h("div", {}, h("dt", {}, label), h("dd", {}, value)),
+                ),
             ),
             spokenText,
         ),
