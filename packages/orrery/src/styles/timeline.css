@@ -19,6 +19,7 @@
             display: block;
             inline-size: 100%;
             block-size: 100%;
+            /* 24px is FADE_PX in timeline.ts, which keeps labels out of it. */
             mask-image: linear-gradient(
                 to right,
                 transparent,

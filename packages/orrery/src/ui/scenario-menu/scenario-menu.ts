@@ -8,6 +8,7 @@ import {
     nameProblem,
     parseScenarioJson,
     readList,
+    SAVED_CHANGED,
     type SavedScenario,
     type SavedStorage,
     startTime,
@@ -146,6 +147,7 @@ export const createScenarios = (
         }
 
         saved = next;
+        window.dispatchEvent(new Event(SAVED_CHANGED));
         nameInput.value = "";
         render();
         setStatus(`Saved ${name}.`);
@@ -163,6 +165,7 @@ export const createScenarios = (
         }
 
         saved = next;
+        window.dispatchEvent(new Event(SAVED_CHANGED));
         render();
         setStatus(`Deleted ${gone.scenario.name}.`);
         nameInput.focus();

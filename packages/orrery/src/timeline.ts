@@ -197,6 +197,27 @@ export const isFree = (
     gap: number,
 ): boolean => taken.every(([a, b]) => to + gap <= a || from - gap >= b);
 
+/** The width in px of the fade at each end of the strip, from `styles/timeline.css`. */
+export const FADE_PX = 24;
+
+/**
+ * The first of the label `candidates` (left edges in px) whose `width` fits in `[min, max]` and
+ * clear of every range in `taken`, or null.
+ */
+export const labelLeft = (
+    candidates: number[],
+    width: number,
+    taken: [number, number][],
+    min: number,
+    max: number,
+): number | null =>
+    candidates.find(
+        (from) =>
+            from >= min &&
+            from + width <= max &&
+            isFree(taken, from, from + width, 0),
+    ) ?? null;
+
 /** A periapsis or apoapsis mark on the strip, and whether it carries its label. */
 export type ApsisMark = { name: "Ap" | "Pe"; t: number; labelled: boolean };
 

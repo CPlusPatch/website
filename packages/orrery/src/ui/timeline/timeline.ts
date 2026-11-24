@@ -1,5 +1,10 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
-import { readList, type SavedStorage, startTime } from "../../persistence.ts";
+import {
+    readList,
+    SAVED_CHANGED,
+    type SavedStorage,
+    startTime,
+} from "../../persistence.ts";
 import { readouts } from "../../readouts.ts";
 import { isLive } from "../../time-text.ts";
 import { clampT, tipText, windowHalf, windowLabel } from "../../timeline.ts";
@@ -340,10 +345,11 @@ export const createTimeline = (
     element.addEventListener("pointercancel", onEnd);
     element.addEventListener("pointerleave", onLeave);
     element.addEventListener("keydown", onKeyDown);
-    // A scenario saved in another tab or in the dialog shows up on the next visit to the strip.
+    // The dialog says so at once. Another tab's save shows up on the next visit to the strip.
     element.addEventListener("pointerenter", readSaved);
     element.addEventListener("focus", readSaved);
     window.addEventListener("focus", readSaved);
+    window.addEventListener(SAVED_CHANGED, readSaved);
 
     // The first frame can draw before the fonts load.
     document.fonts.ready.then(() => {
@@ -367,6 +373,7 @@ export const createTimeline = (
             resize.disconnect();
             off();
             window.removeEventListener("focus", readSaved);
+            window.removeEventListener(SAVED_CHANGED, readSaved);
             element.remove();
         },
     };

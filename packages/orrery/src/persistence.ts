@@ -185,6 +185,9 @@ export const readList = (storage: SavedStorage): SavedScenario[] => {
     return list;
 };
 
+/** The window event for a change to the named scenarios, so the timeline redraws its flags. */
+export const SAVED_CHANGED = "orrery:saved-changed";
+
 /** Saves the named scenarios. Returns `false` when the storage refuses them. */
 export const writeList = (
     storage: SavedStorage,

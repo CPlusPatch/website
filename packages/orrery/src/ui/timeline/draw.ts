@@ -1,7 +1,9 @@
 import type { Readouts } from "../../readouts.ts";
 import {
     apsisMarks,
+    FADE_PX,
     isFree,
+    labelLeft,
     MAX_T,
     MIN_T,
     tickLabel,
@@ -69,6 +71,39 @@ const HATCH_PX = 6;
 /** The width at the left of the strip that the window label takes. */
 const WINDOW_LABEL_PX = 76;
 
+/** The left edge in px of the window label and of the picked body's name. */
+const LABEL_X = 8;
+
+/** `text` cut short with an ellipsis to fit `max` px. */
+const fit = (ctx: CanvasRenderingContext2D, text: string, max: number) => {
+    if (ctx.measureText(text).width <= max) return text;
+
+    let n = text.length;
+    while (n > 1 && ctx.measureText(`${text.slice(0, n)}…`).width > max) n--;
+
+    return `${text.slice(0, n)}…`;
+};
+
+/** Fills `text` at `LABEL_X` in `color` on a patch of `ground`, so a line behind it stays out. */
+const knockout = (
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    baseline: number,
+    fontSize: number,
+    color: string,
+    ground: string,
+) => {
+    ctx.fillStyle = ground;
+    ctx.fillRect(
+        LABEL_X - 3,
+        baseline - fontSize,
+        ctx.measureText(text).width + 6,
+        fontSize + 3,
+    );
+    ctx.fillStyle = color;
+    ctx.fillText(text, LABEL_X, baseline);
+};
+
 /** Draws the strip on `ctx`. Returns the boxes of the saved scenarios and apsides to hit-test, and Now's place. */
 export const drawTimeline = (
     ctx: CanvasRenderingContext2D,
@@ -135,6 +170,14 @@ export const drawTimeline = (
     const windowEdge = phone ? 0 : WINDOW_LABEL_PX;
     ctx.font = `500 ${fontSize}px ${c.fontData}`;
     ctx.textAlign = "left";
+
+    const windowWidth = phone ? 0 : ctx.measureText(view.windowText).width;
+    // The playhead and the Now line cross the ruler, so a label keeps 4 px off them.
+    const centre: [number, number] = [mid - 4, mid + 4];
+    const barred: [number, number][] = [centre];
+    if (inWindow) barred.push([nowX - 4, nowX + 4]);
+    if (!phone) barred.push([0, LABEL_X + windowWidth + 4]);
+
     for (const t of labelled.ticks) {
         const px = x(t);
         if (t < MIN_T || t > MAX_T || px < windowEdge) continue;
@@ -146,20 +189,33 @@ export const drawTimeline = (
         ctx.lineTo(tx, Y);
         ctx.stroke();
 
+        // Flip rather than drop, so a collision doesn't leave a gap of two ticks.
         const text = tickLabel(t, labelled.kind);
-        const end = px + 4 + ctx.measureText(text).width;
-        // The playhead and the Now line cross the ruler, so a label never sits under them.
-        if (end > width - 4) continue;
-        if (px - 4 < mid && mid < end + 4) continue;
-        if (inWindow && px - 4 < nowX && nowX < end + 4) continue;
+        const textWidth = ctx.measureText(text).width;
+        const from = labelLeft(
+            [px + 4, px - 4 - textWidth],
+            textWidth,
+            barred,
+            FADE_PX,
+            width - FADE_PX,
+        );
+        if (from === null) continue;
 
+        barred.push([from - 4, from + textWidth + 4]);
         ctx.fillStyle = c.muted;
-        ctx.fillText(text, px + 4, Y - 4);
+        ctx.fillText(text, from, Y - 4);
     }
-    if (!phone) {
-        ctx.fillStyle = c.dim;
-        ctx.fillText(view.windowText, 8, Y - 4);
-    }
+
+    // Names the pink squares, so they aren't linked to the body by colour alone.
+    ctx.font = `600 ${fontSize}px ${c.fontUi}`;
+    const bodyName =
+        view.bodyName === null
+            ? null
+            : fit(ctx, view.bodyName, width / 3 - LABEL_X);
+    const nameEnd =
+        bodyName === null ? 0 : LABEL_X + ctx.measureText(bodyName).width + 4;
+    const reserved: [number, number][] =
+        bodyName === null ? [] : [[0, nameEnd]];
 
     // The picked body's apsides: labelled when far apart, then squares, then thinned out.
     const sq = phone ? 8 : 9;
@@ -168,11 +224,12 @@ export const drawTimeline = (
         x: number;
         t: number;
         labelled: boolean;
+        /** The label's left edge, or null if there's no room for it. */
+        text: number | null;
         from: number;
         to: number;
     }[] = [];
-    const taken: [number, number][] = [];
-    ctx.font = `600 ${fontSize}px ${c.fontUi}`;
+    const taken: [number, number][] = [...reserved];
     for (const { name, t, labelled } of apsisMarks(
         view.readout,
         clock.t,
@@ -182,14 +239,48 @@ export const drawTimeline = (
     )) {
         const ax = x(t);
         if (t < MIN_T || t > MAX_T || ax < 2 || ax > width - 2) continue;
+        if (!isFree(reserved, ax - sq / 2, ax + sq / 2, 0)) continue;
 
-        const flip = ax > width - 34;
-        const label = labelled ? ctx.measureText(name).width + 4 : 0;
-        const from = flip ? ax - sq / 2 - label : ax - sq / 2;
-        const to = flip ? ax + sq / 2 : ax + sq / 2 + label;
-        marks.push({ name, x: ax, t, labelled, from, to });
+        marks.push({
+            name,
+            x: ax,
+            t,
+            labelled,
+            text: null,
+            from: ax - sq / 2,
+            to: ax + sq / 2,
+        });
+    }
+
+    // A label must clear every square, or "Ap Pe" reads as one mark's name.
+    const placed: [number, number][] = [];
+    for (const mark of marks) {
+        if (mark.labelled) {
+            const { x: ax } = mark;
+            const textWidth = ctx.measureText(mark.name).width;
+            const right = ax + sq / 2 + 4;
+            const left = ax - sq / 2 - 4 - textWidth;
+            const others = marks
+                .filter((other) => other !== mark)
+                .map((other): [number, number] => [
+                    other.from - 1,
+                    other.to + 1,
+                ]);
+            mark.text = labelLeft(
+                ax > width - 34 ? [left, right] : [right, left],
+                textWidth,
+                [centre, ...reserved, ...others, ...placed],
+                0,
+                width,
+            );
+            if (mark.text !== null) {
+                placed.push([mark.text - 1, mark.text + textWidth + 1]);
+                mark.from = Math.min(mark.from, mark.text);
+                mark.to = Math.max(mark.to, mark.text + textWidth);
+            }
+        }
         // A bare square gives way to a scenario's flag, or names vanish at fast rates.
-        if (labelled) taken.push([from, to]);
+        if (mark.labelled) taken.push([mark.from, mark.to]);
     }
 
     // Saved scenarios first, so a name steps aside for an apsis and not the other way round.
@@ -203,6 +294,12 @@ export const drawTimeline = (
         const fx = Math.round(px);
         const textWidth = ctx.measureText(name).width;
         const flip = fx + 14 + textWidth > width - 4;
+        if (
+            !isFree(reserved, flip ? fx - 9 : fx - 1, flip ? fx + 1 : fx + 9, 0)
+        ) {
+            continue;
+        }
+
         const from = flip ? fx - 13 - textWidth : fx + 13;
         const named = isFree(taken, from, from + textWidth, 4);
 
@@ -228,10 +325,9 @@ export const drawTimeline = (
     }
 
     ctx.font = `600 ${fontSize}px ${c.fontUi}`;
-    for (const { name, x: ax, t, labelled, from, to } of marks) {
+    for (const { name, x: ax, t, labelled, text, from, to } of marks) {
         if (!labelled && !isFree(flags, ax - sq / 2, ax + sq / 2, 0)) continue;
 
-        const flip = ax > width - 34;
         const left = Math.round(ax - sq / 2);
         const top = Math.round(ay - sq / 2);
         hits.push({
@@ -251,11 +347,11 @@ export const drawTimeline = (
             ctx.lineWidth = 1;
         }
 
-        if (!labelled) continue;
+        if (text === null) continue;
 
         ctx.fillStyle = c.pick;
-        ctx.textAlign = flip ? "right" : "left";
-        ctx.fillText(name, flip ? ax - sq / 2 - 4 : ax + sq / 2 + 4, ay + 4);
+        ctx.textAlign = "left";
+        ctx.fillText(name, text, ay + 4);
     }
 
     // Now is a line through the marker tier and the ruler, only when it's in the window.
@@ -270,6 +366,17 @@ export const drawTimeline = (
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
+    }
+
+    // Last, so the Now line passes under the labels' knockout.
+    ctx.textAlign = "left";
+    if (!phone) {
+        ctx.font = `500 ${fontSize}px ${c.fontData}`;
+        knockout(ctx, view.windowText, Y - 4, fontSize, c.dim, c.ground);
+    }
+    if (bodyName !== null) {
+        ctx.font = `600 ${fontSize}px ${c.fontUi}`;
+        knockout(ctx, bodyName, ay + 4, fontSize, c.pick, c.ground);
     }
 
     // A faint line at the pointer shows where a click would land.

@@ -7,6 +7,7 @@ import {
     apsisMarks,
     clampT,
     isFree,
+    labelLeft,
     MAX_T,
     MIN_T,
     nowFlagLeft,
@@ -395,4 +396,24 @@ Deno.test("a body with no orbit, or an open one, has no apsides", () => {
         ),
         [],
     );
+});
+
+Deno.test("a label goes right of its tick, or left when the right is taken", () => {
+    const line: [number, number][] = [[96, 104]];
+
+    assertEquals(labelLeft([54, 42], 30, [], 0, 400), 54);
+    assertEquals(labelLeft([80, 20], 30, line, 0, 400), 20);
+    assertEquals(labelLeft([70, 12], 30, line, 0, 400), 12);
+});
+
+Deno.test("a label that fits neither side is dropped", () => {
+    assertEquals(labelLeft([54, 12], 30, [[40, 70]], 0, 400), null);
+    assertEquals(labelLeft([390], 30, [], 24, 376), null);
+    assertEquals(labelLeft([10], 30, [], 24, 376), null);
+    assertEquals(labelLeft([24, 400], 30, [], 24, 376), 24);
+});
+
+Deno.test("a label may touch a range's edge but not cross it", () => {
+    assertEquals(labelLeft([40], 20, [[60, 70]], 0, 400), 40);
+    assertEquals(labelLeft([41], 20, [[60, 70]], 0, 400), null);
 });
