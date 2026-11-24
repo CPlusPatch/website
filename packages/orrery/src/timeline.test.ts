@@ -4,7 +4,7 @@ import { assert, assertEquals, assertExists } from "@std/assert";
 import { RATES } from "./clock.ts";
 import { fromParts, toParts } from "./date-parts.ts";
 import {
-    apsides,
+    apsisMarks,
     clampT,
     isFree,
     nowFlagLeft,
@@ -196,37 +196,119 @@ Deno.test("a range is free when it clears every taken one by the gap", () => {
     assertEquals(isFree([], 12, 15, 4), true);
 });
 
-Deno.test("apsides are the next and the previous one of each kind", () => {
-    const result = apsides(
-        { period: 100, timeToPeriapsis: 30, timeToApoapsis: 80 },
-        1000,
+const ORBIT = { period: 100, timeToPeriapsis: 30, timeToApoapsis: 80 };
+
+const times = (marks: { name: string; t: number }[], name: string) =>
+    marks.filter((mark) => mark.name === name).map((mark) => mark.t);
+
+Deno.test("far apart apsides all show, with labels", () => {
+    // 50 s between marks at 1 px/s is 50 px.
+    const marks = apsisMarks(ORBIT, 1000, 800, 1200, 1);
+
+    assertEquals(times(marks, "Pe"), [830, 930, 1030, 1130]);
+    assertEquals(times(marks, "Ap"), [880, 980, 1080, 1180]);
+    assertEquals(
+        marks.map((mark) => mark.t),
+        marks.map((mark) => mark.t).toSorted((a, b) => a - b),
+    );
+    assertEquals(
+        marks.every((mark) => mark.labelled),
+        true,
+    );
+});
+
+Deno.test("closer apsides all show, as squares", () => {
+    // 50 s between marks at 0.3 px/s is 15 px.
+    const marks = apsisMarks(ORBIT, 1000, 0, 2000, 0.3);
+
+    assertEquals(times(marks, "Pe").length, 20);
+    assertEquals(times(marks, "Ap").length, 20);
+    assertEquals(
+        marks.some((mark) => mark.labelled),
+        false,
+    );
+    assertEquals(apsisMarks(ORBIT, 1000, 800, 1200, 0.6)[0]?.labelled, true);
+    assertEquals(apsisMarks(ORBIT, 1000, 800, 1200, 0.24)[0]?.labelled, false);
+});
+
+Deno.test("fast apsides keep only every Nth periapsis, on the same orbits", () => {
+    // 100 s per orbit at 0.1 px/s is 10 px, so every 2nd orbit clears 12 px: N = 2.
+    const marks = apsisMarks(ORBIT, 1000, 0, 2000, 0.1);
+
+    assertEquals(
+        marks.every((mark) => mark.name === "Pe"),
+        true,
+    );
+    assertEquals(
+        marks.every((mark) => !mark.labelled),
+        true,
+    );
+    assertEquals(
+        marks.map((mark) => mark.t),
+        [30, 230, 430, 630, 830, 1030, 1230, 1430, 1630, 1830],
+    );
+    // N is 12 / (100 * 0.01) = 12.
+    const sparse = apsisMarks(ORBIT, 1000, 0, 5000, 0.01);
+
+    assertEquals(
+        sparse.map((mark) => mark.t),
+        [30, 1230, 2430, 3630, 4830],
+    );
+});
+
+Deno.test("thinned marks keep their times as the clock moves", () => {
+    const at = (shift: number) =>
+        apsisMarks(
+            { ...ORBIT, timeToPeriapsis: 30 - shift },
+            1000 + shift,
+            0,
+            3000,
+            0.01,
+        ).map((mark) => Math.round(mark.t));
+
+    assertEquals(at(0), [30, 1230, 2430]);
+    assertEquals(at(7), at(0));
+    assertEquals(at(23), at(0));
+});
+
+Deno.test("a huge number of orbits in the window stays cheap", () => {
+    const year = 365.25 * 86400;
+    const marks = apsisMarks(
+        { period: 5400, timeToPeriapsis: 1000, timeToApoapsis: 3700 },
+        0,
+        -60 * year,
+        60 * year,
+        1000 / (120 * year),
     );
 
-    assertEquals(result, [
-        { name: "Pe", t: 1030 },
-        { name: "Pe", t: 930 },
-        { name: "Ap", t: 1080 },
-        { name: "Ap", t: 980 },
-    ]);
+    // At most one mark per 12 px of the 1000 px window.
+    assertEquals(marks.length <= 84, true);
+    assertEquals(marks.length >= 60, true);
 });
 
 Deno.test("a body with no orbit, or an open one, has no apsides", () => {
-    assertEquals(apsides(null, 0), []);
+    assertEquals(apsisMarks(null, 0, -10, 10, 1), []);
     assertEquals(
-        apsides(
+        apsisMarks(
             {
                 period: Number.POSITIVE_INFINITY,
                 timeToPeriapsis: 5,
                 timeToApoapsis: 6,
             },
             0,
+            -10,
+            10,
+            1,
         ),
         [],
     );
     assertEquals(
-        apsides(
+        apsisMarks(
             { period: Number.NaN, timeToPeriapsis: 5, timeToApoapsis: 6 },
             0,
+            -10,
+            10,
+            1,
         ),
         [],
     );

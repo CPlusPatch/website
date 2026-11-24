@@ -182,18 +182,50 @@ export const isFree = (
     gap: number,
 ): boolean => taken.every(([a, b]) => to + gap <= a || from - gap >= b);
 
-/** A periapsis or apoapsis the strip can show, and when it happens. */
-export type Apsis = { name: "Ap" | "Pe"; t: number };
+/** A periapsis or apoapsis mark on the strip, and whether it carries its label. */
+export type ApsisMark = { name: "Ap" | "Pe"; t: number; labelled: boolean };
 
-/** The next and the previous apsides at clock time `t`, or none for no orbit or an open one. */
-export const apsides = (
+/** The spacing in px between marks that gives each a label. */
+const LABELLED_PX = 30;
+
+/** The spacing in px below which marks are thinned out. */
+const MARK_PX = 12;
+
+/** The times in `[lo, hi]` that fall on every `every`th orbit, counted from J2000. */
+const orbitTimes = (
+    anchor: number,
+    period: number,
+    lo: number,
+    hi: number,
+    every: number,
+): number[] => {
+    // The phase doesn't change with the clock, so orbit k keeps its time and its place in the count.
+    const phase = ((anchor % period) + period) % period;
+    const first = Math.ceil(Math.ceil((lo - phase) / period) / every) * every;
+    const out: number[] = [];
+
+    for (let k = first; phase + k * period <= hi; k += every) {
+        out.push(phase + k * period);
+    }
+
+    return out;
+};
+
+/**
+ * The apsides in `[lo, hi]` at `perSecond` px per second, or none for no orbit or an open one. Wide
+ * apart they have labels, closer they're squares, and closer still only every Nth periapsis shows.
+ */
+export const apsisMarks = (
     readout: Pick<
         Readouts,
         "period" | "timeToPeriapsis" | "timeToApoapsis"
     > | null,
     t: number,
-): Apsis[] => {
-    if (!readout) return [];
+    lo: number,
+    hi: number,
+    perSecond: number,
+): ApsisMark[] => {
+    if (!readout || !(perSecond > 0)) return [];
 
     const { period, timeToPeriapsis, timeToApoapsis } = readout;
     if (
@@ -203,10 +235,22 @@ export const apsides = (
         return [];
     }
 
-    return [
-        { name: "Pe", t: t + timeToPeriapsis },
-        { name: "Pe", t: t + timeToPeriapsis - period },
-        { name: "Ap", t: t + timeToApoapsis },
-        { name: "Ap", t: t + timeToApoapsis - period },
-    ];
+    const spacing = (period / 2) * perSecond;
+    const labelled = spacing >= LABELLED_PX;
+    const every =
+        spacing >= MARK_PX ? 1 : Math.ceil(MARK_PX / (period * perSecond));
+    const periapses = orbitTimes(
+        t + timeToPeriapsis,
+        period,
+        lo,
+        hi,
+        every,
+    ).map((time) => ({ name: "Pe" as const, t: time, labelled }));
+    if (spacing < MARK_PX) return periapses;
+
+    const apoapses = orbitTimes(t + timeToApoapsis, period, lo, hi, 1).map(
+        (time) => ({ name: "Ap" as const, t: time, labelled }),
+    );
+
+    return [...periapses, ...apoapses].sort((a, b) => a.t - b.t);
 };
