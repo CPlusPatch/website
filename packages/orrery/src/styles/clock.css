@@ -3,6 +3,7 @@
         /* The height of the buttons and the menu items in the bar. */
         --orrery-clock-control: var(--orrery-control-lg);
 
+        position: relative;
         box-sizing: border-box;
         flex: 1 1 100%;
         display: grid;
@@ -205,6 +206,23 @@
         }
     }
 
+    /* The Now flag: the button over the Now line, placed in px by the time bar. */
+    .orrery__go-live.orrery__go-live--flag {
+        position: absolute;
+        z-index: 2;
+        inset-block-start: 2px;
+        block-size: 20px;
+        padding: 0 0.375rem;
+        background-color: var(--orrery-ground);
+        font: 600 var(--orrery-size-label) / 1 var(--orrery-font-ui);
+        overflow: visible;
+        text-overflow: clip;
+
+        &:focus-visible {
+            outline-offset: 1px;
+        }
+    }
+
     .orrery__live-short {
         display: none;
     }
@@ -268,6 +286,17 @@
         .orrery__utc {
             font-size: var(--orrery-size-xs);
         }
+
+        .orrery__go-live.orrery__go-live--flag {
+            block-size: 18px;
+            padding: 0 0.25rem;
+
+            &::after {
+                content: "";
+                position: absolute;
+                inset: -3px -4px -25px;
+            }
+        }
     }
 
     @media (forced-colors: active) {
@@ -291,7 +320,8 @@
             color: HighlightText;
         }
 
-        .orrery__date {
+        .orrery__date,
+        .orrery__go-live.orrery__go-live--flag {
             border: 1px solid ButtonText;
         }
     }

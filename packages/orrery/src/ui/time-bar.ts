@@ -5,9 +5,11 @@ import { presetOf, RATES } from "../clock.ts";
 import { PART_NAMES, type PartName } from "../date-parts.ts";
 import type { SavedStorage } from "../persistence.ts";
 import { isLive, offsetText, rateText, stampParts } from "../time-text.ts";
+import { nowFlagLeft } from "../timeline.ts";
 import type { World } from "../world.ts";
 import { createDateEditor } from "./date-editor.ts";
 import { h, setText } from "./dom.ts";
+import type { NowMark } from "./timeline/draw.ts";
 import { createTimeline } from "./timeline/timeline.ts";
 
 /** The time bar's element and how to drive it. */
@@ -145,6 +147,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     const liveShort = h("span", { class: "orrery__live-short" });
     const liveWord = h("span", { class: "orrery__live-word" });
     const liveOffset = h("span", {}, " · ", liveFull, liveShort, " ", liveWord);
+    const goLiveText = h("span", {}, "Go live");
     const goLiveButton = h(
         "button",
         {
@@ -153,7 +156,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
             "aria-keyshortcuts": "L",
             title: "Real time at 1 sec/s (L)",
         },
-        "Go live",
+        goLiveText,
         liveOffset,
     );
     // A status says Live once. The offset changes too often to announce.
@@ -163,8 +166,51 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     });
 
     const editor = createDateEditor(world, date);
-    const timeline = createTimeline(world, storage);
+    const phone = matchMedia("(max-width: 720px)");
+    let isOn = false;
+    let spokenOffset = "";
+    let nowMark: (NowMark & { width: number }) | null = null;
 
+    // With Now in the window, Go live becomes the Now flag on the Now line.
+    const placeFlag = () => {
+        const flag = !isOn && nowMark !== null && nowMark.inWindow;
+        goLiveButton.classList.toggle("orrery__go-live--flag", flag);
+        setText(goLiveText, flag ? "Now" : "Go live");
+        liveOffset.hidden = flag || spokenOffset === "";
+        // The name starts with the visible text, for voice control.
+        const label = `${flag ? "Now, go live" : "Go live"}${spokenOffset}`;
+        if (goLiveButton.getAttribute("aria-label") !== label) {
+            goLiveButton.setAttribute("aria-label", label);
+        }
+        if (!flag || !nowMark) {
+            goLiveButton.style.left = "";
+
+            return;
+        }
+
+        const left = nowFlagLeft(
+            nowMark.x,
+            goLiveButton.offsetWidth,
+            nowMark.width,
+            date.offsetWidth / 2,
+            phone.matches ? 8 : 6,
+        );
+        const px = `${Math.round(left + stage.offsetLeft + stage.clientLeft)}px`;
+        if (goLiveButton.style.left !== px) goLiveButton.style.left = px;
+    };
+
+    const timeline = createTimeline(world, storage, (mark) => {
+        nowMark = mark;
+        placeFlag();
+    });
+
+    const stage = h(
+        "div",
+        { class: "orrery__stage" },
+        timeline.element,
+        date,
+        editor.element,
+    );
     const element = h(
         "div",
         { class: "orrery__clock", role: "group", "aria-label": "Time" },
@@ -180,13 +226,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
             ),
             h("div", { class: "orrery__live-slot" }, goLiveButton, liveStatus),
         ),
-        h(
-            "div",
-            { class: "orrery__stage" },
-            timeline.element,
-            date,
-            editor.element,
-        ),
+        stage,
     );
 
     const goLive = () => {
@@ -241,21 +281,19 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
 
         liveChip.hidden = !on;
         setText(liveStatus, on ? "Live" : "");
-        liveOffset.hidden = offset === null;
         if (offset) {
             setText(liveFull, offset.full);
             setText(liveShort, offset.short);
             setText(liveWord, offset.word);
         }
-        const label = offset
-            ? `Go live, the clock is ${offset.spoken} ${offset.word}`
-            : "Go live";
-        if (goLiveButton.getAttribute("aria-label") !== label) {
-            goLiveButton.setAttribute("aria-label", label);
-        }
+        spokenOffset = offset
+            ? `, the clock is ${offset.spoken} ${offset.word}`
+            : "";
         // Hiding the button would drop focus to <body>.
         if (on && document.activeElement === goLiveButton) date.focus();
         goLiveButton.hidden = on;
+        isOn = on;
+        placeFlag();
     };
 
     const show = () => {
