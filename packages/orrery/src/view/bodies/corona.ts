@@ -38,14 +38,24 @@ export const coronaTexture = (): CanvasTexture => {
 };
 
 /** A star's glow. Its scale is set each frame, and the star's disc hides the part behind it. */
-export const createCorona = (texture: CanvasTexture, color: Color): Sprite =>
-    new Sprite(
-        new SpriteMaterial({
-            map: texture,
-            color,
-            opacity: OPACITY,
-            blending: AdditiveBlending,
-            depthWrite: false,
-            toneMapped: false,
-        }),
-    );
+export const createCorona = (texture: CanvasTexture, color: Color): Sprite => {
+    const material = new SpriteMaterial({
+        map: texture,
+        color,
+        opacity: OPACITY,
+        blending: AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+    });
+    // At a w of ~1e11 km, SwiftShader interpolates the UVs wrong and the glow draws as an
+    // hourglass. The sprite always faces the camera, so dividing by w here loses nothing.
+    material.onBeforeCompile = (shader) => {
+        shader.vertexShader = shader.vertexShader.replace(
+            "#include <logdepthbuf_vertex>",
+            "#include <logdepthbuf_vertex>\n\tgl_Position /= gl_Position.w;",
+        );
+    };
+    material.customProgramCacheKey = () => "corona";
+
+    return new Sprite(material);
+};
