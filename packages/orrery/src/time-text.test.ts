@@ -1,8 +1,9 @@
 /// <reference types="deno" />
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { assertEquals } from "@std/assert";
-import { RATES } from "./clock.ts";
+import { Clock, RATES } from "./clock.ts";
 import {
+    advanceClock,
     dateText,
     isLive,
     offsetText,
@@ -144,4 +145,35 @@ Deno.test("dateText pads the year, and shows dashes for a time that isn't a date
     assertEquals(dateText(atYear(5)), "0005-01-01");
     assertEquals(dateText(1e30), "----------");
     assertEquals(dateText(Number.NaN), "----------");
+});
+
+Deno.test("a live clock is set to the real time instead of integrating a clamped step", () => {
+    const clock = new Clock(100, 1, false);
+
+    advanceClock(clock, 0.1, 100, 101.4);
+
+    assertEquals(clock.t, 101.4);
+    assertEquals(isLive(clock, 101.4), true);
+});
+
+Deno.test("a live clock stays live after a long gap between frames", () => {
+    const clock = new Clock(100, 1, false);
+
+    advanceClock(clock, 0.1, 100, 160);
+
+    assertEquals(clock.t, 160);
+});
+
+Deno.test("a clock that isn't live advances by its rate times the step", () => {
+    const behind = new Clock(100, 1, false);
+    const fast = new Clock(100, 60, false);
+    const paused = new Clock(100, 1, true);
+
+    advanceClock(behind, 0.1, 110, 110.1);
+    advanceClock(fast, 0.1, 100, 100.1);
+    advanceClock(paused, 0.1, 100, 100.1);
+
+    assertEquals(behind.t, 100.1);
+    assertEquals(fast.t, 106);
+    assertEquals(paused.t, 100);
 });

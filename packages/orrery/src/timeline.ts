@@ -10,8 +10,8 @@ import {
 } from "./date-parts.ts";
 import type { Readouts } from "./readouts.ts";
 
-/** What a labelled tick shows: a time of day, a day, a month or a year. */
-export type TickKind = "time" | "day" | "month" | "year";
+/** What a labelled tick shows: a time with seconds, a time of day, a day, a month or a year. */
+export type TickKind = "seconds" | "time" | "day" | "month" | "year";
 
 /** The first and last time the date editor accepts, in seconds since J2000. */
 export const MIN_T = fromParts({ y: MIN_YEAR, mo: 1, d: 1, h: 0, mi: 0, s: 0 });
@@ -30,6 +30,13 @@ const DAY = 86400;
 
 /** Steps in seconds. */
 const STEPS = [
+    1,
+    5,
+    10,
+    15,
+    30,
+    60, // 1 minute
+    120,
     300, // 5 minutes
     900, // 15 minutes
     3600, // 1 hour
@@ -115,7 +122,9 @@ export const ticks = (
             Math.ceil((lo + UNIX_AT_J2000) / step) * step - UNIX_AT_J2000;
         for (let t = first; t <= hi; t += step) out.push(t);
 
-        return { ticks: out, kind: step < DAY ? "time" : "day" };
+        const kind = step < 60 ? "seconds" : step < DAY ? "time" : "day";
+
+        return { ticks: out, kind };
     }
 
     const months =
@@ -160,10 +169,11 @@ const shortMonth = (mo: number): string => {
     return name.slice(0, 3);
 };
 
-/** `HH:MM`, `Jan 19`, `Mar` (the year on January) or `YYYY`, in UTC. */
+/** `HH:MM:SS`, `HH:MM`, `Jan 19`, `Mar` (the year on January) or `YYYY`, in UTC. */
 export const tickLabel = (t: number, kind: TickKind): string => {
-    const { y, mo, d, h, mi } = toParts(t);
+    const { y, mo, d, h, mi, s } = toParts(t);
 
+    if (kind === "seconds") return `${pad(h)}:${pad(mi)}:${pad(s)}`;
     if (kind === "time") return `${pad(h)}:${pad(mi)}`;
     if (kind === "day") return `${shortMonth(mo)} ${d}`;
     if (kind === "month" && mo !== 1) return shortMonth(mo);

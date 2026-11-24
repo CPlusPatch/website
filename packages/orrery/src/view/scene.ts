@@ -1,9 +1,10 @@
-import type { Body } from "@cpluspatch/orbit";
+import { type Body, unixMsToJ2000s } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import type { SatelliteGroup } from "../catalogue.ts";
 import type { EditScene } from "../editing.ts";
 import type { SatelliteFacts } from "../swarm.ts";
+import { advanceClock } from "../time-text.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 import type { Assets } from "./assets.ts";
@@ -363,6 +364,7 @@ const assemble = (
 
     let frame = 0;
     let last = performance.now();
+    let lastNowT = unixMsToJ2000s(Date.now());
     const draw = (now: number) => {
         frame = requestAnimationFrame(draw);
 
@@ -373,7 +375,9 @@ const assemble = (
         const dt = Math.min((now - last) / 1000, 0.1);
         last = now;
 
-        world.clock.tick(dt);
+        const nowT = unixMsToJ2000s(Date.now());
+        advanceClock(world.clock, dt, lastNowT, nowT);
+        lastNowT = nowT;
         const states = world.states();
 
         satellites.check();

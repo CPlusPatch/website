@@ -90,6 +90,54 @@ Deno.test("clamping keeps a time inside years -9999 to 9999", () => {
     );
 });
 
+Deno.test("the limits are the first and last second of years -9999 and 9999", () => {
+    assertEquals(MIN_T, at(-9999, 1, 1));
+    assertEquals(MAX_T, at(9999, 12, 31, 23, 59, 59));
+});
+
+Deno.test("a window of two minutes gets a tick every 10 seconds, on the 10 seconds", () => {
+    const lo = at(2026, 11, 22, 10, 7, 3);
+    const result = ticks(lo, lo + 120, 12);
+
+    assertEquals(result.kind, "seconds");
+    assertEquals(
+        result.ticks.map((t) => tickLabel(t, result.kind)),
+        [
+            "10:07:10",
+            "10:07:20",
+            "10:07:30",
+            "10:07:40",
+            "10:07:50",
+            "10:08:00",
+            "10:08:10",
+            "10:08:20",
+            "10:08:30",
+            "10:08:40",
+            "10:08:50",
+            "10:09:00",
+        ],
+    );
+});
+
+Deno.test("seconds steps run from 1 second to 2 minutes, then labels drop the seconds", () => {
+    const lo = at(2026, 11, 22, 10);
+    const stepOf = (span: number) => {
+        const [a, b] = ticks(lo, lo + span, 10).ticks;
+
+        return {
+            step: (b ?? 0) - (a ?? 0),
+            kind: ticks(lo, lo + span, 10).kind,
+        };
+    };
+
+    assertEquals(stepOf(10), { step: 1, kind: "seconds" });
+    assertEquals(stepOf(50), { step: 5, kind: "seconds" });
+    assertEquals(stepOf(150), { step: 15, kind: "seconds" });
+    assertEquals(stepOf(300), { step: 30, kind: "seconds" });
+    assertEquals(stepOf(600), { step: 60, kind: "time" });
+    assertEquals(stepOf(1200), { step: 120, kind: "time" });
+});
+
 Deno.test("an hour of window gets ticks every 15 minutes or so, on the quarter hour", () => {
     const lo = at(2026, 11, 22, 10, 7);
     const result = ticks(lo, lo + 3600, 6);
@@ -198,6 +246,18 @@ Deno.test("tick labels come from the UTC parts", () => {
     assertEquals(tickLabel(at(2026, 1, 1), "month"), "2026");
     assertEquals(tickLabel(t, "year"), "2026");
     assertEquals(tickLabel(at(7, 1, 1), "year"), "0007");
+    assertEquals(tickLabel(at(2026, 3, 4, 5, 6, 7), "seconds"), "05:06:07");
+});
+
+Deno.test("a year before 0 is written with a minus and four digits", () => {
+    assertEquals(tickLabel(at(-43, 1, 1), "year"), "-0043");
+    assertEquals(tickLabel(at(-9999, 1, 1), "year"), "-9999");
+    assertEquals(tickLabel(at(0, 1, 1), "year"), "0000");
+    assertEquals(tickLabel(at(-43, 3, 1), "month"), "Mar");
+    assertEquals(
+        tipText(at(-43, 3, 15, 9, 5), 43200),
+        "15 Mar -0043 09:05 UTC",
+    );
 });
 
 Deno.test("the tip shows seconds only in a window under a day", () => {

@@ -81,6 +81,7 @@ export const createTimeline = (
 
         return {
             rule: read("--orrery-rule"),
+            frame: read("--orrery-frame"),
             dim: read("--orrery-dim"),
             muted: read("--orrery-muted"),
             go: read("--orrery-go"),

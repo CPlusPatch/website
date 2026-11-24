@@ -1,8 +1,16 @@
 import type { Readouts } from "../../readouts.ts";
-import { apsisMarks, isFree, tickLabel, ticks } from "../../timeline.ts";
+import {
+    apsisMarks,
+    isFree,
+    MAX_T,
+    MIN_T,
+    tickLabel,
+    ticks,
+} from "../../timeline.ts";
 
 export type Colors = {
     rule: string;
+    frame: string;
     dim: string;
     muted: string;
     go: string;
@@ -55,6 +63,9 @@ export type View = {
     bodyName: string | null;
 };
 
+/** The gap in px between the lines of the hatch over time past the limits. */
+const HATCH_PX = 6;
+
 /** The width at the left of the strip that the window label takes. */
 const WINDOW_LABEL_PX = 76;
 
@@ -84,6 +95,35 @@ export const drawTimeline = (
     const nowX = x(nowT);
     const inWindow = nowX >= 3 && nowX <= width - 3;
 
+    // Time past the date limits isn't valid, so it's hatched off.
+    const past: [number, number][] = [
+        [0, Math.min(width, x(MIN_T))],
+        [Math.max(0, x(MAX_T)), width],
+    ];
+    for (const [from, to] of past) {
+        if (to <= from) continue;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(from, 0, to - from, height);
+        ctx.clip();
+        ctx.strokeStyle = c.rule;
+        ctx.beginPath();
+        for (let hx = from - height; hx < to; hx += HATCH_PX) {
+            ctx.moveTo(hx + height, 0);
+            ctx.lineTo(hx, height);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    for (const limit of [x(MIN_T), x(MAX_T)]) {
+        if (limit < 0 || limit > width) continue;
+
+        ctx.fillStyle = c.frame;
+        ctx.fillRect(Math.round(limit), 0, 1, height);
+    }
+
     ctx.fillStyle = c.rule;
     ctx.fillRect(0, Y - 1, width, 1);
 
@@ -97,7 +137,7 @@ export const drawTimeline = (
     ctx.textAlign = "left";
     for (const t of labelled.ticks) {
         const px = x(t);
-        if (px < windowEdge) continue;
+        if (t < MIN_T || t > MAX_T || px < windowEdge) continue;
 
         const tx = Math.round(px) + 0.5;
         ctx.strokeStyle = c.muted;
@@ -141,7 +181,7 @@ export const drawTimeline = (
         perSecond,
     )) {
         const ax = x(t);
-        if (ax < 2 || ax > width - 2) continue;
+        if (t < MIN_T || t > MAX_T || ax < 2 || ax > width - 2) continue;
 
         const flip = ax > width - 34;
         const label = labelled ? ctx.measureText(name).width + 4 : 0;
@@ -158,7 +198,7 @@ export const drawTimeline = (
     const flags: [number, number][] = [];
     for (const { t, name } of saved.toSorted((a, b) => a.t - b.t)) {
         const px = x(t);
-        if (px < -2 || px > width + 2) continue;
+        if (t < MIN_T || t > MAX_T || px < -2 || px > width + 2) continue;
 
         const fx = Math.round(px);
         const textWidth = ctx.measureText(name).width;

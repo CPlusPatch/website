@@ -24,6 +24,18 @@ export const isLive = (
     clock.rate === 1 &&
     Math.abs(clock.t - nowT) < LIVE_WITHIN_S;
 
+/** Advances the clock by `dtReal` real seconds, but a clock live at `prevNowT` follows the real time. */
+export const advanceClock = (
+    clock: Clock,
+    dtReal: number,
+    prevNowT: number,
+    nowT: number,
+): void => {
+    // Slow frames are clamped, and a hidden tab stops frames, so integrating would drop out of live.
+    if (isLive(clock, prevNowT)) clock.set(nowT);
+    else clock.tick(dtReal);
+};
+
 /** How far the clock is from now, in full and in its largest unit. */
 export type Offset = {
     full: string;
