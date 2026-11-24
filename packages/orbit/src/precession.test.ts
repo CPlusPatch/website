@@ -12,7 +12,7 @@ import {
     precess,
     precessionTurns,
 } from "./precession.ts";
-import type { Body } from "./scenario.ts";
+import type { OrbitingBody } from "./scenario.ts";
 import { cross, dot, normalize, rotate } from "./vec.ts";
 
 const el: Elements = {
@@ -105,11 +105,18 @@ Deno.test("an orbit that precesses onto the ecliptic keeps a node on +x", () => 
     assertAlmostEquals(after.argp, wrapAngle(1 + 1e-7 * 1e7), 1e-12);
 });
 
-Deno.test("elementsAt returns the elements as they are without precession", () => {
-    const body = { elements: el } as Body;
+const orbiting: OrbitingBody = {
+    id: "probe",
+    name: "Probe",
+    kind: "moon",
+    parent: "earth",
+    mu: 0,
+    radius: 1,
+    elements: el,
+};
 
-    assertEquals(elementsAt(body, 1e9), el);
-    assertEquals(elementsAt({ elements: null } as Body, 1e9), null);
+Deno.test("elementsAt returns the elements as they are without precession", () => {
+    assertEquals(elementsAt(orbiting, 1e9), el);
 });
 
 Deno.test("elementsAt precesses the elements when the body has a precession", () => {
@@ -118,13 +125,9 @@ Deno.test("elementsAt precesses the elements when the body has a precession", ()
         nodeRate: 1e-7,
         argpRate: 0,
     };
-    const body = { elements: el, precession } as Body;
+    const body = { ...orbiting, precession };
 
     assertEquals(elementsAt(body, 1e9), precess(el, precession, 1e9));
-});
-
-Deno.test("elementsAt is null for a body with no orbit", () => {
-    assert(elementsAt({ elements: null } as Body, 0) === null);
 });
 
 Deno.test("a quarter turn about +x turns periapsis first, then the node", () => {

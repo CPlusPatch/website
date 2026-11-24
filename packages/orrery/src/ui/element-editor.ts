@@ -83,11 +83,12 @@ export const createElementEditor = (
     done: () => void,
 ): ElementEditor | null => {
     const body = world.scenario.bodies.find((candidate) => candidate.id === id);
+    if (!body || body.parent === null) return null;
     const parent = world.scenario.bodies.find(
-        (candidate) => candidate.id === body?.parent,
+        (candidate) => candidate.id === body.parent,
     );
-    const original = body ? elementsAt(body, world.clock.t) : null;
-    if (!body || !original || !parent) return null;
+    if (!parent) return null;
+    const original = elementsAt(body, world.clock.t);
 
     const mu = parent.mu + body.mu;
     const min = aMin(parent.radius);

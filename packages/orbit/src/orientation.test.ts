@@ -221,14 +221,15 @@ Deno.test("a tidally locked moon keeps one face to its parent", () => {
         const moon = solarSystem.bodies.find((b) => b.id === id);
         const parent = solarSystem.bodies.find((b) => b.id === moon?.parent);
 
-        assert(moon && parent, `no body or parent for ${id}`);
+        assert(
+            moon && parent && moon.parent !== null,
+            `no body or parent for ${id}`,
+        );
 
         for (let k = 0; k < 12; k++) {
             const t = k * 2.53 * 365.25 * DAY + 1234.5;
 
             const elements = elementsAt(moon, t);
-
-            assert(elements, `no elements for ${id}`);
 
             const { r } = stateAt(elements, parent.mu + moon.mu, t);
             const { x, y, z } = orientationOf(id, t);

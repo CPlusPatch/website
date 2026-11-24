@@ -472,7 +472,7 @@ Deno.test("removing the root or an unknown body throws and emits nothing", () =>
 /** A world whose Moon precesses about the ecliptic pole. */
 const makePrecessing = (): World => {
     const bodies = solarSystem.bodies.map((body) =>
-        body.id === "moon"
+        body.id === "moon" && body.parent !== null
             ? {
                   ...body,
                   precession: {

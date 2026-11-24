@@ -54,7 +54,7 @@ export const readouts = (
 ): Readouts | null => {
     const body = scenario.bodies.find((candidate) => candidate.id === id);
     if (!body) throw new Error(`There is no body "${id}".`);
-    if (body.parent === null || body.elements === null) return null;
+    if (body.parent === null) return null;
 
     const parent = scenario.bodies.find(({ id }) => id === body.parent);
     const state = states.get(body.id);

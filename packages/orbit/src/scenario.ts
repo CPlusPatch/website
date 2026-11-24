@@ -22,29 +22,43 @@ export type SpacecraftRole =
     | "earth-observation"
     | "science";
 
-/** One body in a scenario. */
-export type Body = {
+/** The fields every body has. */
+type BodyBase = {
     /** A unique slug of lowercase letters, digits and hyphens. */
     id: string;
     /** The display name. */
     name: string;
     /** What the body is. */
     kind: BodyKind;
-    /** The id of the body this one orbits, or null for the root. */
-    parent: string | null;
     /** The gravitational parameter GM in m³/s², at least 0. */
     mu: number;
     /** The mean radius in metres, above 0. */
     radius: number;
-    /** The orbit around the parent in the ecliptic J2000 frame, or null for the root. */
-    elements: Elements | null;
-    /** Precession of the orbit, or none for a fixed orbit. */
-    precession?: Precession;
     /** An optional CSS colour. */
     color?: string;
     /** What a spacecraft does. Absent means other. Only spacecraft have one. */
     role?: SpacecraftRole;
 };
+
+/** The body at the root of the tree, which orbits nothing. */
+export type RootBody = BodyBase & {
+    parent: null;
+    elements: null;
+    precession?: undefined;
+};
+
+/** A body that orbits another. */
+export type OrbitingBody = BodyBase & {
+    /** The id of the body this one orbits. */
+    parent: string;
+    /** The orbit around the parent in the ecliptic J2000 frame. */
+    elements: Elements;
+    /** Precession of the orbit, or none for a fixed orbit. */
+    precession?: Precession;
+};
+
+/** One body in a scenario. */
+export type Body = RootBody | OrbitingBody;
 
 /** A set of bodies in one tree, with an optional start time. */
 export type Scenario = {
@@ -415,17 +429,30 @@ const validateBody = (
         return null;
     }
 
-    return {
+    const base = {
         id: validId,
         name: validName,
         kind: validKind,
-        parent: validParent,
         mu: validMu,
         radius: validRadius,
-        elements: parsed,
-        ...(parsedPrecession ? { precession: parsedPrecession } : {}),
         ...(validColor === undefined ? {} : { color: validColor }),
         ...(validRole === undefined ? {} : { role: validRole }),
+    };
+
+    if (validParent === null) {
+        return { ...base, parent: null, elements: null };
+    }
+
+    // No errors were added, so a body with a parent has parsed elements.
+    if (parsed === null) {
+        throw new Error(`${label}: elements missing after validation`);
+    }
+
+    return {
+        ...base,
+        parent: validParent,
+        elements: parsed,
+        ...(parsedPrecession ? { precession: parsedPrecession } : {}),
     };
 };
 

@@ -3,7 +3,7 @@
  * The camera's distances, fit and focus moves, and the shift of the view's centre.
  */
 
-import type { Body, Scenario, Vec3 } from "@cpluspatch/orbit";
+import type { Body, OrbitingBody, Scenario, Vec3 } from "@cpluspatch/orbit";
 
 /** A camera distance in km and the floating origin it orbits, in metres. */
 export type Pose = { distance: number; position: Vec3 };
@@ -23,22 +23,19 @@ export const reachKm = (scenario: Scenario): number => {
                 // Not dwarfs, so Pluto's wide orbit doesn't shrink the view. Stars count, so a
                 // companion star like 40 Eridani B stays in reach.
                 .filter(
-                    (body) =>
+                    (body): body is OrbitingBody =>
                         body.parent === root.id &&
                         (body.kind === "planet" || body.kind === "star"),
                 )
-                .map(
-                    (body) =>
-                        (body.elements?.a ?? 0) * (1 + (body.elements?.e ?? 0)),
-                ),
+                .map((body) => body.elements.a * (1 + body.elements.e)),
             root.radius,
         ) / 1000
     );
 };
 
 /** The farthest point of a body's orbit from its parent, in km. */
-const apoapsisKm = (body: Body): number =>
-    ((body.elements?.a ?? 0) * (1 + (body.elements?.e ?? 0))) / 1000;
+const apoapsisKm = (body: OrbitingBody): number =>
+    (body.elements.a * (1 + body.elements.e)) / 1000;
 
 /**
  * The radius in km the opening view frames: the 4th planet's apoapsis from the root, so the inner
@@ -49,8 +46,11 @@ export const openingReachKm = (scenario: Scenario): number => {
     if (!root) throw new Error("The scenario has no root body.");
 
     const planets = scenario.bodies
-        .filter((body) => body.parent === root.id && body.kind === "planet")
-        .sort((a, b) => (a.elements?.a ?? 0) - (b.elements?.a ?? 0));
+        .filter(
+            (body): body is OrbitingBody =>
+                body.parent === root.id && body.kind === "planet",
+        )
+        .sort((a, b) => a.elements.a - b.elements.a);
     const chosen = planets[3] ?? planets.at(-1);
 
     return chosen ? apoapsisKm(chosen) : reachKm(scenario);
@@ -95,7 +95,9 @@ export const frameDistanceKm = (
     const body = scenario.bodies.find((candidate) => candidate.id === id);
     if (!body) throw new Error(`There is no body "${id}".`);
 
-    const children = scenario.bodies.filter((child) => child.parent === id);
+    const children = scenario.bodies.filter(
+        (child): child is OrbitingBody => child.parent === id,
+    );
     if (children.length === 0) {
         return body.radius / 1000 / Math.sin(0.125 * fovRad);
     }

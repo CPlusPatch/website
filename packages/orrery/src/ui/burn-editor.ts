@@ -66,11 +66,12 @@ export const createBurnEditor = (
         const body = world.scenario.bodies.find(
             (candidate) => candidate.id === id,
         );
+        if (!body || body.parent === null) return null;
         const parent = world.scenario.bodies.find(
-            (candidate) => candidate.id === body?.parent,
+            (candidate) => candidate.id === body.parent,
         );
-        const el = body ? elementsAt(body, world.clock.t) : null;
-        if (!body || !el || !parent) return null;
+        if (!parent) return null;
+        const el = elementsAt(body, world.clock.t);
 
         return { body, el, mu: parent.mu + body.mu, parent };
     };

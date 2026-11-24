@@ -18,18 +18,26 @@ const rows = (group: Group | undefined) =>
     );
 
 /** A body on an orbit of semi-major axis `a` and eccentricity `e` around `parent`. */
-const made = (id: string, parent: string | null, a: number, e = 0): Body => ({
-    id,
-    name: id,
-    kind: parent === null ? "star" : "planet",
-    parent,
-    mu: 1e10,
-    radius: 1,
-    elements:
-        parent === null
-            ? null
-            : { a, e, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
-});
+const made = (id: string, parent: string | null, a: number, e = 0): Body =>
+    parent === null
+        ? {
+              id,
+              name: id,
+              kind: "star",
+              parent,
+              mu: 1e10,
+              radius: 1,
+              elements: null,
+          }
+        : {
+              id,
+              name: id,
+              kind: "planet",
+              parent,
+              mu: 1e10,
+              radius: 1,
+              elements: { a, e, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
+          };
 
 Deno.test("the left pane groups the root's children and drops empty groups", () => {
     const { root, groups } = leftPane(solar);

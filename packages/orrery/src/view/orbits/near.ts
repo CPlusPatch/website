@@ -23,7 +23,6 @@ export const rebuildNear = (
     paintRamp: (orbit: Orbit, picked: boolean, dim: number) => void,
 ): void => {
     const elements = elementsAt(orbit.body, t);
-    if (!elements) return;
 
     const center = eccentricAnomalyOf(elements, {
         x: r.x - parentR.x,

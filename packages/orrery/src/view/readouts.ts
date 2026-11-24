@@ -188,14 +188,14 @@ export const createReadouts = (
                 selected === null
                     ? undefined
                     : world.scenario.bodies.find(({ id }) => id === selected);
-            const elements = body ? elementsAt(body, world.clock.t) : null;
             const parentR = body?.parent
                 ? states.get(body.parent)?.r
                 : undefined;
-            if (hidden || !body || !elements || !parentR) {
+            if (hidden || !body || body.parent === null || !parentR) {
                 setShown(false);
                 return;
             }
+            const elements = elementsAt(body, world.clock.t);
 
             viewport.width = size.width;
             viewport.height = size.height;

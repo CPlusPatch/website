@@ -221,8 +221,9 @@ export const createBodies = (
             // An orbit's size on screen sets what folds and which labels show.
             const orbitPx = new Map<string, number>();
             for (const { body } of entries) {
-                const parentR = body.parent && states.get(body.parent)?.r;
-                if (!body.elements || !body.parent || !parentR) continue;
+                if (body.parent === null) continue;
+                const parentR = states.get(body.parent)?.r;
+                if (!parentR) continue;
 
                 view.set(
                     (parentR.x - origin.x) / 1000,

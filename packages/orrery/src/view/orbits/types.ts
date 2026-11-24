@@ -1,4 +1,4 @@
-import type { Body, Elements } from "@cpluspatch/orbit";
+import type { Elements, OrbitingBody } from "@cpluspatch/orbit";
 import type { InterleavedBufferAttribute } from "three";
 import type { Line2 } from "three/addons/lines/Line2.js";
 import type { LineFade } from "./fade-material.ts";
@@ -14,8 +14,7 @@ export type Paint = {
 };
 
 export type Orbit = {
-    body: Body;
-    parent: string;
+    body: OrbitingBody;
     /** The orbit's coloured line. */
     line: Line2;
     /** A wider dark line drawn under `line`, so it shows over bright backgrounds. */
@@ -37,8 +36,7 @@ export type Orbit = {
 };
 
 export type Ghost = {
-    body: Body;
-    parent: string;
+    body: OrbitingBody;
     line: Line2;
     elements: Elements;
     /** The loop's points, in km. */

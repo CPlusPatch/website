@@ -196,15 +196,20 @@ export class World {
         const body = this.#scenario.bodies.find(
             (candidate) => candidate.id === id,
         );
-        const parent = this.#scenario.bodies.find(
-            (candidate) => candidate.id === body?.parent,
-        );
         if (!body) throw new Error(`There is no body "${id}".`);
-        const elements = elementsAt(body, this.clock.t);
-        if (!elements || !parent)
+        if (body.parent === null)
             throw new Error(`"${id}" has no orbit to burn on.`);
+        const parent = this.#scenario.bodies.find(
+            (candidate) => candidate.id === body.parent,
+        );
+        if (!parent) throw new Error(`There is no body "${body.parent}".`);
 
-        return applyBurn(elements, parent.mu + body.mu, this.clock.t, dv);
+        return applyBurn(
+            elementsAt(body, this.clock.t),
+            parent.mu + body.mu,
+            this.clock.t,
+            dv,
+        );
     }
 
     /** Burns `dv` on body `id` now, or says why it can't and changes nothing. */

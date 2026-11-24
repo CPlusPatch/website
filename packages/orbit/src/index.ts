@@ -58,6 +58,8 @@ export {
 export type {
     Body,
     BodyKind,
+    OrbitingBody,
+    RootBody,
     Scenario,
     ScenarioResult,
     SpacecraftRole,

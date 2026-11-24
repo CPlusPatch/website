@@ -1,4 +1,4 @@
-import type { Body, Elements, State, Vec3 } from "@cpluspatch/orbit";
+import type { Elements, OrbitingBody, State, Vec3 } from "@cpluspatch/orbit";
 import { orbitPointsAt } from "@cpluspatch/orbit";
 import {
     type Color,
@@ -88,7 +88,7 @@ export const updateGhost = (
     states: Map<string, State>,
     camera: PerspectiveCamera,
 ): void => {
-    const parentR = states.get(ghost.parent)?.r;
+    const parentR = states.get(ghost.body.parent)?.r;
     if (!parentR) return;
 
     parentAt.set(
@@ -129,8 +129,7 @@ export const updateGhost = (
 export const createGhost = (
     into: Object3D,
     previous: Ghost | null,
-    body: Body,
-    parent: string,
+    body: OrbitingBody,
     elements: Elements,
     pick: Color,
     size: { width: number; height: number },
@@ -174,7 +173,6 @@ export const createGhost = (
 
     return {
         body,
-        parent,
         line,
         elements,
         positions,

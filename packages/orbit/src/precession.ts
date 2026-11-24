@@ -1,6 +1,6 @@
 import type { Elements } from "./kepler.ts";
 import { axes, wrapAngle } from "./kepler.ts";
-import type { Body } from "./scenario.ts";
+import type { OrbitingBody } from "./scenario.ts";
 import type { Vec3 } from "./vec.ts";
 import { cross, dot, length, normalize, rotate } from "./vec.ts";
 
@@ -79,7 +79,7 @@ export const precess = (el: Elements, p: Precession, t: number): Elements => {
 };
 
 /** The orbit of `body` at time `t`: its elements, turned by its precession if it has one. */
-export const elementsAt = (body: Body, t: number): Elements | null =>
-    body.elements && body.precession
+export const elementsAt = (body: OrbitingBody, t: number): Elements =>
+    body.precession
         ? precess(body.elements, body.precession, t)
         : body.elements;

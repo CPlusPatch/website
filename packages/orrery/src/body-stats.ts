@@ -37,7 +37,7 @@ export const bodyStats = (
     const sized = body.kind !== "spacecraft";
 
     const axis = spinAxis(id, t);
-    const elements = elementsAt(body, t);
+    const elements = body.parent === null ? null : elementsAt(body, t);
     // The root has no orbit, so its tilt is from the ecliptic pole.
     const normal = elements
         ? {

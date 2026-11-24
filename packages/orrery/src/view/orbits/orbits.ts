@@ -170,7 +170,7 @@ export const createOrbits = (
     };
 
     const addOrbit = (body: Body): Orbit | null => {
-        if (body.parent === null || body.elements === null) return null;
+        if (body.parent === null) return null;
 
         const { geometry, positions, colors, segments } = orbitGeometry(
             body.elements,
@@ -203,7 +203,6 @@ export const createOrbits = (
         group.add(casing, line);
         const orbit: Orbit = {
             body,
-            parent: body.parent,
             line,
             casing,
             fade: fadeLineMaterial(material),
@@ -238,15 +237,7 @@ export const createOrbits = (
                 return;
             }
 
-            ghost = createGhost(
-                group,
-                ghost,
-                body,
-                body.parent,
-                elements,
-                pick,
-                size,
-            );
+            ghost = createGhost(group, ghost, body, elements, pick, size);
         },
         add: (body) => {
             const orbit = addOrbit(body);
@@ -264,7 +255,7 @@ export const createOrbits = (
             const at = orbits.findIndex((orbit) => orbit.body.id === id);
             if (at !== -1) disposeOrbit(orbits.splice(at, 1)[0] as Orbit);
 
-            if (ghost && (ghost.body.id === id || ghost.parent === id)) {
+            if (ghost && (ghost.body.id === id || ghost.body.parent === id)) {
                 ghost.line.visible = false;
             }
         },
@@ -272,7 +263,7 @@ export const createOrbits = (
             const orbit = orbits.find(
                 (candidate) => candidate.body.id === body.id,
             );
-            if (!orbit || !body.elements) return;
+            if (!orbit || body.parent === null) return;
 
             const { geometry, positions, colors, segments } = orbitGeometry(
                 body.elements,
@@ -294,9 +285,9 @@ export const createOrbits = (
             const dim = ghost?.line.visible ? GHOST_DIM : 1;
 
             for (const orbit of orbits) {
-                const { body, parent, line, casing } = orbit;
-                const parentR = states.get(parent)?.r;
-                if (!parentR || !body.elements) continue;
+                const { body, line, casing } = orbit;
+                const parentR = states.get(body.parent)?.r;
+                if (!parentR) continue;
 
                 parentAt.set(
                     (parentR.x - origin.x) / 1000,

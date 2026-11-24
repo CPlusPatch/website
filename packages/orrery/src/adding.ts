@@ -1,4 +1,4 @@
-import type { Body, BodyKind, Scenario } from "@cpluspatch/orbit";
+import type { Body, BodyKind, OrbitingBody, Scenario } from "@cpluspatch/orbit";
 import { G } from "@cpluspatch/orbit";
 import { type AUnit, aMin, DEGREES, fieldError } from "./editing.ts";
 
@@ -47,7 +47,7 @@ export const subtreeIds = (scenario: Scenario, id: string): string[] => {
 };
 
 /** The body for `input`, with its orbit set at time `t`. */
-export const newBody = (input: NewBodyInput, t: number): Body => ({
+export const newBody = (input: NewBodyInput, t: number): OrbitingBody => ({
     id: input.id,
     name: input.name,
     kind: input.kind,

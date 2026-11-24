@@ -1,7 +1,7 @@
 /// <reference types="deno" />
 import { assert, assertEquals } from "@std/assert";
 import { solarSystem } from "./data/solar-system.ts";
-import type { Scenario } from "./scenario.ts";
+import type { OrbitingBody, Scenario } from "./scenario.ts";
 import {
     MAX_BODIES,
     MAX_NAME,
@@ -56,7 +56,14 @@ const errorsAfter = (change: (s: Scenario) => void): string[] => {
     return result.errors;
 };
 
-const planet = (s: Scenario) => s.bodies[1];
+const planet = (s: Scenario): OrbitingBody => {
+    const body = s.bodies[1];
+
+    if (!body || body.parent === null)
+        throw new Error("The scenario has no planet.");
+
+    return body;
+};
 
 Deno.test("the solar system is a valid scenario and comes back unchanged", () => {
     const result = validateScenario(solarSystem);
@@ -144,8 +151,7 @@ Deno.test("a scenario without a root is rejected", () => {
 
 Deno.test("a scenario with two roots is rejected", () => {
     const errors = errorsAfter((s) => {
-        planet(s).parent = null;
-        planet(s).elements = null;
+        Object.assign(planet(s), { parent: null, elements: null });
     });
 
     assert(
@@ -165,7 +171,7 @@ Deno.test("a root with elements is rejected", () => {
 
 Deno.test("a body with a parent but no elements is rejected", () => {
     const errors = errorsAfter((s) => {
-        planet(s).elements = null;
+        Object.assign(planet(s), { elements: null });
     });
 
     assert(errors.includes("earth.elements: must be set when parent is set"));

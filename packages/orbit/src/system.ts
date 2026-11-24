@@ -14,9 +14,7 @@ export const worldStates = (
     const states = new Map<string, State>();
 
     for (const body of order) {
-        const elements = elementsAt(body, t);
-
-        if (body.parent === null || elements === null) {
+        if (body.parent === null) {
             states.set(body.id, {
                 r: { x: 0, y: 0, z: 0 },
                 v: { x: 0, y: 0, z: 0 },
@@ -34,7 +32,7 @@ export const worldStates = (
             );
         }
 
-        const local = stateAt(elements, parent.mu + body.mu, t);
+        const local = stateAt(elementsAt(body, t), parent.mu + body.mu, t);
 
         states.set(body.id, {
             r: add(parentState.r, local.r),

@@ -48,6 +48,9 @@ Deno.test("every body gets a state", () => {
 
 Deno.test("a precessing body's state follows its precessed orbit", () => {
     const moon = find("moon");
+
+    assert(moon.parent !== null, "the moon has no parent");
+
     const precessing: Body = {
         ...moon,
         precession: {
