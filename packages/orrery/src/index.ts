@@ -3,6 +3,7 @@
  * The Orrery, an interactive model of the solar system drawn with three.js.
  */
 
+import { solarSystem } from "@cpluspatch/orbit";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import {
@@ -193,96 +194,119 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         );
         if (!view) return null;
 
-        setSatellites = view.satelliteGroups;
-        view.satelliteGroups(satellites.groups());
+        // Undoes the parts made so far, so a throw leaves nothing behind.
+        const cleanup: (() => void)[] = [view.destroy];
+        try {
+            setSatellites = view.satelliteGroups;
+            view.satelliteGroups(satellites.groups());
 
-        const current = createInspector(
-            world,
-            units,
-            () => search?.toggle.focus(),
-            view,
-        );
-        inspector = current;
-        root.querySelector(".orrery__panel--right")?.append(current.element);
-
-        const card = createSatelliteCard(view.satellite, () =>
-            search?.toggle.focus(),
-        );
-        root.querySelector(".orrery__panel--right")?.append(card.element);
-
-        currentView = view;
-        view.bare(root.classList.contains("orrery--bare"));
-        const offSatellite = view.satellite.on((event) => {
-            const k = event.k;
-            const name =
-                k === null ? null : (view.satellite.facts(k)?.name ?? null);
-
-            if (event.type === "focus") {
-                crumbs.setSatellite(
-                    k === null || name === null
-                        ? null
-                        : { name, onClick: () => view.satellite.focus(k) },
-                );
-            }
-            if (event.type === "selection" && k !== null) {
-                cue("select");
-                // The keys card hides the orbit card, so a new pick would show nothing.
-                keys.close();
-            }
-
-            // A body pick clears the satellite, and the world's "Selected ..." follows or comes first.
-            if (
-                event.type === "selection" &&
-                k === null &&
-                world.selected !== null
-            ) {
-                return;
-            }
-
-            const message = satelliteAnnouncement(event, name);
-            if (message !== null) live.textContent = message;
-        });
-
-        let wasChasing = view.chasing();
-        const offChase = view.onChase(({ chasing }) => {
-            if (chasing === wasChasing) return;
-
-            wasChasing = chasing;
-
-            const k = view.satellite.focused();
-            const name =
-                (k === null ? null : view.satellite.facts(k)?.name) ??
-                world.scenario.bodies.find((body) => body.id === world.focused)
-                    ?.name ??
-                world.focused;
-            live.textContent = chaseAnnouncement(chasing, name);
-        });
-
-        const hudSlot = root.querySelector<HTMLElement>(".orrery__panel--hud");
-        const removeHud = hudSlot
-            ? createHud(hudSlot, view, units, narrow)
-            : () => {};
-
-        return {
-            ready: view.ready,
-            reveal: view.reveal,
-            destroy: () => {
+            const current = createInspector(
+                world,
+                units,
+                () => search?.toggle.focus(),
+                view,
+            );
+            inspector = current;
+            cleanup.push(() => {
                 if (inspector === current) inspector = null;
-                if (currentView === view) {
-                    currentView = null;
-                    crumbs.setSatellite(null);
-                }
-                offSatellite();
-                offChase();
-                card.destroy();
-                if (setSatellites === view.satelliteGroups) {
-                    setSatellites = null;
-                }
-                removeHud();
                 current.destroy();
-                view.destroy();
-            },
-        };
+            });
+            root.querySelector(".orrery__panel--right")?.append(
+                current.element,
+            );
+
+            const card = createSatelliteCard(view.satellite, () =>
+                search?.toggle.focus(),
+            );
+            cleanup.push(card.destroy);
+            root.querySelector(".orrery__panel--right")?.append(card.element);
+
+            currentView = view;
+            view.bare(root.classList.contains("orrery--bare"));
+            const offSatellite = view.satellite.on((event) => {
+                const k = event.k;
+                const name =
+                    k === null ? null : (view.satellite.facts(k)?.name ?? null);
+
+                if (event.type === "focus") {
+                    crumbs.setSatellite(
+                        k === null || name === null
+                            ? null
+                            : { name, onClick: () => view.satellite.focus(k) },
+                    );
+                }
+                if (event.type === "selection" && k !== null) {
+                    cue("select");
+                    // The keys card hides the orbit card, so a new pick would show nothing.
+                    keys.close();
+                }
+
+                // A body pick clears the satellite, and the world's "Selected ..." follows or comes first.
+                if (
+                    event.type === "selection" &&
+                    k === null &&
+                    world.selected !== null
+                ) {
+                    return;
+                }
+
+                const message = satelliteAnnouncement(event, name);
+                if (message !== null) live.textContent = message;
+            });
+
+            let wasChasing = view.chasing();
+            const offChase = view.onChase(({ chasing }) => {
+                if (chasing === wasChasing) return;
+
+                wasChasing = chasing;
+
+                const k = view.satellite.focused();
+                const name =
+                    (k === null ? null : view.satellite.facts(k)?.name) ??
+                    world.scenario.bodies.find(
+                        (body) => body.id === world.focused,
+                    )?.name ??
+                    world.focused;
+                live.textContent = chaseAnnouncement(chasing, name);
+            });
+
+            const hudSlot = root.querySelector<HTMLElement>(
+                ".orrery__panel--hud",
+            );
+            const removeHud = hudSlot
+                ? createHud(hudSlot, view, units, narrow)
+                : () => {};
+
+            return {
+                ready: view.ready,
+                reveal: view.reveal,
+                destroy: () => {
+                    if (inspector === current) inspector = null;
+                    if (currentView === view) {
+                        currentView = null;
+                        crumbs.setSatellite(null);
+                    }
+                    offSatellite();
+                    offChase();
+                    card.destroy();
+                    if (setSatellites === view.satelliteGroups) {
+                        setSatellites = null;
+                    }
+                    removeHud();
+                    current.destroy();
+                    view.destroy();
+                },
+            };
+        } catch (error) {
+            if (currentView === view) {
+                currentView = null;
+                crumbs.setSatellite(null);
+            }
+            if (setSatellites === view.satelliteGroups) setSatellites = null;
+            for (const undo of cleanup.toReversed()) undo();
+
+            throw error;
+        }
     };
 
     // Drops the share link from the address bar, so a reload opens the saved copy.
@@ -293,7 +317,29 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const notices = createNotices(root);
     if (hashPayload(location.hash) !== null) stripHash();
 
-    let parts = build(loading.progress);
+    let fellBack = false;
+    let parts: ReturnType<typeof build>;
+    try {
+        parts = build(loading.progress);
+    } catch (error) {
+        // A saved copy or link that can't be drawn mustn't lock the page out.
+        if (world.scenario === solarSystem) throw error;
+
+        world.load(solarSystem, startTime(solarSystem));
+        parts = build(loading.progress);
+        fellBack = true;
+        if (parts) {
+            const subject =
+                opened.source === "saved"
+                    ? "Your saved copy"
+                    : "The shared link";
+            notices.show(
+                "warning",
+                `${subject} can't be drawn, so the solar system opened.`,
+            );
+        }
+    }
+
     if (!parts) {
         loading.reveal();
         const alert = webglAlert();
@@ -434,6 +480,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         },
         rebuild: () => {
             parts?.destroy();
+            parts = null;
             parts = build();
             satellites.setAvailable(hasEarth());
             // A view built after the reveal has no loading state, so a sky that comes later fades in.
@@ -457,7 +504,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     let destroyed = false;
 
-    if (opened.source === "link") session.saveNow();
+    // A link that fell back mustn't replace the saved copy with the solar system.
+    if (opened.source === "link" && !fellBack) session.saveNow();
     if (opened.notice) notices.show("warning", opened.notice);
 
     let revealed = false;

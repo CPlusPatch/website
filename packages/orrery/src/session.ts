@@ -69,12 +69,40 @@ export const createSession = (options: {
     let loadId = 0;
     let destroyed = false;
 
+    let lastGood = world.scenario;
+    let restoring = false;
+
     const off = world.on((event) => {
         if (event.type === "scenario") {
             // Any new scenario, even an Import or Reset, cancels a pending link.
             loadId++;
-            rebuild();
+
+            try {
+                rebuild();
+                lastGood = world.scenario;
+            } catch {
+                // A failed restore would only fail again, and its notice is already shown.
+                if (restoring) return;
+
+                notices.show("destructive", "The model can't be drawn.");
+
+                const focused = world.focused;
+                restoring = true;
+                try {
+                    world.load(lastGood, world.clock.t);
+                } finally {
+                    restoring = false;
+                }
+                if (world.scenario.bodies.some((body) => body.id === focused)) {
+                    world.focus(focused);
+                }
+
+                return;
+            }
         }
+
+        // A burn or an edit is kept if a later rebuild fails.
+        if (event.type === "body") lastGood = world.scenario;
 
         // Neither is saved, so they don't need a write.
         if (event.type !== "selection" && event.type !== "focus") saveSoon();
@@ -102,7 +130,12 @@ export const createSession = (options: {
         world.load(result.scenario, startTime(result.scenario));
         saveNow();
     };
-    const onHashChange = () => void loadHash();
+    const onHashChange = () => {
+        // A decode failure is handled in `loadHash`, so this is a throw while loading.
+        loadHash().catch(() => {
+            notices.show("destructive", "The shared link couldn't be opened.");
+        });
+    };
 
     page.window.addEventListener("hashchange", onHashChange);
     page.window.addEventListener("pagehide", saveNow);

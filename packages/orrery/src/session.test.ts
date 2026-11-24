@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/orbit";
+import { type Body, solarSystem } from "@cpluspatch/orbit";
 import { assert, assertEquals } from "@std/assert";
 import { Clock } from "./clock.ts";
 import {
@@ -35,7 +35,7 @@ const earthOnly = {
     ),
 };
 
-const setup = (hash = "") => {
+const setup = (hash = "", rebuildFn: () => void = () => {}) => {
     const world = new World(solarSystem, new Clock(0, 1, false));
     const storage = memory();
     const shown: string[] = [];
@@ -62,6 +62,7 @@ const setup = (hash = "") => {
         page,
         rebuild: () => {
             state.rebuilt++;
+            rebuildFn();
         },
     });
 
@@ -245,4 +246,94 @@ Deno.test("after destroy the listeners are gone and a pending load is dropped", 
     assertEquals(storage.getItem(STORAGE_KEY), null);
     assertEquals(state.rebuilt, 0);
     assert(world.scenario.bodies.length > earthOnly.bodies.length);
+});
+
+const rock = (id: string): Body => {
+    const body = solarSystem.bodies.find(
+        (candidate) => candidate.id === "moon",
+    );
+    if (!body?.elements) throw new Error("The scenario has no Moon.");
+
+    return { ...body, id, name: id, parent: "earth" };
+};
+
+Deno.test("a rebuild that throws reloads the last scenario, keeps the focus and isn't saved", async () => {
+    const { world, storage, shown, session } = setup("", () => {
+        if (world.scenario.bodies.some((body) => body.id === "rock")) {
+            throw new Error("no view");
+        }
+    });
+    const written: string[] = [];
+    storage.setItem = (_key, value) => {
+        written.push(value);
+    };
+    world.focus("earth");
+
+    world.addBody(rock("rock"));
+    await wait(600);
+
+    assertEquals(world.scenario, solarSystem);
+    assertEquals(world.focused, "earth");
+    assertEquals(shown, ["The model can't be drawn."]);
+    assertEquals(written.length, 1);
+    assertEquals(
+        written.some((value) => value.includes('"rock"')),
+        false,
+    );
+
+    session.destroy();
+});
+
+Deno.test("a failed rebuild keeps an orbit edited before it", () => {
+    const { world, session } = setup("", () => {
+        if (world.scenario.bodies.some((body) => body.id === "rock")) {
+            throw new Error("no view");
+        }
+    });
+    const moon = world.scenario.bodies.find((body) => body.id === "moon");
+    if (!moon?.elements) throw new Error("The scenario has no Moon.");
+
+    world.setElements("moon", { ...moon.elements, e: 0.2 });
+    world.addBody(rock("rock"));
+
+    const after = world.scenario.bodies.find((body) => body.id === "moon");
+    assertEquals(after?.elements?.e, 0.2);
+
+    session.destroy();
+});
+
+Deno.test("a rebuild that always throws shows the notice and doesn't loop", () => {
+    const { world, state, shown, session } = setup("", () => {
+        throw new Error("no view");
+    });
+
+    world.load(earthOnly, 0);
+
+    assertEquals(state.rebuilt, 2);
+    assertEquals(shown, ["The model can't be drawn."]);
+
+    session.destroy();
+});
+
+Deno.test("a hashchange whose load rejects shows the invalid notice", async () => {
+    const hash = HASH_PREFIX + (await encodeScenario(earthOnly));
+    const { world, page, shown, session } = setup(hash);
+    world.on((event) => {
+        if (event.type === "scenario") throw new Error("listener");
+    });
+    let unhandled = false;
+    const onUnhandled = (event: PromiseRejectionEvent) => {
+        event.preventDefault();
+        unhandled = true;
+    };
+    globalThis.addEventListener("unhandledrejection", onUnhandled);
+
+    page.window.dispatchEvent(new Event("hashchange"));
+    await wait(100);
+    globalThis.removeEventListener("unhandledrejection", onUnhandled);
+
+    assertEquals(shown, ["The shared link couldn't be opened."]);
+    assertEquals(unhandled, false);
+
+    session.destroy();
 });
