@@ -23,6 +23,10 @@ const AU_VALUE = new Intl.NumberFormat("en", {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
 });
+const MILLION_KM = new Intl.NumberFormat("en", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+});
 const AU_RANGE = new Intl.NumberFormat("en", { maximumSignificantDigits: 4 });
 const THREE_SIGNIFICANT = new Intl.NumberFormat("en", {
     minimumSignificantDigits: 3,
@@ -67,6 +71,17 @@ export const formatRange = (m: number, unit: AUnit): string => {
         unit === "km" ? KM.format(m / 1000) : AU_RANGE.format(m / AU);
 
     return `${number.replace(/^-/, "\u2212")} ${unit}`;
+};
+
+/** A short distance in metres for the plate: `0.983 AU`, `146.5M km` from 1e6 km, else `6,790 km`. */
+export const formatPlateDistance = (m: number, unit: AUnit): string => {
+    if (unit === "AU") return `${AU_VALUE.format(m / AU)} AU`;
+
+    const km = m / 1000;
+
+    return km >= 1e6
+        ? `${MILLION_KM.format(km / 1e6)}M km`
+        : `${KM.format(km)} km`;
 };
 
 /** The unit one list shares: `chosen`, else the unit of its largest distance (km when empty). */

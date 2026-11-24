@@ -12,6 +12,7 @@ import {
     formatInclinationChange,
     formatMass,
     formatNodeChange,
+    formatPlateDistance,
     formatRadius,
     formatRange,
     formatSoon,
@@ -201,4 +202,19 @@ Deno.test("formatEscapeSpeed writes 3 significant figures, in m/s under 1 km/s",
     assertEquals(formatEscapeSpeed(11_186), "11.2 km/s");
     assertEquals(formatEscapeSpeed(617_670), "618 km/s");
     assertEquals(formatEscapeSpeed(11.39), "11.4 m/s");
+});
+
+Deno.test("formatPlateDistance writes AU with three decimals", () => {
+    assertEquals(formatPlateDistance(0.983 * AU, "AU"), "0.983 AU");
+    assertEquals(formatPlateDistance(30.07 * AU, "AU"), "30.070 AU");
+});
+
+Deno.test("formatPlateDistance writes millions of km from 1e6 km", () => {
+    assertEquals(formatPlateDistance(146.5e9, "km"), "146.5M km");
+    assertEquals(formatPlateDistance(1e9, "km"), "1.0M km");
+});
+
+Deno.test("formatPlateDistance groups whole km below 1e6 km", () => {
+    assertEquals(formatPlateDistance(6_790_000, "km"), "6,790 km");
+    assertEquals(formatPlateDistance(384_400_000, "km"), "384,400 km");
 });
