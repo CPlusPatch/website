@@ -38,7 +38,9 @@ const siblings = category?.components ?? [];
 const sources = [...new Set(component.groups.map(sourceOf))];
 const stories = storyCount(component);
 // A component of several groups shows each group's tags with the group.
-const tags = component.groups.length > 1 ? [] : tagsOf(component.groups[0]);
+const [firstGroup] = component.groups;
+const tags =
+    component.groups.length > 1 || !firstGroup ? [] : tagsOf(firstGroup);
 const several = component.groups.length > 1;
 const plural = (n: number, one: string, many = `${one}s`) =>
     `${n} ${n === 1 ? one : many}`;

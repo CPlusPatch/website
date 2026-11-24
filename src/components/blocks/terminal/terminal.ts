@@ -140,7 +140,7 @@ export const help = (): string =>
         .join("")}`;
 
 export const run = (line: string): Result => {
-    const [command, ...args] = line.split(/\s+/);
+    const [command = "", ...args] = line.split(/\s+/);
     return (
         commands.find(({ names }) => names.includes(command))?.run(args) ??
         `bash: ${command}: command not found`

@@ -190,7 +190,10 @@ export const sourceOf = (group: StoryGroup) => {
     if (!ROOT?.endsWith("/")) {
         throw new Error("Can't find the repo root from story-preview.astro");
     }
-    const id = moduleOf(group.stories[0].component);
+    const [first] = group.stories;
+    if (!first) throw new Error(`The group "${group.id}" has no stories`);
+
+    const id = moduleOf(first.component);
     if (!id?.startsWith(ROOT)) {
         throw new Error(`No source in the repo for "${group.id}": ${id}`);
     }

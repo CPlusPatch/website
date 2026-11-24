@@ -118,7 +118,11 @@ const searchText = (component: GalleryComponent, category: string) =>
             </header>
             <ul class="gallery-index__grid">
                 {category.components.map((component) => {
-                    const first = component.groups[0].stories[0];
+                    const first = component.groups[0]?.stories[0];
+                    if (!first) {
+                        throw new Error(`${component.id} has no stories`);
+                    }
+
                     return (
                         <li
                             class="gallery-card"

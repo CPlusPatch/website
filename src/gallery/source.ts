@@ -92,8 +92,9 @@ export const storySource = (story: Story): string => {
     ].filter(Boolean) as string[];
 
     if (!body.length) return `<${open} />`;
-    if (body.length === 1 && !body[0].includes("\n") && body[0].length < 40) {
-        return `<${open}>${body[0]}</${name}>`;
+    const [only] = body;
+    if (body.length === 1 && only && !only.includes("\n") && only.length < 40) {
+        return `<${open}>${only}</${name}>`;
     }
     return `<${open}>\n${indent(body.join("\n"))}\n</${name}>`;
 };

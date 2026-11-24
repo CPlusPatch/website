@@ -1082,7 +1082,7 @@ test("dragging a title bar moves the window, and not out of reach", async ({
     for (const [toX, toY] of [
         [x + 4000, y + 4000],
         [x - 4000, y - 4000],
-    ]) {
+    ] as const) {
         const from = await box(bar);
         await page.mouse.move(
             from.x + from.width / 2,
@@ -1362,7 +1362,7 @@ test("the arrow keys in a window's scroll body and in the terminal's input don't
     for (const [id, field] of [
         ["w-readme", "#w-readme .window__body"],
         ["w-terminal", "#w-terminal input"],
-    ]) {
+    ] as const) {
         await page.locator(field).focus();
         const before = await box(page.locator(`#${id}`));
 

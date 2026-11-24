@@ -77,6 +77,9 @@ export const bindPlayback = (root: HTMLElement, feed: Feed) => {
 
     const toggle = () => {
         const video = videos[feed.current];
+        const short = shorts[feed.current];
+        if (!video || !short) return;
+
         held = !video.paused;
         if (held) video.pause();
         else {
@@ -84,7 +87,6 @@ export const bindPlayback = (root: HTMLElement, feed: Feed) => {
             play(video);
         }
         // Restarted by setting it afresh, as it ends by itself.
-        const short = shorts[feed.current];
         delete short.dataset.flash;
         void short.offsetWidth;
         short.dataset.flash = held ? "pause" : "play";
@@ -92,6 +94,8 @@ export const bindPlayback = (root: HTMLElement, feed: Feed) => {
 
     for (const [i, short] of shorts.entries()) {
         const video = videos[i];
+        if (!video) throw new Error("A short has no video");
+
         const playButton = short.querySelector(
             "[data-short-toggle]",
         ) as HTMLElement;
@@ -146,12 +150,15 @@ export const bindPlayback = (root: HTMLElement, feed: Feed) => {
     });
 
     feed.onChange((_, previous) => {
-        if (previous !== -1) videos[previous].currentTime = 0;
+        const last = videos[previous];
+        if (last) last.currentTime = 0;
         held = false;
         sync();
     });
     new IntersectionObserver(
         ([entry]) => {
+            if (!entry) return;
+
             onScreen = entry.isIntersecting;
             sync();
         },

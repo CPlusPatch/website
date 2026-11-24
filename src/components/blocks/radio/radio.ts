@@ -71,16 +71,25 @@ export const bindRadio = (root: HTMLElement) => {
     // they were).
     const rowOf = (track: HTMLElement) => track.closest("li") as HTMLLIElement;
     part("shuffle").addEventListener("click", () => {
-        const list = rowOf(tracks[0]).parentElement as HTMLElement;
+        const first = tracks[0];
+        const playing = tracks[current];
+        if (!first || !playing) return;
+
+        const list = rowOf(first).parentElement as HTMLElement;
         const before = new Map(
             tracks.map((track) => [track, track.getBoundingClientRect().top]),
         );
         const rest = tracks.filter((_, index) => index !== current);
         for (let i = rest.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [rest[i], rest[j]] = [rest[j], rest[i]];
+            const a = rest[i];
+            const b = rest[j];
+            if (!a || !b) continue;
+
+            rest[i] = b;
+            rest[j] = a;
         }
-        tracks = [tracks[current], ...rest];
+        tracks = [playing, ...rest];
         current = 0;
         list.append(...tracks.map(rowOf));
         list.scrollTop = 0;

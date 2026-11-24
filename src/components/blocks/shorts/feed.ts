@@ -58,7 +58,7 @@ export const bindFeed = (root: HTMLElement): Feed => {
         next?.setAttribute("aria-disabled", String(current === count - 1));
         // Not on load: only a change is news.
         if (before !== -1) {
-            const name = shorts[current].getAttribute("aria-label");
+            const name = shorts[current]?.getAttribute("aria-label") ?? "";
             announce(`Short ${current + 1} of ${count}: ${name}`);
         }
         for (const listener of listeners) listener(current, before);

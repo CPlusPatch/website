@@ -64,7 +64,7 @@ export const bindStatusBoard = (root: HTMLElement) => {
         }
         const beats = beatsOf(feed, name, timeline.children.length);
         [...timeline.children].forEach((el, i) => {
-            const state = beatState(beats[i]);
+            const state = beatState(beats[i] ?? null);
             if (state) el.setAttribute("data-state", state);
             else el.removeAttribute("data-state");
         });

@@ -345,7 +345,9 @@ async function pixelDiff(page: Page, a: Buffer, b: Buffer) {
                     for (let c = 0; c < 3; c++) {
                         delta = Math.max(
                             delta,
-                            Math.abs(da.data[i + c] - db.data[j + c]),
+                            Math.abs(
+                                (da.data[i + c] ?? 0) - (db.data[j + c] ?? 0),
+                            ),
                         );
                     }
                     if (delta > 16) {
@@ -353,7 +355,10 @@ async function pixelDiff(page: Page, a: Buffer, b: Buffer) {
                         diff.data.set([255, 0, 64, 255], o);
                     } else {
                         const grey =
-                            (db.data[j] + db.data[j + 1] + db.data[j + 2]) / 3;
+                            ((db.data[j] ?? 0) +
+                                (db.data[j + 1] ?? 0) +
+                                (db.data[j + 2] ?? 0)) /
+                            3;
                         const faded = 255 - (255 - grey) * 0.15;
                         diff.data.set([faded, faded, faded, 255], o);
                     }

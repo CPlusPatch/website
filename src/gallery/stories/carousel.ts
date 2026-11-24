@@ -41,11 +41,16 @@ const SLIDES: Slide[] = [
 ];
 
 /** Enough slides that the pips overflow a phone-width footer. */
-const MANY: Slide[] = Array.from({ length: 24 }, (_, i) => ({
-    ...SLIDES[i % SLIDES.length],
-    title: `Slide ${i + 1}`,
-    body: "One of many, to see how the pips hold up.",
-}));
+const MANY: Slide[] = Array.from({ length: 24 }, (_, i) => {
+    const slide = SLIDES[i % SLIDES.length];
+    if (!slide) throw new Error("The carousel story has no slides");
+
+    return {
+        ...slide,
+        title: `Slide ${i + 1}`,
+        body: "One of many, to see how the pips hold up.",
+    };
+});
 
 const slides = (list = SLIDES): Story[] =>
     list.map((slide, i) =>
