@@ -14,9 +14,11 @@ import {
     type Saved,
 } from "./draw.ts";
 
-/** The timeline's element and how to remove it. */
+/** The timeline's element, how to make another element scrub it, and how to remove it. */
 export type Timeline = {
     element: HTMLElement;
+    /** Makes a press-and-drag on `handle` scrub like the strip. A press without a drag is a click. */
+    grab: (handle: HTMLElement) => void;
     destroy: () => void;
 };
 
@@ -27,10 +29,10 @@ const DRAG_PX = 3;
 export const createTimeline = (
     world: World,
     storage: SavedStorage,
+    phone: MediaQueryList,
     onNow: (now: NowMark & { width: number }) => void,
 ): Timeline => {
     const { clock } = world;
-    const phone = matchMedia("(max-width: 720px)");
 
     const canvas = h("canvas", { "aria-hidden": "true" });
     const tip = h("div", {
@@ -67,6 +69,8 @@ export const createTimeline = (
         paused: boolean;
         moved: boolean;
         flag: Hit | undefined;
+        /** The element holding the pointer, which gets the moves and the end. */
+        source: HTMLElement;
         /** The scrub scale, fixed for the drag since holding the clock ends live. */
         half: number;
     } | null = null;
@@ -199,22 +203,28 @@ export const createTimeline = (
         tip.style.left = `${Math.min(innerWidth - 4 - tipWidth, Math.max(4, origin + px - tipWidth / 2)) - origin}px`;
     };
 
-    const onDown = (event: PointerEvent) => {
+    const begin = (event: PointerEvent, source: HTMLElement) => {
         if (event.button !== 0) return;
 
-        element.setPointerCapture(event.pointerId);
+        source.setPointerCapture(event.pointerId);
         drag = {
             x: event.clientX,
             t: clock.t,
             paused: clock.paused,
             moved: false,
-            flag: flagAt(
-                event.clientX - canvasLeft(),
-                event.clientY - canvasTop(),
-            ),
+            // A handle's press never picks a flag.
+            flag:
+                source === element
+                    ? flagAt(
+                          event.clientX - canvasLeft(),
+                          event.clientY - canvasTop(),
+                      )
+                    : undefined,
             half: windowNow().half,
+            source,
         };
     };
+    const onDown = (event: PointerEvent) => begin(event, element);
 
     const onMove = (event: PointerEvent) => {
         const px = event.clientX - canvasLeft();
@@ -266,6 +276,33 @@ export const createTimeline = (
             world.setClock({ t: clampT(ended.flag.t) });
         }
         if (event.pointerType === "touch") tip.hidden = true;
+    };
+
+    const grab = (handle: HTMLElement) => {
+        let moved = false;
+
+        const onHandleDown = (event: PointerEvent) => begin(event, handle);
+        const onHandleMove = (event: PointerEvent) => {
+            if (drag?.source === handle) onMove(event);
+        };
+        const onHandleEnd = (event: PointerEvent) => {
+            if (drag?.source !== handle) return;
+
+            moved = drag.moved;
+            onEnd(event);
+            // The click that ends a drag comes right after, and mustn't open the editor.
+            if (moved) setTimeout(() => (moved = false));
+        };
+        const onClick = (event: MouseEvent) => {
+            if (moved) event.stopImmediatePropagation();
+        };
+
+        handle.addEventListener("pointerdown", onHandleDown);
+        handle.addEventListener("pointermove", onHandleMove);
+        handle.addEventListener("pointerup", onHandleEnd);
+        handle.addEventListener("pointercancel", onHandleEnd);
+        // In the capture phase, so it runs before the handle's own click listeners.
+        handle.addEventListener("click", onClick, true);
     };
 
     const onLeave = () => {
@@ -323,6 +360,7 @@ export const createTimeline = (
 
     return {
         element,
+        grab,
         destroy: () => {
             cancelAnimationFrame(frameId);
             resize.disconnect();

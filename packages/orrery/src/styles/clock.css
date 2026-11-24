@@ -128,6 +128,8 @@
         background-color: var(--orrery-text);
         color: var(--orrery-tag-ink);
         cursor: pointer;
+        /* A drag on the tag scrubs the strip. */
+        touch-action: none;
 
         &:focus-visible {
             outline: 2px solid var(--orrery-tag-ink);

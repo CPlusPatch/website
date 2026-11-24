@@ -199,7 +199,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
         if (goLiveButton.style.left !== px) goLiveButton.style.left = px;
     };
 
-    const timeline = createTimeline(world, storage, (mark) => {
+    const timeline = createTimeline(world, storage, phone, (mark) => {
         nowMark = mark;
         placeFlag();
     });
@@ -391,6 +391,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
         world.setClock({ paused: !clock.paused });
     });
     date.addEventListener("click", editor.toggle);
+    timeline.grab(date);
     goLiveButton.addEventListener("click", goLive);
 
     const off = world.on((event) => {
