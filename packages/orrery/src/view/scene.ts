@@ -109,6 +109,43 @@ export const createView = (
     } catch {
         return null;
     }
+
+    const cleanup: (() => void)[] = [];
+    try {
+        return assemble(
+            renderer,
+            cleanup,
+            container,
+            world,
+            blocked,
+            band,
+            units,
+            onLoading,
+        );
+    } catch (error) {
+        for (const undo of cleanup.toReversed()) undo();
+
+        throw error;
+    }
+};
+
+/** Builds the view on `renderer`. Pushes each part's undo to `cleanup`, for a throw before it returns. */
+const assemble = (
+    renderer: WebGLRenderer,
+    cleanup: (() => void)[],
+    container: HTMLElement,
+    world: World,
+    blocked: () => Rect[],
+    band: () => Band,
+    units: Units,
+    onLoading?: (done: number, total: number, fill: number) => void,
+): View => {
+    cleanup.push(() => {
+        renderer.forceContextLoss();
+        renderer.dispose();
+        renderer.domElement.remove();
+    });
+
     // Only the mapped spheres are tone mapped; every flat colour sets `toneMapped: false`.
     // Neutral, not AgX: AgX shifts the hue of dark night sides.
     renderer.toneMapping = neutralNoToe();
@@ -129,8 +166,10 @@ export const createView = (
     canvas.tabIndex = 0;
 
     container.append(canvas, labels.domElement);
+    cleanup.push(() => labels.domElement.remove());
 
     const theme = createTheme(container);
+    cleanup.push(theme.stop);
     const orbits = createOrbits(
         scene,
         world.order,
@@ -138,6 +177,7 @@ export const createView = (
         theme.background(),
         theme.pick(),
     );
+    cleanup.push(orbits.dispose);
     // Neither the sky nor the body maps are drawn where the user asks for more contrast.
     const plain =
         matchMedia("(forced-colors: active)").matches ||
@@ -152,6 +192,9 @@ export const createView = (
         Promise.withResolvers<void>();
     const skyTotal = plain ? 0 : 1;
     let destroyed = false;
+    cleanup.push(() => {
+        destroyed = true;
+    });
     const report = () => {
         // The sky and maps of a destroyed view can still settle.
         if (destroyed) return;
@@ -184,11 +227,13 @@ export const createView = (
             },
         },
     );
+    cleanup.push(bodies.dispose);
 
     const earthMu = world.scenario.bodies.find(
         (body) => body.id === "earth",
     )?.mu;
     const swarm = createSwarm(scene, theme, earthMu ?? 0);
+    cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };
     // Passed as Earth's position, which gives a satellite's position relative to Earth.
     const earthCentre = { x: 0, y: 0, z: 0 };
@@ -215,7 +260,9 @@ export const createView = (
     };
 
     const grips = createGrips(labels.domElement, units);
+    cleanup.push(grips.dispose);
     const readouts = createReadouts(container, labels.domElement, world, units);
+    cleanup.push(readouts.dispose);
 
     let size = { width: 0, height: 0 };
     let shift = 0;
@@ -294,9 +341,11 @@ export const createView = (
             swarm.hover(k);
         },
     });
+    cleanup.push(unbindPointer);
     orbits.highlight(world.selected);
 
     const rig = createRig(camera, canvas, () => world.scenario, world.states());
+    cleanup.push(rig.dispose);
     resize();
 
     const chaseListeners = new Set<(state: ChaseState) => void>();
@@ -388,7 +437,9 @@ export const createView = (
     };
 
     const sky = createSky();
+    cleanup.push(sky.dispose);
     const loading = new AbortController();
+    cleanup.push(() => loading.abort());
     report();
     if (!plain) {
         sky.load(loading.signal, (fraction) => {
@@ -505,8 +556,10 @@ export const createView = (
         labels.render(scene, camera);
     };
     frame = requestAnimationFrame(draw);
+    cleanup.push(() => cancelAnimationFrame(frame));
 
     const observer = new ResizeObserver(resize);
+    cleanup.push(() => observer.disconnect());
     observer.observe(container);
 
     const unsubscribe = world.on((event) => {
@@ -530,6 +583,7 @@ export const createView = (
             rig.rescale();
         }
     });
+    cleanup.push(unsubscribe);
 
     return {
         ghost: (id, elements) => {
