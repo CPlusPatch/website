@@ -34,6 +34,7 @@ import { createSatelliteCard } from "./ui/satellite-card.ts";
 import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import { createScenarios } from "./ui/scenario-menu/scenario-menu.ts";
 import { createSearch, type Search } from "./ui/search.ts";
+import { sheetSpace } from "./ui/sheet.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createSoundMenu } from "./ui/sound-menu.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
@@ -98,6 +99,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const panels = root.querySelectorAll<HTMLElement>(".orrery__panel");
     const top = root.querySelector<HTMLElement>(".orrery__panel--top");
     const bottom = root.querySelector<HTMLElement>(".orrery__panel--bottom");
+    const side = root.querySelector<HTMLElement>(".orrery__panel--right");
 
     // Created before the view, so a screen reader watches it before its text changes.
     const live = h("div", {
@@ -418,8 +420,26 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 `${bottom.offsetHeight}px`,
             );
         }
+        if (side) {
+            const boxes = [...side.children].map((card) =>
+                card.getBoundingClientRect(),
+            );
+            const space = sheetSpace(
+                side.getBoundingClientRect().bottom,
+                boxes,
+            );
+            root.style.setProperty("--orrery-sheet-space", `${space}px`);
+        }
     });
     for (const panel of [top, bottom]) if (panel) measure.observe(panel);
+    // The cards come and go, and the inspector arrives once the view is built.
+    const watchSide = new MutationObserver(() => {
+        for (const card of side?.children ?? []) measure.observe(card);
+    });
+    if (side) {
+        for (const card of side.children) measure.observe(card);
+        watchSide.observe(side, { childList: true });
+    }
 
     const setBare = (bare: boolean) => {
         if (root.classList.contains("orrery--bare") === bare) return;
@@ -566,7 +586,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             session.destroy();
             off();
             measure.disconnect();
+            watchSide.disconnect();
             root.style.removeProperty("--orrery-top-space");
+            root.style.removeProperty("--orrery-sheet-space");
             root.style.removeProperty("--orrery-bottom-space");
             live.remove();
             unbind();

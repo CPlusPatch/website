@@ -102,6 +102,13 @@
             justify-content: flex-end;
             align-items: stretch;
             inline-size: auto;
+            /* Leaves the HUD's top row and the zoom row above an open sheet. */
+            padding-block-start: calc(
+                2 *
+                var(--control-height-md) +
+                3 *
+                var(--orrery-inset)
+            );
         }
 
         /*
@@ -113,8 +120,13 @@
             grid-template-columns: auto minmax(0, 1fr) auto auto;
             grid-template-rows: auto minmax(0, 1fr) auto;
             justify-content: stretch;
+            /* Zoom and the scale ride above the sheet. */
             padding-block: calc(var(--orrery-top-space) + var(--orrery-inset))
-                calc(var(--orrery-bottom-space) + var(--orrery-inset));
+                calc(
+                    var(--orrery-bottom-space) +
+                    var(--orrery-sheet-space) +
+                    var(--orrery-inset)
+                );
             padding-inline-end: max(
                 var(--orrery-inset),
                 env(safe-area-inset-right, 0px)
