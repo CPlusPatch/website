@@ -11,15 +11,16 @@
         gap: var(--space-sm);
     }
 
+    /* Sized by label, so Focused gets more room than Edit and Burn. */
     .orrery__orbit-button {
-        flex: 1;
+        flex: auto;
         min-inline-size: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: var(--space-sm);
         block-size: var(--orrery-control-lg);
-        padding: 0 var(--space-sm);
+        padding: 0 0.75rem;
         border: 1px solid var(--orrery-frame);
         background-color: var(--orrery-panel-raised);
         color: var(--orrery-text);
