@@ -344,7 +344,13 @@ const assemble = (
     cleanup.push(unbindPointer);
     orbits.highlight(world.selected);
 
-    const rig = createRig(camera, canvas, () => world.scenario, world.states());
+    const rig = createRig(
+        camera,
+        canvas,
+        () => world.scenario,
+        world.states(),
+        world.focused,
+    );
     cleanup.push(rig.dispose);
     resize();
 

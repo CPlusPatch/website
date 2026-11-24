@@ -33,7 +33,7 @@ export type Rig = {
     origin: () => Vec3;
     /** The id of the focused body. */
     focusId: () => string;
-    /** Places the camera above the ecliptic so the orbits of the inner planets fit. */
+    /** Places the camera above the ecliptic to frame the focus, or the inner planets for the root. */
     fit: () => void;
     /** Whether the user or a focus change has moved the camera since the first fit. */
     moved: () => boolean;
@@ -111,12 +111,13 @@ type Zoom = { to: number };
 /** The look target's offset from the focus, in camera distances, gliding from `from` to `to`. */
 type LookGlide = { from: Vector3; to: Vector3; elapsed: number };
 
-/** A camera that starts above the ecliptic and looks at the root. */
+/** A camera that starts above the ecliptic and looks at `firstFocus`. */
 export const createRig = (
     camera: PerspectiveCamera,
     canvas: HTMLElement,
     scenario: () => Scenario,
     firstStates: Map<string, State>,
+    firstFocus: string,
 ): Rig => {
     const root = scenario().bodies.find((body) => body.parent === null);
     if (!root) throw new Error("The scenario has no root body.");
@@ -184,7 +185,8 @@ export const createRig = (
     controls.zoomSpeed = WHEEL_ZOOM_SPEED;
     controls.enableDamping = !reducedMotion();
 
-    let focused = root.id;
+    // The view is rebuilt after an add or remove, and the focus must survive that.
+    let focused = bodyOf(firstFocus).id;
     let touched = false;
     controls.addEventListener("start", () => {
         touched = true;
@@ -203,10 +205,10 @@ export const createRig = (
     const look = new Vector3();
     let lookGlide: LookGlide | null = null;
     const up = new Vector3(0, 0, 1);
-    const origin: Vec3 = { ...positionOf(root.id) };
+    const origin: Vec3 = { ...positionOf(focused) };
 
     const fovRad = (camera.fov * Math.PI) / 180;
-    controls.minDistance = minDistanceKm(root, fovRad);
+    controls.minDistance = minDistanceKm(bodyOf(focused), fovRad);
 
     const fitTo = (reach: number) =>
         fitDistanceKm(reach, fovRad, camera.aspect, START_ELEVATION);
@@ -400,9 +402,24 @@ export const createRig = (
         if (s === 1) lookGlide = null;
     };
 
+    // Where the camera goes to frame a body, in km.
+    const frameDistance = (id: string) =>
+        id === root.id
+            ? openingDistance()
+            : frameDistanceKm(scenario(), id, fovRad, camera.aspect);
+
+    const clampDistance = (id: string, distance: number) =>
+        Math.min(
+            Math.max(distance, minDistanceKm(bodyOf(id), fovRad)),
+            controls.maxDistance,
+        );
+
     const fit = () => {
-        const distance = openingDistance();
         controls.maxDistance = fitDistance() * MAX_DISTANCE_FACTOR;
+        const distance =
+            focused === root.id
+                ? openingDistance()
+                : clampDistance(focused, frameDistance(focused));
         zoomMove = null;
         proxy.position.set(
             0,
@@ -479,18 +496,6 @@ export const createRig = (
         // The old minimum must not stop the camera on its way in.
         controls.minDistance = Math.min(controls.minDistance, target.min());
     };
-
-    // Where the camera goes to frame a body, in km.
-    const frameDistance = (id: string) =>
-        id === root.id
-            ? openingDistance()
-            : frameDistanceKm(scenario(), id, fovRad, camera.aspect);
-
-    const clampDistance = (id: string, distance: number) =>
-        Math.min(
-            Math.max(distance, minDistanceKm(bodyOf(id), fovRad)),
-            controls.maxDistance,
-        );
 
     const fitFocus = () => {
         touched = true;
