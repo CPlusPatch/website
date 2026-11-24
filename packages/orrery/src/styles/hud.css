@@ -114,6 +114,8 @@
 
         .orrery__hud-scale {
             grid-area: 3 / 2;
+            /* Its ground stays as wide as the bar and label, not the column. */
+            justify-self: start;
             align-self: center;
             flex-direction: row;
             align-items: center;
