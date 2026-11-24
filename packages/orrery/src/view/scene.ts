@@ -66,6 +66,8 @@ export type View = EditScene & {
     kmPerPx: () => number;
     /** Sets the satellite groups drawn around Earth. The first non-empty list loads the snapshot. */
     satelliteGroups: (groups: readonly SatelliteGroup[]) => void;
+    /** Adds and removes bodies in place, without rebuilding the view. */
+    patch: (change: { added: string[]; removed: string[] }) => void;
     /** Marks the loading state as gone; a sky that arrives later fades in. */
     reveal: () => void;
     /** The catalogue satellite that is selected or focused, by index. Selecting one clears the world's selection. */
@@ -155,10 +157,6 @@ const assemble = (
     // Neutral, not AgX: AgX shifts the hue of dark night sides.
     renderer.toneMapping = neutralNoToe();
     renderer.toneMappingExposure = EXPOSURE;
-
-    const names = new Map(
-        world.scenario.bodies.map((body) => [body.id, body.name]),
-    );
 
     const scene = new Scene();
     const camera = new PerspectiveCamera(50, 1, 1e-6, 1e12);
@@ -388,7 +386,9 @@ const assemble = (
         canvas.setAttribute(
             "aria-label",
             `The solar system, centred on ${
-                satellite?.name ?? names.get(rig.focusId())
+                satellite?.name ??
+                world.scenario.bodies.find((body) => body.id === rig.focusId())
+                    ?.name
             }. Arrow keys rotate, plus and minus zoom, 0 fits the focus, C chases it.`,
         );
     };
@@ -606,6 +606,22 @@ const assemble = (
             ghostShown = body !== undefined && elements !== null;
         },
         grips: grips.target,
+        patch: ({ added, removed }) => {
+            for (const id of removed) {
+                orbits.remove(id);
+                bodies.remove(id);
+            }
+            for (const id of added) {
+                const body = world.scenario.bodies.find(
+                    (candidate) => candidate.id === id,
+                );
+                if (!body) continue;
+
+                orbits.add(body);
+                bodies.add(body);
+            }
+            rig.rescale();
+        },
         zoom: rig.zoom,
         fitFocus: rig.fitFocus,
         chase: (on) => {

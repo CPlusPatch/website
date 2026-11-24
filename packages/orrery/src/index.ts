@@ -472,6 +472,19 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         },
     });
 
+    const rebuild = () => {
+        parts?.destroy();
+        parts = null;
+        parts = build();
+        satellites.setAvailable(hasEarth());
+        // A view built after the reveal has no loading state, so a sky that comes later fades in.
+        if (revealed) parts?.reveal();
+        else if (parts) revealWhenReady(parts);
+        if (!parts) {
+            notices.show("destructive", "The model can't be drawn.");
+        }
+    };
+
     const session = createSession({
         world,
         storage,
@@ -483,16 +496,18 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             window,
             document,
         },
-        rebuild: () => {
-            parts?.destroy();
-            parts = null;
-            parts = build();
-            satellites.setAvailable(hasEarth());
-            // A view built after the reveal has no loading state, so a sky that comes later fades in.
-            if (revealed) parts?.reveal();
-            else if (parts) revealWhenReady(parts);
-            if (!parts) {
-                notices.show("destructive", "The model can't be drawn.");
+        rebuild,
+        update: (change) => {
+            // The satellite swarm, Earth's mu and the satellite menu are set once per build.
+            const view = currentView;
+            if (
+                !view ||
+                change.added.includes("earth") ||
+                change.removed.includes("earth")
+            ) {
+                rebuild();
+            } else {
+                view.patch(change);
             }
         },
     });

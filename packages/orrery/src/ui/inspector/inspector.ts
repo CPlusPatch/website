@@ -372,7 +372,7 @@ export const createInspector = (
         if (event.type === "selection") {
             mode = "card";
             render();
-        } else if (event.type === "scenario") {
+        } else if (event.type === "bodies") {
             const gone = !world.scenario.bodies.some(
                 (candidate) => candidate.id === world.selected,
             );

@@ -350,7 +350,7 @@ export const createBodyAdder = (
             },
             world.clock.t,
         );
-        // The world rebuilds the inspector on adding, so the form is gone after.
+        // Selecting the new body replaces the form with its card, so the root is found first.
         const orrery = form.element.closest<HTMLElement>(".orrery");
 
         try {

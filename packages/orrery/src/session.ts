@@ -46,8 +46,10 @@ export const createSession = (options: {
     notices: Pick<Notices, "show">;
     page: Page;
     rebuild: () => void;
+    /** Applies added and removed bodies to the view in place. Throws if it can't. */
+    update: (change: { added: string[]; removed: string[] }) => void;
 }): Session => {
-    const { world, storage, notices, page, rebuild } = options;
+    const { world, storage, notices, page, rebuild, update } = options;
 
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
     const saveNow = () => {
@@ -72,32 +74,48 @@ export const createSession = (options: {
     let lastGood = world.scenario;
     let restoring = false;
 
+    // Redraws from scratch. A scenario that can't be drawn goes back to the last good one.
+    const rebuildOrRestore = (): boolean => {
+        try {
+            rebuild();
+            lastGood = world.scenario;
+
+            return true;
+        } catch {
+            // A failed restore would only fail again, and its notice is already shown.
+            if (restoring) return false;
+
+            notices.show("destructive", "The model can't be drawn.");
+
+            const focused = world.focused;
+            restoring = true;
+            try {
+                world.load(lastGood, world.clock.t);
+            } finally {
+                restoring = false;
+            }
+            if (world.scenario.bodies.some((body) => body.id === focused)) {
+                world.focus(focused);
+            }
+
+            return false;
+        }
+    };
+
     const off = world.on((event) => {
         if (event.type === "scenario") {
             // Any new scenario, even an Import or Reset, cancels a pending link.
             loadId++;
 
+            if (!rebuildOrRestore()) return;
+        }
+
+        if (event.type === "bodies") {
             try {
-                rebuild();
+                update({ added: event.added, removed: event.removed });
                 lastGood = world.scenario;
             } catch {
-                // A failed restore would only fail again, and its notice is already shown.
-                if (restoring) return;
-
-                notices.show("destructive", "The model can't be drawn.");
-
-                const focused = world.focused;
-                restoring = true;
-                try {
-                    world.load(lastGood, world.clock.t);
-                } finally {
-                    restoring = false;
-                }
-                if (world.scenario.bodies.some((body) => body.id === focused)) {
-                    world.focus(focused);
-                }
-
-                return;
+                if (!rebuildOrRestore()) return;
             }
         }
 

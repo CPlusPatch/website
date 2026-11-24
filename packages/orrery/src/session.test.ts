@@ -35,7 +35,14 @@ const earthOnly = {
     ),
 };
 
-const setup = (hash = "", rebuildFn: () => void = () => {}) => {
+const setup = (
+    hash = "",
+    rebuildFn: () => void = () => {},
+    updateFn: (change: {
+        added: string[];
+        removed: string[];
+    }) => void = () => {},
+) => {
     const world = new World(solarSystem, new Clock(0, 1, false));
     const storage = memory();
     const shown: string[] = [];
@@ -54,7 +61,13 @@ const setup = (hash = "", rebuildFn: () => void = () => {}) => {
         window: new EventTarget(),
         document: new EventTarget(),
     };
-    const state = { hash, hidden: false, stripped: 0, rebuilt: 0 };
+    const state = {
+        hash,
+        hidden: false,
+        stripped: 0,
+        rebuilt: 0,
+        updated: [] as { added: string[]; removed: string[] }[],
+    };
     const session = createSession({
         world,
         storage,
@@ -63,6 +76,10 @@ const setup = (hash = "", rebuildFn: () => void = () => {}) => {
         rebuild: () => {
             state.rebuilt++;
             rebuildFn();
+        },
+        update: (change) => {
+            state.updated.push(change);
+            updateFn(change);
         },
     });
 
@@ -258,11 +275,17 @@ const rock = (id: string): Body => {
 };
 
 Deno.test("a rebuild that throws reloads the last scenario, keeps the focus and isn't saved", async () => {
-    const { world, storage, shown, session } = setup("", () => {
-        if (world.scenario.bodies.some((body) => body.id === "rock")) {
-            throw new Error("no view");
-        }
-    });
+    const { world, storage, shown, session } = setup(
+        "",
+        () => {
+            if (world.scenario.bodies.some((body) => body.id === "rock")) {
+                throw new Error("no view");
+            }
+        },
+        () => {
+            throw new Error("no patch");
+        },
+    );
     const written: string[] = [];
     storage.setItem = (_key, value) => {
         written.push(value);
@@ -285,11 +308,17 @@ Deno.test("a rebuild that throws reloads the last scenario, keeps the focus and 
 });
 
 Deno.test("a failed rebuild keeps an orbit edited before it", () => {
-    const { world, session } = setup("", () => {
-        if (world.scenario.bodies.some((body) => body.id === "rock")) {
-            throw new Error("no view");
-        }
-    });
+    const { world, session } = setup(
+        "",
+        () => {
+            if (world.scenario.bodies.some((body) => body.id === "rock")) {
+                throw new Error("no view");
+            }
+        },
+        () => {
+            throw new Error("no patch");
+        },
+    );
     const moon = world.scenario.bodies.find((body) => body.id === "moon");
     if (!moon?.elements) throw new Error("The scenario has no Moon.");
 
@@ -298,6 +327,85 @@ Deno.test("a failed rebuild keeps an orbit edited before it", () => {
 
     const after = world.scenario.bodies.find((body) => body.id === "moon");
     assertEquals(after?.elements?.e, 0.2);
+
+    session.destroy();
+});
+
+Deno.test("a bodies event calls update and not rebuild", () => {
+    const { world, state, session } = setup();
+
+    world.addBody(rock("rock"));
+    world.removeBody("rock");
+
+    assertEquals(state.updated, [
+        { added: ["rock"], removed: [] },
+        { added: [], removed: ["rock"] },
+    ]);
+    assertEquals(state.rebuilt, 0);
+
+    session.destroy();
+});
+
+Deno.test("an update that throws falls back to a rebuild", () => {
+    const { world, state, shown, session } = setup(
+        "",
+        () => {},
+        () => {
+            throw new Error("no patch");
+        },
+    );
+
+    world.addBody(rock("rock"));
+
+    assertEquals(state.rebuilt, 1);
+    assertEquals(shown, []);
+    assert(world.scenario.bodies.some((body) => body.id === "rock"));
+
+    session.destroy();
+});
+
+Deno.test("an update and a rebuild that both throw show the notice and restore the last scenario", () => {
+    const { world, state, shown, session } = setup(
+        "",
+        () => {
+            if (world.scenario.bodies.some((body) => body.id === "rock")) {
+                throw new Error("no view");
+            }
+        },
+        () => {
+            throw new Error("no patch");
+        },
+    );
+
+    world.addBody(rock("rock"));
+
+    assertEquals(world.scenario, solarSystem);
+    assertEquals(shown, ["The model can't be drawn."]);
+    // The failed rebuild, then the restore's.
+    assertEquals(state.rebuilt, 2);
+
+    session.destroy();
+});
+
+Deno.test("a failure after an update restores the scenario with its change", () => {
+    const has = (id: string) =>
+        world.scenario.bodies.some((body) => body.id === id);
+    const { world, shown, session } = setup(
+        "",
+        () => {
+            if (has("rock2")) throw new Error("no view");
+        },
+        (change) => {
+            if (change.added.includes("rock2")) throw new Error("no patch");
+        },
+    );
+
+    world.addBody(rock("rock"));
+    world.addBody(rock("rock2"));
+
+    assertEquals(shown, ["The model can't be drawn."]);
+    assert(has("rock"));
+    assert(!has("rock2"));
 
     session.destroy();
 });

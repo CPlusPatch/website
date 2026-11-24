@@ -7,7 +7,7 @@ import {
     assertNotEquals,
     assertThrows,
 } from "@std/assert";
-import { newBody } from "./adding.ts";
+import { newBody, subtreeIds } from "./adding.ts";
 import { Clock } from "./clock.ts";
 import { World, type WorldEvent } from "./world.ts";
 
@@ -255,7 +255,7 @@ const rock = (id: string, parent: string): Body => {
     return { ...body, id, name: id, parent };
 };
 
-Deno.test("adding a body emits one scenario event and keeps focus and selection", () => {
+Deno.test("adding a body emits one bodies event and keeps focus and selection", () => {
     const world = make();
     world.focus("earth");
     world.select("mars");
@@ -264,7 +264,7 @@ Deno.test("adding a body emits one scenario event and keeps focus and selection"
 
     world.addBody(rock("rock", "moon"));
 
-    assertEquals(events, [{ type: "scenario" }]);
+    assertEquals(events, [{ type: "bodies", added: ["rock"], removed: [] }]);
     assert(world.scenario.bodies.some((body) => body.id === "rock"));
     assertEquals(world.order.at(-1)?.id, "rock");
     assert(world.states().has("rock"));
@@ -310,7 +310,7 @@ Deno.test("adding a body made by newBody works", () => {
     assert(world.scenario.bodies.some((body) => body.id === "probe"));
 });
 
-Deno.test("removing a body removes the bodies that orbit it, in one event", () => {
+Deno.test("removing a body removes the bodies that orbit it, in one bodies event", () => {
     const world = make();
     const events: WorldEvent[] = [];
     world.on((e) => events.push(e));
@@ -318,12 +318,69 @@ Deno.test("removing a body removes the bodies that orbit it, in one event", () =
     world.removeBody("earth");
 
     const ids = world.scenario.bodies.map((body) => body.id);
-    assertEquals(events, [{ type: "scenario" }]);
+    assertEquals(events, [
+        {
+            type: "bodies",
+            added: [],
+            removed: subtreeIds(solarSystem, "earth"),
+        },
+    ]);
+    assert(subtreeIds(solarSystem, "earth").length > 1);
     assert(!ids.includes("earth"));
     assert(!ids.includes("moon"));
     assert(!ids.includes("iss"));
     assert(ids.includes("mars"));
     assertEquals(world.order.length, ids.length);
+});
+
+Deno.test("removing a body emits focus and selection after bodies, with the state already set", () => {
+    const world = make();
+    world.focus("moon");
+    world.select("iss");
+    const seen: string[] = [];
+    world.on((e) => {
+        seen.push(
+            `${e.type}:${world.focused}:${world.selected}:${world.scenario.bodies.length}`,
+        );
+    });
+    const count =
+        solarSystem.bodies.length - subtreeIds(solarSystem, "earth").length;
+
+    world.removeBody("earth");
+
+    assertEquals(seen, [
+        `bodies:sun:null:${count}`,
+        `focus:sun:null:${count}`,
+        `selection:sun:null:${count}`,
+    ]);
+});
+
+Deno.test("removing a body emits no focus or selection when neither was inside it", () => {
+    const world = make();
+    world.focus("mars");
+    world.select("mars");
+    const types: string[] = [];
+    world.on((e) => types.push(e.type));
+
+    world.removeBody("earth");
+
+    assertEquals(types, ["bodies"]);
+});
+
+Deno.test("removing a body emits focus but not selection when only the focus was inside", () => {
+    const world = make();
+    world.focus("moon");
+    world.select("mars");
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    world.removeBody("earth");
+
+    assertEquals(
+        events.map((e) => e.type),
+        ["bodies", "focus"],
+    );
+    assertEquals(events[1], { type: "focus", id: "sun" });
 });
 
 Deno.test("removing the focused body's ancestor moves the focus to its parent", () => {
@@ -362,6 +419,41 @@ Deno.test("removing another body keeps the selection", () => {
     world.removeBody("earth");
 
     assertEquals(world.selected, "mars");
+});
+
+Deno.test("removing the focus still announces the new focus and selection when a listener throws", () => {
+    const world = make();
+    world.focus("earth");
+    world.select("moon");
+    const types: string[] = [];
+    world.on((event) => {
+        if (event.type === "bodies") throw new Error("draw failed");
+    });
+    world.on((event) => types.push(event.type));
+
+    assertThrows(() => world.removeBody("earth"));
+
+    assertEquals(types, ["bodies", "focus", "selection"]);
+});
+
+Deno.test("removing the focus doesn't move it to the parent after a listener restores it", () => {
+    const world = make();
+    world.focus("earth");
+    const focused: string[] = [];
+    let restored = false;
+    world.on((event) => {
+        if (event.type === "bodies" && !restored) {
+            restored = true;
+            world.load(solarSystem, 0);
+            world.focus("earth");
+        }
+        if (event.type === "focus") focused.push(event.id);
+    });
+
+    world.removeBody("earth");
+
+    assertEquals(world.focused, "earth");
+    assertEquals(focused, ["earth"]);
 });
 
 Deno.test("removing the root or an unknown body throws and emits nothing", () => {

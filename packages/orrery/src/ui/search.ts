@@ -553,7 +553,12 @@ export const createSearch = (
     };
 
     const unsubscribe = world.on((event) => {
-        if (event.type === "scenario" && !panel.hidden) render();
+        if (
+            (event.type === "scenario" || event.type === "bodies") &&
+            !panel.hidden
+        ) {
+            render();
+        }
     });
 
     // Pressing the button or a row would blur the input, and close the panel.

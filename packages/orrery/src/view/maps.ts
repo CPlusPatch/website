@@ -80,6 +80,8 @@ const LINEAR = new Set(["earth-clouds"]);
 export type Maps = {
     /** Fetches the map of a body once and hands it to `onLoad`. Ignores a body with no map. */
     load: (id: string, onLoad: (texture: Texture) => void) => void;
+    /** Frees the map of body `id`, so a body added later with the same id loads it again. */
+    release: (id: string) => void;
     /** Frees every loaded map, and any that arrives later. */
     dispose: () => void;
 };
@@ -90,14 +92,16 @@ export const createMaps = (
     anisotropy: number,
     onChange?: (done: number, total: number) => void,
 ): Maps => {
-    const started = new Set<string>();
-    const loaded: Texture[] = [];
+    // The token of each id's current request, so a request that was released can tell it's stale.
+    const started = new Map<string, number>();
+    const loaded = new Map<string, Texture>();
     let disposed = false;
+    let requests = 0;
     let settled = 0;
 
     const settle = () => {
         settled++;
-        onChange?.(settled, started.size);
+        onChange?.(settled, requests);
     };
 
     return {
@@ -107,11 +111,17 @@ export const createMaps = (
             const pending = images(id);
             if (pending === null) return;
 
-            started.add(id);
-            onChange?.(settled, started.size);
+            const token = ++requests;
+            started.set(id, token);
+            onChange?.(settled, requests);
             pending.then(
                 (image) => {
                     if (disposed) return;
+                    if (started.get(id) !== token) {
+                        settle();
+
+                        return;
+                    }
 
                     const texture = new Texture(image);
                     texture.colorSpace = LINEAR.has(id)
@@ -119,7 +129,7 @@ export const createMaps = (
                         : SRGBColorSpace;
                     texture.anisotropy = anisotropy;
                     texture.needsUpdate = true;
-                    loaded.push(texture);
+                    loaded.set(id, texture);
                     onLoad(texture);
                     settle();
                 },
@@ -132,10 +142,15 @@ export const createMaps = (
                 },
             );
         },
+        release: (id) => {
+            started.delete(id);
+            loaded.get(id)?.dispose();
+            loaded.delete(id);
+        },
         dispose: () => {
             disposed = true;
-            for (const texture of loaded) texture.dispose();
-            loaded.length = 0;
+            for (const texture of loaded.values()) texture.dispose();
+            loaded.clear();
         },
     };
 };

@@ -130,6 +130,9 @@ export const createRig = (
         return body;
     };
 
+    const exists = (id: string) =>
+        scenario().bodies.some((candidate) => candidate.id === id);
+
     let states = firstStates;
 
     const positionOf = (id: string): Vec3 => {
@@ -561,7 +564,8 @@ export const createRig = (
         moved: () => touched,
         rescale: () => {
             controls.maxDistance = fitDistance() * MAX_DISTANCE_FACTOR;
-            if (!touched) fit();
+            // A removed focus is followed by a `focus` call, which frames its parent.
+            if (!touched && exists(focused)) fit();
         },
         zoom,
         fitFocus,
@@ -571,23 +575,24 @@ export const createRig = (
         kmPerPx: (viewportHeightPx) =>
             kmPerPx(proxy.position.length(), fovRad, viewportHeightPx),
         focus: (id) => {
-            const old = bodyOf(focused);
+            const old = exists(focused) ? bodyOf(focused) : null;
             const body = bodyOf(id);
             // The camera's distance from a followed point says nothing about the old body's size.
-            const fromPoint = following !== null;
+            // Nor does it for a body that was removed.
+            const fromPoint = following !== null || old === null;
             touched = true;
             focused = id;
             following = null;
 
             const distance = proxy.position.length();
-            const oldKm = old.radius / 1000;
+            const oldKm = (old?.radius ?? 0) / 1000;
             const px =
                 canvas.clientHeight > 0
                     ? (2 * oldKm) /
                       kmPerPx(distance, fovRad, canvas.clientHeight)
                     : 0;
             const target =
-                px >= KEEP_SIZE_PX && !fromPoint
+                old && px >= KEEP_SIZE_PX && !fromPoint
                     ? keepSizeDistanceKm(distance, old.radius, body.radius)
                     : frameDistance(id);
 

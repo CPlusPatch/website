@@ -129,6 +129,7 @@ export const createCrumbs = (world: World): Crumbs => {
         if (
             event.type === "focus" ||
             event.type === "scenario" ||
+            event.type === "bodies" ||
             event.type === "body"
         ) {
             render();

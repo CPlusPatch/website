@@ -80,6 +80,10 @@ export type Bodies = {
     bare: (bare: boolean) => void;
     /** Redraws a body's colours, after its orbit or colour changed. */
     recolor: (body: Body) => void;
+    /** Adds a sphere, marker and label for `body`. */
+    add: (body: Body) => void;
+    /** Removes body `id` and frees what it drew. */
+    remove: (id: string) => void;
     /** Removes the bodies and frees them. */
     dispose: () => void;
 };
@@ -128,7 +132,7 @@ export const createBodies = (
     const spin = new Matrix4();
     const styling = createLabels(host, entries);
 
-    for (const body of bodies) {
+    const addEntry = (body: Body): Entry => {
         const entry = createEntry(
             body,
             color,
@@ -138,16 +142,40 @@ export const createBodies = (
         );
         scene.add(entry.group);
         entries.push(entry);
-    }
+
+        return entry;
+    };
+    for (const body of bodies) addEntry(body);
 
     // Bigger bodies draw later, and the root last.
     const drawSize = (body: Body) =>
         body.parent === null ? Infinity : body.radius;
-    [...entries]
-        .sort((a, b) => drawSize(a.body) - drawSize(b.body))
-        .forEach(({ marker }, rank) => {
-            marker.renderOrder = rank + 1;
-        });
+    const sortMarkers = () => {
+        [...entries]
+            .sort((a, b) => drawSize(a.body) - drawSize(b.body))
+            .forEach(({ marker }, rank) => {
+                marker.renderOrder = rank + 1;
+            });
+    };
+    sortMarkers();
+
+    const disposeEntry = ({
+        group,
+        sphere,
+        model,
+        marker,
+        corona,
+        label,
+        extras,
+    }: Entry) => {
+        extras.dispose();
+        if (model) disposeModel(model);
+        label.removeFromParent();
+        group.removeFromParent();
+        sphere.material.dispose();
+        marker.material.dispose();
+        corona?.material.dispose();
+    };
 
     let hoverId: string | null = null;
     let placements = new Map<string, Placement>();
@@ -181,6 +209,8 @@ export const createBodies = (
         model: Entry["model"];
     } | null = null;
     let size = { width: 1, height: 1 };
+    // The last resize's px to marker scale, which a body added later needs.
+    let markerScale: ((pixels: number) => number) | null = null;
 
     return {
         update: (camera, t, origin, focus, selected, states, blocked) => {
@@ -558,9 +588,10 @@ export const createBodies = (
             size = { width, height };
             const scale = (pixels: number) =>
                 (pixels * 2 * Math.tan((camera.fov * Math.PI) / 360)) / height;
+            markerScale = scale;
             for (const { body, marker } of entries) {
-                const markerScale = scale(markerPx(body));
-                marker.scale.set(markerScale, markerScale, 1);
+                const px = scale(markerPx(body));
+                marker.scale.set(px, px, 1);
             }
 
             styling.measureAll();
@@ -582,25 +613,35 @@ export const createBodies = (
             entry.sphere.material.color.copy(next);
             entry.marker.material.color.copy(next);
         },
+        add: (body) => {
+            const { marker } = addEntry(body);
+            sortMarkers();
+
+            if (markerScale) {
+                const px = markerScale(markerPx(body));
+                marker.scale.set(px, px, 1);
+            }
+        },
+        remove: (id) => {
+            const at = entries.findIndex((entry) => entry.body.id === id);
+            if (at !== -1) disposeEntry(entries.splice(at, 1)[0] as Entry);
+            sortMarkers();
+
+            placements.delete(id);
+            culled.delete(id);
+            changed.delete(id);
+            placed.delete(id);
+            bareHidden.delete(id);
+            if (hoverId === id) hoverId = null;
+            if (drawn?.id === id) drawn = null;
+
+            maps.release(id);
+            // Saturn's rings are a map of their own, which a later Saturn needs again.
+            if (id === "saturn") maps.release("saturn-ring");
+        },
         dispose: () => {
             disposed = true;
-            for (const {
-                group,
-                sphere,
-                model,
-                marker,
-                corona,
-                label,
-                extras,
-            } of entries) {
-                extras.dispose();
-                if (model) disposeModel(model);
-                label.removeFromParent();
-                group.removeFromParent();
-                sphere.material.dispose();
-                marker.material.dispose();
-                corona?.material.dispose();
-            }
+            for (const entry of entries) disposeEntry(entry);
             styling.dispose();
             sun.removeFromParent();
             ambient.removeFromParent();

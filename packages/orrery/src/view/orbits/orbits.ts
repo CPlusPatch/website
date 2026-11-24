@@ -52,6 +52,10 @@ export type Orbits = {
     highlight: (id: string | null) => void;
     /** Draws the line of `body` again from its new elements. */
     rebuild: (body: Body) => void;
+    /** Adds the line of `body`, if it has an orbit. */
+    add: (body: Body) => void;
+    /** Removes and frees the line of body `id`, and hides the ghost if it was for it or around it. */
+    remove: (id: string) => void;
     /** Draws a dashed line for `elements` around the parent of `body`, or none with `null`. */
     ghost: (body: Body, elements: Elements | null) => void;
     /** Switches the lines to read over the sky, which has no flat ground colour to fade into. */
@@ -165,8 +169,8 @@ export const createOrbits = (
         else orbit.fade.ground.value.copy(background);
     };
 
-    for (const body of bodies) {
-        if (body.parent === null || body.elements === null) continue;
+    const addOrbit = (body: Body): Orbit | null => {
+        if (body.parent === null || body.elements === null) return null;
 
         const { geometry, positions, colors, segments } = orbitGeometry(
             body.elements,
@@ -212,7 +216,20 @@ export const createOrbits = (
         };
         styleLines(orbit);
         orbits.push(orbit);
-    }
+
+        return orbit;
+    };
+
+    // The geometry is shared by the line and its casing.
+    const disposeOrbit = ({ line, casing }: Orbit) => {
+        line.removeFromParent();
+        casing.removeFromParent();
+        line.geometry.dispose();
+        line.material.dispose();
+        casing.material.dispose();
+    };
+
+    for (const body of bodies) addOrbit(body);
 
     return {
         ghost: (body, elements) => {
@@ -230,6 +247,26 @@ export const createOrbits = (
                 pick,
                 size,
             );
+        },
+        add: (body) => {
+            const orbit = addOrbit(body);
+            if (!orbit) return;
+
+            // A body made at startup gets these from the first `resize` and `highlight`.
+            orbit.line.material.resolution.set(size.width, size.height);
+            orbit.casing.material.resolution.set(size.width, size.height);
+            if (body.id === pickedId) {
+                orbit.line.material.linewidth = SELECTED_LINE_PX;
+                orbit.casing.material.linewidth = casingPx(SELECTED_LINE_PX);
+            }
+        },
+        remove: (id) => {
+            const at = orbits.findIndex((orbit) => orbit.body.id === id);
+            if (at !== -1) disposeOrbit(orbits.splice(at, 1)[0] as Orbit);
+
+            if (ghost && (ghost.body.id === id || ghost.parent === id)) {
+                ghost.line.visible = false;
+            }
         },
         rebuild: (body) => {
             const orbit = orbits.find(
@@ -410,13 +447,7 @@ export const createOrbits = (
                 ghost.line.geometry.dispose();
                 ghost.line.material.dispose();
             }
-            for (const { line, casing } of orbits) {
-                line.removeFromParent();
-                casing.removeFromParent();
-                line.geometry.dispose();
-                line.material.dispose();
-                casing.material.dispose();
-            }
+            for (const orbit of orbits) disposeOrbit(orbit);
             group.removeFromParent();
         },
     };

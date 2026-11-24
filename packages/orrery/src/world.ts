@@ -22,6 +22,8 @@ export type WorldEvent =
     | { type: "selection"; id: string | null }
     | { type: "clock" }
     | { type: "body"; id: string }
+    /** Bodies were added or removed (ids). A removal lists the whole subtree. */
+    | { type: "bodies"; added: string[]; removed: string[] }
     | { type: "scenario" };
 
 /** The scenario, the clock, what's focused and what's selected. */
@@ -123,7 +125,7 @@ export class World {
         if (!result.ok) throw new Error(result.errors.join(" "));
 
         this.#replace(result.scenario);
-        this.#emit({ type: "scenario" });
+        this.#emit({ type: "bodies", added: [body.id], removed: [] });
     }
 
     /** Removes body `id` and every body that orbits it. */
@@ -135,7 +137,8 @@ export class World {
         );
         if (!body?.parent) throw new Error(`"${id}" is the root.`);
 
-        const gone = new Set(subtreeIds(this.#scenario, id));
+        const removed = subtreeIds(this.#scenario, id);
+        const gone = new Set(removed);
 
         this.#replace({
             ...this.#scenario,
@@ -143,11 +146,27 @@ export class World {
                 (candidate) => !gone.has(candidate.id),
             ),
         });
-        if (gone.has(this.focused)) this.focused = body.parent;
-        if (this.selected !== null && gone.has(this.selected)) {
-            this.selected = null;
+
+        const refocus = gone.has(this.focused);
+        const deselect = this.selected !== null && gone.has(this.selected);
+        if (refocus) this.focused = body.parent;
+        if (deselect) this.selected = null;
+
+        try {
+            this.#emit({ type: "bodies", added: [], removed });
+        } finally {
+            // A view that fails to draw restores the old scenario and its focus, which this mustn't undo.
+            const parent = body.parent;
+            try {
+                if (refocus && this.focused === parent) {
+                    this.#emit({ type: "focus", id: parent });
+                }
+            } finally {
+                if (deselect && this.selected === null) {
+                    this.#emit({ type: "selection", id: null });
+                }
+            }
         }
-        this.#emit({ type: "scenario" });
     }
 
     /** Replaces the orbit of body `id` with a fixed Kepler orbit, dropping any precession. */
