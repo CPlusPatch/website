@@ -402,14 +402,11 @@ const validateBody = (
 /** Checks the links between bodies: one root, known parents, no cycles. */
 const validateTree = (inputs: unknown[], errors: string[]): void => {
     const parents = new Map<string, string | null>();
-    const labels: string[] = [];
 
-    for (const [index, input] of inputs.entries()) {
+    for (const input of inputs) {
         const id = isRecord(input) ? input.id : undefined;
         const parent = isRecord(input) ? input.parent : undefined;
         const validId = typeof id === "string" && SLUG.test(id);
-
-        labels.push(validId ? id : `bodies[${index}]`);
 
         if (validId && (parent === null || typeof parent === "string")) {
             parents.set(id, parent);
@@ -430,16 +427,31 @@ const validateTree = (inputs: unknown[], errors: string[]): void => {
         }
     }
 
-    for (const id of parents.keys()) {
-        let current = parents.get(id);
-        let steps = 0;
+    // Each body is walked once: a chain stops at the first body already settled.
+    const loops = new Map<string, boolean>();
 
-        while (typeof current === "string" && steps <= parents.size) {
+    for (const id of parents.keys()) {
+        const path = new Set<string>();
+        let current: string | null | undefined = id;
+
+        while (
+            typeof current === "string" &&
+            !loops.has(current) &&
+            !path.has(current)
+        ) {
+            path.add(current);
             current = parents.get(current);
-            steps++;
         }
 
-        if (steps > parents.size) {
+        const looped =
+            typeof current === "string" &&
+            (path.has(current) || loops.get(current) === true);
+
+        for (const step of path) loops.set(step, looped);
+    }
+
+    for (const id of parents.keys()) {
+        if (loops.get(id)) {
             errors.push(`${id}.parent: the parent chain loops back on itself`);
         }
     }

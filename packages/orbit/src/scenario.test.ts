@@ -191,6 +191,38 @@ Deno.test("a parent cycle is rejected", () => {
     assert(errors.includes("b.parent: the parent chain loops back on itself"));
 });
 
+Deno.test("a body whose chain runs into a cycle is rejected, and one beside it isn't", () => {
+    const errors = errorsAfter((s) => {
+        const a = { ...planet(s), id: "a", parent: "b" };
+        const b = { ...planet(s), id: "b", parent: "a" };
+        const tail = { ...planet(s), id: "tail", parent: "a" };
+
+        s.bodies = [s.bodies[0], tail, a, b, planet(s)];
+    });
+    const looping = errors.filter((error) =>
+        error.endsWith("loops back on itself"),
+    );
+
+    assertEquals(looping, [
+        "tail.parent: the parent chain loops back on itself",
+        "a.parent: the parent chain loops back on itself",
+        "b.parent: the parent chain loops back on itself",
+    ]);
+});
+
+Deno.test("a long chain of moons is accepted", () => {
+    const scenario = structuredClone(valid);
+    const chain = Array.from({ length: 400 }, (_, index) => ({
+        ...planet(scenario),
+        id: `m${index}`,
+        parent: index === 0 ? "earth" : `m${index - 1}`,
+    }));
+
+    scenario.bodies.push(...chain);
+
+    assert(validateScenario(scenario).ok);
+});
+
 Deno.test("a number that isn't finite is rejected", () => {
     const errors = errorsAfter((s) => {
         const elements = planet(s).elements;
