@@ -162,7 +162,7 @@ export const createStepper = ({
 export type Form = {
     element: HTMLFormElement;
     apply: HTMLButtonElement;
-    /** The Cancel and Apply row, inside the form unless it was built as a footer. */
+    /** The Cancel and Apply row, for the caller to pin below the form. */
     actions: HTMLElement;
 };
 
@@ -176,9 +176,9 @@ export const createForm = (
     /** Called on Cancel and Esc. */
     onCancel: () => void,
     /** The text of the submit button. */
-    applyLabel = "Apply",
-    /** The form's id. With it, the actions are a pinned footer that the caller places outside. */
-    footerFor?: string,
+    applyLabel: string,
+    /** The form's id, which the Apply button in the footer submits. */
+    id: string,
 ): Form => {
     const cancel = h(
         "button",
@@ -195,28 +195,25 @@ export const createForm = (
         {
             type: "submit",
             class: buttonClasses().join(" "),
-            ...(footerFor ? { form: footerFor } : {}),
+            form: id,
         },
         applyLabel,
     );
-    const actions = footerFor
-        ? h(
-              "div",
-              { class: "orrery__inspector-foot orrery__inspector-foot--form" },
-              cancel,
-              apply,
-          )
-        : h("div", { class: "orrery__form-actions" }, cancel, apply);
+    const actions = h(
+        "div",
+        { class: "orrery__inspector-foot orrery__inspector-foot--form" },
+        cancel,
+        apply,
+    );
     const element = h(
         "form",
         {
             class: "orrery__form",
             novalidate: "",
             "aria-labelledby": labelledBy,
-            ...(footerFor ? { id: footerFor } : {}),
+            id,
         },
         ...children,
-        ...(footerFor ? [] : [actions]),
     );
 
     cancel.addEventListener("click", onCancel);
@@ -233,7 +230,7 @@ export const createForm = (
         onCancel();
     };
     element.addEventListener("keydown", onKeydown);
-    if (footerFor) actions.addEventListener("keydown", onKeydown);
+    actions.addEventListener("keydown", onKeydown);
 
     return { element, apply, actions };
 };
