@@ -11,8 +11,11 @@ import {
     LABEL_MIN_ORBIT_PX,
     labelRank,
     labelShownForOrbit,
+    ORBIT_FADE_VIEWPORTS,
+    ORBIT_FULL_PX,
     ORBIT_MAX_VIEWPORTS,
     ORBIT_MIN_PX,
+    orbitFade,
     orbitShown,
     projectedRadiusPx,
 } from "./visibility.ts";
@@ -72,21 +75,36 @@ Deno.test("a sphere hides what lies within its angular radius, which is 4.3 degr
     );
 });
 
-Deno.test("an orbit is drawn from 16px up to four times the viewport's longer side", () => {
+Deno.test("an orbit fades in from 16 px to 32 px and out from two to four viewports", () => {
     assertEquals(ORBIT_MIN_PX, 16);
+    assertEquals(ORBIT_FULL_PX, 32);
+    assertEquals(ORBIT_FADE_VIEWPORTS, 2);
     assertEquals(ORBIT_MAX_VIEWPORTS, 4);
+    assertEquals(orbitFade(15.9, 800, 600), 0);
+    assertAlmostEquals(orbitFade(24, 800, 600), 0.5);
+    assertEquals(orbitFade(32, 800, 600), 1);
+    assertEquals(orbitFade(400, 800, 600), 1);
+    assertEquals(orbitFade(1600, 800, 600), 1);
+    assertAlmostEquals(orbitFade(2400, 800, 600), 0.5);
+    assertEquals(orbitFade(3200.1, 800, 600), 0);
+});
+
+Deno.test("an orbit is shown while it has any fade left", () => {
     assertEquals(orbitShown(15.9, 800, 600), false);
-    assertEquals(orbitShown(16, 800, 600), true);
-    assertEquals(orbitShown(3200, 800, 600), true);
+    assertEquals(orbitShown(16.1, 800, 600), true);
+    assertEquals(orbitShown(3199, 800, 600), true);
     assertEquals(orbitShown(3200.1, 800, 600), false);
 });
 
-Deno.test("the largest orbit allowed follows the longer side of a tall viewport", () => {
-    assertEquals(orbitShown(3000, 600, 800), true);
+Deno.test("the fade out follows the longer side of a tall viewport", () => {
+    assertEquals(orbitFade(1600, 600, 800), 1);
+    assertAlmostEquals(orbitFade(2400, 600, 800), 0.5);
     assertEquals(orbitShown(3300, 600, 800), false);
 });
 
-Deno.test("a picked orbit shows at any size over the minimum", () => {
+Deno.test("a picked orbit doesn't fade out at any size over the minimum", () => {
+    assertEquals(orbitFade(2400, 800, 600, true), 1);
+    assertEquals(orbitFade(1e6, 800, 600, true), 1);
     assertEquals(orbitShown(1e6, 800, 600, true), true);
     assertEquals(orbitShown(15.9, 800, 600, true), false);
 });

@@ -1,6 +1,7 @@
 import type { Body, Elements } from "@cpluspatch/orbit";
 import type { InterleavedBufferAttribute } from "three";
 import type { Line2 } from "three/addons/lines/Line2.js";
+import type { LineFade } from "./fade-material.ts";
 
 export type Paint = {
     index: number;
@@ -14,6 +15,8 @@ export type Orbit = {
     parent: string;
     line: Line2;
     casing: Line2;
+    /** The line's depth and size fade. */
+    fade: LineFade;
     /** The loop's points, in km. */
     positions: Float32Array;
     /** The line's vertex colours, which are rewritten as the body moves. */

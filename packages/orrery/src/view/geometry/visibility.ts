@@ -47,18 +47,50 @@ export const LABEL_MIN_ORBIT_PX = 28;
 /** An orbit whose semi-major axis shows over this many times the viewport's longer side is left out. */
 export const ORBIT_MAX_VIEWPORTS = 4;
 
+/** An orbit whose semi-major axis shows this many px or more is drawn at full strength. */
+export const ORBIT_FULL_PX = 2 * ORBIT_MIN_PX;
+
+/** An orbit starts to fade out over this many times the viewport's longer side. */
+export const ORBIT_FADE_VIEWPORTS = 2;
+
 /**
- * Whether an orbit with a semi-major axis of `aPx` is drawn in a viewport of this size.
- * A `picked` orbit has no upper limit, since an eccentric one can pass close by.
+ * How much of an orbit with a semi-major axis of `aPx` shows in a viewport of this size, from 0 to 1.
+ * It fades in from `ORBIT_MIN_PX` to `ORBIT_FULL_PX` and out from `ORBIT_FADE_VIEWPORTS` to
+ * `ORBIT_MAX_VIEWPORTS` viewports. A `picked` orbit never fades out, since an eccentric one can
+ * pass close by.
  */
+export const orbitFade = (
+    aPx: number,
+    width: number,
+    height: number,
+    picked = false,
+): number => {
+    const small = Math.min(
+        Math.max((aPx - ORBIT_MIN_PX) / (ORBIT_FULL_PX - ORBIT_MIN_PX), 0),
+        1,
+    );
+    if (picked) return small;
+
+    const side = Math.max(width, height);
+    const big = Math.min(
+        Math.max(
+            (ORBIT_MAX_VIEWPORTS * side - aPx) /
+                ((ORBIT_MAX_VIEWPORTS - ORBIT_FADE_VIEWPORTS) * side),
+            0,
+        ),
+        1,
+    );
+
+    return small * big;
+};
+
+/** Whether an orbit with a semi-major axis of `aPx` is drawn in a viewport of this size. */
 export const orbitShown = (
     aPx: number,
     width: number,
     height: number,
     picked = false,
-): boolean =>
-    aPx >= ORBIT_MIN_PX &&
-    (picked || aPx <= ORBIT_MAX_VIEWPORTS * Math.max(width, height));
+): boolean => orbitFade(aPx, width, height, picked) > 0;
 
 /** Whether the label of a body with an orbit of `aPx` shows. Bodies with no orbit always show. */
 export const labelShownForOrbit = (

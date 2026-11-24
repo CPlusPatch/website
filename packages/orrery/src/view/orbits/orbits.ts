@@ -20,7 +20,8 @@ import {
     trailAlpha,
     trailBack,
 } from "../geometry/along-orbit.ts";
-import { orbitShown, projectedRadiusPx } from "../geometry/visibility.ts";
+import { orbitFade, projectedRadiusPx } from "../geometry/visibility.ts";
+import { fadeLineMaterial } from "./fade-material.ts";
 import { createGhost, updateGhost } from "./ghost.ts";
 import {
     casingPx,
@@ -150,6 +151,7 @@ export const createOrbits = (
     const normalTurn = new Quaternion();
     const axis = new Vector3();
     const relative = new Vector3();
+    const inView = new Vector3();
 
     // Over the sky the casing is a dark rail, and additive lines turn white where segments overlap.
     const styleLines = (orbit: Orbit) => {
@@ -158,6 +160,9 @@ export const createOrbits = (
         line.material.blendEquation = MaxEquation;
         line.material.needsUpdate = true;
         casing.material.visible = !skyShown;
+        // Over the sky the lines fade toward black, which the max blend leaves out.
+        if (skyShown) orbit.fade.ground.value.setRGB(0, 0, 0);
+        else orbit.fade.ground.value.copy(background);
     };
 
     for (const body of bodies) {
@@ -197,6 +202,7 @@ export const createOrbits = (
             parent: body.parent,
             line,
             casing,
+            fade: fadeLineMaterial(material),
             positions,
             colors,
             segments,
@@ -268,9 +274,21 @@ export const createOrbits = (
                     size.height,
                 );
                 const picked = body.id === pickedId;
-                const shown = orbitShown(aPx, size.width, size.height, picked);
+                const fade = orbitFade(aPx, size.width, size.height, picked);
+                const shown = fade > 0;
                 line.visible = shown;
                 casing.visible = shown;
+                if (shown) {
+                    const { e, a } = body.elements;
+                    orbit.fade.parentDepth.value = inView
+                        .copy(parentAt)
+                        .applyMatrix4(camera.matrixWorldInverse).z;
+                    // An escape orbit has no far point, so its depth is measured against |a|.
+                    orbit.fade.reach.value =
+                        (e < 1 ? a * (1 + e) : Math.abs(a)) / 1000;
+                    orbit.fade.fade.value = fade;
+                    casing.material.opacity = fade;
+                }
 
                 const r = states.get(body.id)?.r;
                 const distance = r
