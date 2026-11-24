@@ -34,6 +34,11 @@
         max-block-size: 100%;
         overflow: auto;
         padding: var(--space-sm) var(--orrery-pad) var(--orrery-pad);
+
+        /* A spacecraft with no moons or stats leaves it empty, and the padding a gap. */
+        &:empty {
+            display: none;
+        }
     }
 
     /* The head of the small panels: the title is size-md. */
