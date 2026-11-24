@@ -12,17 +12,14 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { kmPerPx } from "../scale.ts";
 import { behindDirection, chaseFrame, chaseView } from "./geometry/chase.ts";
 import {
-    approachDistance,
-    ease,
     fitDistanceKm,
-    focusTween,
     frameDistanceKm,
     keepSizeDistanceKm,
     minDistanceKm,
     openingReachKm,
-    type Pose,
     reachKm,
 } from "./geometry/framing.ts";
+import { type Glide, stepGlide } from "./geometry/glide.ts";
 
 /** A state relative to the parent, in metres and metres per second. */
 export type Relative = { r: Vec3; v: Vec3 };
@@ -76,11 +73,6 @@ const MAX_DISTANCE_FACTOR = 4;
 const KEY_ROTATE_RAD = (5 * Math.PI) / 180;
 /** A dolly scale below 1 brings the camera closer. */
 const KEY_ZOOM = 1 / 1.25;
-const FOCUS_SECONDS = 0.4;
-/** A key zoom closes all but `e^-4`, about 2%, of its gap in 0.2 s. */
-const ZOOM_TAU_SECONDS = 0.05;
-/** A key zoom snaps to its end once the distance is within this log ratio of it. */
-const ZOOM_SNAP = 1e-3;
 /** A wheel notch scales the distance by about 0.8, which is `0.95 ** 4.35`. */
 const WHEEL_ZOOM_SPEED = 4.35;
 /** Line-mode notches (Firefox) are 3 lines, which OrbitControls reads as 48 px, not 100. */
@@ -104,12 +96,8 @@ type Target = {
     min: () => number;
     relative: () => Relative | null;
 };
-/** A direction that glides from `from` to a goal, as seconds in. */
-type Turn = { from: Vector3; elapsed: number };
-type Move = { from: Pose; target: Target; distance: number; elapsed: number };
-type Zoom = { to: number };
-/** The look target's offset from the focus, in camera distances, gliding from `from` to `to`. */
-type LookGlide = { from: Vector3; to: Vector3; elapsed: number };
+
+const plain = (v: Vector3): Vec3 => ({ x: v.x, y: v.y, z: v.z });
 
 /** A camera that starts above the ecliptic and looks at `firstFocus`. */
 export const createRig = (
@@ -170,15 +158,15 @@ export const createRig = (
               ? LINE_WHEEL_ZOOM_SPEED
               : WHEEL_ZOOM_SPEED;
         // A running key zoom would undo the wheel's dolly.
-        zoomMove = null;
+        glide.zoom = null;
     };
     const onPointerDown = (event: PointerEvent) => {
         // A drag takes the direction over from a chase glide.
-        aim = null;
+        glide.aim = null;
         if (event.pointerType !== "touch") return;
 
         controls.zoomSpeed = PINCH_ZOOM_SPEED;
-        zoomMove = null;
+        glide.zoom = null;
     };
     canvas.addEventListener("wheel", onWheel);
     canvas.addEventListener("pointerdown", onPointerDown);
@@ -194,19 +182,22 @@ export const createRig = (
     controls.addEventListener("start", () => {
         touched = true;
     });
-    let move: Move | null = null;
     // Set while the camera follows a point instead of the focused body.
     let following: { target: Target; distance: number } | null = null;
-    let zoomMove: Zoom | null = null;
     let chasing = false;
     // Turns the proxy's offset into the world's. It's the identity unless chasing.
     const frame = new Quaternion();
-    // The glides of the proxy's direction to behind the focus, and of the camera's up.
-    let aim: Turn | null = null;
-    let upGlide: Turn | null = null;
+    // The focus move, the key zoom, and the glides of the proxy's direction to behind the focus,
+    // of the look target and of the camera's up.
+    let glide: Glide<Target> = {
+        move: null,
+        zoom: null,
+        aim: null,
+        look: null,
+        up: null,
+    };
     // Where the camera looks, as a multiple of its distance from the focus, in the proxy's frame.
     const look = new Vector3();
-    let lookGlide: LookGlide | null = null;
     const up = new Vector3(0, 0, 1);
     const origin: Vec3 = { ...positionOf(focused) };
 
@@ -225,7 +216,6 @@ export const createRig = (
     const behind = new Vector3().copy(behindDirection());
     const eclipticUp = new Vector3(0, 0, 1);
     const matrix = new Matrix4();
-    const turn = new Quaternion();
     const rest = new Quaternion();
     const goal = new Vector3();
 
@@ -243,16 +233,8 @@ export const createRig = (
         return true;
     };
 
-    // `from` turned toward `to`, `k` of the way, into `out`.
-    const swing = (out: Vector3, from: Vector3, to: Vector3, k: number) => {
-        turn.setFromUnitVectors(from, to);
-        rest.identity().slerp(turn, k);
-
-        return out.copy(from).applyQuaternion(rest);
-    };
-
     const startUpGlide = () => {
-        upGlide = reducedMotion() ? null : { from: up.clone(), elapsed: 0 };
+        glide.up = reducedMotion() ? null : { from: plain(up), elapsed: 0 };
     };
 
     // The radius of the body the focus moves around. A followed point moves around the focused body.
@@ -268,12 +250,12 @@ export const createRig = (
     const startLook = (to: Vector3) => {
         if (reducedMotion()) {
             look.copy(to);
-            lookGlide = null;
+            glide.look = null;
 
             return;
         }
 
-        lookGlide = { from: look.clone(), to: to.clone(), elapsed: 0 };
+        glide.look = { from: plain(look), to: plain(to), elapsed: 0 };
     };
 
     const aimBehind = () => {
@@ -288,13 +270,16 @@ export const createRig = (
         startLook(goal.set(0, 0, -view.nadirOffset));
 
         if (reducedMotion()) {
-            aim = null;
+            glide.aim = null;
             proxy.position.copy(behind).setLength(proxy.position.length());
 
             return;
         }
 
-        aim = { from: proxy.position.clone().normalize(), elapsed: 0 };
+        glide.aim = {
+            from: plain(proxy.position.clone().normalize()),
+            elapsed: 0,
+        };
     };
 
     const leaveChase = () => {
@@ -304,7 +289,7 @@ export const createRig = (
         look.applyQuaternion(frame);
         frame.identity();
         chasing = false;
-        aim = null;
+        glide.aim = null;
         startUpGlide();
         startLook(goal.set(0, 0, 0));
     };
@@ -361,50 +346,6 @@ export const createRig = (
         camera.lookAt(goal);
     };
 
-    // The up the camera has, which glides to the frame's Z, or to the ecliptic's when not chasing.
-    const advanceUp = (dt: number) => {
-        const to = goal.copy(eclipticUp);
-        if (chasing) to.applyQuaternion(frame);
-        if (!upGlide) {
-            up.copy(to);
-
-            return;
-        }
-
-        upGlide.elapsed += dt;
-
-        const s = Math.min(upGlide.elapsed / FOCUS_SECONDS, 1);
-        if (s === 1) {
-            up.copy(to);
-            upGlide = null;
-
-            return;
-        }
-
-        swing(up, upGlide.from, to, ease(s));
-    };
-
-    const advanceAim = (dt: number) => {
-        if (!aim) return;
-
-        aim.elapsed += dt;
-
-        const s = Math.min(aim.elapsed / FOCUS_SECONDS, 1);
-        const distance = proxy.position.length();
-        swing(proxy.position, aim.from, behind, ease(s)).setLength(distance);
-        if (s === 1) aim = null;
-    };
-
-    const advanceLook = (dt: number) => {
-        if (!lookGlide) return;
-
-        lookGlide.elapsed += dt;
-
-        const s = Math.min(lookGlide.elapsed / FOCUS_SECONDS, 1);
-        look.lerpVectors(lookGlide.from, lookGlide.to, ease(s));
-        if (s === 1) lookGlide = null;
-    };
-
     // Where the camera goes to frame a body, in km.
     const frameDistance = (id: string) =>
         id === root.id
@@ -423,7 +364,7 @@ export const createRig = (
             focused === root.id
                 ? openingDistance()
                 : clampDistance(focused, frameDistance(focused));
-        zoomMove = null;
+        glide.zoom = null;
         proxy.position.set(
             0,
             -Math.cos(START_ELEVATION) * distance,
@@ -452,34 +393,37 @@ export const createRig = (
 
         // A focus glide owns the distance, so the press changes where it ends. The path depends on
         // both ends, so it restarts from here instead of jumping.
-        if (move) {
-            move.from = {
-                distance: proxy.position.length(),
-                position: { ...origin },
+        if (glide.move) {
+            glide.move = {
+                ...glide.move,
+                from: {
+                    distance: proxy.position.length(),
+                    position: { ...origin },
+                },
+                distance: clamp(glide.move.distance),
+                elapsed: 0,
             };
-            move.distance = clamp(move.distance);
-            move.elapsed = 0;
 
             return;
         }
 
-        const to = clamp(zoomMove?.to ?? proxy.position.length());
+        const to = clamp(glide.zoom?.to ?? proxy.position.length());
         if (reducedMotion()) {
-            zoomMove = null;
+            glide.zoom = null;
             setDistance(to);
 
             return;
         }
 
-        zoomMove = { to };
+        glide.zoom = { to };
     };
 
     // Eases the camera to `distance` from `target`, or jumps there under reduced motion.
-    const glide = (target: Target, distance: number) => {
-        zoomMove = null;
+    const glideTo = (target: Target, distance: number) => {
+        glide.zoom = null;
 
         if (reducedMotion()) {
-            move = null;
+            glide.move = null;
             Object.assign(origin, target.position());
             setDistance(distance);
             controls.minDistance = target.min();
@@ -487,7 +431,7 @@ export const createRig = (
             return;
         }
 
-        move = {
+        glide.move = {
             from: {
                 distance: proxy.position.length(),
                 position: { ...origin },
@@ -504,12 +448,12 @@ export const createRig = (
         touched = true;
         if (chasing) aimBehind();
         if (following) {
-            glide(following.target, following.distance);
+            glideTo(following.target, following.distance);
 
             return;
         }
 
-        glide(
+        glideTo(
             bodyTarget(focused),
             clampDistance(focused, frameDistance(focused)),
         );
@@ -520,19 +464,19 @@ export const createRig = (
 
         switch (event.key) {
             case "ArrowLeft":
-                aim = null;
+                glide.aim = null;
                 controls.rotateLeft(KEY_ROTATE_RAD);
                 break;
             case "ArrowRight":
-                aim = null;
+                glide.aim = null;
                 controls.rotateLeft(-KEY_ROTATE_RAD);
                 break;
             case "ArrowUp":
-                aim = null;
+                glide.aim = null;
                 controls.rotateUp(KEY_ROTATE_RAD);
                 break;
             case "ArrowDown":
-                aim = null;
+                glide.aim = null;
                 controls.rotateUp(-KEY_ROTATE_RAD);
                 break;
             case "+":
@@ -596,7 +540,7 @@ export const createRig = (
                     ? keepSizeDistanceKm(distance, old.radius, body.radius)
                     : frameDistance(id);
 
-            glide(bodyTarget(id), clampDistance(id, target));
+            glideTo(bodyTarget(id), clampDistance(id, target));
             if (chasing) retargetChase();
         },
         focusPoint: (position, distanceKm, relative) => {
@@ -612,67 +556,48 @@ export const createRig = (
             touched = true;
             following = { target, distance };
 
-            glide(target, distance);
+            glideTo(target, distance);
             if (chasing) retargetChase();
         },
         update: (dt, latest) => {
             states = latest;
             if (chasing) refreshFrame();
 
-            if (move) {
-                move.elapsed += dt;
+            // The up glides to the frame's Z, or to the ecliptic's when not chasing.
+            const upGoal = goal.copy(eclipticUp);
+            if (chasing) upGoal.applyQuaternion(frame);
 
-                const s = Math.min(move.elapsed / FOCUS_SECONDS, 1);
-                const pose = focusTween(
-                    move.from,
-                    {
-                        distance: move.distance,
-                        position: move.target.position(),
-                    },
-                    s,
-                    Math.tan(fovRad / 2),
-                );
-                Object.assign(origin, pose.position);
-                setDistance(pose.distance);
+            const step = stepGlide(glide, dt, {
+                distance: proxy.position.length(),
+                direction: plain(proxy.position.clone().normalize()),
+                look: plain(look),
+                moveTo: glide.move?.target.position() ?? null,
+                behind: plain(behind),
+                up: plain(upGoal),
+                minDistance: controls.minDistance,
+                maxDistance: controls.maxDistance,
+                tanHalfFov: Math.tan(fovRad / 2),
+            });
+            glide = step.glide;
+            if (step.ended) controls.minDistance = step.ended.target.min();
 
-                if (s === 1) {
-                    controls.minDistance = move.target.min();
-                    move = null;
-                }
-            } else {
-                Object.assign(
-                    origin,
-                    following
+            Object.assign(
+                origin,
+                step.origin ??
+                    (following
                         ? following.target.position()
-                        : positionOf(focused),
-                );
-            }
+                        : positionOf(focused)),
+            );
+            proxy.position.set(
+                step.direction.x,
+                step.direction.y,
+                step.direction.z,
+            );
+            setDistance(step.distance);
+            look.set(step.look.x, step.look.y, step.look.z);
 
-            if (zoomMove && !move) {
-                // Clamped again, since the limits can change mid-zoom and the end must stay reachable.
-                const to = Math.min(
-                    Math.max(zoomMove.to, controls.minDistance),
-                    controls.maxDistance,
-                );
-                const distance = approachDistance(
-                    proxy.position.length(),
-                    to,
-                    dt,
-                    ZOOM_TAU_SECONDS,
-                );
-
-                if (Math.abs(Math.log(distance / to)) < ZOOM_SNAP) {
-                    setDistance(to);
-                    zoomMove = null;
-                } else {
-                    setDistance(distance);
-                }
-            }
-
-            advanceAim(dt);
-            advanceLook(dt);
             controls.update();
-            advanceUp(dt);
+            up.set(step.up.x, step.up.y, step.up.z);
             place();
         },
         dispose: () => {
