@@ -56,6 +56,17 @@ export const bindShortcuts = (
         toggleDate,
     }: ShortcutActions,
 ): (() => void) => {
+    let spaceOnButton = false;
+    // Read when focus lands, since Chromium makes a mouse-focused button :focus-visible on keydown.
+    let keyboardFocus =
+        document.activeElement?.matches(":focus-visible") ?? false;
+
+    const onFocusIn = (event: FocusEvent) => {
+        keyboardFocus =
+            event.target instanceof Element &&
+            event.target.matches(":focus-visible");
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.defaultPrevented || event.isComposing) return;
         if (event.ctrlKey || event.altKey || event.metaKey) return;
@@ -67,8 +78,9 @@ export const bindShortcuts = (
         const element = target instanceof Element ? target : null;
 
         if (element?.closest(TEXT)) return;
-        // A focused button would also click on Space.
-        if (event.key === " " && element?.closest("button")) return;
+        // A keyboard-focused button clicks on Space. After a mouse click it doesn't get the key.
+        const button = element?.closest("button") ?? null;
+        if (event.key === " " && button && keyboardFocus) return;
 
         const { clock } = world;
         const rate = (next: number) => {
@@ -97,6 +109,7 @@ export const bindShortcuts = (
         } else if (event.key === " ") {
             cue(clock.paused ? "play" : "pause");
             world.setClock({ paused: !clock.paused });
+            spaceOnButton = button !== null;
         } else if (event.key === "[") {
             rate(stepRate(clock.rate, -1));
         } else if (event.key === "]") {
@@ -122,7 +135,21 @@ export const bindShortcuts = (
         event.preventDefault();
     };
 
-    document.addEventListener("keydown", onKeyDown);
+    // Firefox clicks a button on Space's keyup, even if the keydown was cancelled.
+    const onKeyUp = (event: KeyboardEvent) => {
+        if (event.key !== " " || !spaceOnButton) return;
 
-    return () => document.removeEventListener("keydown", onKeyDown);
+        spaceOnButton = false;
+        event.preventDefault();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keyup", onKeyUp);
+    document.addEventListener("focusin", onFocusIn);
+
+    return () => {
+        document.removeEventListener("keydown", onKeyDown);
+        document.removeEventListener("keyup", onKeyUp);
+        document.removeEventListener("focusin", onFocusIn);
+    };
 };
