@@ -289,7 +289,8 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
 
     const showTime = () => {
         const nowT = unixMsToJ2000s(Date.now());
-        const stamp = stampParts(clock.t, clock.rate);
+        // A held clock changes nothing, so no part fades.
+        const stamp = stampParts(clock.t, clock.paused ? 0 : clock.rate);
 
         for (const name of PART_NAMES) {
             setText(parts[name], stamp[name].text);
