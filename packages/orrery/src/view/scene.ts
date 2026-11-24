@@ -1,4 +1,4 @@
-import { type Body, EARTH_RADIUS } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/orbit";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import type { SatelliteGroup } from "../catalogue.ts";
@@ -9,17 +9,20 @@ import type { World } from "../world.ts";
 import type { Assets } from "./assets.ts";
 import { createBodies } from "./bodies/bodies.ts";
 import { createRig } from "./camera.ts";
-import {
-    type Band,
-    centreShift,
-    pointFrameDistanceKm,
-} from "./geometry/framing.ts";
+import { type Band, centreShift } from "./geometry/framing.ts";
 import type { Rect } from "./geometry/labels.ts";
 import { createGrips } from "./grips/grips.ts";
+import { createLoadingProgress } from "./loading-progress.ts";
 import { createOrbits } from "./orbits/orbits.ts";
 import { type PickPoint, pickBody } from "./picking.ts";
 import { bindPointer } from "./pointer.ts";
 import { createReadouts } from "./readouts.ts";
+import {
+    createSatelliteFocus,
+    SATELLITE_PREFIX,
+    type SatelliteEvent,
+    satelliteIndex,
+} from "./satellite-focus.ts";
 import { createSky } from "./sky.ts";
 import { createSwarm } from "./swarm.ts";
 import { createTheme } from "./theme.ts";
@@ -28,24 +31,10 @@ import { neutralNoToe } from "./tone-mapping.ts";
 /** How much brighter the mapped spheres are drawn, before tone mapping. */
 const EXPOSURE = 2.0;
 
-/** What a listener of `View.satellite` is told about. */
-export type SatelliteEvent =
-    | { type: "selection"; k: number | null }
-    | { type: "focus"; k: number | null };
+export type { SatelliteEvent };
 
 /** What a listener of `View.onChase` is told: whether the camera chases, and whether it could. */
 export type ChaseState = { chasing: boolean; canChase: boolean };
-
-/** The seconds either side of now that a satellite's velocity is taken over. */
-const VELOCITY_HALF_SPAN = 1;
-
-/** The pointer's id for satellite `k`, which can't clash with a body's. */
-const SATELLITE_PREFIX = "sat:";
-
-const satelliteIndex = (id: string): number | null =>
-    id.startsWith(SATELLITE_PREFIX)
-        ? Number(id.slice(SATELLITE_PREFIX.length))
-        : null;
 
 /** The 3D view drawn into a container. */
 export type View = EditScene & {
@@ -190,36 +179,8 @@ const assemble = (
     const plain =
         matchMedia("(forced-colors: active)").matches ||
         matchMedia("(prefers-contrast: more)").matches;
-    // The sky counts as one file, the stars and the Milky Way together.
-    let skyDone = 0;
-    let skyFraction = 0;
-    let mapsDone = 0;
-    let mapsTotal = 0;
-    let drawn = false;
-    const { promise: ready, resolve: resolveReady } =
-        Promise.withResolvers<void>();
-    const skyTotal = plain ? 0 : 1;
-    let destroyed = false;
-    cleanup.push(() => {
-        destroyed = true;
-    });
-    const report = () => {
-        // The sky and maps of a destroyed view can still settle.
-        if (destroyed) return;
-
-        const total = skyTotal + mapsTotal;
-        if (total > 0) {
-            onLoading?.(
-                skyDone + mapsDone,
-                total,
-                (skyFraction + mapsDone) / total,
-            );
-        }
-        // The maps of the first frame are started by then.
-        if (drawn && skyDone === skyTotal && mapsDone === mapsTotal) {
-            resolveReady();
-        }
-    };
+    const progress = createLoadingProgress({ sky: !plain, onLoading });
+    cleanup.push(progress.destroy);
     const bodies = createBodies(
         scene,
         labels.domElement,
@@ -229,11 +190,7 @@ const assemble = (
             maps: !plain,
             images: assets.map,
             anisotropy: renderer.capabilities.getMaxAnisotropy(),
-            onMaps: (done, total) => {
-                mapsDone = done;
-                mapsTotal = total;
-                report();
-            },
+            onMaps: progress.maps,
         },
     );
     cleanup.push(bodies.dispose);
@@ -245,29 +202,6 @@ const assemble = (
     const swarm = createSwarm(scene, theme, () => assets.swarm(host?.mu ?? 0));
     cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };
-    // Passed as Earth's position, which gives a satellite's position relative to Earth.
-    const earthCentre = { x: 0, y: 0, z: 0 };
-
-    let satelliteSelected: number | null = null;
-    let satelliteFocused: number | null = null;
-    // Set while the view's own `world.focus` runs, so its event isn't taken for a user's.
-    let focusingSatellite = false;
-    const satelliteListeners = new Set<(e: SatelliteEvent) => void>();
-    const emitSatellite = (event: SatelliteEvent) => {
-        for (const fn of satelliteListeners) fn(event);
-    };
-    const selectSatellite = (k: number | null) => {
-        if (k === satelliteSelected) return;
-
-        satelliteSelected = k;
-        swarm.select(k);
-        emitSatellite({ type: "selection", k });
-    };
-    // A satellite and a body are never selected together.
-    const pickSatellite = (k: number) => {
-        if (world.selected !== null) world.select(null);
-        selectSatellite(k);
-    };
 
     const grips = createGrips(labels.domElement, units);
     cleanup.push(grips.dispose);
@@ -334,16 +268,16 @@ const assemble = (
         select: (id) => {
             const k = id === null ? null : satelliteIndex(id);
             if (k === null) {
-                selectSatellite(null);
+                satellites.clear();
                 world.select(id);
             } else {
-                pickSatellite(k);
+                satellites.pick(k);
             }
         },
         focus: (id) => {
             const k = satelliteIndex(id);
             if (k === null) world.focus(id);
-            else focusSatellite(k);
+            else satellites.focus(k);
         },
         hover: (id) => {
             const k = id === null ? null : satelliteIndex(id);
@@ -384,10 +318,9 @@ const assemble = (
     };
 
     const describe = () => {
+        const focused = satellites.focused();
         const satellite =
-            satelliteFocused === null
-                ? null
-                : swarm.facts(satelliteFocused, world.clock.t);
+            focused === null ? null : swarm.facts(focused, world.clock.t);
 
         canvas.setAttribute(
             "aria-label",
@@ -398,85 +331,33 @@ const assemble = (
             }. Arrow keys rotate, plus and minus zoom, 0 fits the focus, C chases it.`,
         );
     };
+    const satellites = createSatelliteFocus({
+        world,
+        swarm,
+        host,
+        rig,
+        camera,
+        notifyChase,
+        describe,
+    });
     describe();
-
-    const focusSatellite = (k: number) => {
-        pickSatellite(k);
-
-        const facts = swarm.facts(k, world.clock.t);
-        if (!facts || !host) return;
-
-        focusingSatellite = true;
-        world.focus(host.id);
-        focusingSatellite = false;
-
-        const fov = (camera.fov * Math.PI) / 180;
-        const apogeeKm = facts.apogeeKm + EARTH_RADIUS / 1000;
-        rig.focusPoint(
-            () => {
-                const earth = world.states().get(host.id)?.r ?? rig.origin();
-
-                return swarm.positionOf(k, world.clock.t, earth) ?? earth;
-            },
-            pointFrameDistanceKm(apogeeKm, fov, camera.aspect),
-            () => {
-                const t = world.clock.t;
-                const before = swarm.positionOf(
-                    k,
-                    t - VELOCITY_HALF_SPAN,
-                    earthCentre,
-                );
-                const now = swarm.positionOf(k, t, earthCentre);
-                const after = swarm.positionOf(
-                    k,
-                    t + VELOCITY_HALF_SPAN,
-                    earthCentre,
-                );
-                if (!before || !now || !after) return null;
-
-                const span = 2 * VELOCITY_HALF_SPAN;
-
-                return {
-                    r: now,
-                    v: {
-                        x: (after.x - before.x) / span,
-                        y: (after.y - before.y) / span,
-                        z: (after.z - before.z) / span,
-                    },
-                };
-            },
-        );
-        notifyChase();
-
-        // Emitted even on a refocus, so its announcement follows Earth's.
-        satelliteFocused = k;
-        emitSatellite({ type: "focus", k });
-        describe();
-    };
 
     const sky = createSky();
     cleanup.push(sky.dispose);
-    report();
+    progress.report();
     if (!plain) {
         assets
-            .sky((fraction) => {
-                skyFraction = fraction;
-                report();
-            })
+            .sky(progress.sky)
             .then((data) => {
-                if (!destroyed) sky.show(data);
+                if (!progress.destroyed()) sky.show(data);
             })
             .catch((error: unknown) => {
-                if (destroyed) return;
+                if (progress.destroyed()) return;
 
                 // The only report of a failed optional asset, and the project has no logger.
                 console.warn("Couldn't load the sky.", error);
             })
-            .finally(() => {
-                skyDone = skyTotal;
-                skyFraction = 1;
-                report();
-            });
+            .finally(progress.skyDone);
     }
     let skyCleared = false;
 
@@ -495,17 +376,7 @@ const assemble = (
         world.clock.tick(dt);
         const states = world.states();
 
-        // A satellite leaves when its group is turned off or the clock leaves the snapshot.
-        if (
-            host &&
-            satelliteFocused !== null &&
-            !swarm.available(satelliteFocused)
-        ) {
-            world.focus(host.id);
-        }
-        if (satelliteSelected !== null && !swarm.available(satelliteSelected)) {
-            selectSatellite(null);
-        }
+        satellites.check();
 
         offset(free);
         rig.update(dt, states);
@@ -548,10 +419,7 @@ const assemble = (
             size.height,
         );
         grips.placeNote(bodies.placed());
-        if (!drawn) {
-            drawn = true;
-            report();
-        }
+        progress.drawn();
         readouts.update({
             camera,
             origin: rig.origin(),
@@ -590,14 +458,11 @@ const assemble = (
     const unsubscribe = world.on((event) => {
         if (event.type === "selection") {
             orbits.highlight(event.id);
-            if (event.id !== null) selectSatellite(null);
+            satellites.onWorld(event);
         } else if (event.type === "focus") {
             rig.focus(event.id);
             notifyChase();
-            if (!focusingSatellite && satelliteFocused !== null) {
-                satelliteFocused = null;
-                emitSatellite({ type: "focus", k: null });
-            }
+            satellites.onWorld(event);
             describe();
         } else if (event.type === "body") {
             const body = world.scenario.bodies.find((b) => b.id === event.id);
@@ -658,26 +523,17 @@ const assemble = (
         kmPerPx: () => (size.height > 0 ? rig.kmPerPx(size.height) : 0),
         satelliteGroups: swarm.groups,
         satellite: {
-            selected: () => satelliteSelected,
-            focused: () => satelliteFocused,
-            select: (k) =>
-                k === null ? selectSatellite(null) : pickSatellite(k),
-            focus: focusSatellite,
-            facts: (k) => swarm.facts(k, world.clock.t),
-            on: (fn) => {
-                satelliteListeners.add(fn);
-
-                return () => {
-                    satelliteListeners.delete(fn);
-                };
-            },
+            selected: satellites.selected,
+            focused: satellites.focused,
+            select: satellites.select,
+            focus: satellites.focus,
+            facts: satellites.facts,
+            on: satellites.on,
         },
         reveal: sky.reveal,
-        ready,
+        ready: progress.ready,
         destroy: () => {
-            // A view that goes before it's ready doesn't hold the reveal.
-            destroyed = true;
-            resolveReady();
+            progress.destroy();
             unsubscribe();
             unbindPointer();
             cancelAnimationFrame(frame);
