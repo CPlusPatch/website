@@ -27,7 +27,7 @@
     .orrery__rate {
         box-sizing: border-box;
         block-size: var(--orrery-clock-control);
-        border: 1px solid var(--orrery-frame);
+        border: 1px solid var(--orrery-control-frame);
         border-radius: 0;
         background-color: var(--orrery-panel-raised);
         color: var(--orrery-text);
@@ -43,11 +43,7 @@
 
         @media (hover: hover) {
             &:hover:not(.orrery__run--held, [aria-pressed="true"]) {
-                background-color: color-mix(
-                    in srgb,
-                    var(--orrery-panel-raised) 85%,
-                    var(--orrery-text)
-                );
+                background-color: var(--orrery-panel-hover);
             }
         }
     }
@@ -178,6 +174,13 @@
         min-inline-size: 0;
     }
 
+    /* The longest text, "Go live · 26y 327d behind", is about 147px wide. */
+    @media (width < 1000px) {
+        .orrery__live-slot {
+            inline-size: 9.75rem;
+        }
+    }
+
     .orrery__go-live {
         min-inline-size: 0;
         block-size: var(--orrery-clock-control);
@@ -220,8 +223,9 @@
         overflow: visible;
         text-overflow: clip;
 
+        /* Clear of the bar's top border. */
         &:focus-visible {
-            outline-offset: 1px;
+            outline-offset: 0;
         }
     }
 

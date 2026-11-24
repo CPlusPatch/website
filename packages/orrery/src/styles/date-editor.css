@@ -21,7 +21,7 @@
         align-items: center;
         block-size: 40px;
         padding: 0 8px;
-        border: 1px solid var(--orrery-frame);
+        border: 1px solid var(--orrery-control-frame);
         background-color: var(--orrery-ground);
         color: var(--orrery-dim);
         font: 400 var(--orrery-size-md) var(--orrery-font-data);
@@ -110,6 +110,18 @@
 
         .button {
             flex: 1;
+        }
+    }
+
+    /* With a side panel open, the editor stops at its edge. 170px is half its width. */
+    @media (min-width: 721px) {
+        &:has(.orrery__panel--right > :not([hidden])) .orrery__date-editor {
+            --half: min(170px, calc(50% - var(--space-sm)));
+
+            inset-inline-start: max(
+                calc(var(--half) + var(--space-sm)),
+                min(50%, 100% - var(--orrery-side-width) - var(--half))
+            );
         }
     }
 

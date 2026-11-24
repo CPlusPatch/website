@@ -15,11 +15,13 @@
         cursor: pointer;
 
         &[aria-expanded="true"] {
-            background-color: var(--orrery-panel-raised);
+            background-color: var(--orrery-panel-hover);
+            outline: 1px solid var(--orrery-muted);
+            outline-offset: -1px;
         }
 
         @media (hover: hover) {
-            &:hover {
+            &:hover:not([aria-expanded="true"]) {
                 background-color: var(--orrery-panel-raised);
             }
         }

@@ -168,7 +168,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     const editor = createDateEditor(world, date);
     const phone = matchMedia("(max-width: 720px)");
     let isOn = false;
-    let spokenOffset = "";
+    let offsetNow: ReturnType<typeof offsetText> = null;
     let nowMark: (NowMark & { width: number }) | null = null;
 
     // The flag's width and the tag's are read once, and again when they may have changed.
@@ -179,7 +179,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     const setFlag = (flag: boolean) => {
         goLiveButton.classList.toggle("orrery__go-live--flag", flag);
         setText(goLiveText, flag ? "Now" : "Go live");
-        liveOffset.hidden = flag || spokenOffset === "";
+        liveOffset.hidden = flag || offsetNow === null;
     };
 
     // The clash test needs the flag's width even while the button shows as the slot's text.
@@ -208,10 +208,28 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
         const flag = left !== null;
 
         setFlag(flag);
-        // The name starts with the visible text, for voice control.
-        const label = `${flag ? "Now, go live" : "Go live"}${spokenOffset}`;
+        // The name is the visible text, for voice control. The long form goes in the description.
+        const shown =
+            offsetNow &&
+            `${phone.matches ? offsetNow.short : offsetNow.full} ${offsetNow.word}`;
+        const label = flag
+            ? "Now, go live"
+            : shown
+              ? `Go live, ${shown}`
+              : "Go live";
+        const description = offsetNow
+            ? `The clock is ${offsetNow.spoken} ${offsetNow.word}`
+            : "";
         if (goLiveButton.getAttribute("aria-label") !== label) {
             goLiveButton.setAttribute("aria-label", label);
+        }
+        if (
+            (goLiveButton.getAttribute("aria-description") ?? "") !==
+            description
+        ) {
+            if (description)
+                goLiveButton.setAttribute("aria-description", description);
+            else goLiveButton.removeAttribute("aria-description");
         }
         if (left === null) {
             goLiveButton.style.left = "";
@@ -311,9 +329,7 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
             setText(liveShort, offset.short);
             setText(liveWord, offset.word);
         }
-        spokenOffset = offset
-            ? `, the clock is ${offset.spoken} ${offset.word}`
-            : "";
+        offsetNow = offset;
         // Hiding the button would drop focus to <body>.
         if (on && document.activeElement === goLiveButton) date.focus();
         goLiveButton.hidden = on;

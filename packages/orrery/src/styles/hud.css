@@ -34,8 +34,10 @@
             border-inline-start: 1px solid var(--orrery-rule);
         }
 
-        &:hover:not(:disabled) {
-            background-color: var(--orrery-panel-raised);
+        @media (hover: hover) {
+            &:hover:not(:disabled) {
+                background-color: var(--orrery-panel-raised);
+            }
         }
 
         &[aria-pressed="true"] {
@@ -43,8 +45,10 @@
             color: var(--orrery-go-ink);
 
             /* The plain hover outranks this, and its grey hid the dark ink. */
-            &:hover:not(:disabled) {
-                background-color: var(--color-success-hover);
+            @media (hover: hover) {
+                &:hover:not(:disabled) {
+                    background-color: var(--color-success-hover);
+                }
             }
         }
 

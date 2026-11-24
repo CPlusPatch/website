@@ -21,7 +21,7 @@
         gap: var(--space-sm);
         block-size: var(--orrery-control-lg);
         padding: 0 0.75rem;
-        border: 1px solid var(--orrery-frame);
+        border: 1px solid var(--orrery-control-frame);
         background-color: var(--orrery-panel-raised);
         color: var(--orrery-text);
         font: 500 var(--orrery-size-sm) var(--orrery-font-ui);

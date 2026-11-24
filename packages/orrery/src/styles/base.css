@@ -18,7 +18,15 @@
         transparent
     );
     --orrery-panel-raised: #222225;
+    /* A raised control under the pointer, or held open. */
+    --orrery-panel-hover: color-mix(
+        in srgb,
+        var(--orrery-panel-raised) 85%,
+        var(--orrery-text)
+    );
     --orrery-frame: #46464b;
+    /* 3:1 on the panel, the ground and a raised fill, for the edge of a button or field. */
+    --orrery-control-frame: #6c6c72;
     --orrery-rule: #303034;
     --orrery-scanline: rgb(255 255 255 / 0.035);
     --orrery-backdrop: rgb(0 0 0 / 0.7);

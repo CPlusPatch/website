@@ -85,7 +85,7 @@
         display: flex;
         align-items: stretch;
         block-size: var(--orrery-control-lg);
-        border: 1px solid var(--orrery-frame);
+        border: 1px solid var(--orrery-control-frame);
         background-color: var(--orrery-ground);
 
         &:focus-within {
@@ -203,8 +203,10 @@
             border-width: 0 0 0 1px;
         }
 
-        &:hover {
-            color: var(--orrery-text);
+        @media (hover: hover) {
+            &:hover {
+                color: var(--orrery-text);
+            }
         }
     }
 
@@ -255,14 +257,16 @@
         white-space: nowrap;
 
         &:not(.button--solid, .orrery__orbit-quiet) {
-            border-color: var(--orrery-frame);
+            border-color: var(--orrery-control-frame);
             background-color: var(--orrery-panel-raised);
             color: var(--orrery-text);
 
-            &:hover {
-                border-color: var(--orrery-text);
-                background-color: var(--orrery-panel-raised);
-                color: var(--orrery-text);
+            @media (hover: hover) {
+                &:hover {
+                    border-color: var(--orrery-text);
+                    background-color: var(--orrery-panel-raised);
+                    color: var(--orrery-text);
+                }
             }
         }
     }
@@ -270,7 +274,7 @@
     /* A disabled primary drops the fill and dashes its frame, so it differs from Cancel in kind. */
     .button.button--solid:disabled {
         border-style: dashed;
-        border-color: var(--orrery-frame);
+        border-color: var(--orrery-control-frame);
         background-color: transparent;
         color: var(--orrery-dim);
         opacity: 1;
