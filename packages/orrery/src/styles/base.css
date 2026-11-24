@@ -4,7 +4,7 @@
     /* The room the top and bottom panels leave for the side panels. */
     --orrery-top-space: 3rem;
     --orrery-bottom-space: 4rem;
-    --orrery-side-width: 19rem;
+    --orrery-side-width: 23.25rem;
     /* The gap between the top bar, the HUD and the card and the canvas edge. */
     --orrery-inset: 0.625rem;
 
