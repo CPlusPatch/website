@@ -1,4 +1,9 @@
-import { elementsAt } from "@cpluspatch/orbit";
+import {
+    apoapsis,
+    elementsAt,
+    periapsis,
+    trueAnomalyAt,
+} from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -167,7 +172,7 @@ export const createInspector = (
         burn?.refresh();
 
         const id = world.selected;
-        if (!id || !headline) return;
+        if (!id) return;
 
         const current = readouts(
             world.scenario,
@@ -175,9 +180,8 @@ export const createInspector = (
             world.states(),
             world.clock.t,
         );
-        if (!current) return;
-
-        refreshHeadline(headline, current, units.get());
+        if (headline && current)
+            refreshHeadline(headline, current, units.get());
 
         const body = world.scenario.bodies.find((b) => b.id === id);
         const parent = world.scenario.bodies.find((b) => b.id === body?.parent);
@@ -186,6 +190,31 @@ export const createInspector = (
         const grandparent = world.scenario.bodies.find(
             (b) => b.id === parent.parent,
         );
+        const drawn = {
+            parentRadius: parent.radius,
+            bodyColor: colorOf(body, parent),
+            parentColor: colorOf(parent, grandparent),
+            unit: units.get(),
+        };
+
+        // The edit form draws its draft, without the times, as they'd be of the saved orbit.
+        if (editor) {
+            const draft = editor.elements();
+            refreshPlate(plate, {
+                a: draft.a,
+                e: draft.e,
+                raan: draft.raan,
+                argp: draft.argp,
+                trueAnomaly: trueAnomalyAt(draft, editor.mu, world.clock.t),
+                periapsisAltitude: periapsis(draft) - parent.radius,
+                apoapsisAltitude: apoapsis(draft) - parent.radius,
+                ...drawn,
+            });
+
+            return;
+        }
+        if (!current) return;
+
         // Precession turns the node and the periapsis.
         const now = elementsAt(
             { ...body, elements: body.elements },
@@ -197,14 +226,11 @@ export const createInspector = (
             raan: now.raan,
             argp: now.argp,
             trueAnomaly: current.trueAnomaly,
-            parentRadius: parent.radius,
             periapsisAltitude: current.periapsisAltitude,
             apoapsisAltitude: current.apoapsisAltitude,
             timeToPeriapsis: current.timeToPeriapsis,
             timeToApoapsis: current.timeToApoapsis,
-            bodyColor: colorOf(body, parent),
-            parentColor: colorOf(parent, grandparent),
-            unit: units.get(),
+            ...drawn,
         });
     };
 
@@ -309,8 +335,13 @@ export const createInspector = (
 
         let form: HTMLFormElement | null = null;
         if (mode === "edit") {
-            editor = createElementEditor(world, units, body.id, scene, () =>
-                closeForm("edit"),
+            editor = createElementEditor(
+                world,
+                units,
+                body.id,
+                scene,
+                () => closeForm("edit"),
+                refresh,
             );
             form = editor?.element ?? null;
         } else if (mode === "burn") {
@@ -322,8 +353,9 @@ export const createInspector = (
         if (!form) mode = "card";
 
         showBodyMarker(marker, body, parent);
-        marker.hidden = mode !== "card";
-        setHead(mode !== "card");
+        // The edit form keeps the card's head, with its plate under it.
+        marker.hidden = mode === "burn";
+        setHead(mode === "burn");
         grip.hidden = mode !== "card";
         element.toggleAttribute("data-peek", !open && mode === "card");
         titleText.textContent =
@@ -336,13 +368,21 @@ export const createInspector = (
                   world.select(parent.id),
               )
             : null;
-        meta.hidden = false;
+        meta.hidden = mode === "edit";
         meta.replaceChildren(
             `${KIND_LABELS[body.kind]} `,
             ...(link ? ["around ", link] : ["at the centre"]),
         );
         if (form) {
             content.append(form);
+            if (editor && parent) {
+                plate = createPlate(units, body.name, parent.name);
+                head.after(plate.element);
+                foot = editor.foot;
+                element.append(foot);
+                refresh();
+            }
+
             return;
         }
 

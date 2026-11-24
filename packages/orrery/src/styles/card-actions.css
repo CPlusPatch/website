@@ -83,6 +83,11 @@
         grid-template-columns: 1fr auto auto;
     }
 
+    /* Cancel and Apply of a form, in two equal columns. */
+    .orrery__inspector-foot--form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .orrery__foot-remove {
         grid-column: 4;
         justify-self: end;

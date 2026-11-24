@@ -22,13 +22,9 @@ const SCALE_MAX_PX = 44;
 
 /** What a plate draws. */
 export type PlateData = Pick<Elements, "a" | "e" | "raan" | "argp"> &
-    Pick<
-        Readouts,
-        | "periapsisAltitude"
-        | "apoapsisAltitude"
-        | "timeToPeriapsis"
-        | "timeToApoapsis"
-    > & {
+    Pick<Readouts, "periapsisAltitude" | "apoapsisAltitude"> &
+    /** Without the times, the legend shows the altitudes only. */
+    Partial<Pick<Readouts, "timeToPeriapsis" | "timeToApoapsis">> & {
         /** The body's true anomaly in radians. */
         trueAnomaly: number;
         /** The parent's radius in metres. */
@@ -339,8 +335,12 @@ export const refreshPlate = (plate: Plate, input: PlateData): void => {
     ] as const;
     for (const [row, altitude, time] of rows) {
         setText(row.altitude, formatPlateDistance(altitude, shown));
-        setText(row.time, `in ${formatSoon(time)}`);
+        if (time !== undefined) setText(row.time, `in ${formatSoon(time)}`);
     }
+    plate.element.classList.toggle(
+        "orrery__plate--still",
+        input.timeToPeriapsis === undefined,
+    );
 
     setStyle(plate.scale, "--plate-bar-y", round(geometry.scaleBar.y));
     setStyle(plate.scale, "--plate-bar-px", round(geometry.scaleBar.px));

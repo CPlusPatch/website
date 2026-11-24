@@ -162,6 +162,8 @@ export const createStepper = ({
 export type Form = {
     element: HTMLFormElement;
     apply: HTMLButtonElement;
+    /** The Cancel and Apply row, inside the form unless it was built as a footer. */
+    actions: HTMLElement;
 };
 
 /** The form of the orbit card: `children`, then Cancel and Apply. */
@@ -175,6 +177,8 @@ export const createForm = (
     onCancel: () => void,
     /** The text of the submit button. */
     applyLabel = "Apply",
+    /** The form's id. With it, the actions are a pinned footer that the caller places outside. */
+    footerFor?: string,
 ): Form => {
     const cancel = h(
         "button",
@@ -188,18 +192,31 @@ export const createForm = (
     );
     const apply = h(
         "button",
-        { type: "submit", class: buttonClasses().join(" ") },
+        {
+            type: "submit",
+            class: buttonClasses().join(" "),
+            ...(footerFor ? { form: footerFor } : {}),
+        },
         applyLabel,
     );
+    const actions = footerFor
+        ? h(
+              "div",
+              { class: "orrery__inspector-foot orrery__inspector-foot--form" },
+              cancel,
+              apply,
+          )
+        : h("div", { class: "orrery__form-actions" }, cancel, apply);
     const element = h(
         "form",
         {
             class: "orrery__form",
             novalidate: "",
             "aria-labelledby": labelledBy,
+            ...(footerFor ? { id: footerFor } : {}),
         },
         ...children,
-        h("div", { class: "orrery__form-actions" }, cancel, apply),
+        ...(footerFor ? [] : [actions]),
     );
 
     cancel.addEventListener("click", onCancel);
@@ -207,14 +224,16 @@ export const createForm = (
         event.preventDefault();
         onApply();
     });
-    element.addEventListener("keydown", (event) => {
+    const onKeydown = (event: KeyboardEvent) => {
         if (event.key !== "Escape") return;
 
         // The shortcut that clears the selection skips a handled key.
         event.preventDefault();
         event.stopPropagation();
         onCancel();
-    });
+    };
+    element.addEventListener("keydown", onKeydown);
+    if (footerFor) actions.addEventListener("keydown", onKeydown);
 
-    return { element, apply };
+    return { element, apply, actions };
 };

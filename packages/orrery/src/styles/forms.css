@@ -58,6 +58,20 @@
         min-inline-size: 0;
     }
 
+    /* The edit form: steppers two to a row, and the hint and warning across both. */
+    .orrery__form--pairs {
+        /* Tighter steppers, so a in km (9 digits for Earth) fits half a row. */
+        --orrery-stepper-step: 1.5rem;
+        --orrery-stepper-pad: 0.25rem;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-sm) 0.75rem;
+
+        > :is(.orrery__form-hint, .orrery__warning) {
+            grid-column: 1 / -1;
+        }
+    }
+
     .orrery__form-hint {
         margin: 0;
         color: var(--orrery-muted);
@@ -101,7 +115,7 @@
             flex: 1;
             inline-size: 100%;
             min-inline-size: 0;
-            padding: 0 var(--space-sm);
+            padding: 0 var(--orrery-stepper-pad, var(--space-sm));
             border: 0;
             outline: none;
             background: none;
@@ -190,7 +204,7 @@
 
     .orrery__stepper-step {
         flex: none;
-        inline-size: 1.875rem;
+        inline-size: var(--orrery-stepper-step, 1.875rem);
         padding: 0;
         border: solid var(--orrery-frame);
         border-width: 0 1px 0 0;

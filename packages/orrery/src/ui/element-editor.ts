@@ -23,6 +23,12 @@ import { createWarning } from "./warning.ts";
 /** The edit form's element and how to remove it. */
 export type ElementEditor = {
     element: HTMLFormElement;
+    /** The Cancel and Apply row, for the caller to pin below the form. */
+    foot: HTMLElement;
+    /** The last valid draft, or the original orbit while nothing was changed. */
+    elements: () => Elements;
+    /** The parent's and the body's gravitational parameters added, in m³/s². */
+    mu: number;
     /** Clears the pending orbit from the scene. */
     destroy: () => void;
 };
@@ -81,6 +87,8 @@ export const createElementEditor = (
     scene: EditScene,
     /** Called when the form is done, whether it changed the orbit or was cancelled. */
     done: () => void,
+    /** Called when the draft may have changed, by typing, stepping or dragging a grip. */
+    onDraft: () => void,
 ): ElementEditor | null => {
     const body = world.scenario.bodies.find((candidate) => candidate.id === id);
     if (!body || body.parent === null) return null;
@@ -172,15 +180,19 @@ export const createElementEditor = (
 
     // Kept for the grips, which read it every frame.
     let current = draft();
+    // The plate keeps drawing this while the fields are invalid.
+    let lastValid = current ?? original;
 
     const preview = () => {
         const next = draft();
         current = next;
+        if (next) lastValid = next;
 
         scene.ghost(id, changes().length > 0 ? next : null);
         alert.text.textContent = `This orbit passes through ${parent.name}.`;
         alert.element.hidden =
             next === null || !passesThroughParent(next, parent.radius);
+        onDraft();
     };
 
     for (const spec of specs(unit, original.a)) {
@@ -313,7 +325,7 @@ export const createElementEditor = (
             h(
                 "p",
                 { class: "orrery__form-hint" },
-                "Type values, use − and +, or drag Pe, Ap, Node and Inc in the view.",
+                "Type values, or drag Pe, Ap, Node and Inc in the view.",
             ),
             ...[...steppers.values()].map((stepper) => stepper.element),
             alert.element,
@@ -324,10 +336,16 @@ export const createElementEditor = (
             scene.grips(null);
             done();
         },
+        "Apply",
+        "orrery-edit-form",
     );
+    form.element.classList.add("orrery__form--pairs");
 
     return {
         element: form.element,
+        foot: form.actions,
+        elements: () => lastValid,
+        mu,
         destroy: () => {
             offUnits();
             scene.ghost(id, null);

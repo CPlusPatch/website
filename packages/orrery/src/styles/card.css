@@ -211,6 +211,11 @@
         padding-inline-end: max(0px, calc(100% - var(--orrery-side-width)));
         background: var(--orrery-ground);
 
+        /* No times, so the legend is two lines shorter. */
+        &.orrery__plate--still {
+            --plate-legend: calc(2 * var(--plate-line) + var(--space-sm));
+        }
+
         svg {
             display: block;
             inline-size: 64cqw;
@@ -253,6 +258,10 @@
 
     .orrery__plate-time {
         grid-column: 2;
+    }
+
+    .orrery__plate--still .orrery__plate-time {
+        display: none;
     }
 
     /* On the bottom of the orbit, but clear of the legend and the plate's edge. */
