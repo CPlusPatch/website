@@ -1,16 +1,18 @@
 /// <reference types="deno" />
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { assert, assertEquals, assertExists } from "@std/assert";
+import { RATES } from "./clock.ts";
 import { fromParts, toParts } from "./date-parts.ts";
 import {
     apsides,
     clampT,
     isFree,
+    nowFlagLeft,
     tickLabel,
-    tickLabelFree,
     ticks,
     tipText,
     windowHalf,
+    windowLabel,
 } from "./timeline.ts";
 
 const DAY = 86400;
@@ -22,15 +24,56 @@ const at = (y: number, mo: number, d: number, h = 0, mi = 0, s = 0): number =>
             ((h * 60 + mi) * 60 + s) * 1000,
     );
 
-Deno.test("the window is a minute per second of the rate, and at least an hour", () => {
-    assertEquals(windowHalf(1), 3600);
-    assertEquals(windowHalf(60), 3600);
-    assertEquals(windowHalf(3600), 216000);
-    assertEquals(windowHalf(DAY), 5184000);
+Deno.test("the window is 60 ticks of the rate, with no floor", () => {
+    assertEquals(windowHalf(1, false), 60);
+    assertEquals(windowHalf(60, false), 3600);
+    assertEquals(windowHalf(3600, false), 216000);
+    assertEquals(windowHalf(DAY, false), 5184000);
 });
 
 Deno.test("a reversed clock has the same window as a forward one", () => {
-    assertEquals(windowHalf(-DAY), windowHalf(DAY));
+    assertEquals(windowHalf(-DAY, false), windowHalf(DAY, false));
+});
+
+Deno.test("a live window is at least 60 days", () => {
+    assertEquals(windowHalf(1, true), 60 * DAY);
+    assertEquals(windowHalf(DAY, true), 60 * DAY);
+    assertEquals(windowHalf(3600 * 24 * 7, true), 60 * 7 * DAY);
+});
+
+Deno.test("the window label names the unit of the preset the rate snaps to", () => {
+    const labels = RATES.map((rate) => windowLabel(rate, false));
+
+    assertEquals(labels, [
+        "±60 sec",
+        "±60 min",
+        "±60 hours",
+        "±60 days",
+        "±60 weeks",
+        "±60 months",
+        "±60 years",
+    ]);
+    assertEquals(windowLabel(-DAY, false), "±60 days");
+    assertEquals(windowLabel(0.5, false), "±60 sec");
+    assertEquals(windowLabel(100000, false), "±60 days");
+});
+
+Deno.test("a live window is labelled in days at least", () => {
+    assertEquals(windowLabel(1, true), "±60 days");
+    assertEquals(windowLabel(RATES[6] ?? 0, true), "±60 years");
+});
+
+Deno.test("the Now flag is centred on Now, and kept inside the strip", () => {
+    assertEquals(nowFlagLeft(100, 60, 1000, 70, 6), 70);
+    assertEquals(nowFlagLeft(10, 60, 1000, 70, 6), 4);
+    assertEquals(nowFlagLeft(990, 60, 1000, 70, 6), 936);
+});
+
+Deno.test("the Now flag keeps clear of the date tag, on the side Now is on", () => {
+    // The tag spans 430 to 570, plus a gap of 6 each side.
+    assertEquals(nowFlagLeft(490, 60, 1000, 70, 6), 364);
+    assertEquals(nowFlagLeft(510, 60, 1000, 70, 6), 576);
+    assertEquals(nowFlagLeft(360, 60, 1000, 70, 6), 330);
 });
 
 Deno.test("clamping keeps a time inside years 1 to 9999", () => {
@@ -187,16 +230,4 @@ Deno.test("a body with no orbit, or an open one, has no apsides", () => {
         ),
         [],
     );
-});
-
-Deno.test("a tick label keeps 12px from the Now label, and 3px from other labels", () => {
-    const now: [number, number] = [100, 120];
-
-    assertEquals(tickLabelFree([], now, 132, 160), true);
-    assertEquals(tickLabelFree([], now, 131, 160), false);
-    assertEquals(tickLabelFree([], now, 60, 88), true);
-    assertEquals(tickLabelFree([], now, 60, 89), false);
-    assertEquals(tickLabelFree([], null, 121, 160), true);
-    assertEquals(tickLabelFree([[0, 10]], null, 12, 20), false);
-    assertEquals(tickLabelFree([[0, 10]], null, 13, 20), true);
 });

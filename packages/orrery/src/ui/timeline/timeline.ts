@@ -1,16 +1,17 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { readList, type SavedStorage, startTime } from "../../persistence.ts";
 import { readouts } from "../../readouts.ts";
-import { clampT, tipText, windowHalf } from "../../timeline.ts";
+import { isLive } from "../../time-text.ts";
+import { clampT, tipText, windowHalf, windowLabel } from "../../timeline.ts";
 import type { World } from "../../world.ts";
 import { h } from "../dom.ts";
 import {
-    BASE,
     type Colors,
     drawTimeline,
+    EVENTS,
     type Hit,
+    type NowMark,
     type Saved,
-    type Square,
 } from "./draw.ts";
 
 /** The timeline's element and how to remove it. */
@@ -26,8 +27,10 @@ const DRAG_PX = 3;
 export const createTimeline = (
     world: World,
     storage: SavedStorage,
+    onNow: (now: NowMark & { width: number }) => void,
 ): Timeline => {
     const { clock } = world;
+    const phone = matchMedia("(max-width: 720px)");
 
     const canvas = h("canvas", { "aria-hidden": "true" });
     const tip = h("div", {
@@ -56,7 +59,6 @@ export const createTimeline = (
     let colors: Colors | null = null;
     let saved: Saved[] = [];
     let hits: Hit[] = [];
-    let squares: Square[] = [];
     let dirty = true;
     let shown = "";
     let drag: {
@@ -65,6 +67,8 @@ export const createTimeline = (
         paused: boolean;
         moved: boolean;
         flag: Hit | undefined;
+        /** The scrub scale, fixed for the drag since holding the clock ends live. */
+        half: number;
     } | null = null;
 
     const readColors = (): Colors => {
@@ -72,13 +76,14 @@ export const createTimeline = (
         const read = (name: string) => style.getPropertyValue(name).trim();
 
         return {
-            frame: read("--orrery-frame"),
             rule: read("--orrery-rule"),
             dim: read("--orrery-dim"),
+            muted: read("--orrery-muted"),
             go: read("--orrery-go"),
             text: read("--orrery-text"),
             signal: read("--orrery-signal"),
-            signalInk: read("--orrery-signal-ink"),
+            pick: read("--orrery-pick"),
+            ground: read("--orrery-ground"),
             fontUi: read("--orrery-font-ui"),
             fontData: read("--orrery-font-data"),
         };
@@ -92,7 +97,14 @@ export const createTimeline = (
         dirty = true;
     };
 
-    const draw = () => {
+    // The window is wider when live, so it follows the real time.
+    const windowNow = (nowT = unixMsToJ2000s(Date.now())) => {
+        const live = isLive(clock, nowT);
+
+        return { nowT, live, half: windowHalf(clock.rate, live) };
+    };
+
+    const draw = (nowT: number, live: boolean, half: number) => {
         if (!ctx || !element.isConnected || width === 0) return;
 
         colors ??= readColors();
@@ -101,22 +113,30 @@ export const createTimeline = (
             picked === null
                 ? null
                 : readouts(world.scenario, picked, world.states(), clock.t);
+        const bodyName =
+            world.scenario.bodies.find((body) => body.id === picked)?.name ??
+            null;
 
-        ({ hits, squares } = drawTimeline(ctx, {
+        const drawn = drawTimeline(ctx, {
             width,
             height,
             ratio,
+            phone: phone.matches,
             colors,
             clock,
+            half,
+            windowText: windowLabel(clock.rate, live),
+            nowT,
             saved,
             hover,
             readout,
-        }));
+            bodyName,
+        });
+        hits = drawn.hits;
+        onNow({ ...drawn.now, width });
     };
 
-    const showAria = (force: boolean) => {
-        const half = windowHalf(clock.rate);
-
+    const showAria = (force: boolean, half: number) => {
         element.setAttribute(
             "aria-valuemin",
             String(Math.round(clock.t - half)),
@@ -137,17 +157,15 @@ export const createTimeline = (
         frameId = requestAnimationFrame(frame);
 
         // The Now mark moves with real time, whatever the clock does.
-        const nowPx = Math.round(
-            ((unixMsToJ2000s(Date.now()) - clock.t) * width) /
-                (2 * windowHalf(clock.rate)),
-        );
-        const signature = `${clock.t} ${clock.rate} ${nowPx}`;
+        const { nowT, live, half } = windowNow();
+        const nowPx = Math.round(((nowT - clock.t) * width) / (2 * half));
+        const signature = `${clock.t} ${clock.rate} ${live} ${nowPx}`;
         if (!dirty && signature === shown) return;
 
         dirty = false;
         shown = signature;
-        showAria(false);
-        draw();
+        showAria(false, half);
+        draw(nowT, live, half);
     };
     let frameId = requestAnimationFrame(frame);
 
@@ -163,13 +181,12 @@ export const createTimeline = (
     resize.observe(canvas);
 
     const canvasLeft = () => canvas.getBoundingClientRect().left;
-    const flagAt = (px: number) =>
-        hits.find(({ from, to }) => px >= from - 2 && px <= to + 2);
-    // The squares are 5px, so a few pixels of slack make them hoverable.
-    const squareAt = (px: number, py: number) =>
-        Math.abs(py - BASE) <= 6
-            ? squares.find((square) => Math.abs(px - square.x) <= 5)
+    // The events row, with a few pixels of slack either side of a mark.
+    const flagAt = (px: number, py: number) =>
+        py >= height - EVENTS
+            ? hits.find(({ from, to }) => px >= from - 2 && px <= to + 2)
             : undefined;
+    const canvasTop = () => canvas.getBoundingClientRect().top;
 
     const showTip = (px: number, text: string) => {
         // The tip is placed from the padding box, inside the forced-colors border.
@@ -191,12 +208,17 @@ export const createTimeline = (
             t: clock.t,
             paused: clock.paused,
             moved: false,
-            flag: flagAt(event.clientX - canvasLeft()),
+            flag: flagAt(
+                event.clientX - canvasLeft(),
+                event.clientY - canvasTop(),
+            ),
+            half: windowNow().half,
         };
     };
 
     const onMove = (event: PointerEvent) => {
         const px = event.clientX - canvasLeft();
+        const py = event.clientY - canvasTop();
 
         if (drag) {
             hover = null;
@@ -208,7 +230,7 @@ export const createTimeline = (
                 world.setClock({ paused: true });
             }
             world.setClock({
-                t: clampT(drag.t + (dx / width) * 2 * windowHalf(clock.rate)),
+                t: clampT(drag.t + (dx / width) * 2 * drag.half),
             });
             // The clock already shows the date being dragged to.
             tip.hidden = true;
@@ -219,17 +241,11 @@ export const createTimeline = (
 
         hover = px;
         dirty = true;
-        element.classList.toggle(
-            "orrery__timeline--flag",
-            flagAt(px) !== undefined,
-        );
+        const hit = flagAt(px, py);
+        element.classList.toggle("orrery__timeline--flag", hit !== undefined);
 
-        const half = windowHalf(clock.rate);
-        const square = squareAt(
-            px,
-            event.clientY - canvas.getBoundingClientRect().top,
-        );
-        if (square) showTip(square.x, square.name);
+        const { half } = windowNow();
+        if (hit) showTip(hit.x, hit.tip);
         else
             showTip(
                 px,
@@ -262,12 +278,13 @@ export const createTimeline = (
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.ctrlKey || event.altKey || event.metaKey) return;
 
-        const span = 2 * windowHalf(clock.rate);
+        const { half } = windowNow();
+        const tick = half / 60;
         const by = {
-            ArrowLeft: -span / 60,
-            ArrowRight: span / 60,
-            PageUp: span / 6,
-            PageDown: -span / 6,
+            ArrowLeft: -tick,
+            ArrowRight: tick,
+            PageUp: 10 * tick,
+            PageDown: -10 * tick,
         }[event.key];
 
         if (by !== undefined) world.setClock({ t: clampT(clock.t + by) });
@@ -276,7 +293,7 @@ export const createTimeline = (
         } else return;
 
         event.preventDefault();
-        showAria(true);
+        showAria(true, windowNow().half);
     };
 
     element.addEventListener("pointerdown", onDown);

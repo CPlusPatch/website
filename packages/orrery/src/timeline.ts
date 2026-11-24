@@ -1,4 +1,5 @@
 import { j2000sToUnixMs } from "@cpluspatch/orbit";
+import { presetOf } from "./clock.ts";
 import {
     fromParts,
     MAX_YEAR,
@@ -32,9 +33,53 @@ const STEPS = [
 /** The step in months, tried in order. */
 const MONTH_STEPS = [1, 3, 6, 12, 24, 60, 120, 240, 600];
 
-/** Half the window in seconds: a minute per second of the rate, and at least an hour. */
-export const windowHalf = (rate: number): number =>
-    Math.max(3600, 60 * Math.abs(rate));
+/** The window's half-width in the live view, in seconds: 60 days. */
+const LIVE_HALF = 60 * DAY;
+
+/** Half the window in seconds: 60 ticks of the rate, and at least 60 days when live. */
+export const windowHalf = (rate: number, live: boolean): number =>
+    Math.max(live ? LIVE_HALF : 0, 60 * Math.abs(rate));
+
+const WINDOW_UNITS = [
+    "sec",
+    "min",
+    "hours",
+    "days",
+    "weeks",
+    "months",
+    "years",
+];
+
+/** The window's size as text, like `±60 days`. Live counts as at least days. */
+export const windowLabel = (rate: number, live: boolean): string => {
+    const k = Math.max(presetOf(rate), live ? WINDOW_UNITS.indexOf("days") : 0);
+
+    return `±60 ${WINDOW_UNITS[k]}`;
+};
+
+/**
+ * The left edge of the Now flag in px: centred on `nowX` and kept inside the strip. It moves to the
+ * side of the date tag that `nowX` is on if it would overlap the tag and `gap`.
+ */
+export const nowFlagLeft = (
+    nowX: number,
+    flagWidth: number,
+    width: number,
+    tagHalf: number,
+    gap: number,
+): number => {
+    const mid = width / 2;
+    const edge = 4;
+    const left = Math.min(
+        Math.max(nowX - flagWidth / 2, edge),
+        width - edge - flagWidth,
+    );
+    const clash =
+        left < mid + tagHalf + gap && left + flagWidth > mid - tagHalf - gap;
+    if (!clash) return left;
+
+    return nowX < mid ? mid - tagHalf - gap - flagWidth : mid + tagHalf + gap;
+};
 
 /** `t`, kept inside the years the date editor accepts. */
 export const clampT = (t: number): number =>
@@ -136,19 +181,6 @@ export const isFree = (
     to: number,
     gap: number,
 ): boolean => taken.every(([a, b]) => to + gap <= a || from - gap >= b);
-
-/** The px a tick label keeps clear of the "Now" label. */
-const NOW_GAP_PX = 12;
-
-/** Whether a tick label at `[from, to]` is clear of the taken ranges and of the "Now" label. */
-export const tickLabelFree = (
-    taken: [number, number][],
-    now: [number, number] | null,
-    from: number,
-    to: number,
-): boolean =>
-    isFree(taken, from, to, 3) &&
-    (now === null || isFree([now], from, to, NOW_GAP_PX));
 
 /** A periapsis or apoapsis the strip can show, and when it happens. */
 export type Apsis = { name: "Ap" | "Pe"; t: number };
