@@ -9,6 +9,13 @@ export const RATES = [
     31557600, // 1 year (Julian, 365.25 days)
 ];
 
+/** The index in `RATES` of the preset a rate snaps to, by magnitude. */
+export const presetOf = (rate: number): number =>
+    Math.max(
+        RATES.findLastIndex((preset) => Math.abs(rate) >= preset),
+        0,
+    );
+
 /** One day per second. */
 export const DEFAULT_RATE = 86400;
 

@@ -1,7 +1,7 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { cue } from "../audio/cues.ts";
-import { RATES } from "../clock.ts";
+import { presetOf, RATES } from "../clock.ts";
 import { PART_NAMES, type PartName } from "../date-parts.ts";
 import type { SavedStorage } from "../persistence.ts";
 import { isLive, offsetText, rateText, stampParts } from "../time-text.ts";
@@ -22,13 +22,6 @@ export type TimeBar = {
 
 /** How often the shown time refreshes while the clock runs, in ms. */
 const REFRESH_MS = 250;
-
-/** The index in `RATES` of the preset a rate snaps to, by magnitude. */
-const presetOf = (rate: number): number =>
-    Math.max(
-        RATES.findLastIndex((preset) => Math.abs(rate) >= preset),
-        0,
-    );
 
 // Rewind: two triangles pointing left.
 const REVERSE_ICON =
