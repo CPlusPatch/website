@@ -1,4 +1,4 @@
-import type { Scenario, State } from "@cpluspatch/orbit";
+import type { Body, Scenario, State } from "@cpluspatch/orbit";
 import {
     apoapsis,
     length,
@@ -27,6 +27,22 @@ export type Readouts = {
     timeToPeriapsis: number;
     /** The time until the next apoapsis in seconds. */
     timeToApoapsis: number;
+};
+
+/** The distance in metres from `body` to its parent, or `null` for the root. */
+export const distanceOf = (
+    states: Map<string, State>,
+    body: Body,
+): number | null => {
+    if (body.parent === null) return null;
+
+    const state = states.get(body.id);
+    const parentState = states.get(body.parent);
+    if (!state || !parentState) {
+        throw new Error(`There is no state for "${body.id}" or its parent.`);
+    }
+
+    return length(sub(state.r, parentState.r));
 };
 
 /** The readouts of body `id` at time `t`, or `null` for a body with no orbit. */

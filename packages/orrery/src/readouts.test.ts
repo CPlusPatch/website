@@ -6,7 +6,7 @@ import {
     assertEquals,
     assertThrows,
 } from "@std/assert";
-import { readouts } from "./readouts.ts";
+import { distanceOf, readouts } from "./readouts.ts";
 
 const at = (id: string, t: number) =>
     readouts(
@@ -84,4 +84,19 @@ Deno.test("the true anomaly is in [0, 2π)", () => {
         assert(moon);
         assert(moon.trueAnomaly >= 0 && moon.trueAnomaly < 2 * Math.PI);
     }
+});
+
+Deno.test("a body's distance matches its readouts, and the root has none", () => {
+    const states = worldStates(solarSystem, sortByDepth(solarSystem), 0);
+    const body = (id: string) => {
+        const found = solarSystem.bodies.find(
+            (candidate) => candidate.id === id,
+        );
+        assert(found);
+
+        return found;
+    };
+
+    assertEquals(distanceOf(states, body("sun")), null);
+    assertEquals(distanceOf(states, body("moon")), at("moon", 0)?.distance);
 });

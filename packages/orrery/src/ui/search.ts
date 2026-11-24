@@ -1,7 +1,7 @@
 import type { Body } from "@cpluspatch/orbit";
 import type { AUnit } from "../editing.ts";
 import { formatRange, listUnit } from "../format.ts";
-import { readouts } from "../readouts.ts";
+import { distanceOf } from "../readouts.ts";
 import { found, treeOrder } from "../search.ts";
 import { leftPane, system } from "../systems.ts";
 import type { Units } from "../units.ts";
@@ -229,9 +229,21 @@ export const createSearch = (
 
     const searching = (): boolean => input.value.trim() !== "";
 
-    const distance = (id: string): number | null =>
-        readouts(world.scenario, id, world.states(), world.clock.t)?.distance ??
-        null;
+    /** Each body's distance to its parent, worked out once per render or patch. */
+    let distances = new Map<string, number | null>();
+
+    const measure = () => {
+        const states = world.states();
+
+        distances = new Map(
+            world.scenario.bodies.map((body) => [
+                body.id,
+                distanceOf(states, body),
+            ]),
+        );
+    };
+
+    const distance = (id: string): number | null => distances.get(id) ?? null;
 
     /** The unit all of one list's rows share. */
     const unitOf = (ids: readonly string[]): AUnit =>
@@ -296,6 +308,8 @@ export const createSearch = (
         ) {
             input.focus();
         }
+
+        measure();
 
         const bodies = world.scenario.bodies;
         const { root: top } = leftPane(bodies);
@@ -429,6 +443,8 @@ export const createSearch = (
     };
 
     const patchRanges = () => {
+        measure();
+
         for (const list of [left, head, systemList, results]) {
             const items = [...list.querySelectorAll<HTMLElement>("[data-id]")];
             const range = rangeIn(

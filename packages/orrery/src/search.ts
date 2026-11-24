@@ -5,16 +5,23 @@ export const treeOrder = (bodies: readonly Body[]): Body[] => {
     const children = new Map<string | null, Body[]>();
 
     for (const body of bodies) {
-        children.set(body.parent, [...(children.get(body.parent) ?? []), body]);
+        const siblings = children.get(body.parent);
+
+        if (siblings) siblings.push(body);
+        else children.set(body.parent, [body]);
     }
 
-    const walk = (parent: string | null): Body[] =>
-        (children.get(parent) ?? []).flatMap((body) => [
-            body,
-            ...walk(body.id),
-        ]);
+    const order: Body[] = [];
+    const walk = (parent: string | null) => {
+        for (const body of children.get(parent) ?? []) {
+            order.push(body);
+            walk(body.id);
+        }
+    };
 
-    return walk(null);
+    walk(null);
+
+    return order;
 };
 
 /**
