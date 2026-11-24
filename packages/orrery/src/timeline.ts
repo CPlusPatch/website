@@ -58,8 +58,8 @@ export const windowLabel = (rate: number, live: boolean): string => {
 };
 
 /**
- * The left edge of the Now flag in px: centred on `nowX` and kept inside the strip. It moves to the
- * side of the date tag that `nowX` is on if it would overlap the tag and `gap`.
+ * The left edge of the Now flag in px: centred on `nowX` and kept inside the strip. Returns null if
+ * the flag would overlap the date tag and `gap`, so Go live stays in its slot.
  */
 export const nowFlagLeft = (
     nowX: number,
@@ -67,7 +67,7 @@ export const nowFlagLeft = (
     width: number,
     tagHalf: number,
     gap: number,
-): number => {
+): number | null => {
     const mid = width / 2;
     const edge = 4;
     const left = Math.min(
@@ -76,9 +76,8 @@ export const nowFlagLeft = (
     );
     const clash =
         left < mid + tagHalf + gap && left + flagWidth > mid - tagHalf - gap;
-    if (!clash) return left;
 
-    return nowX < mid ? mid - tagHalf - gap - flagWidth : mid + tagHalf + gap;
+    return clash ? null : left;
 };
 
 /** `t`, kept inside the years the date editor accepts. */

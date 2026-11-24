@@ -171,30 +171,54 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     let spokenOffset = "";
     let nowMark: (NowMark & { width: number }) | null = null;
 
-    // With Now in the window, Go live becomes the Now flag on the Now line.
-    const placeFlag = () => {
-        const flag = !isOn && nowMark !== null && nowMark.inWindow;
+    // The flag's width and the tag's are read once, and again when they may have changed.
+    let measured = false;
+    let flagWidth = 0;
+    let tagHalf = 0;
+
+    const setFlag = (flag: boolean) => {
         goLiveButton.classList.toggle("orrery__go-live--flag", flag);
         setText(goLiveText, flag ? "Now" : "Go live");
         liveOffset.hidden = flag || spokenOffset === "";
+    };
+
+    // The clash test needs the flag's width even while the button shows as the slot's text.
+    const measure = () => {
+        setFlag(true);
+        flagWidth = goLiveButton.offsetWidth;
+        tagHalf = date.offsetWidth / 2;
+        // Zero means the bar isn't laid out yet, so measure again next time.
+        measured = flagWidth > 0;
+    };
+
+    // With Now in the window and clear of the tag, Go live becomes the Now flag on the Now line.
+    const placeFlag = () => {
+        let left: number | null = null;
+        if (!isOn && nowMark?.inWindow) {
+            if (!measured) measure();
+
+            left = nowFlagLeft(
+                nowMark.x,
+                flagWidth,
+                nowMark.width,
+                tagHalf,
+                phone.matches ? 8 : 6,
+            );
+        }
+        const flag = left !== null;
+
+        setFlag(flag);
         // The name starts with the visible text, for voice control.
         const label = `${flag ? "Now, go live" : "Go live"}${spokenOffset}`;
         if (goLiveButton.getAttribute("aria-label") !== label) {
             goLiveButton.setAttribute("aria-label", label);
         }
-        if (!flag || !nowMark) {
+        if (left === null) {
             goLiveButton.style.left = "";
 
             return;
         }
 
-        const left = nowFlagLeft(
-            nowMark.x,
-            goLiveButton.offsetWidth,
-            nowMark.width,
-            date.offsetWidth / 2,
-            phone.matches ? 8 : 6,
-        );
         const px = `${Math.round(left + stage.offsetLeft + stage.clientLeft)}px`;
         if (goLiveButton.style.left !== px) goLiveButton.style.left = px;
     };
@@ -394,6 +418,19 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
     timeline.grab(date);
     goLiveButton.addEventListener("click", goLive);
 
+    const remeasure = () => {
+        measured = false;
+        placeFlag();
+    };
+    // The tag's width changes with the Live chip and the phone layout.
+    const resize = new ResizeObserver(remeasure);
+    resize.observe(date);
+    resize.observe(stage);
+    phone.addEventListener("change", remeasure);
+    document.fonts.ready.then(() => {
+        if (element.isConnected) remeasure();
+    });
+
     const off = world.on((event) => {
         if (event.type === "clock" || event.type === "scenario") show();
     });
@@ -407,6 +444,8 @@ export const createTimeBar = (world: World, storage: SavedStorage): TimeBar => {
         destroy: () => {
             off();
             clearInterval(interval);
+            resize.disconnect();
+            phone.removeEventListener("change", remeasure);
             document.removeEventListener("pointerdown", onPointerDown);
             editor.destroy();
             timeline.destroy();

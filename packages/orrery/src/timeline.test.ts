@@ -69,11 +69,12 @@ Deno.test("the Now flag is centred on Now, and kept inside the strip", () => {
     assertEquals(nowFlagLeft(990, 60, 1000, 70, 6), 936);
 });
 
-Deno.test("the Now flag keeps clear of the date tag, on the side Now is on", () => {
+Deno.test("the Now flag gives way to Go live when it would clash with the date tag", () => {
     // The tag spans 430 to 570, plus a gap of 6 each side.
-    assertEquals(nowFlagLeft(490, 60, 1000, 70, 6), 364);
-    assertEquals(nowFlagLeft(510, 60, 1000, 70, 6), 576);
+    assertEquals(nowFlagLeft(490, 60, 1000, 70, 6), null);
+    assertEquals(nowFlagLeft(510, 60, 1000, 70, 6), null);
     assertEquals(nowFlagLeft(360, 60, 1000, 70, 6), 330);
+    assertEquals(nowFlagLeft(640, 60, 1000, 70, 6), 610);
 });
 
 Deno.test("clamping keeps a time inside years 1 to 9999", () => {
