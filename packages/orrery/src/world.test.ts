@@ -56,6 +56,29 @@ Deno.test("an unsubscribed listener hears nothing more", () => {
     assertEquals(count, 1);
 });
 
+Deno.test("a listener that throws doesn't stop the next one, and the emit rethrows", () => {
+    const world = make();
+    const heard: string[] = [];
+    const off = world.on(() => {
+        throw new Error("first");
+    });
+    world.on((e) => heard.push(e.type));
+
+    assertThrows(() => world.setClock({ paused: true }), Error, "first");
+    assertEquals(heard, ["clock"]);
+
+    off();
+    world.on(() => {
+        throw new Error("one");
+    });
+    world.on(() => {
+        throw new Error("two");
+    });
+
+    assertThrows(() => world.setClock({ paused: false }), AggregateError);
+    assertEquals(heard, ["clock", "clock"]);
+});
+
 Deno.test("states returns the same map until the time changes", () => {
     const world = make();
 

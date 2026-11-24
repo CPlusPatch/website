@@ -216,6 +216,19 @@ export class World {
     }
 
     #emit(event: WorldEvent): void {
-        for (const fn of this.#listeners) fn(event);
+        const errors: unknown[] = [];
+
+        // One failing listener mustn't leave the others out of date.
+        for (const fn of this.#listeners) {
+            try {
+                fn(event);
+            } catch (error) {
+                errors.push(error);
+            }
+        }
+
+        if (errors.length === 1) throw errors[0];
+        if (errors.length > 1)
+            throw new AggregateError(errors, "Listeners threw.");
     }
 }
