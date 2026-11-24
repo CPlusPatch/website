@@ -45,7 +45,7 @@ const table1 = (row: Table1Row): Elements => {
 // Earth is the Earth-Moon barycentre row; the offset of about 4 700 km is accepted.
 // Pluto isn't on the current page. Its row is from the older
 // https://ssd.jpl.nasa.gov/txt/p_elem_t1.txt (archived copy).
-const ORBITS: Record<string, Table1Row> = {
+const ORBITS: Record<keyof typeof PHYSICAL, Table1Row> = {
     mercury: {
         a: 0.38709927,
         e: 0.20563593,

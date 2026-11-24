@@ -43,3 +43,14 @@ export const assertVecClose = (
         `vectors differ by ${error} (relative ${error / length(expected)})`,
     );
 };
+
+/** The `k`th point of a packed xyz array, such as the output of `orbitPoints`. */
+export const pointAt = (points: Float64Array, k: number): Vec3 => {
+    const [x, y, z] = points.subarray(3 * k, 3 * k + 3);
+
+    if (x === undefined || y === undefined || z === undefined) {
+        throw new Error(`no point ${k} in an array of ${points.length / 3}`);
+    }
+
+    return { x, y, z };
+};

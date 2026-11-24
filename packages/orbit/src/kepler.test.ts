@@ -1,6 +1,12 @@
 /// <reference types="deno" />
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
-import { assertVecClose, MU, mulberry32, randomElements } from "./fixture.ts";
+import {
+    assertVecClose,
+    MU,
+    mulberry32,
+    pointAt,
+    randomElements,
+} from "./fixture.ts";
 import type { Elements } from "./kepler.ts";
 import {
     apoapsis,
@@ -121,14 +127,10 @@ Deno.test("orbit points lie on the orbit, starting at periapsis", () => {
     const start = stateAt(el, MU, 0).r;
 
     assertEquals(points.length, 64 * 3);
-    assertVecClose({ x: points[0], y: points[1], z: points[2] }, start);
+    assertVecClose(pointAt(points, 0), start);
 
     for (let k = 0; k < 64; k++) {
-        const r = Math.hypot(
-            points[k * 3],
-            points[k * 3 + 1],
-            points[k * 3 + 2],
-        );
+        const r = length(pointAt(points, k));
 
         assert(
             r >= periapsis(el) * (1 - 1e-9) && r <= apoapsis(el) * (1 + 1e-9),

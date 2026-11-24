@@ -23,6 +23,12 @@ const find = (id: string) => {
     return { ...body, elements: body.elements };
 };
 
+const sun = solarSystem.bodies.find((b) => b.id === "sun");
+
+assert(sun, "no sun");
+
+const SUN_MU = sun.mu;
+
 Deno.test("there are 55 bodies with the expected ids", () => {
     assertEquals(
         solarSystem.bodies.map((b) => b.id),
@@ -160,7 +166,7 @@ Deno.test("Earth's negative Table 1 inclination is the same orbit after the flip
         m0: wrapAngle(deg(100.46457166 - 102.93768193)),
     };
     const t = unixMsToJ2000s(Date.UTC(2026, 0, 3, 12));
-    const mu = solarSystem.bodies[0].mu + earth.mu;
+    const mu = SUN_MU + earth.mu;
 
     const flipped = stateAt(earth.elements, mu, t);
     const expected = stateAt(raw, mu, t);
@@ -248,7 +254,7 @@ Deno.test("Triton is retrograde around Neptune", () => {
 
 Deno.test("Halley's inclination is 162.19 degrees and it reaches perihelion on 1986-02-09", () => {
     const halley = find("halley");
-    const mu = solarSystem.bodies[0].mu + halley.mu;
+    const mu = SUN_MU + halley.mu;
     const next = nextApsisTime(
         halley.elements,
         mu,
@@ -262,9 +268,7 @@ Deno.test("Halley's inclination is 162.19 degrees and it reaches perihelion on 1
 
 Deno.test("Ceres orbits the Sun in 4.60 years", () => {
     const ceres = find("ceres");
-    const years =
-        period(ceres.elements, solarSystem.bodies[0].mu + ceres.mu) /
-        (365.25 * DAY);
+    const years = period(ceres.elements, SUN_MU + ceres.mu) / (365.25 * DAY);
 
     assertAlmostEquals(years, 4.6, 0.01);
 });
@@ -341,7 +345,10 @@ Deno.test("moons point where Horizons puts them in 2015", () => {
 
 // Geometric vectors from the parent in ecliptic J2000, in km, from JPL Horizons at
 // 2026-11-24 00:00 TDB, one day after the probes' epoch.
-const HORIZONS_PROBES: Record<string, Vec3> = {
+const HORIZONS_PROBES: Record<
+    "mro" | "lro" | "juno" | "parker-solar-probe",
+    Vec3
+> = {
     mro: { x: 1050.583882246016, y: -1037.355041138028, z: -3327.607949548157 },
     lro: { x: -1279.8151416294, y: -541.8156285521441, z: -1173.089278908651 },
     juno: { x: 1171872.25891045, y: -341475.4301779601, z: -5174248.407601531 },
@@ -353,7 +360,7 @@ const HORIZONS_PROBES: Record<string, Vec3> = {
 };
 
 Deno.test("Juno and Parker Solar Probe point where Horizons puts them a day after the epoch", () => {
-    for (const id of ["juno", "parker-solar-probe"]) {
+    for (const id of ["juno", "parker-solar-probe"] as const) {
         const probe = find(id);
         const parent = solarSystem.bodies.find((b) => b.id === probe.parent);
         const t = probe.elements.epoch + DAY;
@@ -373,7 +380,7 @@ Deno.test("Juno and Parker Solar Probe point where Horizons puts them a day afte
 });
 
 Deno.test("MRO and LRO are in their orbit planes a day after the epoch", () => {
-    for (const id of ["mro", "lro"]) {
+    for (const id of ["mro", "lro"] as const) {
         const probe = find(id);
         const elements = elementsAt(probe, probe.elements.epoch + DAY);
 

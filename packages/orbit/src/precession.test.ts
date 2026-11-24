@@ -2,7 +2,7 @@
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import { DAY } from "./constants.ts";
 import { solarSystem } from "./data/solar-system.ts";
-import { assertVecClose, MU } from "./fixture.ts";
+import { assertVecClose, MU, pointAt } from "./fixture.ts";
 import type { Elements } from "./kepler.ts";
 import { axes, orbitPoints, stateAt, wrapAngle } from "./kepler.ts";
 import type { Precession } from "./precession.ts";
@@ -188,26 +188,14 @@ Deno.test("turning the epoch orbit by the precession turns gives the precessed o
     const expected = orbitPoints(precess(eccentric, p, t), 64);
 
     for (let k = 0; k < 64; k++) {
-        const point = {
-            x: epoch[3 * k],
-            y: epoch[3 * k + 1],
-            z: epoch[3 * k + 2],
-        };
+        const point = pointAt(epoch, k);
         const turned = rotate(
             rotate(point, about.axis, about.angle),
             turn.axis,
             turn.angle,
         );
 
-        assertVecClose(
-            turned,
-            {
-                x: expected[3 * k],
-                y: expected[3 * k + 1],
-                z: expected[3 * k + 2],
-            },
-            1e-6,
-        );
+        assertVecClose(turned, pointAt(expected, k), 1e-6);
     }
 });
 

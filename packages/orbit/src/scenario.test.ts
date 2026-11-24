@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { builtInScenarios } from "./data/built-in.ts";
 import { kerbol } from "./data/fiction.ts";
 import { solarSystem } from "./data/solar-system.ts";
@@ -46,6 +46,14 @@ const valid: Scenario = {
 };
 
 /** Applies `change` to a clone of the tiny scenario and returns the validation errors. */
+const at = <T>(items: readonly T[], index: number): T => {
+    const item = items[index];
+
+    assertExists(item, `no item at index ${index}`);
+
+    return item;
+};
+
 const errorsAfter = (change: (s: Scenario) => void): string[] => {
     const scenario = structuredClone(valid);
 
@@ -105,8 +113,8 @@ Deno.test("a version 1 scenario gets models from its ids and satellites for Eart
     assert(result.ok);
     assertEquals(result.scenario.version, 2);
     assertEquals(result.scenario.hasSatellites, true);
-    assertEquals(result.scenario.bodies[0].model, "sun");
-    assertEquals(result.scenario.bodies[1].model, "earth");
+    assertEquals(at(result.scenario.bodies, 0).model, "sun");
+    assertEquals(at(result.scenario.bodies, 1).model, "earth");
 });
 
 Deno.test("a version 1 scenario without Earth has no satellites", () => {
@@ -146,7 +154,7 @@ Deno.test("a version 1 scenario ignores model and hasSatellites", () => {
     });
 
     assert(result.ok);
-    assertEquals(result.scenario.bodies[0].model, "sun");
+    assertEquals(at(result.scenario.bodies, 0).model, "sun");
     assert(!("model" in planet(result.scenario)));
     assert(!("hasSatellites" in result.scenario));
 });
@@ -277,7 +285,7 @@ Deno.test("a scenario with two roots is rejected", () => {
 
 Deno.test("a root with elements is rejected", () => {
     const errors = errorsAfter((s) => {
-        s.bodies[0].elements = structuredClone(planet(s).elements);
+        at(s.bodies, 0).elements = structuredClone(planet(s).elements);
     });
 
     assert(errors.includes("sun.elements: must be null when parent is null"));
@@ -304,7 +312,7 @@ Deno.test("a parent cycle is rejected", () => {
         const a = { ...planet(s), id: "a", parent: "b" };
         const b = { ...planet(s), id: "b", parent: "a" };
 
-        s.bodies = [s.bodies[0], a, b];
+        s.bodies = [at(s.bodies, 0), a, b];
     });
 
     assert(errors.includes("a.parent: the parent chain loops back on itself"));
@@ -317,7 +325,7 @@ Deno.test("a body whose chain runs into a cycle is rejected, and one beside it i
         const b = { ...planet(s), id: "b", parent: "a" };
         const tail = { ...planet(s), id: "tail", parent: "a" };
 
-        s.bodies = [s.bodies[0], tail, a, b, planet(s)];
+        s.bodies = [at(s.bodies, 0), tail, a, b, planet(s)];
     });
     const looping = errors.filter((error) =>
         error.endsWith("loops back on itself"),
@@ -436,29 +444,29 @@ Deno.test("time and color are kept only when present", () => {
     const withBoth = structuredClone(valid);
 
     withBoth.time = 5;
-    withBoth.bodies[0].color = "#ffd700";
+    at(withBoth.bodies, 0).color = "#ffd700";
 
     const kept = validateScenario(withBoth);
     const plain = validateScenario(valid);
 
     assert(kept.ok && plain.ok);
     assertEquals(kept.scenario.time, 5);
-    assertEquals(kept.scenario.bodies[0].color, "#ffd700");
+    assertEquals(at(kept.scenario.bodies, 0).color, "#ffd700");
     assert(!("time" in plain.scenario));
-    assert(!("color" in plain.scenario.bodies[0]));
+    assert(!("color" in at(plain.scenario.bodies, 0)));
 });
 
 Deno.test("a spacecraft role is kept", () => {
     const scenario = structuredClone(valid);
 
-    scenario.bodies[1].kind = "spacecraft";
-    scenario.bodies[1].role = "telescope";
+    at(scenario.bodies, 1).kind = "spacecraft";
+    at(scenario.bodies, 1).role = "telescope";
 
     const result = validateScenario(scenario);
 
     assert(result.ok);
     assertEquals(planet(result.scenario).role, "telescope");
-    assert(!("role" in result.scenario.bodies[0]));
+    assert(!("role" in at(result.scenario.bodies, 0)));
 });
 
 Deno.test("an unknown role is rejected", () => {
@@ -510,7 +518,7 @@ const withPrecession = (precession: unknown) => {
     const scenario = structuredClone(valid) as Record<string, unknown>;
     const bodies = scenario.bodies as Record<string, unknown>[];
 
-    bodies[1].precession = precession;
+    at(bodies, 1).precession = precession;
 
     return scenario;
 };
@@ -527,7 +535,7 @@ Deno.test("a valid precession is accepted and its pole normalised", () => {
     );
 
     assert(result.ok);
-    assertEquals(result.scenario.bodies[1].precession, precession);
+    assertEquals(at(result.scenario.bodies, 1).precession, precession);
 });
 
 Deno.test("a precession with a pole that isn't a unit vector is rejected", () => {
@@ -536,7 +544,7 @@ Deno.test("a precession with a pole that isn't a unit vector is rejected", () =>
     );
 
     assert(!result.ok);
-    assert(result.errors[0].startsWith("earth.precession.pole: must be"));
+    assert(at(result.errors, 0).startsWith("earth.precession.pole: must be"));
 });
 
 Deno.test("a precession with a rate that isn't finite is rejected", () => {
@@ -545,20 +553,24 @@ Deno.test("a precession with a rate that isn't finite is rejected", () => {
     );
 
     assert(!result.ok);
-    assert(result.errors[0].startsWith("earth.precession.nodeRate: must be"));
+    assert(
+        at(result.errors, 0).startsWith("earth.precession.nodeRate: must be"),
+    );
 });
 
 Deno.test("a precession that isn't an object is rejected", () => {
     const result = validateScenario(withPrecession(3));
 
     assert(!result.ok);
-    assert(result.errors[0].startsWith("earth.precession: must be an object"));
+    assert(
+        at(result.errors, 0).startsWith("earth.precession: must be an object"),
+    );
 });
 
 Deno.test("a precession on the root is rejected", () => {
     const scenario = withPrecession(precession);
 
-    (scenario.bodies as Record<string, unknown>[])[0].precession = precession;
+    at(scenario.bodies as Record<string, unknown>[], 0).precession = precession;
 
     const result = validateScenario(scenario);
 
@@ -570,7 +582,7 @@ Deno.test("a body without precession has no precession key", () => {
     const result = validateScenario(valid);
 
     assert(result.ok);
-    assert(!("precession" in result.scenario.bodies[1]));
+    assert(!("precession" in at(result.scenario.bodies, 1)));
 });
 
 Deno.test("a colour that isn't #rgb or #rrggbb is rejected", () => {
@@ -596,12 +608,12 @@ Deno.test("#rgb and #rrggbb colours are accepted in either case", () => {
     for (const color of ["#abc", "#AABBCC"]) {
         const scenario = structuredClone(valid);
 
-        scenario.bodies[0].color = color;
+        at(scenario.bodies, 0).color = color;
 
         const result = validateScenario(scenario);
 
         assert(result.ok, color);
-        assertEquals(result.scenario.bodies[0].color, color);
+        assertEquals(at(result.scenario.bodies, 0).color, color);
     }
 });
 
@@ -630,7 +642,7 @@ Deno.test("a scenario name over the limit is rejected, and one at the limit is k
 Deno.test("more bodies than the limit are rejected with one error", () => {
     const errors = errorsAfter((s) => {
         s.bodies = Array.from({ length: MAX_BODIES + 1 }, () =>
-            structuredClone(s.bodies[0]),
+            structuredClone(at(s.bodies, 0)),
         );
     });
 
@@ -647,8 +659,8 @@ Deno.test("a scenario time outside the year bounds is rejected", () => {
 
         assertEquals(errors.length, 1);
         assert(
-            errors[0].startsWith("time: must be in years 1 to 9999"),
-            errors[0],
+            at(errors, 0).startsWith("time: must be in years 1 to 9999"),
+            at(errors, 0),
         );
     }
 
@@ -669,10 +681,10 @@ Deno.test("an element epoch outside the year bounds is rejected", () => {
 
         assertEquals(errors.length, 1);
         assert(
-            errors[0].startsWith(
+            at(errors, 0).startsWith(
                 "earth.elements.epoch: must be in years 1 to 9999",
             ),
-            errors[0],
+            at(errors, 0),
         );
     }
 });
