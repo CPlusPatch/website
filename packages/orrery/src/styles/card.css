@@ -199,6 +199,100 @@
         }
     }
 
+    /*
+     * The to-scale orbit, in two columns: the drawing, and the apsides legend with the scale bar.
+     * One drawing unit is 64cqw / 224, so the bar and the legend line up with it in CSS.
+     */
+    .orrery__plate {
+        --plate-unit: calc(64cqw / 224);
+        --plate-line: 1.125rem;
+        --plate-legend: calc(4 * var(--plate-line) + var(--space-sm));
+        /* The top of the orbit's box in the drawing. */
+        --plate-top: calc(20 * var(--plate-unit));
+        --plate-gap: var(--space-sm);
+        position: relative;
+        display: grid;
+        flex: none;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: var(--plate-gap);
+        container-type: inline-size;
+        margin: 0;
+        background: var(--orrery-ground);
+
+        svg {
+            display: block;
+            inline-size: 64cqw;
+            block-size: auto;
+        }
+    }
+
+    .orrery__plate-badge {
+        fill: var(--orrery-signal-ink);
+        font: 600 12px var(--orrery-font-ui);
+    }
+
+    .orrery__plate-legend {
+        display: grid;
+        align-self: start;
+        gap: var(--space-sm);
+        padding-block-start: var(--plate-top);
+        padding-inline-end: var(--orrery-pad);
+        white-space: nowrap;
+        line-height: var(--plate-line);
+    }
+
+    .orrery__plate-apsis {
+        display: grid;
+        grid-template-columns: 1.375rem auto;
+        justify-content: start;
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__plate-name,
+    .orrery__plate-time {
+        color: var(--orrery-muted);
+        font-family: var(--orrery-font-ui);
+    }
+
+    .orrery__plate-altitude {
+        font-family: var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .orrery__plate-time {
+        grid-column: 2;
+    }
+
+    /* On the bottom of the orbit, but clear of the legend and the plate's edge. */
+    .orrery__plate-scale {
+        position: absolute;
+        inset-inline-start: calc(64cqw + var(--plate-gap));
+        inset-block-start: min(
+            max(
+                calc(var(--plate-bar-y) * var(--plate-unit)),
+                calc(var(--plate-top) + var(--plate-legend) + 0.875rem)
+            ),
+            calc(158 * var(--plate-unit) - 0.75rem)
+        );
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        transform: translateY(-50%);
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-label) / 1.2 var(--orrery-font-data);
+    }
+
+    .orrery__plate-bar {
+        flex: none;
+        box-sizing: border-box;
+        inline-size: calc(var(--plate-bar-px) * var(--plate-unit));
+        block-size: 7px;
+        border-inline: 1px solid currentColor;
+        background:
+            linear-gradient(currentColor, currentColor) center / 100% 1px
+            no-repeat;
+    }
+
     .orrery__orbit-around,
     .orrery__body-stats {
         margin-block-start: var(--orrery-pad);
@@ -316,6 +410,10 @@
         }
     }
 
+    .orrery__plate-scale .orrery__unit-switch {
+        min-block-size: 1.5rem;
+    }
+
     .orrery__warning {
         margin-block-start: var(--space-md);
         /* Compact, since it holds one sentence. */
@@ -377,6 +475,7 @@
         /* Peeked: the grip, the head and the headline stay. */
         .orrery__inspector[data-peek] {
             .orrery__orbit-meta,
+            .orrery__plate,
             .orrery__inspector-body,
             .orrery__inspector-foot {
                 display: none;

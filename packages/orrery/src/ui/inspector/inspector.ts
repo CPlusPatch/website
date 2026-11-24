@@ -1,4 +1,4 @@
-import type { Body } from "@cpluspatch/orbit";
+import { type Body, elementsAt } from "@cpluspatch/orbit";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -6,6 +6,7 @@ import { bodyStats } from "../../body-stats.ts";
 import type { EditScene } from "../../editing.ts";
 import { readouts } from "../../readouts.ts";
 import type { Units } from "../../units.ts";
+import { colorOf } from "../../view/theme.ts";
 import type { World } from "../../world.ts";
 import { type BodyAdder, createBodyAdder } from "../body-adder.ts";
 import { showBodyMarker } from "../body-marker.ts";
@@ -15,6 +16,7 @@ import { createElementEditor, type ElementEditor } from "../element-editor.ts";
 import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";
 import { type ActionButtons, button, createActions } from "./actions.ts";
+import { createPlate, type Plate, refreshPlate } from "./plate.ts";
 import { createHeadline, type Headline, refreshHeadline } from "./readouts.ts";
 import { createStatsSection } from "./stats.ts";
 
@@ -141,6 +143,7 @@ export const createInspector = (
     setHead(false);
 
     let headline: Headline | null = null;
+    let plate: Plate | null = null;
     let foot: HTMLElement | null = null;
     let stats: HTMLElement | null = null;
     let shown: string | null = null;
@@ -173,6 +176,34 @@ export const createInspector = (
         if (!current) return;
 
         refreshHeadline(headline, current, units.get());
+
+        const body = world.scenario.bodies.find((b) => b.id === id);
+        const parent = world.scenario.bodies.find((b) => b.id === body?.parent);
+        if (!plate || !body?.elements || !parent) return;
+
+        const grandparent = world.scenario.bodies.find(
+            (b) => b.id === parent.parent,
+        );
+        // Precession turns the node and the periapsis.
+        const now = elementsAt(
+            { ...body, elements: body.elements },
+            world.clock.t,
+        );
+        refreshPlate(plate, {
+            a: now.a,
+            e: now.e,
+            raan: now.raan,
+            argp: now.argp,
+            trueAnomaly: current.trueAnomaly,
+            parentRadius: parent.radius,
+            periapsisAltitude: current.periapsisAltitude,
+            apoapsisAltitude: current.apoapsisAltitude,
+            timeToPeriapsis: current.timeToPeriapsis,
+            timeToApoapsis: current.timeToApoapsis,
+            bodyColor: colorOf(body, parent),
+            parentColor: colorOf(parent, grandparent),
+            unit: units.get(),
+        });
     };
 
     // The card re-renders, so what had focus moves to the first thing a reader can pick next.
@@ -268,6 +299,8 @@ export const createInspector = (
         );
         headline?.element.remove();
         headline = null;
+        plate?.element.remove();
+        plate = null;
         foot?.remove();
         foot = null;
         stats = null;
@@ -341,6 +374,10 @@ export const createInspector = (
         if (parent) {
             headline = createHeadline(parent.name);
             head.after(headline.element);
+        }
+        if (parent && hasOrbit) {
+            plate = createPlate(units, body.name, parent.name);
+            headline?.element.after(plate.element);
         }
 
         stats = createStatsSection(
