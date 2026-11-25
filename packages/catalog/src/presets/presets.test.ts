@@ -60,9 +60,32 @@ Deno.test("every preset is a known name", () => {
 // These have a colour but no rotation model.
 const COLOUR_ONLY = ["titan", "eris", "haumea", "makemake", "halley"];
 
-Deno.test("the presets are the bodies with a rotation model or a colour", () => {
+// These have a mesh.
+const SPACECRAFT = [
+    "iss",
+    "hubble",
+    "tiangong",
+    "parisat",
+    "juno",
+    "landsat-9",
+    "gps-biii-1",
+    "goes-19",
+    "meridian-10",
+    "mro",
+    "mars-express",
+    "mars-odyssey",
+    "tgo",
+    "hope",
+    "lro",
+    "chandrayaan-2",
+    "danuri",
+    "parker-solar-probe",
+    "solar-orbiter",
+];
+
+Deno.test("the presets are the bodies with a rotation model, a colour or a mesh", () => {
     assertEquals(
         Object.keys(PRESETS).sort(),
-        [...WITH_ROTATION, ...COLOUR_ONLY].sort(),
+        [...WITH_ROTATION, ...COLOUR_ONLY, ...SPACECRAFT].sort(),
     );
 });

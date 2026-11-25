@@ -13,6 +13,18 @@ type PresetAppearance = {
     clouds?: { map: string };
     nightSide?: { map: string };
     rings?: { map: string; inner: number; outer: number };
+    // The mesh types and their params are in `packages/render/src/meshes/index.ts`.
+    mesh?: {
+        type: string;
+        size?: [number, number, number];
+        wings?: 1 | 2;
+        wingLength?: number;
+        wingWidth?: number;
+        boom?: number;
+        antenna?: [number, number];
+        dish?: number;
+        shield?: { shape: "disc" | "plate"; size: number; thickness: number };
+    };
 };
 
 /** The look of each model by preset, for the bodies that have one of their own. */
@@ -213,4 +225,151 @@ export const APPEARANCE: Readonly<Record<string, PresetAppearance>> = {
     bop: { map: "bop" },
     pol: { map: "pol" },
     eeloo: { map: "eeloo" },
+    // Spacecraft.
+    iss: { mesh: { type: "iss" } },
+    hubble: { mesh: { type: "hubble" } },
+    tiangong: { mesh: { type: "tiangong" } },
+    parisat: { mesh: { type: "parisat" } },
+    juno: { mesh: { type: "juno" } },
+    "landsat-9": {
+        mesh: {
+            type: "bus",
+            size: [3, 2.4, 4.3],
+            wings: 1,
+            wingLength: 9.4,
+            wingWidth: 2.6,
+        },
+    },
+    "gps-biii-1": {
+        mesh: {
+            type: "bus",
+            size: [2.5, 2.5, 2.5],
+            wings: 2,
+            wingLength: 6.65,
+            wingWidth: 1.9,
+            antenna: [1.6, 1.6],
+        },
+    },
+    "goes-19": {
+        mesh: {
+            type: "bus",
+            size: [6, 5.6, 3.9],
+            wings: 1,
+            wingLength: 12,
+            wingWidth: 3,
+            boom: 8,
+        },
+    },
+    "meridian-10": {
+        mesh: {
+            type: "bus",
+            size: [1.5, 1.5, 2.5],
+            wings: 2,
+            wingLength: 3.75,
+            wingWidth: 1.8,
+        },
+    },
+    mro: {
+        mesh: {
+            type: "bus",
+            size: [3, 2.5, 2.5],
+            wings: 2,
+            wingLength: 5.35,
+            wingWidth: 2.53,
+            dish: 3,
+        },
+    },
+    "mars-express": {
+        mesh: {
+            type: "bus",
+            size: [1.5, 1.8, 1.4],
+            wings: 2,
+            wingLength: 5.3,
+            wingWidth: 1.9,
+            dish: 1.6,
+        },
+    },
+    "mars-odyssey": {
+        mesh: {
+            type: "bus",
+            size: [2.2, 1.7, 2.6],
+            wings: 1,
+            wingLength: 3.4,
+            wingWidth: 2.1,
+            dish: 1.3,
+            boom: 6.2,
+        },
+    },
+    tgo: {
+        mesh: {
+            type: "bus",
+            size: [3.2, 2, 2],
+            wings: 2,
+            wingLength: 7.5,
+            wingWidth: 2.2,
+            dish: 2.2,
+        },
+    },
+    hope: {
+        mesh: {
+            type: "bus",
+            size: [2.4, 2.9, 2.4],
+            wings: 2,
+            wingLength: 2.5,
+            wingWidth: 1.8,
+            dish: 1.85,
+        },
+    },
+    lro: {
+        mesh: {
+            type: "bus",
+            size: [1.9, 1.9, 2.7],
+            wings: 1,
+            wingLength: 3.3,
+            wingWidth: 2.4,
+            dish: 0.75,
+        },
+    },
+    "chandrayaan-2": {
+        mesh: {
+            type: "bus",
+            size: [3.2, 2.2, 2.2],
+            wings: 1,
+            wingLength: 3,
+            wingWidth: 2,
+            dish: 1,
+        },
+    },
+    danuri: {
+        mesh: {
+            type: "bus",
+            size: [2.14, 1.82, 2.19],
+            wings: 2,
+            wingLength: 2.3,
+            wingWidth: 1.2,
+            dish: 2.6,
+        },
+    },
+    "parker-solar-probe": {
+        mesh: {
+            type: "bus",
+            size: [1, 1, 1.4],
+            wings: 2,
+            wingLength: 1.1,
+            wingWidth: 0.6,
+            shield: { shape: "disc", size: 2.3, thickness: 0.115 },
+        },
+    },
+    "solar-orbiter": {
+        mesh: {
+            type: "bus",
+            size: [2.5, 3.1, 2.7],
+            wings: 2,
+            wingLength: 6.5,
+            wingWidth: 1.2,
+            dish: 1.1,
+            boom: 4.4,
+            shield: { shape: "plate", size: 3.1, thickness: 0.3 },
+        },
+    },
 };
