@@ -22,35 +22,6 @@ export type Theme = {
     stop: () => void;
 };
 
-/** CSS colours by preset, for the bodies of the solar system scenario. */
-export const BODY_COLORS: Readonly<Record<string, string>> = {
-    sun: "#ffd27a",
-    mercury: "#b9b2a6",
-    venus: "#e9cf98",
-    earth: "#62a7ff",
-    moon: "#cfd0d2",
-    mars: "#ec6f4a",
-    jupiter: "#dcae7c",
-    saturn: "#e8d59a",
-    uranus: "#93e0dc",
-    neptune: "#7c8cff",
-    pluto: "#c8a593",
-    // Only bodies with a look of their own; grey moons keep their kind's colour.
-    io: "#e6cf63",
-    europa: "#dccdb2",
-    ganymede: "#aa9f90",
-    callisto: "#6f6a66",
-    titan: "#e0a452",
-    enceladus: "#eef4f7",
-    triton: "#dbc1b6",
-    ceres: "#a7a199",
-    eris: "#e8e6e2",
-    haumea: "#c9cfd4",
-    makemake: "#c99877",
-    vesta: "#bcae9a",
-    halley: "#b5c9d6",
-};
-
 /** The token that colours Earth satellites of each orbit class. */
 export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     leo: "var(--orrery-orbit-leo)",
@@ -59,7 +30,7 @@ export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     heo: "var(--orrery-orbit-heo)",
 };
 
-/** The CSS colour of a body: its own, its orbit class's, its preset's, then its tag's. */
+/** The CSS colour of a body with its preset filled in: its own, its orbit class's, then its tag's. */
 export const colorOf = (body: Body, parent: Body | undefined): string => {
     const { color } = appearanceOf(body);
 
@@ -71,10 +42,7 @@ export const colorOf = (body: Body, parent: Body | undefined): string => {
         return ORBIT_CLASS_COLORS[orbitClass(body.orbit.elements)];
     }
 
-    return (
-        (body.preset === undefined ? undefined : BODY_COLORS[body.preset]) ??
-        style.color
-    );
+    return style.color;
 };
 
 /** Colours for `container`. */

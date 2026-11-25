@@ -1,8 +1,8 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/catalog";
-import type { Body } from "@cpluspatch/sim";
+import { PRESETS, solarSystem } from "@cpluspatch/catalog";
+import { type Body, expandBody } from "@cpluspatch/sim";
 import { assert, assertEquals } from "@std/assert";
-import { BODY_COLORS, colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
+import { colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 
 const body = (
     id: string,
@@ -19,16 +19,22 @@ const body = (
     ...(options.preset === undefined ? {} : { preset: options.preset }),
 });
 
+const expanded = (...args: Parameters<typeof body>): Body =>
+    expandBody(body(...args), PRESETS);
+
 Deno.test("an explicit colour wins over the preset and the kind", () => {
-    const earth = body("earth", "planet", { color: "gold", preset: "earth" });
+    const earth = expanded("earth", "planet", {
+        color: "gold",
+        preset: "earth",
+    });
 
     assertEquals(colorOf(earth, undefined), "gold");
 });
 
 Deno.test("a known preset wins over the kind", () => {
-    const earth = body("earth", "planet", { preset: "earth" });
+    const earth = expanded("earth", "planet", { preset: "earth" });
 
-    assertEquals(colorOf(earth, undefined), BODY_COLORS.earth);
+    assertEquals(colorOf(earth, undefined), "#62a7ff");
 });
 
 Deno.test("a body without a preset takes its kind's colour, whatever its id", () => {
@@ -59,8 +65,10 @@ Deno.test("the Sun and every planet have a colour of their own", () => {
         ({ tags }) => tags.includes("star") || tags.includes("planet"),
     );
 
-    for (const { id, preset } of named) {
-        assert(preset !== undefined && preset in BODY_COLORS, id);
+    for (const planet of named) {
+        const { appearance } = expandBody(planet, PRESETS);
+
+        assert(appearance !== undefined, planet.id);
     }
 });
 
@@ -74,7 +82,7 @@ const satellite = (color?: string): Body => ({
 });
 
 Deno.test("a spacecraft around a body with preset earth takes its orbit class's colour", () => {
-    const host = body("home", "planet", { preset: "earth" });
+    const host = expanded("home", "planet", { preset: "earth" });
 
     assertEquals(colorOf(satellite(), host), ORBIT_CLASS_COLORS.leo);
 });
@@ -92,7 +100,7 @@ Deno.test("a spacecraft around another body keeps its kind's colour", () => {
 });
 
 Deno.test("a spacecraft's own colour wins over its orbit class", () => {
-    const host = body("home", "planet", { preset: "earth" });
+    const host = expanded("home", "planet", { preset: "earth" });
 
     assertEquals(colorOf(satellite("gold"), host), "gold");
 });

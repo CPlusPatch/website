@@ -1,5 +1,12 @@
 import type { Burn, ElementsResult } from "@cpluspatch/orbit";
-import type { Command, Document, Scenario, System } from "@cpluspatch/sim";
+import { colorOf } from "@cpluspatch/render";
+import type {
+    Body,
+    Command,
+    Document,
+    Scenario,
+    System,
+} from "@cpluspatch/sim";
 import { previewBurn } from "../burning.ts";
 import type { Scene } from "./scene.ts";
 
@@ -22,6 +29,15 @@ export class DocumentStore {
     /** How many scenarios have been loaded. A body edit replaces `doc` too, but doesn't count. */
     get loads(): number {
         return this.#scene.loads;
+    }
+
+    /** The colour of `body`, read from the system's bodies, which have their presets filled in. */
+    colorOf(body: Body, parent: Body | undefined): string {
+        const system = this.system;
+        const expanded = (b: Body): Body =>
+            system.index.has(b.id) ? system.body(b.id) : b;
+
+        return colorOf(expanded(body), parent && expanded(parent));
     }
 
     /** Runs a command on one body. A rejected command changes nothing. */

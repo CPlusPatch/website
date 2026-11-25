@@ -10,7 +10,6 @@ const REFRESH_MS = 250;
 import { apoapsis, periapsis, trueAnomalyAt } from "@cpluspatch/orbit";
 import {
     type AUnit,
-    colorOf,
     type EditScene,
     styleOf,
     type Units,
@@ -115,8 +114,8 @@ const refresh = () => {
         );
         const drawn = {
             parentRadius: around.mass.radius,
-            bodyColor: colorOf(selected, around),
-            parentColor: colorOf(around, grandparent),
+            bodyColor: documents.colorOf(selected, around),
+            parentColor: documents.colorOf(around, grandparent),
             unit,
         };
 
@@ -325,7 +324,9 @@ $effect(() => {
                 <span
                     class="orrery__orbit-marker"
                     hidden={adding}
-                    style:color={body ? colorOf(body, parent) : undefined}
+                    style:color={body
+                        ? documents.colorOf(body, parent)
+                        : undefined}
                     >{@html body ? bodyMarker(body) : ""}</span
                 ><span>{title}</span>
             </h2>

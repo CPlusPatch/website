@@ -1,13 +1,8 @@
 <script lang="ts">
 import { AU } from "@cpluspatch/orbit";
-import {
-    type AUnit,
-    colorOf,
-    formatRange,
-    listUnit,
-    styleOf,
-} from "@cpluspatch/render";
+import { type AUnit, formatRange, listUnit, styleOf } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
+import { getDocument } from "../../state/context.ts";
 import { rail } from "../../systems.ts";
 import { named } from "./nav.ts";
 
@@ -24,6 +19,7 @@ type Props = {
 
 const { body, bodies, metres, active, chosen }: Props = $props();
 
+const documents = getDocument();
 const unit = $derived(listUnit([metres.lo, metres.hi], chosen));
 // Ticks on powers of ten of the shown unit, so AU labels read 1 and 10, not 0.6685.
 const scale = $derived(
@@ -65,7 +61,7 @@ const labelled = $derived(
     {/each}
     <i
         class="orrery__search-rail-primary"
-        style:--orrery-rail-colour={colorOf(body, parent)}
+        style:--orrery-rail-colour={documents.colorOf(body, parent)}
     ></i>
     {#each scale.marks as { body: child, at } (child.id)}
         <i
@@ -74,7 +70,7 @@ const labelled = $derived(
                 styleOf(child).craft && "orrery__search-rail-mark--craft",
             ]}
             style:--at={String(at)}
-            style:--orrery-rail-colour={colorOf(child, body)}
+            style:--orrery-rail-colour={documents.colorOf(child, body)}
             data-active={child.id === active ? "" : undefined}
         ></i>
     {/each}

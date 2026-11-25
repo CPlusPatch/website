@@ -89,7 +89,7 @@ A body's `rotation` is data. `sim/src/rotation/index.ts` is the registry, keyed 
 
 `iau` records keep NAIF's units, so the tables in `catalog/src/presets/` can be checked against `pck00011.tpc`. Everything else in `sim` is SI.
 
-A preset in `catalog/src/presets/` fills a body's missing `rotation` and `gravity`. `compile(doc, presets)` and `expandPresets` do it, and a field set on the body wins. The document keeps bodies as written.
+A preset in `catalog/src/presets/` fills a body's missing `rotation` and `gravity`, and merges its `appearance` into the body's by key. `compile(doc, presets)` and `expandPresets` do it, and a field set on the body wins. The document keeps bodies as written, so `render` and the UI read colour from `System.body(id)`, which has the preset filled in.
 
 ## Gravity and perturbations
 

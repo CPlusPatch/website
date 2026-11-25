@@ -1,7 +1,8 @@
 <script lang="ts">
-import { colorOf, roleOf, styleOf } from "@cpluspatch/render";
+import { roleOf, styleOf } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import { marked } from "../../search.ts";
+import { getDocument } from "../../state/context.ts";
 import { system } from "../../systems.ts";
 import { bodyMarker } from "../body-marker.ts";
 import { ROLE_LABELS } from "../labels.ts";
@@ -42,6 +43,7 @@ const {
 const CHEVRON =
     '<svg viewBox="0 0 8 12" aria-hidden="true" focusable="false"><path d="M1.5 1.5 6.5 6l-5 4.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
+const documents = getDocument();
 const parent = $derived(
     bodies.find((candidate) => candidate.id === body.orbit?.parent),
 );
@@ -90,7 +92,7 @@ const opens = $derived(
 >
     <span
         class="orrery__search-marker orrery__search-marker--row"
-        style:color={colorOf(body, parent)}
+        style:color={documents.colorOf(body, parent)}
         >{@html bodyMarker(body)}</span
     >
     {#if query === undefined}

@@ -167,16 +167,17 @@ const assemble = (
 
     const theme = createTheme(container);
     cleanup.push(theme.stop);
+    // The system's bodies have their presets filled in, which colour and appearance read.
+    const expanded = (id: string | undefined): Body | undefined =>
+        id !== undefined && source.system.index.has(id)
+            ? source.system.body(id)
+            : undefined;
     const colorOf = (body: Body) =>
-        theme.color(
-            body,
-            source.scenario.bodies.find(
-                (other) => other.id === body.orbit?.parent,
-            ),
-        );
+        theme.color(body, expanded(body.orbit?.parent));
+    const order = source.order.map((body) => source.system.body(body.id));
     const orbits = createOrbits(
         scene,
-        source.order,
+        order,
         colorOf,
         theme.background(),
         theme.pick(),
@@ -188,18 +189,12 @@ const assemble = (
         matchMedia("(prefers-contrast: more)").matches;
     const progress = createLoadingProgress({ sky: !plain, onLoading });
     cleanup.push(progress.destroy);
-    const bodies = createBodies(
-        scene,
-        labels.domElement,
-        source.order,
-        colorOf,
-        {
-            maps: !plain,
-            images: assets.map,
-            anisotropy: renderer.capabilities.getMaxAnisotropy(),
-            onMaps: progress.maps,
-        },
-    );
+    const bodies = createBodies(scene, labels.domElement, order, colorOf, {
+        maps: !plain,
+        images: assets.map,
+        anisotropy: renderer.capabilities.getMaxAnisotropy(),
+        onMaps: progress.maps,
+    });
     cleanup.push(bodies.dispose);
 
     // The scene is rebuilt when the first cloud's host comes or goes, so the host is fixed here.
@@ -481,7 +476,7 @@ const assemble = (
             satellites.onWorld(event);
             describe();
         } else if (event.type === "body") {
-            const body = source.scenario.bodies.find((b) => b.id === event.id);
+            const body = expanded(event.id);
             if (body) {
                 orbits.rebuild(body);
                 bodies.recolor(body);
@@ -493,7 +488,7 @@ const assemble = (
 
     return {
         ghost: (id, elements) => {
-            const body = source.order.find((candidate) => candidate.id === id);
+            const body = expanded(id);
             if (body) orbits.ghost(body, elements);
             ghostShown = body !== undefined && elements !== null;
         },
@@ -504,9 +499,7 @@ const assemble = (
                 bodies.remove(id);
             }
             for (const id of added) {
-                const body = source.scenario.bodies.find(
-                    (candidate) => candidate.id === id,
-                );
+                const body = expanded(id);
                 if (!body) continue;
 
                 orbits.add(body);

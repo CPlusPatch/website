@@ -1,5 +1,4 @@
 <script lang="ts">
-import { colorOf } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import { untrack } from "svelte";
 import { getDocument, getView } from "../../state/context.ts";
@@ -126,7 +125,7 @@ $effect(() => {
                     >
                         <span
                             class="orrery__orbit-chip-marker"
-                            style:color={colorOf(child, centre)}
+                            style:color={documents.colorOf(child, centre)}
                             >{@html bodyMarker(child)}</span
                         >{child.name}
                     </button>

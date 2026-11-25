@@ -1,11 +1,7 @@
 <script lang="ts">
-import {
-    colorOf,
-    formatDuration,
-    formatRadius,
-    styleOf,
-} from "@cpluspatch/render";
+import { formatDuration, formatRadius, styleOf } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
+import { getDocument } from "../../state/context.ts";
 import { facts } from "../../systems.ts";
 import { bodyMarker } from "../body-marker.ts";
 
@@ -19,6 +15,7 @@ type Props = {
 
 const { body, bodies, picked, range, onact }: Props = $props();
 
+const documents = getDocument();
 const parent = $derived(
     bodies.find((candidate) => candidate.id === body.orbit?.parent),
 );
@@ -35,7 +32,7 @@ const entries = $derived.by((): [string, string][] => {
 <div class="orrery__search-title" data-id={body.id}>
     <span
         class="orrery__search-marker orrery__search-marker--head"
-        style:color={colorOf(body, parent)}
+        style:color={documents.colorOf(body, parent)}
         >{@html bodyMarker(body)}</span
     >
     <h2>{body.name}</h2>

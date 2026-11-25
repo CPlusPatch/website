@@ -1,5 +1,4 @@
 <script lang="ts">
-import { colorOf } from "@cpluspatch/render";
 import { getDocument, getView } from "../state/context.ts";
 import { bodyMarker } from "./body-marker.ts";
 import { focusPath } from "./crumbs.ts";
@@ -28,7 +27,7 @@ const crumbs = $derived.by((): Crumb[] => {
         name: body.name,
         marker: {
             svg: bodyMarker(body),
-            color: colorOf(body, path[at - 1]),
+            color: documents.colorOf(body, path[at - 1]),
         },
         current: body.id === view.focus && !satellite,
         onClick: () => view.setFocus(body.id),
