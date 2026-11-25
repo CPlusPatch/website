@@ -202,10 +202,9 @@ const assemble = (
     );
     cleanup.push(bodies.dispose);
 
-    // The scene is rebuilt when a body with model "earth" comes or goes, so the host is fixed here.
-    const host = source.scenario.hasSatellites
-        ? source.scenario.bodies.find((body) => body.model === "earth")
-        : undefined;
+    // The scene is rebuilt when the first cloud's host comes or goes, so the host is fixed here.
+    const hostId = source.scenario.clouds?.[0]?.host;
+    const host = source.scenario.bodies.find((body) => body.id === hostId);
     const swarm = createSwarm(scene, theme, () =>
         assets.swarm(host?.mass.mu ?? 0),
     );

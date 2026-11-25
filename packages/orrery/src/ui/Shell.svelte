@@ -109,11 +109,8 @@ const showNotice = (
 ) => notices?.show(variant, text, clearAfterMs);
 
 const satelliteGroups = () => satellites?.groups() ?? readSatellites(storage);
-// The body the satellites orbit, which is the first with model "earth".
-const satelliteHost = () =>
-    scene.scenario.hasSatellites
-        ? scene.scenario.bodies.find((body) => body.model === "earth")?.id
-        : undefined;
+// The body the satellites orbit, which is the first cloud's host.
+const satelliteHost = () => scene.scenario.clouds?.[0]?.host;
 // The host the current view was built with.
 let builtHost: string | undefined;
 

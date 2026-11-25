@@ -63,7 +63,7 @@ export type SatelliteFocusDeps = {
     /** Focuses a body. Must act before it returns, as `focusing` relies on it. */
     onFocus: (id: string) => void;
     swarm: SwarmLayer;
-    /** The body with model "earth", or `undefined` when the scenario has no satellites. */
+    /** The first cloud's host, or `undefined` when the scenario has no clouds. */
     host: Body | undefined;
     rig: Rig;
     camera: PerspectiveCamera;

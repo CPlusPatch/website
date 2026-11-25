@@ -43,6 +43,12 @@ const valid: Scenario = {
     ],
 };
 
+const satellites = {
+    id: "satellites",
+    host: "earth",
+    source: "celestrak-snapshot",
+};
+
 const secular = {
     type: "secular" as const,
     pole: { x: 0, y: 0, z: 1 },
@@ -129,9 +135,11 @@ Deno.test("the built-in scenarios validate, and Earth has its model", () => {
     const earth = solarSystem.bodies.find((b) => b.id === "earth");
 
     assertEquals(earth?.model, "earth");
-    assertEquals(solarSystem.hasSatellites, true);
+    assertEquals(solarSystem.clouds, [
+        { id: "satellites", host: "earth", source: "celestrak-snapshot" },
+    ]);
     assertEquals(kerbol.bodies.find((b) => b.id === "kerbin")?.model, "kerbin");
-    assert(!("hasSatellites" in kerbol));
+    assert(!("clouds" in kerbol));
 });
 
 Deno.test("a version 1 scenario gets models from its ids and satellites for Earth", () => {
@@ -139,7 +147,7 @@ Deno.test("a version 1 scenario gets models from its ids and satellites for Eart
 
     assert(result.ok);
     assertEquals(result.scenario.version, 3);
-    assertEquals(result.scenario.hasSatellites, true);
+    assertEquals(result.scenario.clouds, [satellites]);
     assertEquals(at(result.scenario.bodies, 0).model, "sun");
     assertEquals(at(result.scenario.bodies, 1).model, "earth");
 });
@@ -153,7 +161,7 @@ Deno.test("a version 1 scenario without Earth has no satellites", () => {
 
     assert(result.ok);
     assertEquals(result.scenario.version, 3);
-    assert(!("hasSatellites" in result.scenario));
+    assert(!("clouds" in result.scenario));
 });
 
 Deno.test("a version 1 body with an unknown id gets no model", () => {
@@ -165,7 +173,7 @@ Deno.test("a version 1 body with an unknown id gets no model", () => {
 
     assert(result.ok);
     assert(!("model" in planet(result.scenario)));
-    assert(!("hasSatellites" in result.scenario));
+    assert(!("clouds" in result.scenario));
 });
 
 Deno.test("a version 1 scenario ignores model and hasSatellites", () => {
@@ -185,7 +193,7 @@ Deno.test("a version 1 scenario ignores model and hasSatellites", () => {
     assert(result.ok);
     assertEquals(at(result.scenario.bodies, 0).model, "sun");
     assert(!("model" in planet(result.scenario)));
-    assert(!("hasSatellites" in result.scenario));
+    assert(!("clouds" in result.scenario));
 });
 
 Deno.test("a version 3 body named Earth keeps no model and adds no satellites", () => {
@@ -193,20 +201,110 @@ Deno.test("a version 3 body named Earth keeps no model and adds no satellites", 
 
     assert(result.ok);
     assert(!("model" in planet(result.scenario)));
-    assert(!("hasSatellites" in result.scenario));
+    assert(!("clouds" in result.scenario));
 });
 
-Deno.test("a model and hasSatellites are kept in version 3", () => {
+Deno.test("a model is kept in version 3", () => {
     const scenario = structuredClone(valid);
 
-    scenario.hasSatellites = true;
     planet(scenario).model = "earth";
 
     const result = validateScenario(scenario);
 
     assert(result.ok);
     assertEquals(planet(result.scenario).model, "earth");
-    assertEquals(result.scenario.hasSatellites, true);
+    assert(!("clouds" in result.scenario));
+});
+
+Deno.test("a version 2 scenario with hasSatellites gets a cloud on its first Earth model", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).model = "earth";
+
+    const result = validateScenario({ ...old, hasSatellites: true });
+
+    assert(result.ok);
+    assertEquals(result.scenario.clouds, [satellites]);
+});
+
+Deno.test("a version 2 scenario with hasSatellites but no Earth model gets no cloud", () => {
+    const result = validateScenario({ ...legacy(2), hasSatellites: true });
+
+    assert(result.ok);
+    assert(!("clouds" in result.scenario));
+});
+
+Deno.test("a version 3 scenario ignores hasSatellites", () => {
+    const scenario = structuredClone(valid);
+
+    planet(scenario).model = "earth";
+    Object.assign(scenario, { hasSatellites: true });
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assert(!("clouds" in result.scenario));
+    assert(!("hasSatellites" in result.scenario));
+});
+
+Deno.test("a version 3 cloud is kept", () => {
+    const scenario = structuredClone(valid);
+
+    scenario.clouds = [
+        satellites,
+        { ...satellites, id: "debris", host: "sun" },
+    ];
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assertEquals(result.scenario, scenario);
+});
+
+Deno.test("an empty clouds array is dropped", () => {
+    const scenario = structuredClone(valid);
+
+    scenario.clouds = [];
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assert(!("clouds" in result.scenario));
+});
+
+Deno.test("a cloud with a bad field is rejected with its path", () => {
+    const cases: [unknown, string][] = [
+        [
+            [{ ...satellites, host: "mars" }],
+            'clouds[0].host: there is no body "mars"',
+        ],
+        [
+            [{ ...satellites, host: 3 }],
+            "clouds[0].host: must be a string (got 3)",
+        ],
+        [
+            [satellites, { ...satellites, host: "sun" }],
+            'clouds[1].id: must be unique (got "satellites")',
+        ],
+        [
+            [{ ...satellites, id: "Not Slug" }],
+            `clouds[0].id: must match ${/^[a-z0-9-]+$/} (got "Not Slug")`,
+        ],
+        [
+            [{ ...satellites, source: "No_Slug" }],
+            `clouds[0].source: must match ${/^[a-z0-9-]+$/} (got "No_Slug")`,
+        ],
+        [[7], "clouds[0]: must be an object (got 7)"],
+        ["x", 'clouds: must be an array (got "x")'],
+    ];
+
+    for (const [clouds, expected] of cases) {
+        const errors = errorsAfter((s) => {
+            Object.assign(s, { clouds });
+        });
+
+        assertEquals(errors, [expected]);
+    }
 });
 
 Deno.test("an unknown model is rejected", () => {
@@ -221,13 +319,14 @@ Deno.test("an unknown model is rejected", () => {
     );
 });
 
-Deno.test("hasSatellites other than true is rejected", () => {
-    const errors = errorsAfter((s) => {
-        Object.assign(s, { hasSatellites: false });
-    });
+Deno.test("a version 2 hasSatellites other than true is rejected", () => {
+    const result = validateScenario({ ...legacy(2), hasSatellites: false });
 
+    assert(!result.ok);
     assert(
-        errors.includes("hasSatellites: must be true when set (got boolean)"),
+        result.errors.includes(
+            "hasSatellites: must be true when set (got boolean)",
+        ),
     );
 });
 

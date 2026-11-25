@@ -120,10 +120,13 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
         if (body.orbit === undefined) return fail(`id: "${id}" is the root.`);
 
         const gone = new Set(subtreeIds(scenario, id));
+        const { clouds, ...rest } = scenario;
+        const kept = clouds?.filter((cloud) => !gone.has(cloud.host)) ?? [];
 
         return finish(
             {
-                ...scenario,
+                ...rest,
+                ...(kept.length ? { clouds: kept } : {}),
                 bodies: scenario.bodies.filter(
                     (candidate) => !gone.has(candidate.id),
                 ),

@@ -59,6 +59,9 @@ export type OrbitingBody = Body & { orbit: BodyOrbit };
 export const isOrbiting = (body: Body): body is OrbitingBody =>
     body.orbit !== undefined;
 
+/** A catalogue of small bodies drawn around `host`. `source` names the catalogue, like `"celestrak-snapshot"`. */
+export type Cloud = { id: string; host: string; source: string };
+
 /** A set of bodies in one tree, with an optional start time. */
 export type Scenario = {
     /** Format version. */
@@ -67,8 +70,8 @@ export type Scenario = {
     name: string;
     /** The initial time in seconds since J2000. Absent means now. */
     time?: number;
-    /** Draws the Earth satellite catalogue around the body with model `"earth"`. Absent means no. */
-    hasSatellites?: true;
+    /** The small-body catalogues to draw. Absent means none. */
+    clouds?: Cloud[];
     /** The bodies, in any order. Exactly one has no orbit. */
     bodies: Body[];
 };
@@ -356,6 +359,65 @@ const validatePerturbations = (
         const rates = validatePrecession(itemPath, item, errors);
 
         if (rates) parsed.push({ type, ...rates });
+    });
+
+    return parsed;
+};
+
+const validateClouds = (
+    input: unknown,
+    bodyIds: Set<string>,
+    errors: string[],
+): Cloud[] => {
+    if (!Array.isArray(input)) {
+        errors.push(`clouds: must be an array (got ${show(input)})`);
+
+        return [];
+    }
+
+    const seen = new Set<string>();
+    const parsed: Cloud[] = [];
+
+    input.forEach((item: unknown, i) => {
+        const path = `clouds[${i}]`;
+
+        if (!isRecord(item)) {
+            errors.push(`${path}: must be an object (got ${show(item)})`);
+
+            return;
+        }
+
+        const { id, host, source } = item;
+        const before = errors.length;
+
+        if (typeof id !== "string" || !SLUG.test(id)) {
+            errors.push(`${path}.id: must match ${SLUG} (got ${show(id)})`);
+        } else if (seen.has(id)) {
+            errors.push(`${path}.id: must be unique (got ${show(id)})`);
+        } else {
+            seen.add(id);
+        }
+
+        if (typeof host !== "string") {
+            errors.push(`${path}.host: must be a string (got ${show(host)})`);
+        } else if (!bodyIds.has(host)) {
+            errors.push(`${path}.host: there is no body ${show(host)}`);
+        }
+
+        if (typeof source !== "string" || !SLUG.test(source)) {
+            errors.push(
+                `${path}.source: must match ${SLUG} (got ${show(source)})`,
+            );
+        }
+
+        if (
+            errors.length === before &&
+            typeof id === "string" &&
+            typeof host === "string" &&
+            typeof source === "string"
+        ) {
+            parsed.push({ id, host, source });
+        }
     });
 
     return parsed;
@@ -790,7 +852,14 @@ export const validateScenario = (
     }
 
     const errors: string[] = [];
-    const { version, name, time, hasSatellites, bodies: inputs } = input;
+    const {
+        version,
+        name,
+        time,
+        hasSatellites,
+        clouds: inputClouds,
+        bodies: inputs,
+    } = input;
     const validVersion =
         version === 1 || version === 2 || version === 3 ? version : null;
 
@@ -799,7 +868,7 @@ export const validateScenario = (
     }
 
     if (
-        (validVersion === 2 || validVersion === 3) &&
+        validVersion === 2 &&
         hasSatellites !== undefined &&
         hasSatellites !== true
     ) {
@@ -862,15 +931,34 @@ export const validateScenario = (
         validateTree(inputs, validVersion ?? 2, errors);
     }
 
+    // Version 3 only: older files get their cloud from `hasSatellites` or the Earth id.
+    const parsedClouds =
+        validVersion === 3 && inputClouds !== undefined
+            ? validateClouds(
+                  inputClouds,
+                  new Set(bodies.map((body) => body.id)),
+                  errors,
+              )
+            : [];
+
     if (errors.length > 0 || validName === null) {
         return { ok: false, errors };
     }
 
     // A version 1 file had no models, so Earth's id stood for them and for the satellites.
-    const satellites =
-        validVersion === 1
-            ? bodies.some((body) => body.id === "earth")
-            : hasSatellites === true;
+    const filled = validVersion === 1 ? fillModels(bodies) : bodies;
+    const earth = filled.find((body) => body.model === "earth");
+    let clouds = parsedClouds;
+
+    if (
+        validVersion !== 3 &&
+        earth &&
+        (validVersion === 1 || hasSatellites === true)
+    ) {
+        clouds = [
+            { id: "satellites", host: earth.id, source: "celestrak-snapshot" },
+        ];
+    }
 
     return {
         ok: true,
@@ -878,8 +966,8 @@ export const validateScenario = (
             version: 3,
             name: validName,
             ...(validTime === undefined ? {} : { time: validTime }),
-            ...(satellites ? { hasSatellites: true } : {}),
-            bodies: validVersion === 1 ? fillModels(bodies) : bodies,
+            ...(clouds.length ? { clouds } : {}),
+            bodies: filled,
         },
     };
 };

@@ -89,6 +89,18 @@ Deno.test("remove-body drops the body and its subtree", () => {
     );
 });
 
+Deno.test("remove-body drops the clouds hosted in the subtree", () => {
+    const next = ok(apply(doc, { type: "remove-body", id: "earth" }));
+
+    assert(!("clouds" in next.scenario));
+});
+
+Deno.test("remove-body keeps the clouds hosted elsewhere", () => {
+    const next = ok(apply(doc, { type: "remove-body", id: "iss" }));
+
+    assertEquals(next.scenario.clouds, solarSystem.clouds);
+});
+
 Deno.test("remove-body of an unknown id is an error", () => {
     assertEquals(errors(apply(doc, { type: "remove-body", id: "nope" })), [
         'id: there is no body "nope"',

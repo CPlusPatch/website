@@ -190,7 +190,7 @@ const SUN_MU = 1.32712440041e20;
 export const solarSystem: Scenario = {
     version: 3,
     name: "Solar System",
-    hasSatellites: true,
+    clouds: [{ id: "satellites", host: "earth", source: "celestrak-snapshot" }],
     bodies: fillModels([
         {
             id: "sun",
