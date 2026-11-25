@@ -1,12 +1,4 @@
 import { h } from "@cpluspatch/render";
-import type { Scenario } from "@cpluspatch/sim";
-import type { World } from "../../world.ts";
-
-/** The scenario as it is now, with the clock's time. */
-export const current = (world: World): Scenario => ({
-    ...world.scenario,
-    time: world.clock.t,
-});
 
 /** The file name for a scenario called `name`. */
 export const fileName = (name: string): string => {

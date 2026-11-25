@@ -46,7 +46,7 @@ import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
 import { createSatelliteCard } from "./ui/satellite-card.ts";
 import { createSatelliteMenu } from "./ui/satellite-menu.ts";
-import { createScenarios } from "./ui/scenario-menu/scenario-menu.ts";
+import ScenarioMenu from "./ui/scenario-menu/ScenarioMenu.svelte";
 import { createSearch, type Search } from "./ui/search.ts";
 import { sheetSpace } from "./ui/sheet.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
@@ -156,7 +156,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             : ".orrery__panel--bottom > :not([hidden])";
 
         for (const card of root.querySelectorAll(
-            ".orrery__panel--top > :not([hidden])",
+            ".orrery__panel--top > :not([hidden], dialog)",
         )) {
             const box = card.getBoundingClientRect();
             if (box.height > 0) {
@@ -429,13 +429,16 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     // The search panel isn't in a .orrery__panel, so it covers the scene without moving the labels.
     search = createSearch(root, world, units, openAdd);
     top?.insertBefore(search.toggle, firstInTop);
-    const scenarios = createScenarios(root, world, storage, () => openAdd());
-    top?.append(
-        scenarios.toggle,
-        satellites.element,
-        keys.toggle,
-        notices.element,
-    );
+    top?.append(satellites.element, keys.toggle, notices.element);
+    // Mounted last, so the toggle can go right before the satellites menu.
+    const scenarios = top
+        ? mountComponent(ScenarioMenu, {
+              target: top,
+              anchor: satellites.element,
+              context: storeContext(documentStore, viewState),
+              props: { storage, openAdd: () => openAdd() },
+          })
+        : null;
     satellites.setAvailable(satelliteHost() !== undefined);
     root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
@@ -624,7 +627,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             root.style.removeProperty("--orrery-bottom-space");
             live.remove();
             unbind();
-            scenarios.destroy();
+            if (scenarios) void unmount(scenarios);
             satellites.destroy();
             search?.destroy();
             if (timeBar) void unmount(timeBar);
