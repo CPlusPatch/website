@@ -13,6 +13,8 @@
 
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--space-sm) 0.75rem;
+        /* An error under one field would otherwise push its neighbour's stepper down. */
+        align-items: start;
 
         > :is(.orrery__form-hint, .orrery__warning) {
             grid-column: 1 / -1;
@@ -56,6 +58,13 @@
 
         &:has([aria-invalid="true"]) {
             border-color: var(--orrery-abort);
+        }
+
+        /* The unit is set smaller, so centring it would lift it off the number's baseline. */
+        &:has(.orrery__stepper-unit:not(:empty))
+            > :is(input, .orrery__stepper-unit) {
+            align-self: baseline;
+            block-size: 100%;
         }
 
         input {
@@ -137,6 +146,8 @@
         inline-size: calc(3ch + 0.375rem);
         padding-inline-end: 0.375rem;
         white-space: nowrap;
+        /* On the number's baseline exactly, the small unit and its underline read as low. */
+        translate: 0 -0.1em;
         color: var(--orrery-muted);
         font-size: var(--orrery-size-xs);
         font-variant-numeric: tabular-nums;
