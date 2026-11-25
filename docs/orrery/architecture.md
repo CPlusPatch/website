@@ -40,7 +40,21 @@ Deno can't run `.svelte.ts` files. The logic and its tests stay in plain `.ts`, 
 
 The clock isn't held. `render` ticks it every frame, so `ViewState.clock` copies its flags from the scene's `clock` and `scenario` events, and `now()` reads its time. Components update in Svelte's next microtask, so code that reads their DOM right after a scene call sees the old DOM.
 
-`mount()` gets the stores through `storeContext()`, and components read them with `getDocument()` and `getView()`. Today only the focus crumbs (`ui/Crumbs.svelte`) are a component. They're mounted into the vanilla shell in `index.ts`.
+`ui/Shell.svelte` makes the stores and passes them down with `setStores()`. Components read them with `getDocument()` and `getView()`.
+
+## Shell
+
+`orbits.astro` renders the loading state and `<Orrery client:only="svelte" />` inside `.orrery`. The components:
+
+| Component         | Does                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `Orrery.svelte`   | Opens the scenario from the share link or the saved copy, then renders `Shell`. Owns the live region. |
+| `Shell.svelte`    | Makes the stores, session, shortcuts and sound, and renders the four panels                           |
+| `Viewport.svelte` | Holds the canvas and the `render` view, or the WebGL alert                                            |
+
+`Viewport.build()` is a method, not reactive, because the session's `rebuild` must throw when a scenario can't be drawn. The components that read the view (the inspector, the satellite card, the HUD) sit in `{#key view}`, so a rebuild makes them again.
+
+When Orrery's startup throws, it replaces the loading text with an error. When its chunk won't download, Astro fires `astro:hydration-error` on the island, and the page script shows the same text.
 
 ## Temporary exceptions
 

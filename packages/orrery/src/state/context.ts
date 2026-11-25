@@ -1,24 +1,20 @@
-import { getContext } from "svelte";
+import { getContext, setContext } from "svelte";
 import type { DocumentStore } from "./document.svelte.ts";
 import type { ViewState } from "./view.svelte.ts";
 
 const DOCUMENT = Symbol("orrery.document");
 const VIEW = Symbol("orrery.view");
 
-/** The context for `mount()` that gives components these stores. */
-export const storeContext = (
-    doc: DocumentStore,
-    view: ViewState,
-): Map<symbol, unknown> =>
-    new Map<symbol, unknown>([
-        [DOCUMENT, doc],
-        [VIEW, view],
-    ]);
+/** Gives the components below the current one these stores. */
+export const setStores = (doc: DocumentStore, view: ViewState): void => {
+    setContext(DOCUMENT, doc);
+    setContext(VIEW, view);
+};
 
 const need = <T>(key: symbol, name: string): T => {
     const value = getContext<T | undefined>(key);
     if (value === undefined) {
-        throw new Error(`No ${name} in context. Mount with storeContext().`);
+        throw new Error(`No ${name} in context. Call setStores() in a parent.`);
     }
 
     return value;

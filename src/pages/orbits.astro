@@ -2,6 +2,7 @@
 /** The Orrery: a 3D model of the solar system, the Moon and the ISS. */
 
 import { Font } from "astro:assets";
+import { Orrery } from "@cpluspatch/orrery";
 import "@cpluspatch/orrery/styles.css";
 import Layout from "../layouts/desktop.astro";
 ---
@@ -33,7 +34,6 @@ import Layout from "../layouts/desktop.astro";
     <main id="main">
         <h1 class="visually-hidden">Orbits</h1>
         <div class="orrery">
-            <div class="orrery__canvas"></div>
             <div class="orrery__loading" role="status">
                 <p class="orrery__loading-text">
                     <span class="orrery__loading-stage">Loading orbits</span>
@@ -54,32 +54,21 @@ import Layout from "../layouts/desktop.astro";
                     Turn on JavaScript to see the orbits.
                 </p>
             </noscript>
-            <div class="orrery__panel orrery__panel--top" hidden>
-                <span class="orrery__spacer"></span>
-            </div>
-            <div class="orrery__panel orrery__panel--right" hidden></div>
-            <div class="orrery__panel orrery__panel--hud" hidden></div>
-            <div class="orrery__panel orrery__panel--bottom" hidden></div>
+            <Orrery client:only="svelte" />
         </div>
     </main>
 </Layout>
 
 <script>
-import { loadOrrery } from "../lib/orrery.ts";
-
 const root = document.querySelector<HTMLElement>(".orrery");
-if (root) {
-    try {
-        await loadOrrery(root);
-    } catch (error) {
-        const text = root.querySelector(".orrery__loading-text");
-        if (text) {
-            text.textContent =
-                "Orbits couldn't load. Reload the page to try again.";
-        }
-        root.querySelector(".orrery__loading-bar")?.remove();
 
-        throw error;
+// Orrery shows this itself when its startup throws, so this covers a chunk that won't load.
+root?.addEventListener("astro:hydration-error", () => {
+    const text = root.querySelector(".orrery__loading-text");
+    if (text) {
+        text.textContent =
+            "Orbits couldn't load. Reload the page to try again.";
     }
-}
+    root.querySelector(".orrery__loading-bar")?.remove();
+});
 </script>
