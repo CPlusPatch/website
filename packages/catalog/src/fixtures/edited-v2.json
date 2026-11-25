@@ -1,0 +1,113 @@
+{
+    "version": 2,
+    "name": "My inner system",
+    "time": 800000000,
+    "bodies": [
+        {
+            "id": "sun",
+            "name": "Sun",
+            "kind": "star",
+            "parent": null,
+            "mu": 1.32712440018e20,
+            "radius": 695700000,
+            "color": "#ffd27a",
+            "elements": null
+        },
+        {
+            "id": "earth",
+            "name": "Earth",
+            "kind": "planet",
+            "parent": "sun",
+            "mu": 3.986004418e14,
+            "radius": 6371008.4,
+            "model": "earth",
+            "elements": {
+                "a": 149598023000,
+                "e": 0.0167,
+                "i": 0,
+                "raan": 0,
+                "argp": 1.7966,
+                "m0": 6.2401,
+                "epoch": 0
+            }
+        },
+        {
+            "id": "moon",
+            "name": "Moon",
+            "kind": "moon",
+            "parent": "earth",
+            "mu": 4.9028e12,
+            "radius": 1737400,
+            "model": "moon",
+            "elements": {
+                "a": 384399000,
+                "e": 0.0549,
+                "i": 0.0898,
+                "raan": 2.1824,
+                "argp": 5.5527,
+                "m0": 2.3562,
+                "epoch": 0
+            },
+            "precession": {
+                "pole": { "x": 0, "y": 0.3977771559, "z": 0.9174820621 },
+                "nodeRate": -1.0711e-8,
+                "argpRate": 2.2476e-8
+            }
+        },
+        {
+            "id": "station",
+            "name": "My station",
+            "kind": "spacecraft",
+            "role": "station",
+            "parent": "earth",
+            "mu": 0,
+            "radius": 50,
+            "color": "#9be3ff",
+            "elements": {
+                "a": 6790000,
+                "e": 0.001,
+                "i": 0.9006,
+                "raan": 1.2,
+                "argp": 0.5,
+                "m0": 3.1,
+                "epoch": 0
+            }
+        },
+        {
+            "id": "rock",
+            "name": "Rock",
+            "kind": "asteroid",
+            "parent": "sun",
+            "mu": 1e9,
+            "radius": 12000,
+            "color": "#c0805a",
+            "elements": {
+                "a": 330000000000,
+                "e": 0.18,
+                "i": 0.17,
+                "raan": 1.1,
+                "argp": 2.9,
+                "m0": 0.4,
+                "epoch": 0
+            }
+        },
+        {
+            "id": "mars",
+            "name": "Mars",
+            "kind": "planet",
+            "parent": "sun",
+            "mu": 4.2828e13,
+            "radius": 3389500,
+            "model": "mars",
+            "elements": {
+                "a": 227939366000,
+                "e": 0.0934,
+                "i": 0.0323,
+                "raan": 0.8653,
+                "argp": 5.0004,
+                "m0": 0.3379,
+                "epoch": 0
+            }
+        }
+    ]
+}

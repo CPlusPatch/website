@@ -2,6 +2,9 @@
 import { solarSystem } from "@cpluspatch/catalog";
 import { validateScenario } from "@cpluspatch/sim";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
+import edited from "../../catalog/src/fixtures/edited-v2.json" with {
+    type: "json",
+};
 import {
     decodeScenario,
     encodeScenario,
@@ -54,6 +57,19 @@ Deno.test("a scenario survives encoding and decoding", async () => {
     assert(expected.ok);
     assertEquals(result, expected);
     assertEquals(result.ok && result.scenario.time, 123456);
+});
+
+// Captured from `encodeScenario` on the edited-v2 fixture, so old links keep opening.
+const EDITED_V2_LINK =
+    "hZRNb9swDIb_SqBdU0ES9Zn7jr10x2EH1VFWo45tyM6wLMh_H21LsbIFrS82KZHi84r0hfwKcai7luzElrT-GMiOPJ83dduGuBnOwxiOZEvGelqwLD1b8trt6zCQ3fcLqfcYMpxacov_NhvvdTuvjD6idTyRHQdhuJCSMX5Lhbmi39cnzKWdMslVdU0XMfjL4bAXxmN872NoR7JrT02zJaEJRzSHxb5uUxXBx_FtreNrMlMlfePbMKZawFnNmJSpkqIKMJwxSyXu6_ahKdLmGhLtWsSFeKSTTjnLBMzp8HxGGddmS2r8nPL7dv7w8WePu6lxWuMZDI-kQjKOMX1XveGe6w3o2HWFrs-LlXDS2gQjHRP2f0G5ASMnRwZJITeODPYPCVgJzhUYSroFgzLrbGYRlFshM5CiSgmzAAkKSosCCM-MoQrD0mkX0ndNmN6_Z0XOU2ZwBh-ulHUwqYja_Jn8jhtpBdOCWWwPhalapHnxIyZ44pQZzsOTXapYvALlNBqdq47YhGN9J-V5s_pyp_a-ClX0h9wjhZSqbEr3GuBwwE1xxiiyf6asNo4Vuk6XPsuKXp1l5VRkTRlVi6BAH7ZH7Kr3lellsRKNx9GNHW5Ls_dg4Li4H7aKWab8p40OwIpkMwm3CYSbFYNnDEHdgsGmqXrQ5T4OxdUs1qOhlcKKR38OAOvUXaMvOT7mEMI4cKB1cSMOZO50EHCbWmq1grXTMUBmIgDjSqgf178";
+
+Deno.test("a share link from the version 2 encoder decodes to the same scenario", async () => {
+    const expected = validateScenario(edited);
+
+    const result = await decodeScenario(EDITED_V2_LINK);
+
+    assert(expected.ok);
+    assertEquals(result, expected);
 });
 
 Deno.test("an encoded scenario is URL-safe and smaller than its JSON", async () => {

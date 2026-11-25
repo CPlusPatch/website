@@ -1,0 +1,321 @@
+{
+    "version": 2,
+    "name": "Kerbol (Kerbal Space Program)",
+    "bodies": [
+        {
+            "id": "kerbol",
+            "name": "Kerbol",
+            "kind": "star",
+            "parent": null,
+            "mu": 1172332800000000000,
+            "radius": 261600000,
+            "elements": null,
+            "color": "#fff1c4",
+            "model": "kerbol"
+        },
+        {
+            "id": "moho",
+            "name": "Moho",
+            "kind": "planet",
+            "parent": "kerbol",
+            "mu": 168609380000,
+            "radius": 250000,
+            "elements": {
+                "a": 5263138304,
+                "e": 0.2,
+                "i": 0.12217304763960307,
+                "raan": 1.2217304763960306,
+                "argp": 0.2617993877991494,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#8a6a55",
+            "model": "moho"
+        },
+        {
+            "id": "eve",
+            "name": "Eve",
+            "kind": "planet",
+            "parent": "kerbol",
+            "mu": 8171730200000,
+            "radius": 700000,
+            "elements": {
+                "a": 9832684544,
+                "e": 0.01,
+                "i": 0.03665191429188092,
+                "raan": 0.2617993877991494,
+                "argp": 0,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#8b4fa8",
+            "model": "eve"
+        },
+        {
+            "id": "gilly",
+            "name": "Gilly",
+            "kind": "moon",
+            "parent": "eve",
+            "mu": 8289449.8,
+            "radius": 13000,
+            "elements": {
+                "a": 31500000,
+                "e": 0.55,
+                "i": 0.20943951023931953,
+                "raan": 1.3962634015954636,
+                "argp": 0.17453292519943295,
+                "m0": 0.9,
+                "epoch": 0
+            },
+            "color": "#a08a78",
+            "model": "gilly"
+        },
+        {
+            "id": "kerbin",
+            "name": "Kerbin",
+            "kind": "planet",
+            "parent": "kerbol",
+            "mu": 3531600000000,
+            "radius": 600000,
+            "elements": {
+                "a": 13599840256,
+                "e": 0,
+                "i": 0,
+                "raan": 0,
+                "argp": 0,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#4a7fb5",
+            "model": "kerbin"
+        },
+        {
+            "id": "mun",
+            "name": "Mun",
+            "kind": "moon",
+            "parent": "kerbin",
+            "mu": 65138398000,
+            "radius": 200000,
+            "elements": {
+                "a": 12000000,
+                "e": 0,
+                "i": 0,
+                "raan": 0,
+                "argp": 0,
+                "m0": 1.7,
+                "epoch": 0
+            },
+            "color": "#9a9a9a",
+            "model": "mun"
+        },
+        {
+            "id": "minmus",
+            "name": "Minmus",
+            "kind": "moon",
+            "parent": "kerbin",
+            "mu": 1765800000,
+            "radius": 60000,
+            "elements": {
+                "a": 47000000,
+                "e": 0,
+                "i": 0.10471975511965977,
+                "raan": 1.361356816555577,
+                "argp": 0.6632251157578452,
+                "m0": 0.9,
+                "epoch": 0
+            },
+            "color": "#b8e0d0",
+            "model": "minmus"
+        },
+        {
+            "id": "duna",
+            "name": "Duna",
+            "kind": "planet",
+            "parent": "kerbol",
+            "mu": 301363210000,
+            "radius": 320000,
+            "elements": {
+                "a": 20726155264,
+                "e": 0.051,
+                "i": 0.0010471975511965976,
+                "raan": 2.3649211364523164,
+                "argp": 0,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#b5583a",
+            "model": "duna"
+        },
+        {
+            "id": "ike",
+            "name": "Ike",
+            "kind": "moon",
+            "parent": "duna",
+            "mu": 18568369000,
+            "radius": 130000,
+            "elements": {
+                "a": 3200000,
+                "e": 0.03,
+                "i": 0.003490658503988659,
+                "raan": 0,
+                "argp": 0,
+                "m0": 1.7,
+                "epoch": 0
+            },
+            "color": "#6e6a66",
+            "model": "ike"
+        },
+        {
+            "id": "dres",
+            "name": "Dres",
+            "kind": "planet",
+            "parent": "kerbol",
+            "mu": 21484489000,
+            "radius": 138000,
+            "elements": {
+                "a": 40839348203,
+                "e": 0.145,
+                "i": 0.08726646259971647,
+                "raan": 4.886921905584122,
+                "argp": 1.5707963267948966,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#8c847a",
+            "model": "dres"
+        },
+        {
+            "id": "jool",
+            "name": "Jool",
+            "kind": "planet",
+            "parent": "kerbol",
+            "mu": 282528000000000,
+            "radius": 6000000,
+            "elements": {
+                "a": 68773560320,
+                "e": 0.05,
+                "i": 0.022759093446006056,
+                "raan": 0.9075712110370514,
+                "argp": 0,
+                "m0": 0.1,
+                "epoch": 0
+            },
+            "color": "#6fa84a",
+            "model": "jool"
+        },
+        {
+            "id": "laythe",
+            "name": "Laythe",
+            "kind": "moon",
+            "parent": "jool",
+            "mu": 1962000000000,
+            "radius": 500000,
+            "elements": {
+                "a": 27184000,
+                "e": 0,
+                "i": 0,
+                "raan": 0,
+                "argp": 0,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#3e6ea8",
+            "model": "laythe"
+        },
+        {
+            "id": "vall",
+            "name": "Vall",
+            "kind": "moon",
+            "parent": "jool",
+            "mu": 207481500000,
+            "radius": 300000,
+            "elements": {
+                "a": 43152000,
+                "e": 0,
+                "i": 0,
+                "raan": 0,
+                "argp": 0,
+                "m0": 0.9,
+                "epoch": 0
+            },
+            "color": "#b8c8d8",
+            "model": "vall"
+        },
+        {
+            "id": "tylo",
+            "name": "Tylo",
+            "kind": "moon",
+            "parent": "jool",
+            "mu": 2825280000000,
+            "radius": 600000,
+            "elements": {
+                "a": 68500000,
+                "e": 0,
+                "i": 0.0004363323129985824,
+                "raan": 0,
+                "argp": 0,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#c8bca8",
+            "model": "tylo"
+        },
+        {
+            "id": "bop",
+            "name": "Bop",
+            "kind": "moon",
+            "parent": "jool",
+            "mu": 2486834900,
+            "radius": 65000,
+            "elements": {
+                "a": 128500000,
+                "e": 0.235,
+                "i": 0.2617993877991494,
+                "raan": 0.17453292519943295,
+                "argp": 0.4363323129985824,
+                "m0": 0.9,
+                "epoch": 0
+            },
+            "color": "#7a6450",
+            "model": "bop"
+        },
+        {
+            "id": "pol",
+            "name": "Pol",
+            "kind": "moon",
+            "parent": "jool",
+            "mu": 721702080,
+            "radius": 44000,
+            "elements": {
+                "a": 179890000,
+                "e": 0.171,
+                "i": 0.07417649320975901,
+                "raan": 0.03490658503988659,
+                "argp": 0.2617993877991494,
+                "m0": 0.9,
+                "epoch": 0
+            },
+            "color": "#c9b46a",
+            "model": "pol"
+        },
+        {
+            "id": "eeloo",
+            "name": "Eeloo",
+            "kind": "planet",
+            "parent": "kerbol",
+            "mu": 74410815000,
+            "radius": 210000,
+            "elements": {
+                "a": 90118820000,
+                "e": 0.26,
+                "i": 0.10733774899765128,
+                "raan": 0.8726646259971648,
+                "argp": 4.537856055185257,
+                "m0": 3.14,
+                "epoch": 0
+            },
+            "color": "#e8e8e0",
+            "model": "eeloo"
+        }
+    ]
+}
