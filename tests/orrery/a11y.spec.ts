@@ -16,3 +16,25 @@ test("has no axe violations", async ({ page }) => {
         })),
     ).toEqual([]);
 });
+
+for (const form of ["Edit", "Burn"]) {
+    test(`has no axe violations with the ${form.toLowerCase()} form open`, async ({
+        page,
+    }) => {
+        await openOrbits(page);
+        await selectBody(page, "Mars");
+        await page
+            .getByRole("region", { name: "Selected body" })
+            .getByRole("button", { name: form })
+            .click();
+
+        const { violations } = await new AxeBuilder({ page }).analyze();
+
+        expect(
+            violations.map(({ id, nodes }) => ({
+                id,
+                targets: nodes.map(({ target }) => target),
+            })),
+        ).toEqual([]);
+    });
+}

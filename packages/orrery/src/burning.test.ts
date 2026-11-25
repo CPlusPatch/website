@@ -1,11 +1,19 @@
 /// <reference types="deno" />
+import { solarSystem } from "@cpluspatch/catalog";
 import type { Elements } from "@cpluspatch/orbit";
-import { assertAlmostEquals, assertEquals } from "@std/assert";
+import { compile, documentOf } from "@cpluspatch/sim";
+import {
+    assert,
+    assertAlmostEquals,
+    assertEquals,
+    assertThrows,
+} from "@std/assert";
 import {
     failureMessage,
     isZero,
     nudge,
     predict,
+    previewBurn,
     STEPS,
     sameElements,
 } from "./burning.ts";
@@ -66,4 +74,23 @@ Deno.test("an escape message names the parent and a degenerate one the body", ()
         failureMessage("degenerate", "Earth", "Moon"),
         "This burn would leave Moon with no orbit plane.",
     );
+});
+
+Deno.test("previewing a burn gives the new orbit of a body with a parent", () => {
+    const system = compile(documentOf(solarSystem));
+    const dv = { prograde: 100, normal: 0, radial: 0 };
+
+    const result = previewBurn(solarSystem, system, "moon", 0, dv);
+    const before = system.elementsAt("moon", 0);
+
+    assert(result.ok);
+    assert(result.elements.a !== before.a);
+});
+
+Deno.test("previewing a burn throws for an unknown body or one with no orbit", () => {
+    const system = compile(documentOf(solarSystem));
+    const dv = { prograde: 100, normal: 0, radial: 0 };
+
+    assertThrows(() => previewBurn(solarSystem, system, "nowhere", 0, dv));
+    assertThrows(() => previewBurn(solarSystem, system, "sun", 0, dv));
 });

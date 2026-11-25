@@ -10,12 +10,13 @@ import { elementsAt, readouts } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
+import { type Component, flushSync, mount, unmount } from "svelte";
 import { bodyStats } from "../../body-stats.ts";
 import type { World } from "../../world.ts";
 import { type BodyAdder, createBodyAdder } from "../body-adder.ts";
 import { showBodyMarker } from "../body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "../burn-editor.ts";
-import { createElementEditor, type ElementEditor } from "../element-editor.ts";
+import ElementEditor from "../ElementEditor.svelte";
 import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";
 import { type ActionButtons, button, createActions } from "./actions.ts";
@@ -23,6 +24,9 @@ import { type ChildrenSection, createChildrenSection } from "./children.ts";
 import { createPlate, type Plate, refreshPlate } from "./plate.ts";
 import { createHeadline, type Headline, refreshHeadline } from "./readouts.ts";
 import { createStatsSection } from "./stats.ts";
+
+/** What a mounted component exports. */
+type Exports<C> = C extends Component<never, infer E, string> ? E : never;
 
 /** The inspector's element and how to remove it. */
 export type Inspector = {
@@ -46,6 +50,8 @@ export const createInspector = (
     restoreFocus: (id: string) => void,
     /** What the editors draw in the scene. */
     scene: EditScene,
+    /** The stores for the forms, from `storeContext`. */
+    context: Map<symbol, unknown>,
 ): Inspector => {
     const close = h("button", {
         type: "button",
@@ -150,7 +156,7 @@ export const createInspector = (
     let children: ChildrenSection | null = null;
     let shown: string | null = null;
     let mode: Mode = "card";
-    let editor: ElementEditor | null = null;
+    let editor: Exports<typeof ElementEditor> | null = null;
     let burn: BurnEditor | null = null;
     let adder: BodyAdder | null = null;
     const buttons: ActionButtons = { focus: null, edit: null, burn: null };
@@ -304,11 +310,11 @@ export const createInspector = (
         children?.destroy();
         children = null;
         buttons.focus = null;
-        content.replaceChildren();
-        editor?.destroy();
+        if (editor) unmount(editor);
         editor = null;
         burn?.destroy();
         burn = null;
+        content.replaceChildren();
         adder?.destroy();
         adder = null;
         // The forms need the room, so they never peek.
@@ -331,17 +337,20 @@ export const createInspector = (
         );
         const hasOrbit = parent !== undefined && body.elements !== undefined;
 
-        let form: HTMLFormElement | null = null;
-        if (mode === "edit") {
-            editor = createElementEditor(
-                world,
-                units,
-                body.id,
-                scene,
-                () => closeForm("edit"),
-                refresh,
-            );
-            form = editor?.element ?? null;
+        // A body with no parent has no orbit to edit or burn on.
+        if (parent && mode === "edit") {
+            editor = mount(ElementEditor, {
+                target: content,
+                context,
+                props: {
+                    id: body.id,
+                    units,
+                    scene,
+                    footTarget: element,
+                    done: () => closeForm("edit"),
+                    onDraft: refresh,
+                },
+            });
         } else if (mode === "burn") {
             burn = createBurnEditor(
                 world,
@@ -350,9 +359,12 @@ export const createInspector = (
                 () => closeForm("burn"),
                 refresh,
             );
-            form = burn?.element ?? null;
+            if (burn) content.append(burn.element);
         }
-        if (!form) mode = "card";
+        // The form's effects pin its Cancel and Apply row, and focus is set right after this.
+        flushSync();
+        const active = editor ?? burn;
+        if (!active) mode = "card";
 
         showBodyMarker(marker, body, parent);
         grip.hidden = mode !== "card";
@@ -372,17 +384,15 @@ export const createInspector = (
             `${KIND_LABELS[body.kind]} `,
             ...(link ? ["around ", link] : ["at the centre"]),
         );
-        if (form) {
-            content.append(form);
+        if (active && parent) {
             // The forms keep the card's head, with the plate under it.
-            const active = editor ?? burn;
-            if (active && parent) {
-                plate = createPlate(units, body.name, parent.name);
-                content.before(plate.element);
-                foot = active.foot;
+            plate = createPlate(units, body.name, parent.name);
+            content.before(plate.element);
+            if (burn) {
+                foot = burn.foot;
                 element.append(foot);
-                refresh();
             }
+            refresh();
 
             return;
         }
@@ -463,7 +473,7 @@ export const createInspector = (
             offUnits();
             clearInterval(interval);
             children?.destroy();
-            editor?.destroy();
+            if (editor) unmount(editor);
             burn?.destroy();
             adder?.destroy();
             element.remove();

@@ -64,6 +64,82 @@ test("a prograde burn changes the period", async ({ page, problems }) => {
     expect(problems).toEqual([]);
 });
 
+test("Esc in an edit field closes the form and focuses Edit", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    await selectBody(page, "Mars");
+
+    await card(page).getByRole("button", { name: "Edit" }).click();
+    const field = page.getByRole("spinbutton", { name: "Semi-major axis" });
+    await expect(field).toBeFocused();
+    await field.press("Escape");
+
+    await expect(field).toHaveCount(0);
+    await expect(
+        card(page).getByRole("heading", { name: "Mars", level: 2 }),
+    ).toBeVisible();
+    await expect(
+        card(page).getByRole("button", { name: "Edit" }),
+    ).toBeFocused();
+    expect(problems).toEqual([]);
+});
+
+test("an invalid eccentricity shows its error and keeps the form open", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    await selectBody(page, "Mars");
+
+    await card(page).getByRole("button", { name: "Edit" }).click();
+    const field = page.getByRole("spinbutton", { name: "Eccentricity" });
+    await field.fill("1.5");
+    // The error shows on blur, and it moves the Apply button, so click only after.
+    await field.blur();
+    await expect(field).toHaveAttribute("aria-invalid", "true");
+    await card(page).getByRole("button", { name: "Apply" }).click();
+
+    await expect(field).toBeFocused();
+    await expect(
+        card(page).getByRole("button", { name: "Apply" }),
+    ).toBeVisible();
+    expect(problems).toEqual([]);
+});
+
+test("a burn needs a value, and Cancel resumes the clock it paused", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    await selectBody(page, "Mars");
+    // The tests run with reduced motion, so the clock starts held.
+    await page.getByRole("button", { name: "Held. Run time" }).click();
+    await expect(
+        page.getByRole("button", { name: "Running. Hold time" }),
+    ).toBeVisible();
+
+    await card(page).getByRole("button", { name: "Burn" }).click();
+    const apply = card(page).getByRole("button", { name: "Apply" });
+    await expect(apply).toBeDisabled();
+    await page.getByRole("spinbutton", { name: "Prograde" }).fill("10");
+
+    await expect(apply).toBeEnabled();
+    await expect(
+        page.getByRole("button", { name: "Held. Run time" }),
+    ).toBeVisible();
+    await card(page).getByRole("button", { name: "Cancel" }).click();
+
+    await expect(
+        card(page).getByRole("button", { name: "Burn" }),
+    ).toBeFocused();
+    await expect(
+        page.getByRole("button", { name: "Running. Hold time" }),
+    ).toBeVisible();
+    expect(problems).toEqual([]);
+});
+
 test("a body can be added and is then selected", async ({ page, problems }) => {
     await openOrbits(page);
 

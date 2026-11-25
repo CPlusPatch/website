@@ -104,6 +104,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     );
     const world = new World(opened.scenario, clock);
     const units = createUnits();
+    // Made before the inspector, whose forms read them.
+    const documentStore = new DocumentStore(world);
+    const viewState = new ViewState(world);
 
     const panels = root.querySelectorAll<HTMLElement>(".orrery__panel");
     const top = root.querySelector<HTMLElement>(".orrery__panel--top");
@@ -231,6 +234,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 units,
                 () => search?.toggle.focus(),
                 view,
+                storeContext(documentStore, viewState),
             );
             inspector = current;
             cleanup.push(() => {
@@ -399,8 +403,6 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const timeBar = createTimeBar(world, storage);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
     // The page has the spacer between them. The notices come last.
-    const documentStore = new DocumentStore(world);
-    const viewState = new ViewState(world);
     // Taken before createSearch so the crumbs and the search toggle stay first in the bar.
     const firstInTop = top?.firstChild ?? null;
     const crumbs = top

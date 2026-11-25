@@ -1,10 +1,9 @@
-import {
-    applyBurn,
-    type Burn,
-    type Elements,
-    type ElementsResult,
-    type State,
-    type Vec3,
+import type {
+    Burn,
+    Elements,
+    ElementsResult,
+    State,
+    Vec3,
 } from "@cpluspatch/orbit";
 import type { Clock } from "@cpluspatch/render";
 import {
@@ -20,6 +19,7 @@ import {
     sortByDepth,
     subtreeIds,
 } from "@cpluspatch/sim";
+import { previewBurn } from "./burning.ts";
 import type { ViewState } from "./view-state.ts";
 
 /** What a listener of a `World` is told about. */
@@ -202,34 +202,18 @@ export class World {
 
     /** Replaces the orbit of body `id` with a fixed Kepler orbit, dropping any precession. */
     setElements(id: string, el: Elements): void {
-        this.#dispatch({
+        const result = this.dispatch({
             type: "set-orbit",
             bodyId: id,
             t: this.view.clock.t,
             elements: el,
         });
-        this.#emit({ type: "body", id });
+        if (!result.ok) throw new Error(result.errors.join(" "));
     }
 
     /** The orbit body `id` would have after burning `dv` now. Changes nothing. */
     previewBurn(id: string, dv: Burn): ElementsResult {
-        const body = this.scenario.bodies.find(
-            (candidate) => candidate.id === id,
-        );
-        if (!body) throw new Error(`There is no body "${id}".`);
-        if (body.parent === null)
-            throw new Error(`"${id}" has no orbit to burn on.`);
-        const parent = this.scenario.bodies.find(
-            (candidate) => candidate.id === body.parent,
-        );
-        if (!parent) throw new Error(`There is no body "${body.parent}".`);
-
-        return applyBurn(
-            this.system.elementsAt(id, this.clock.t),
-            parent.mu + body.mu,
-            this.clock.t,
-            dv,
-        );
+        return previewBurn(this.scenario, this.system, id, this.clock.t, dv);
     }
 
     /** Burns `dv` on body `id` now, or says why it can't and changes nothing. */
@@ -240,13 +224,32 @@ export class World {
         const result = this.previewBurn(id, dv);
         if (!result.ok) return result;
 
-        this.#dispatch({
+        const done = this.dispatch({
             type: "schedule-burn",
             bodyId: id,
             t: this.clock.t,
             dv,
         });
-        this.#emit({ type: "body", id });
+        if (!done.ok) throw new Error(done.errors.join(" "));
+
+        return { ok: true };
+    }
+
+    /** Runs a command on one body and tells listeners. A rejected command changes nothing. */
+    dispatch(
+        cmd: Extract<
+            Command,
+            { type: "set-orbit" | "schedule-burn" | "update-body" }
+        >,
+    ): { ok: true } | { ok: false; errors: string[] } {
+        const result = apply(this.#doc, cmd);
+        if (!result.ok) return { ok: false, errors: result.errors };
+
+        this.#commit(result.doc);
+        this.#emit({
+            type: "body",
+            id: cmd.type === "update-body" ? cmd.id : cmd.bodyId,
+        });
 
         return { ok: true };
     }
@@ -255,8 +258,12 @@ export class World {
         const result = apply(this.#doc, cmd);
         if (!result.ok) throw new Error(result.errors.join(" "));
 
-        this.#doc = result.doc;
-        this.#order = sortByDepth(result.doc.scenario);
+        this.#commit(result.doc);
+    }
+
+    #commit(doc: Document): void {
+        this.#doc = doc;
+        this.#order = sortByDepth(doc.scenario);
         this.#cache = null;
         this.#system = null;
     }

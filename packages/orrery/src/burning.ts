@@ -1,10 +1,13 @@
 import {
     apoapsis,
+    applyBurn,
     type Burn,
     type Elements,
+    type ElementsResult,
     periapsis,
     period,
 } from "@cpluspatch/orbit";
+import type { Scenario, System } from "@cpluspatch/sim";
 
 /** The step choices of a burn's controls, in m/s. */
 export const STEPS = [1, 10, 100] as const;
@@ -54,3 +57,23 @@ export const failureMessage = (
     reason === "escape"
         ? `This burn would escape ${parent}. Escape orbits aren't supported.`
         : `This burn would leave ${body} with no orbit plane.`;
+
+/** The orbit body `id` would have after burning `dv` at `t`, or throws if it has none to burn on. */
+export const previewBurn = (
+    scenario: Scenario,
+    system: System,
+    id: string,
+    t: number,
+    dv: Burn,
+): ElementsResult => {
+    const body = scenario.bodies.find((candidate) => candidate.id === id);
+    if (!body) throw new Error(`There is no body "${id}".`);
+    if (body.parent === null)
+        throw new Error(`"${id}" has no orbit to burn on.`);
+    const parent = scenario.bodies.find(
+        (candidate) => candidate.id === body.parent,
+    );
+    if (!parent) throw new Error(`There is no body "${body.parent}".`);
+
+    return applyBurn(system.elementsAt(id, t), parent.mu + body.mu, t, dv);
+};

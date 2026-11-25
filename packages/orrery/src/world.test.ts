@@ -215,6 +215,41 @@ Deno.test("previewBurn returns the new orbit without changing the scenario", () 
     assertEquals(count, 0);
 });
 
+Deno.test("dispatch applies a command and emits one body event", () => {
+    const world = make();
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    const result = world.dispatch({
+        type: "schedule-burn",
+        bodyId: "moon",
+        t: 0,
+        dv: PROGRADE,
+    });
+
+    assertEquals(result, { ok: true });
+    assertEquals(events, [{ type: "body", id: "moon" }]);
+});
+
+Deno.test("dispatch reports a rejected command and changes nothing", () => {
+    const world = make();
+    const before = world.doc;
+    let count = 0;
+    world.on(() => count++);
+
+    const result = world.dispatch({
+        type: "schedule-burn",
+        bodyId: "nowhere",
+        t: 0,
+        dv: PROGRADE,
+    });
+
+    assert(!result.ok);
+    assert(result.errors.length > 0);
+    assert(world.doc === before);
+    assertEquals(count, 0);
+});
+
 Deno.test("burning a body with no orbit throws", () => {
     const world = make();
 
