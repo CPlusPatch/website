@@ -215,6 +215,17 @@ Deno.test("formatPlateDistance writes millions of km from 1e6 km", () => {
     assertEquals(formatPlateDistance(1e9, "km"), "1.0M km");
 });
 
+Deno.test("formatPlateDistance writes billions of km from 1e9 km", () => {
+    assertEquals(formatPlateDistance(4.459e12, "km"), "4.46B km");
+    assertEquals(formatPlateDistance(1e12, "km"), "1.00B km");
+    assertEquals(formatPlateDistance(9.99e11, "km"), "999.0M km");
+});
+
+Deno.test("formatPlateDistance moves up a tier where the lower one would read 1000.0", () => {
+    assertEquals(formatPlateDistance(999.96e9, "km"), "1.00B km");
+    assertEquals(formatPlateDistance(999_960_000, "km"), "1.0M km");
+});
+
 Deno.test("formatPlateDistance writes thousands of km from 1e4 km", () => {
     assertEquals(formatPlateDistance(384_400_000, "km"), "384.4k km");
     assertEquals(formatPlateDistance(10_000_000, "km"), "10.0k km");
@@ -235,4 +246,10 @@ Deno.test("formatScaleLength writes M from 1e6 km, k from 1e4 km, else grouped k
     assertEquals(formatScaleLength(2e10, "km"), "20M");
     assertEquals(formatScaleLength(2e8, "km"), "200k");
     assertEquals(formatScaleLength(5e6, "km"), "5,000");
+});
+
+Deno.test("formatScaleLength writes B from 1e9 km", () => {
+    assertEquals(formatScaleLength(2e12, "km"), "2B");
+    assertEquals(formatScaleLength(1e12, "km"), "1B");
+    assertEquals(formatScaleLength(5e11, "km"), "500M");
 });

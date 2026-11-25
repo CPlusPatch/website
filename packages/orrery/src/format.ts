@@ -27,6 +27,10 @@ const MILLION_KM = new Intl.NumberFormat("en", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
 });
+const BILLION_KM = new Intl.NumberFormat("en", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+});
 const AU_RANGE = new Intl.NumberFormat("en", { maximumSignificantDigits: 4 });
 const THREE_SIGNIFICANT = new Intl.NumberFormat("en", {
     minimumSignificantDigits: 3,
@@ -73,25 +77,28 @@ export const formatRange = (m: number, unit: AUnit): string => {
     return `${number.replace(/^-/, "\u2212")} ${unit}`;
 };
 
-/** A short distance in metres for the plate: `0.983 AU`, `146.5M km` from 1e6 km, else `6,790 km`. */
+/** A short distance in metres for the plate: `0.983 AU`, `4.46B km` from 1e9 km, `146.5M km` from 1e6 km, else `6,790 km`. */
 export const formatPlateDistance = (m: number, unit: AUnit): string => {
     if (unit === "AU") return `${AU_VALUE.format(m / AU)} AU`;
 
     const km = m / 1000;
 
     // Short forms keep the value inside the plate's legend column.
-    if (km >= 1e6) return `${MILLION_KM.format(km / 1e6)}M km`;
+    // Each tier starts where the one below would round up to 1000.0.
+    if (km >= 1e9 - 5e4) return `${BILLION_KM.format(km / 1e9)}B km`;
+    if (km >= 1e6 - 50) return `${MILLION_KM.format(km / 1e6)}M km`;
     if (km >= 1e4) return `${MILLION_KM.format(km / 1e3)}k km`;
 
     return `${KM.format(km)} km`;
 };
 
-/** The length of a plate's scale bar as a number: `0.2` AU, `20M`, `200k` or `5,000` km. */
+/** The length of a plate's scale bar as a number: `0.2` AU, `2B`, `20M`, `200k` or `5,000` km. */
 export const formatScaleLength = (m: number, unit: AUnit): string => {
     if (unit === "AU") return String(+(m / AU).toPrecision(6));
 
     const km = m / 1000;
 
+    if (km >= 1e9) return `${+(km / 1e9).toPrecision(6)}B`;
     if (km >= 1e6) return `${+(km / 1e6).toPrecision(6)}M`;
     if (km >= 1e4) return `${+(km / 1e3).toPrecision(6)}k`;
 
