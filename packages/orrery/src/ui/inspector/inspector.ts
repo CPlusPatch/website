@@ -13,8 +13,8 @@ import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { type Component, flushSync, mount, unmount } from "svelte";
 import { bodyStats } from "../../body-stats.ts";
 import type { World } from "../../world.ts";
+import BodyAdder from "../BodyAdder.svelte";
 import BurnEditor from "../BurnEditor.svelte";
-import { type BodyAdder, createBodyAdder } from "../body-adder.ts";
 import { showBodyMarker } from "../body-marker.ts";
 import ElementEditor from "../ElementEditor.svelte";
 import { KIND_LABELS } from "../labels.ts";
@@ -158,7 +158,7 @@ export const createInspector = (
     let mode: Mode = "card";
     let editor: Exports<typeof ElementEditor> | null = null;
     let burn: Exports<typeof BurnEditor> | null = null;
-    let adder: BodyAdder | null = null;
+    let adder: Exports<typeof BodyAdder> | null = null;
     const buttons: ActionButtons = { focus: null, edit: null, burn: null };
 
     const syncFocus = () => {
@@ -315,7 +315,7 @@ export const createInspector = (
         if (burn) unmount(burn);
         burn = null;
         content.replaceChildren();
-        adder?.destroy();
+        if (adder) unmount(adder);
         adder = null;
         // The forms need the room, so they never peek.
         grip.hidden = adding;
@@ -323,10 +323,18 @@ export const createInspector = (
             element.removeAttribute("data-peek");
             meta.hidden = true;
             titleText.textContent = "Add a body";
-            adder = createBodyAdder(world, units, addName, cancelAdd);
-            content.append(adder.element);
-            foot = adder.foot;
-            element.append(foot);
+            adder = mount(BodyAdder, {
+                target: content,
+                context,
+                props: {
+                    units,
+                    name: addName,
+                    footTarget: element,
+                    done: cancelAdd,
+                },
+            });
+            // The form's effects pin its Cancel and Add row, and focus is set right after this.
+            flushSync();
 
             return;
         }
@@ -474,7 +482,7 @@ export const createInspector = (
             children?.destroy();
             if (editor) unmount(editor);
             if (burn) unmount(burn);
-            adder?.destroy();
+            if (adder) unmount(adder);
             element.remove();
         },
     };

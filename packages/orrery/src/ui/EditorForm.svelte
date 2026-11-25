@@ -11,6 +11,8 @@ type Props = {
     pairs?: boolean;
     /** The element the Cancel and Apply row moves to, as its last child. */
     footTarget: HTMLElement;
+    /** The text of the submit button. */
+    applyLabel?: string;
     applyDisabled?: boolean;
     /** Called on Apply, or Enter in a field. */
     onApply: () => void;
@@ -23,6 +25,7 @@ const {
     id,
     pairs = false,
     footTarget,
+    applyLabel = "Apply",
     applyDisabled = false,
     onApply,
     onCancel,
@@ -81,7 +84,7 @@ const pin: Attachment<HTMLElement> = (node) => {
             form={id}
             disabled={applyDisabled}
         >
-            Apply
+            {applyLabel}
         </button>
     </div>
 </form>
