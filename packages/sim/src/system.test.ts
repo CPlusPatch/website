@@ -50,11 +50,14 @@ Deno.test("a precessing body's state follows its precessed orbit", () => {
 
     const precessing: Body = {
         ...moon,
-        precession: {
-            pole: { x: 0, y: 0, z: 1 },
-            nodeRate: -1e-6,
-            argpRate: 0,
-        },
+        perturbations: [
+            {
+                type: "secular",
+                pole: { x: 0, y: 0, z: 1 },
+                nodeRate: -1e-6,
+                argpRate: 0,
+            },
+        ],
     };
     const scenario = {
         ...solarSystem,

@@ -162,13 +162,18 @@ export const satellites = (earthMu: number): Body[] => {
             tags: role === undefined ? ["spacecraft"] : ["spacecraft", role],
             mass: { mu: 0, radius },
             orbit: { parent: "earth", elements },
-            precession: j2Precession(
-                elements,
-                earthMu,
-                EARTH_J2,
-                EARTH_RADIUS,
-                pole,
-            ),
+            perturbations: [
+                {
+                    type: "secular",
+                    ...j2Precession(
+                        elements,
+                        earthMu,
+                        EARTH_J2,
+                        EARTH_RADIUS,
+                        pole,
+                    ),
+                },
+            ],
         };
     });
 };

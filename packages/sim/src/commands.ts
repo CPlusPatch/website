@@ -45,7 +45,7 @@ const finish = (
         : fail(...result.errors);
 };
 
-/** `scenario` with body `id` on a fixed orbit of `elements`, dropping any precession. */
+/** `scenario` with body `id` on a fixed orbit of `elements`, dropping any perturbations. */
 const withOrbit = (
     scenario: Scenario,
     id: string,
@@ -55,7 +55,7 @@ const withOrbit = (
     bodies: scenario.bodies.map((body) => {
         if (body.id !== id || body.orbit === undefined) return body;
 
-        const { precession: _dropped, ...fixed } = body;
+        const { perturbations: _dropped, ...fixed } = body;
 
         return { ...fixed, orbit: { ...body.orbit, elements } };
     }),

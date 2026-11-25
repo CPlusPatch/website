@@ -43,6 +43,13 @@ const valid: Scenario = {
     ],
 };
 
+const secular = {
+    type: "secular" as const,
+    pole: { x: 0, y: 0, z: 1 },
+    nodeRate: 1e-8,
+    argpRate: 2e-8,
+};
+
 /** The tiny scenario as a version 1 or 2 file wrote it, with a kind and no tags. */
 const legacy = (version: 1 | 2): Record<string, unknown> => {
     const { bodies, ...rest } = structuredClone(valid);
@@ -355,19 +362,15 @@ Deno.test("a body without mass is rejected in version 3", () => {
     assert(errors.includes("earth.mass: must be an object (got undefined)"));
 });
 
-Deno.test("precession without an orbit is rejected in version 3", () => {
+Deno.test("perturbations without an orbit are rejected in version 3", () => {
     const errors = errorsAfter((s) => {
-        Object.assign(at(s.bodies, 0), {
-            precession: {
-                pole: { x: 0, y: 0, z: 1 },
-                nodeRate: 0,
-                argpRate: 0,
-            },
-        });
+        Object.assign(at(s.bodies, 0), { perturbations: [secular] });
     });
 
     assert(
-        errors.includes("sun.precession: must be absent when orbit is absent"),
+        errors.includes(
+            "sun.perturbations: must be absent when orbit is absent",
+        ),
     );
 });
 
@@ -866,42 +869,64 @@ Deno.test("sorting puts every body after its parent", () => {
     }
 });
 
+/** The tiny scenario as a version 2 file, with `precession` on the planet. */
 const withPrecession = (precession: unknown) => {
-    const scenario = structuredClone(valid) as Record<string, unknown>;
-    const bodies = scenario.bodies as Record<string, unknown>[];
+    const scenario = legacy(2);
 
-    at(bodies, 1).precession = precession;
+    legacyBody(scenario, 1).precession = precession;
 
     return scenario;
 };
 
-const precession = {
+const rates = {
     pole: { x: 0, y: 0, z: 1 },
     nodeRate: 1e-8,
     argpRate: 2e-8,
 };
 
-Deno.test("a valid precession is accepted and its pole normalised", () => {
+/** The tiny scenario with `perturbations` on the planet. */
+const withPerturbations = (perturbations: unknown): Record<string, unknown> => {
+    const scenario = structuredClone(valid) as Record<string, unknown>;
+
+    at(scenario.bodies as Record<string, unknown>[], 1).perturbations =
+        perturbations;
+
+    return scenario;
+};
+
+const perturbationErrors = (perturbations: unknown): string[] => {
+    const result = validateScenario(withPerturbations(perturbations));
+
+    assert(!result.ok);
+
+    return result.errors;
+};
+
+Deno.test("a version 2 precession loads as a secular perturbation", () => {
     const result = validateScenario(
-        withPrecession({ ...precession, pole: { x: 0, y: 0, z: 1 + 5e-7 } }),
+        withPrecession({ ...rates, pole: { x: 0, y: 0, z: 1 + 5e-7 } }),
     );
 
     assert(result.ok);
-    assertEquals(at(result.scenario.bodies, 1).precession, precession);
+    assertEquals(at(result.scenario.bodies, 1).perturbations, [secular]);
+    assertEquals(
+        Object.keys(at(at(result.scenario.bodies, 1).perturbations ?? [], 0)),
+        ["type", "pole", "nodeRate", "argpRate"],
+    );
 });
 
-Deno.test("a precession with a pole that isn't a unit vector is rejected", () => {
+Deno.test("a version 2 precession with a pole that isn't a unit vector is rejected", () => {
     const result = validateScenario(
-        withPrecession({ ...precession, pole: { x: 0, y: 0, z: 1.01 } }),
+        withPrecession({ ...rates, pole: { x: 0, y: 0, z: 1.01 } }),
     );
 
     assert(!result.ok);
     assert(at(result.errors, 0).startsWith("earth.precession.pole: must be"));
 });
 
-Deno.test("a precession with a rate that isn't finite is rejected", () => {
+Deno.test("a version 2 precession with a rate that isn't finite is rejected", () => {
     const result = validateScenario(
-        withPrecession({ ...precession, nodeRate: Number.NaN }),
+        withPrecession({ ...rates, nodeRate: Number.NaN }),
     );
 
     assert(!result.ok);
@@ -910,7 +935,7 @@ Deno.test("a precession with a rate that isn't finite is rejected", () => {
     );
 });
 
-Deno.test("a precession that isn't an object is rejected", () => {
+Deno.test("a version 2 precession that isn't an object is rejected", () => {
     const result = validateScenario(withPrecession(3));
 
     assert(!result.ok);
@@ -919,21 +944,90 @@ Deno.test("a precession that isn't an object is rejected", () => {
     );
 });
 
-Deno.test("a precession on the root is rejected", () => {
-    const scenario = withPrecession(precession);
+Deno.test("a version 2 precession on the root is rejected", () => {
+    const scenario = withPrecession(rates);
 
-    at(scenario.bodies as Record<string, unknown>[], 0).precession = precession;
+    legacyBody(scenario, 0).precession = rates;
 
     const result = validateScenario(scenario);
 
     assert(!result.ok);
-    assert(result.errors.some((e) => e.startsWith("sun.precession: must be")));
+    assert(
+        result.errors.includes(
+            "sun.precession: must be absent when parent is null",
+        ),
+    );
 });
 
-Deno.test("a body without precession has no precession key", () => {
+Deno.test("a version 3 body without perturbations has no perturbations key", () => {
     const result = validateScenario(valid);
 
     assert(result.ok);
+    assert(!("perturbations" in at(result.scenario.bodies, 1)));
+});
+
+Deno.test("a valid version 3 secular perturbation is accepted and its pole normalised", () => {
+    const result = validateScenario(
+        withPerturbations([{ ...secular, pole: { x: 0, y: 0, z: 1 + 5e-7 } }]),
+    );
+
+    assert(result.ok);
+    assertEquals(at(result.scenario.bodies, 1).perturbations, [secular]);
+});
+
+Deno.test("an empty perturbations array is accepted and dropped", () => {
+    const result = validateScenario(withPerturbations([]));
+
+    assert(result.ok);
+    assert(!("perturbations" in at(result.scenario.bodies, 1)));
+});
+
+Deno.test("perturbations that aren't an array are rejected", () => {
+    assertEquals(perturbationErrors(3), [
+        "earth.perturbations: must be an array (got 3)",
+    ]);
+});
+
+Deno.test("a perturbation that isn't an object is rejected", () => {
+    assertEquals(perturbationErrors([3]), [
+        "earth.perturbations[0]: must be an object (got 3)",
+    ]);
+});
+
+Deno.test("a perturbation of an unknown type is rejected", () => {
+    assertEquals(perturbationErrors([{ ...secular, type: "j2" }]), [
+        'earth.perturbations[0].type: must be one of "secular" (got "j2")',
+    ]);
+    assertEquals(perturbationErrors([rates]), [
+        'earth.perturbations[0].type: must be one of "secular" (got undefined)',
+    ]);
+});
+
+Deno.test("a second perturbation of the same type is rejected", () => {
+    assertEquals(perturbationErrors([secular, secular]), [
+        'earth.perturbations[1].type: must be unique (got "secular")',
+    ]);
+});
+
+Deno.test("a version 3 secular perturbation with a bad pole or rate is rejected", () => {
+    const pole = perturbationErrors([
+        { ...secular, pole: { x: 0, y: 0, z: 1.01 } },
+    ]);
+    const rate = perturbationErrors([{ ...secular, nodeRate: Number.NaN }]);
+
+    assert(at(pole, 0).startsWith("earth.perturbations[0].pole: must be"));
+    assert(at(rate, 0).startsWith("earth.perturbations[0].nodeRate: must be"));
+});
+
+Deno.test("a stale precession key is ignored in version 3", () => {
+    const scenario = structuredClone(valid) as Record<string, unknown>;
+
+    at(scenario.bodies as Record<string, unknown>[], 1).precession = rates;
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assert(!("perturbations" in at(result.scenario.bodies, 1)));
     assert(!("precession" in at(result.scenario.bodies, 1)));
 });
 

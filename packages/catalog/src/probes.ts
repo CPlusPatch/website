@@ -230,12 +230,17 @@ export const probes = (mu: Record<Parent, number>): Body[] =>
 
         return {
             ...body,
-            precession: j2Precession(
-                elements,
-                mu[parent],
-                j2,
-                reference,
-                poleOf(parent),
-            ),
+            perturbations: [
+                {
+                    type: "secular",
+                    ...j2Precession(
+                        elements,
+                        mu[parent],
+                        j2,
+                        reference,
+                        poleOf(parent),
+                    ),
+                },
+            ],
         };
     });

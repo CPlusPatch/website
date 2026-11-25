@@ -125,7 +125,7 @@ Deno.test("update-body can't change id or orbit", () => {
         name: "Terra",
         id: "other",
         orbit: { parent: "mars", elements },
-        precession: undefined,
+        perturbations: undefined,
     } as BodyPatch;
     const next = ok(apply(doc, { type: "update-body", id: "moon", patch }));
     const moon = find(next, "moon");
@@ -135,15 +135,15 @@ Deno.test("update-body can't change id or orbit", () => {
     assertEquals(find(next, "other"), undefined);
 });
 
-Deno.test("update-body keeps the precession", () => {
+Deno.test("update-body keeps the perturbations", () => {
     const precessing = solarSystem.bodies.find(
-        (body) => body.orbit !== undefined && body.precession !== undefined,
+        (body) => body.orbit !== undefined && body.perturbations !== undefined,
     );
-    assert(precessing?.precession);
+    assert(precessing?.perturbations);
 
     const patch = {
         name: "Renamed",
-        precession: { ...precessing.precession, nodeRate: 1 },
+        perturbations: [{ ...precessing.perturbations[0], nodeRate: 1 }],
     } as BodyPatch;
     const next = ok(
         apply(doc, { type: "update-body", id: precessing.id, patch }),
@@ -180,9 +180,9 @@ Deno.test("update-body returns the validator's errors", () => {
     assert(error?.includes("earth.mass.radius"));
 });
 
-Deno.test("set-orbit replaces the elements and drops precession", () => {
+Deno.test("set-orbit replaces the elements and drops perturbations", () => {
     const precessing = solarSystem.bodies.find(
-        (body) => body.orbit !== undefined && body.precession !== undefined,
+        (body) => body.orbit !== undefined && body.perturbations !== undefined,
     );
     assert(precessing);
 
@@ -197,8 +197,8 @@ Deno.test("set-orbit replaces the elements and drops precession", () => {
     const body = find(next, precessing.id);
 
     assertEquals(body?.orbit?.elements, elements);
-    assertEquals(body?.precession, undefined);
-    assert(!("precession" in (body ?? {})));
+    assertEquals(body?.perturbations, undefined);
+    assert(!("perturbations" in (body ?? {})));
 });
 
 Deno.test("set-orbit of an unknown id or the root is an error", () => {
@@ -248,9 +248,9 @@ Deno.test("schedule-burn gives the elements applyBurn does", () => {
     assertEquals(next.timeline, []);
 });
 
-Deno.test("schedule-burn drops precession like set-orbit", () => {
+Deno.test("schedule-burn drops perturbations like set-orbit", () => {
     const precessing = solarSystem.bodies.find(
-        (body) => body.orbit !== undefined && body.precession !== undefined,
+        (body) => body.orbit !== undefined && body.perturbations !== undefined,
     );
     assert(precessing);
 
@@ -263,7 +263,7 @@ Deno.test("schedule-burn drops precession like set-orbit", () => {
         }),
     );
 
-    assert(!("precession" in (find(next, precessing.id) ?? {})));
+    assert(!("perturbations" in (find(next, precessing.id) ?? {})));
 });
 
 Deno.test("schedule-burn that escapes is an error naming the body", () => {

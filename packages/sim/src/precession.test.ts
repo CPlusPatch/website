@@ -122,17 +122,20 @@ const orbiting: OrbitingBody = {
     orbit: { parent: "earth", elements: el },
 };
 
-Deno.test("elementsAt returns the elements as they are without precession", () => {
+Deno.test("elementsAt returns the elements as they are without perturbations", () => {
     assertEquals(elementsAt(orbiting, 1e9), el);
 });
 
-Deno.test("elementsAt precesses the elements when the body has a precession", () => {
+Deno.test("elementsAt precesses the elements when the body has a secular perturbation", () => {
     const precession: Precession = {
         pole: { x: 0, y: 0, z: 1 },
         nodeRate: 1e-7,
         argpRate: 0,
     };
-    const body = { ...orbiting, precession };
+    const body = {
+        ...orbiting,
+        perturbations: [{ type: "secular" as const, ...precession }],
+    };
 
     assertEquals(elementsAt(body, 1e9), precess(el, precession, 1e9));
 });
@@ -208,9 +211,9 @@ Deno.test("turning the epoch orbit by the precession turns gives the precessed o
 
 const satelliteRates = (id: string) => {
     const body = solarSystem.bodies.find((b) => b.id === id);
-    const precession = body?.precession;
+    const precession = body?.perturbations?.[0];
 
-    assert(precession, `${id} has no precession`);
+    assert(precession, `${id} has no perturbations`);
 
     const perDay = (rate: number) => (rate * DAY * 180) / Math.PI;
 

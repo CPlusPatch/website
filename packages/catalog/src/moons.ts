@@ -516,11 +516,14 @@ export const moonBodies = (
         };
 
         if (nodeRate !== 0 || argpRate !== 0) {
-            body.precession = {
-                pole: normalize(moonPole(row)),
-                nodeRate,
-                argpRate,
-            };
+            body.perturbations = [
+                {
+                    type: "secular",
+                    pole: normalize(moonPole(row)),
+                    nodeRate,
+                    argpRate,
+                },
+            ];
         }
 
         return body;

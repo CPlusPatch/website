@@ -27,6 +27,12 @@ export type BodyOrbit = {
     elements: Elements;
 };
 
+/** The orbit turning about a fixed pole. */
+export type Secular = { type: "secular" } & Precession;
+
+/** A force acting on an orbit besides its parent's gravity. */
+export type Perturbation = Secular;
+
 /** One body in a scenario. */
 export type Body = {
     /** A unique slug of lowercase letters, digits and hyphens. */
@@ -38,8 +44,8 @@ export type Body = {
     mass: Mass;
     /** The orbit. Absent for the root, which orbits nothing. */
     orbit?: BodyOrbit;
-    /** Precession of the orbit, or none for a fixed orbit. Only allowed with an orbit. */
-    precession?: Precession;
+    /** Applied in order. At most one of each type. Only allowed with an orbit. */
+    perturbations?: Perturbation[];
     /** Opaque to sim. The renderer validates it. */
     appearance?: unknown;
     /** The built-in look: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
@@ -299,6 +305,62 @@ const validatePrecession = (
     return { pole: unit, nodeRate: node, argpRate: apsis };
 };
 
+const validatePerturbations = (
+    path: string,
+    input: unknown,
+    root: boolean,
+    errors: string[],
+): Perturbation[] => {
+    if (!Array.isArray(input)) {
+        errors.push(`${path}: must be an array (got ${show(input)})`);
+
+        return [];
+    }
+
+    if (root) {
+        errors.push(`${path}: must be absent when orbit is absent`);
+
+        return [];
+    }
+
+    const seen = new Set<unknown>();
+    const parsed: Perturbation[] = [];
+
+    input.forEach((item: unknown, i) => {
+        const itemPath = `${path}[${i}]`;
+
+        if (!isRecord(item)) {
+            errors.push(`${itemPath}: must be an object (got ${show(item)})`);
+
+            return;
+        }
+
+        const { type } = item;
+
+        if (type !== "secular") {
+            errors.push(
+                `${itemPath}.type: must be one of "secular" (got ${show(type)})`,
+            );
+
+            return;
+        }
+
+        if (seen.has(type)) {
+            errors.push(`${itemPath}.type: must be unique (got ${show(type)})`);
+
+            return;
+        }
+
+        seen.add(type);
+
+        const rates = validatePrecession(itemPath, item, errors);
+
+        if (rates) parsed.push({ type, ...rates });
+    });
+
+    return parsed;
+};
+
 const validateTags = (
     path: string,
     input: unknown,
@@ -384,6 +446,7 @@ const validateBody = (
         mass,
         orbit,
         precession,
+        perturbations,
         color,
         appearance,
         role,
@@ -562,21 +625,34 @@ const validateBody = (
         parsed = validateElements(elementsPath, elements, errors);
     }
 
-    let parsedPrecession: Precession | null = null;
+    let parsedPerturbations: Perturbation[] = [];
 
-    if (precession !== undefined) {
+    if (version === 3) {
+        if (perturbations !== undefined) {
+            parsedPerturbations = validatePerturbations(
+                `${label}.perturbations`,
+                perturbations,
+                root,
+                errors,
+            );
+        }
+    } else if (precession !== undefined) {
         if (root) {
             errors.push(
-                version === 3
-                    ? `${label}.precession: must be absent when orbit is absent`
-                    : `${label}.precession: must be absent when parent is null`,
+                `${label}.precession: must be absent when parent is null`,
             );
         } else {
-            parsedPrecession = validatePrecession(
+            const parsedPrecession = validatePrecession(
                 `${label}.precession`,
                 precession,
                 errors,
             );
+
+            if (parsedPrecession) {
+                parsedPerturbations = [
+                    { type: "secular", ...parsedPrecession },
+                ];
+            }
         }
     }
 
@@ -614,7 +690,9 @@ const validateBody = (
     return {
         ...base,
         orbit: { parent: validParent, elements: parsed },
-        ...(parsedPrecession ? { precession: parsedPrecession } : {}),
+        ...(parsedPerturbations.length > 0
+            ? { perturbations: parsedPerturbations }
+            : {}),
     };
 };
 

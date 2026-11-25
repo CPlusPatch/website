@@ -27,7 +27,7 @@ export type System = {
     readonly index: ReadonlyMap<string, number>;
     /** The state of every body at `t`. Only the last result is cached. */
     snapshot(t: number): Snapshot;
-    /** The orbit of an orbiting body at `t`, turned by its precession. Throws for the root or an unknown id. */
+    /** The orbit of an orbiting body at `t`, with its perturbations applied. Throws for the root or an unknown id. */
     elementsAt(id: string, t: number): Elements;
 };
 

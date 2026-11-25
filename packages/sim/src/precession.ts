@@ -85,8 +85,9 @@ export const precess = (el: Elements, p: Precession, t: number): Elements => {
     return { ...el, i, raan: wrapAngle(raan), argp: wrapAngle(argp) };
 };
 
-/** The orbit of `body` at time `t`: its elements, turned by its precession if it has one. */
+/** The orbit of `body` at time `t`: its elements, with each perturbation applied in order. */
 export const elementsAt = (body: OrbitingBody, t: number): Elements =>
-    body.precession
-        ? precess(body.orbit.elements, body.precession, t)
-        : body.orbit.elements;
+    (body.perturbations ?? []).reduce(
+        (acc, p) => (p.type === "secular" ? precess(acc, p, t) : acc),
+        body.orbit.elements,
+    );

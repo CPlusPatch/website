@@ -305,11 +305,11 @@ Deno.test("Ceres orbits the Sun in 4.60 years", () => {
 Deno.test("only moons with a period for the node or apsides precess", () => {
     const body = (id: string) => solarSystem.bodies.find((b) => b.id === id);
 
-    assertEquals(body("charon")?.precession, undefined);
-    assertEquals(body("io")?.precession?.nodeRate, 0);
-    assert((body("io")?.precession?.argpRate ?? 0) !== 0);
-    assert((body("triton")?.precession?.nodeRate ?? 0) > 0);
-    assert((body("titan")?.precession?.nodeRate ?? 0) < 0);
+    assertEquals(body("charon")?.perturbations, undefined);
+    assertEquals(body("io")?.perturbations?.[0]?.nodeRate, 0);
+    assert((body("io")?.perturbations?.[0]?.argpRate ?? 0) !== 0);
+    assert((body("triton")?.perturbations?.[0]?.nodeRate ?? 0) > 0);
+    assert((body("titan")?.perturbations?.[0]?.nodeRate ?? 0) < 0);
 });
 
 Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
@@ -320,13 +320,11 @@ Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
     assertEquals(spacecraft.length, 8);
 
     for (const body of spacecraft) {
-        assert(body.precession, `${body.id} has no precession`);
-        assert(body.precession.nodeRate !== 0, `${body.id} has no node rate`);
-        assertAlmostEquals(
-            body.precession.pole.z,
-            Math.cos(OBLIQUITY_J2000),
-            1e-12,
-        );
+        const secular = body.perturbations?.[0];
+
+        assert(secular, `${body.id} has no perturbations`);
+        assert(secular.nodeRate !== 0, `${body.id} has no node rate`);
+        assertAlmostEquals(secular.pole.z, Math.cos(OBLIQUITY_J2000), 1e-12);
     }
 });
 
@@ -444,14 +442,16 @@ Deno.test("every Mars, Moon and Jupiter probe precesses about its parent's pole"
         );
 
         assert(pole, `no rotation model for ${body.orbit?.parent}`);
-        assert(body.precession, `${body.id} has no precession`);
-        assertVecClose(body.precession.pole, pole.z, 1e-12);
+        const secular = body.perturbations?.[0];
+
+        assert(secular, `${body.id} has no perturbations`);
+        assertVecClose(secular.pole, pole.z, 1e-12);
     }
 });
 
 Deno.test("MRO's node precesses about +0.5 degrees a day, sun-synchronous with Mars", () => {
-    const rate = find("mro").precession?.nodeRate;
+    const rate = find("mro").perturbations?.[0]?.nodeRate;
 
-    assert(rate !== undefined, "MRO has no precession");
+    assert(rate !== undefined, "MRO has no perturbations");
     assertAlmostEquals(toDeg(rate) * DAY, 0.5, 0.1);
 });

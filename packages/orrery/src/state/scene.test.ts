@@ -609,11 +609,14 @@ const makePrecessing = (): Scene => {
         body.id === "moon" && body.orbit !== undefined
             ? {
                   ...body,
-                  precession: {
-                      pole: { x: 0, y: 0, z: 1 },
-                      nodeRate: -1e-6,
-                      argpRate: 1e-6,
-                  },
+                  perturbations: [
+                      {
+                          type: "secular" as const,
+                          pole: { x: 0, y: 0, z: 1 },
+                          nodeRate: -1e-6,
+                          argpRate: 1e-6,
+                      },
+                  ],
               }
             : body,
     );
@@ -626,12 +629,12 @@ Deno.test("setElements turns a precessing body into a fixed orbit", () => {
     const moon = scene.scenario.bodies.find((body) => body.id === "moon");
 
     if (!moon?.orbit) throw new Error("The scenario has no Moon.");
-    assert(moon.precession);
+    assert(moon.perturbations);
 
     scene.setElements("moon", moon.orbit.elements);
 
     const after = scene.scenario.bodies.find((body) => body.id === "moon");
-    assert(after && !("precession" in after));
+    assert(after && !("perturbations" in after));
 });
 
 Deno.test("a zero burn on a precessing body keeps its position", () => {

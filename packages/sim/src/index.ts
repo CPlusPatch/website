@@ -45,8 +45,10 @@ export type {
     BodyOrbit,
     Mass,
     OrbitingBody,
+    Perturbation,
     Scenario,
     ScenarioResult,
+    Secular,
     ValidateOptions,
 } from "./scenario.ts";
 export {

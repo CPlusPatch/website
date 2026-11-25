@@ -206,7 +206,7 @@ export class Scene {
         }
     }
 
-    /** Replaces the orbit of body `id` with a fixed Kepler orbit, dropping any precession. */
+    /** Replaces the orbit of body `id` with a fixed Kepler orbit, dropping any perturbations. */
     setElements(id: string, el: Elements): void {
         const result = this.dispatch({
             type: "set-orbit",

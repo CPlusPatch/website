@@ -331,10 +331,13 @@ export const createOrbits = (
 
                 // The near points are already placed in the world, so they take no turn.
                 turn.identity();
-                if (!near && body.precession) {
+                const secular = body.perturbations?.find(
+                    (p) => p.type === "secular",
+                );
+                if (!near && secular) {
                     const [about, pole] = precessionTurns(
                         body.orbit.elements,
-                        body.precession,
+                        secular,
                         t,
                     );
                     normalTurn.setFromAxisAngle(
