@@ -57,7 +57,7 @@ export {
     validateScenario,
 } from "./scenario.ts";
 export type { Snapshot, System } from "./snapshot.ts";
-export { compile } from "./snapshot.ts";
+export { compile, statesAt } from "./snapshot.ts";
 export type { SatelliteFacts, Swarm } from "./swarm.ts";
 export {
     inSnapshotWindow,

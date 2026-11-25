@@ -1,4 +1,4 @@
-import type { Elements } from "@cpluspatch/orbit";
+import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
@@ -101,4 +101,22 @@ export const compile = (doc: Document): System => {
             return elementsAt(body, t);
         },
     };
+};
+
+/** The state of every body of `system` at `t`, by id. */
+export const statesAt = (system: System, t: number): Map<string, State> => {
+    const { r, v } = system.snapshot(t);
+    const states = new Map<string, State>();
+
+    const at = (data: Float64Array, i: number): Vec3 => {
+        const [x = 0, y = 0, z = 0] = data.subarray(3 * i, 3 * i + 3);
+
+        return { x, y, z };
+    };
+
+    for (const [id, i] of system.index) {
+        states.set(id, { r: at(r, i), v: at(v, i) });
+    }
+
+    return states;
 };

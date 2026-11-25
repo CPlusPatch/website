@@ -13,7 +13,7 @@ import { documentOf } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
 import { sortByDepth } from "./scenario.ts";
-import { compile } from "./snapshot.ts";
+import { compile, statesAt } from "./snapshot.ts";
 import { worldStates } from "./system.ts";
 
 const TIMES = [...golden.times, -3.15576e9, 123_456_789.5];
@@ -137,4 +137,13 @@ Deno.test("elementsAt throws for an unknown id", () => {
         Error,
         "Unknown body",
     );
+});
+
+Deno.test("statesAt holds the worldStates of every body", () => {
+    const system = compile(documentOf(scenario));
+    const order = sortByDepth(scenario);
+
+    for (const t of TIMES) {
+        assertEquals(statesAt(system, t), worldStates(scenario, order, t));
+    }
 });
