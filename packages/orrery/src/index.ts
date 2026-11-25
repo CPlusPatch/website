@@ -51,7 +51,7 @@ import { createSearch, type Search } from "./ui/search.ts";
 import { sheetSpace } from "./ui/sheet.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createSoundMenu } from "./ui/sound-menu.ts";
-import { createTimeBar } from "./ui/time-bar.ts";
+import TimeBar from "./ui/time/TimeBar.svelte";
 import { World } from "./world.ts";
 
 /** A mounted Orrery. */
@@ -187,7 +187,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         storage,
         (groups) => setSatellites?.(groups),
         // `timeBar` is made below, and the menu only calls this once it's open.
-        { now: () => world.clock.t, goLive: () => timeBar.goLive() },
+        { now: () => world.clock.t, goLive: () => timeBar?.goLive() },
     );
     // The body the satellites orbit, which is the first with model "earth".
     const satelliteHost = () =>
@@ -403,8 +403,13 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     // The views come and go, and the sound menu stays in the HUD panel beside them.
     const soundMenu = createSoundMenu(sound);
     root.querySelector(".orrery__panel--hud")?.append(soundMenu.element);
-    const timeBar = createTimeBar(world, storage);
-    root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
+    const timeBar = bottom
+        ? mountComponent(TimeBar, {
+              target: bottom,
+              context: storeContext(documentStore, viewState),
+              props: { storage },
+          })
+        : null;
     // The page has the spacer between them. The notices come last.
     // Taken before createSearch so the crumbs and the search toggle stay first in the bar.
     const firstInTop = top?.firstChild ?? null;
@@ -503,7 +508,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
             return true;
         },
-        goLive: timeBar.goLive,
+        goLive: () => timeBar?.goLive(),
         openSearch: () => {
             showInterface();
             search.open();
@@ -525,7 +530,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         toggleBare: () => setBare(!root.classList.contains("orrery--bare")),
         toggleDate: () => {
             showInterface();
-            timeBar.toggleDate();
+            timeBar?.toggleDate();
         },
     });
 
@@ -622,7 +627,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             scenarios.destroy();
             satellites.destroy();
             search?.destroy();
-            timeBar.destroy();
+            if (timeBar) void unmount(timeBar);
             soundMenu.destroy();
             sound.destroy();
             if (crumbs) void unmount(crumbs);

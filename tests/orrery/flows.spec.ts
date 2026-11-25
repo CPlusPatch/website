@@ -235,3 +235,142 @@ test("the crumbs follow the focus and keep keyboard focus when clicked", async (
     await expect(buttons.nth(1)).toBeFocused();
     expect(problems).toEqual([]);
 });
+
+const runButton = (page: Page) =>
+    page.getByRole("button", { name: /^(Running\. Hold|Held\. Run) time$/ });
+
+const rateButton = (page: Page) => page.locator(".orrery__rate");
+
+const dateEditor = (page: Page) =>
+    page.getByRole("region", { name: "Set the date" });
+
+const shownDate = (page: Page) => page.locator(".orrery__clock time");
+
+/** Opens the editor with T and sets a date in 2030. */
+const jumpTo2030 = async (page: Page) => {
+    await page.keyboard.press("t");
+    await expect(dateEditor(page)).toBeVisible();
+    await dateEditor(page).getByRole("textbox", { name: "Year" }).fill("2030");
+    await dateEditor(page).getByRole("textbox", { name: "Month" }).fill("06");
+    await dateEditor(page).getByRole("textbox", { name: "Day" }).fill("15");
+    await dateEditor(page).getByRole("button", { name: "Go to date" }).click();
+};
+
+test("the run button toggles between running and held", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    // Reduced motion starts the clock held, so read the state first.
+    const first = (await runButton(page).getAttribute("aria-label")) ?? "";
+    const other =
+        first === "Held. Run time" ? "Running. Hold time" : "Held. Run time";
+
+    await runButton(page).click();
+
+    await expect(runButton(page)).toHaveAccessibleName(other);
+
+    await runButton(page).click();
+
+    await expect(runButton(page)).toHaveAccessibleName(first);
+    expect(problems).toEqual([]);
+});
+
+test("the rate menu opens with arrows, picks with Enter and closes with Esc", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    await selectBody(page, "Mars");
+    const before = await rateButton(page).innerText();
+    const menu = page.getByRole("menu", { name: "Time warp" });
+
+    await rateButton(page).focus();
+    await page.keyboard.press("ArrowDown");
+
+    await expect(menu).toBeVisible();
+    await expect(rateButton(page)).toHaveAttribute("aria-expanded", "true");
+    await expect(
+        menu.getByRole("menuitemradio", { checked: true }),
+    ).toBeFocused();
+
+    await page.keyboard.press("ArrowUp");
+    const picked = await page.locator(":focus").innerText();
+    await page.keyboard.press("Enter");
+
+    await expect(menu).toBeHidden();
+    await expect(rateButton(page)).toBeFocused();
+    await expect(rateButton(page)).not.toHaveText(before);
+    await expect(rateButton(page)).toHaveText(picked);
+
+    await page.keyboard.press("ArrowDown");
+    await expect(menu).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await expect(menu).toBeHidden();
+    await expect(rateButton(page)).toBeFocused();
+    await expect(rateButton(page)).toHaveAttribute("aria-expanded", "false");
+    await expect(card(page)).toBeVisible();
+    expect(problems).toEqual([]);
+});
+
+test("the date editor sets the clock, and Esc and a bad month keep it as it was", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+
+    await jumpTo2030(page);
+
+    await expect(dateEditor(page)).toBeHidden();
+    await expect(shownDate(page)).toHaveAttribute("datetime", /^2030-06-15T/);
+
+    // Reduced motion starts the clock held, and Esc has to put back a running one.
+    await runButton(page).click();
+    await expect(runButton(page)).toHaveAccessibleName("Running. Hold time");
+
+    await page.keyboard.press("t");
+    await expect(dateEditor(page)).toBeVisible();
+    await expect(runButton(page)).toHaveAccessibleName("Held. Run time");
+    await page.keyboard.press("Escape");
+
+    await expect(dateEditor(page)).toBeHidden();
+    await expect(runButton(page)).toHaveAccessibleName("Running. Hold time");
+
+    await page.keyboard.press("t");
+    await dateEditor(page).getByRole("textbox", { name: "Month" }).fill("13");
+    await dateEditor(page).getByRole("button", { name: "Go to date" }).click();
+
+    await expect(page.locator("#orrery-date-error")).toBeVisible();
+    await expect(dateEditor(page)).toBeVisible();
+    expect(problems).toEqual([]);
+});
+
+test("Go live shows after a date jump and returns to the real time", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    const goLive = page.locator(".orrery__go-live");
+    const chip = page.locator(".orrery__date-live");
+
+    // The clock starts at the scenario's date, not the real time.
+    await expect(goLive).toBeVisible();
+    await expect(chip).toBeHidden();
+
+    await goLive.click();
+
+    await expect(goLive).toBeHidden();
+    await expect(chip).toBeVisible();
+
+    await jumpTo2030(page);
+
+    await expect(goLive).toBeVisible();
+    await expect(chip).toBeHidden();
+
+    await goLive.click();
+
+    await expect(goLive).toBeHidden();
+    await expect(chip).toBeVisible();
+    expect(problems).toEqual([]);
+});
