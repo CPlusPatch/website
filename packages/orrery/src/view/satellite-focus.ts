@@ -9,6 +9,7 @@ import type { PerspectiveCamera } from "three";
 import type { SatelliteFacts } from "../swarm.ts";
 import type { World, WorldEvent } from "../world.ts";
 import type { Relative, Rig } from "./camera.ts";
+import { positionOf } from "./frame.ts";
 import { pointFrameDistanceKm } from "./geometry/framing.ts";
 import type { SwarmLayer } from "./swarm.ts";
 
@@ -137,7 +138,11 @@ export const createSatelliteFocus = ({
         const apogeeKm = facts.apogeeKm + EARTH_RADIUS / 1000;
         rig.focusPoint(
             () => {
-                const earth = world.states().get(host.id)?.r ?? rig.origin();
+                const frame = {
+                    system: world.system,
+                    snapshot: world.snapshot(),
+                };
+                const earth = positionOf(frame, host.id) ?? rig.origin();
 
                 return swarm.positionOf(k, world.clock.t, earth) ?? earth;
             },

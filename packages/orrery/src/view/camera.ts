@@ -2,7 +2,6 @@ import {
     type Body,
     length,
     type Scenario,
-    type State,
     sub,
     type Vec3,
 } from "@cpluspatch/orbit";
@@ -10,6 +9,7 @@ import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { kmPerPx } from "../scale.ts";
+import { type Frame, positionOf as positionIn, velocityOf } from "./frame.ts";
 import { behindDirection, chaseFrame, chaseView } from "./geometry/chase.ts";
 import {
     fitDistanceKm,
@@ -64,7 +64,7 @@ export type Rig = {
     /** Whether the focus has a parent to chase against. */
     canChase: () => boolean;
     /** Advances a focus move by `dt` seconds, follows the focus and updates the controls. */
-    update: (dt: number, states: Map<string, State>) => void;
+    update: (dt: number, frame: Frame) => void;
     /** Removes the controls' and the keys' listeners. */
     dispose: () => void;
 };
@@ -104,7 +104,7 @@ export const createRig = (
     camera: PerspectiveCamera,
     canvas: HTMLElement,
     scenario: () => Scenario,
-    firstStates: Map<string, State>,
+    firstFrame: Frame,
     firstFocus: string,
 ): Rig => {
     const root = scenario().bodies.find((body) => body.parent === null);
@@ -121,25 +121,26 @@ export const createRig = (
     const exists = (id: string) =>
         scenario().bodies.some((candidate) => candidate.id === id);
 
-    let states = firstStates;
+    let current = firstFrame;
 
     const positionOf = (id: string): Vec3 => {
-        const state = states.get(id);
-        if (!state) throw new Error(`There is no state for "${id}".`);
+        const r = positionIn(current, id);
+        if (!r) throw new Error(`There is no state for "${id}".`);
 
-        return state.r;
+        return r;
     };
 
     const bodyRelative = (id: string): Relative | null => {
         const parent = bodyOf(id).parent;
-        const state = states.get(id);
-        const parentState = parent === null ? undefined : states.get(parent);
-        if (!state || !parentState) return null;
+        const r = positionIn(current, id);
+        const v = velocityOf(current, id);
+        const parentR =
+            parent === null ? undefined : positionIn(current, parent);
+        const parentV =
+            parent === null ? undefined : velocityOf(current, parent);
+        if (!r || !v || !parentR || !parentV) return null;
 
-        return {
-            r: sub(state.r, parentState.r),
-            v: sub(state.v, parentState.v),
-        };
+        return { r: sub(r, parentR), v: sub(v, parentV) };
     };
 
     // The ecliptic is the XY plane, so north is Z.
@@ -560,7 +561,7 @@ export const createRig = (
             if (chasing) retargetChase();
         },
         update: (dt, latest) => {
-            states = latest;
+            current = latest;
             if (chasing) refreshFrame();
 
             // The up glides to the frame's Z, or to the ecliptic's when not chasing.

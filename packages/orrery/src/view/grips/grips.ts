@@ -4,7 +4,7 @@
  * descending node), drawn as DOM over the scene.
  */
 
-import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
+import type { Elements, Vec3 } from "@cpluspatch/orbit";
 import { wrapAngle } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
 import { cue } from "../../audio/cues.ts";
@@ -16,6 +16,7 @@ import {
 } from "../../format.ts";
 import { h, setText } from "../../ui/dom.ts";
 import type { Units } from "../../units.ts";
+import { type Frame, positionOf } from "../frame.ts";
 import {
     axisPosition,
     GRIPS_MIN_ORBIT_PX,
@@ -34,7 +35,7 @@ export type GripsFrame = {
     camera: PerspectiveCamera;
     /** The floating origin, in metres. */
     origin: Vec3;
-    states: Map<string, State>;
+    frame: Frame;
     viewport: { width: number; height: number };
     /** The id of the body that body `id` orbits. */
     parentOf: (id: string) => string | null | undefined;
@@ -359,7 +360,7 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
         update: (frame) => {
             const elements = current?.elements() ?? null;
             const parent = current ? frame.parentOf(current.id) : undefined;
-            const r = parent ? frame.states.get(parent)?.r : undefined;
+            const r = parent ? positionOf(frame.frame, parent) : undefined;
             if (!current || !elements || !r) return hide();
 
             const { camera: eye, origin } = frame;

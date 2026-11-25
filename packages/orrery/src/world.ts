@@ -4,14 +4,17 @@ import type {
     Elements,
     ElementsResult,
     Scenario,
+    Snapshot,
     State,
+    System,
+    Vec3,
 } from "@cpluspatch/orbit";
 import {
     applyBurn,
+    compile,
     elementsAt,
     sortByDepth,
     validateScenario,
-    worldStates,
 } from "@cpluspatch/orbit";
 import { subtreeIds } from "./adding.ts";
 import type { Clock } from "./clock.ts";
@@ -36,6 +39,7 @@ export class World {
     #order: Body[];
     #listeners = new Set<(e: WorldEvent) => void>();
     #cache: { t: number; states: Map<string, State> } | null = null;
+    #system: System | null = null;
 
     constructor(scenario: Scenario, clock: Clock) {
         const root = scenario.bodies.find((body) => body.parent === null);
@@ -66,15 +70,37 @@ export class World {
         };
     }
 
+    /** The scenario compiled for evaluation. Compiled on first use and again after a change. */
+    get system(): System {
+        this.#system ??= compile(this.scenario);
+
+        return this.#system;
+    }
+
+    /** Every body at the clock's time. */
+    snapshot(): Snapshot {
+        return this.system.snapshot(this.clock.t);
+    }
+
     /** The state of every body at the clock's time. */
     states(): Map<string, State> {
         const t = this.clock.t;
 
         if (this.#cache?.t !== t) {
-            this.#cache = {
-                t,
-                states: worldStates(this.scenario, this.order, t),
+            const { r, v } = this.snapshot();
+            const states = new Map<string, State>();
+
+            const at = (data: Float64Array, i: number): Vec3 => {
+                const [x = 0, y = 0, z = 0] = data.subarray(3 * i, 3 * i + 3);
+
+                return { x, y, z };
             };
+
+            for (const [id, i] of this.system.index) {
+                states.set(id, { r: at(r, i), v: at(v, i) });
+            }
+
+            this.#cache = { t, states };
         }
 
         return this.#cache.states;
@@ -110,6 +136,7 @@ export class World {
         this.#scenario = scenario;
         this.#order = sortByDepth(scenario);
         this.#cache = null;
+        this.#system = null;
         this.selected = null;
         this.focused = root.id;
         this.clock.set(t);
@@ -229,6 +256,7 @@ export class World {
         this.#scenario = scenario;
         this.#order = sortByDepth(scenario);
         this.#cache = null;
+        this.#system = null;
     }
 
     #check(id: string): void {

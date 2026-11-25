@@ -1,9 +1,5 @@
-import type { Vec3 } from "@cpluspatch/orbit";
-import {
-    eccentricAnomalyOf,
-    elementsAt,
-    orbitPointsAt,
-} from "@cpluspatch/orbit";
+import type { System, Vec3 } from "@cpluspatch/orbit";
+import { eccentricAnomalyOf, orbitPointsAt } from "@cpluspatch/orbit";
 import { nearAnomalies, trailBackAt } from "../geometry/along-orbit.ts";
 import { SAMPLES, setVertex } from "./line-geometry.ts";
 import type { Orbit, Paint } from "./types.ts";
@@ -14,6 +10,7 @@ import type { Orbit, Paint } from "./types.ts";
  */
 export const rebuildNear = (
     orbit: Orbit,
+    system: System,
     parentR: Vec3,
     r: Vec3,
     origin: Vec3,
@@ -22,7 +19,7 @@ export const rebuildNear = (
     next: Paint,
     paintRamp: (orbit: Orbit, picked: boolean, dim: number) => void,
 ): void => {
-    const elements = elementsAt(orbit.body, t);
+    const elements = system.elementsAt(orbit.body.id, t);
 
     const center = eccentricAnomalyOf(elements, {
         x: r.x - parentR.x,

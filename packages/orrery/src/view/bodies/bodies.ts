@@ -1,10 +1,4 @@
-import {
-    type Body,
-    bodyOrientation,
-    type State,
-    sub,
-    type Vec3,
-} from "@cpluspatch/orbit";
+import { type Body, sub, type Vec3 } from "@cpluspatch/orbit";
 import {
     AmbientLight,
     Box3,
@@ -18,6 +12,7 @@ import {
     Vector3,
 } from "three";
 import type { Assets } from "../assets.ts";
+import { type Frame, orientationOf, positionOf, velocityOf } from "../frame.ts";
 import { lvlhMatrix } from "../geometry/attitude.ts";
 import { projectedBox } from "../geometry/footprint.ts";
 import {
@@ -45,14 +40,13 @@ import { disposeModel } from "./spacecraft.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
-    /** Places every body relative to `origin` at clock time `t` and picks what to show. Labels keep out of `blocked`. Returns where the shown bodies are on screen. */
+    /** Places every body relative to `origin` at the frame's time and picks what to show. Labels keep out of `blocked`. Returns where the shown bodies are on screen. */
     update: (
         camera: PerspectiveCamera,
-        t: number,
         origin: Vec3,
         focus: string,
         selected: string | null,
-        states: Map<string, State>,
+        frame: Frame,
         blocked: Rect[],
     ) => PickPoint[];
     /** The boxes the shown labels took in the last update, by body id, in px from the canvas's top left. */
@@ -190,14 +184,17 @@ export const createBodies = (
     let markerScale: ((pixels: number) => number) | null = null;
 
     return {
-        update: (camera, t, origin, focus, selected, states, blocked) => {
+        update: (camera, origin, focus, selected, frame, blocked) => {
             const fov = (camera.fov * Math.PI) / 180;
             const viewport = size;
             const keep = new Set([focus]);
             if (selected) keep.add(selected);
 
             const positions = new Map<string, Vec3>();
-            for (const [id, { r }] of states) {
+            for (const id of frame.system.ids) {
+                const r = positionOf(frame, id);
+                if (!r) continue;
+
                 positions.set(id, {
                     x: (r.x - origin.x) / 1000,
                     y: (r.y - origin.y) / 1000,
@@ -249,7 +246,7 @@ export const createBodies = (
             const text = new Map<string, Entry["text"]>();
             for (const entry of entries) {
                 const { body, sphere, model, marker, corona } = entry;
-                if (!states.has(body.id)) continue;
+                if (!frame.system.index.has(body.id)) continue;
 
                 if (folded.has(body.id)) {
                     sphere.visible = false;
@@ -315,14 +312,17 @@ export const createBodies = (
                 sphere.visible = big;
                 if (model) {
                     model.visible = big;
-                    const state = states.get(body.id);
-                    const parent = body.parent && states.get(body.parent);
-                    if (big && state && parent) {
+                    const r = positionOf(frame, body.id);
+                    const v = velocityOf(frame, body.id);
+                    const parentR = body.parent
+                        ? positionOf(frame, body.parent)
+                        : undefined;
+                    const parentV = body.parent
+                        ? velocityOf(frame, body.parent)
+                        : undefined;
+                    if (big && r && v && parentR && parentV) {
                         spin.fromArray(
-                            lvlhMatrix(
-                                sub(state.r, parent.r),
-                                sub(state.v, parent.v),
-                            ),
+                            lvlhMatrix(sub(r, parentR), sub(v, parentV)),
                         );
                         model.quaternion.setFromRotationMatrix(spin);
                     }
@@ -343,7 +343,7 @@ export const createBodies = (
                         entry.extras.load(maps);
                     }
 
-                    const orientation = bodyOrientation(body.model, t);
+                    const orientation = orientationOf(frame, body.id);
                     if (orientation) {
                         spin.fromArray(spinMatrix(orientation));
                         sphere.quaternion.setFromRotationMatrix(spin);
@@ -396,7 +396,10 @@ export const createBodies = (
             culled = settled.culled;
             placed = settled.placed;
             for (const entry of entries) {
-                if (states.has(entry.body.id) && !folded.has(entry.body.id)) {
+                if (
+                    frame.system.index.has(entry.body.id) &&
+                    !folded.has(entry.body.id)
+                ) {
                     restyle(entry);
                 }
             }

@@ -3,8 +3,8 @@
  * The picked orbit's apsides and numbers, drawn as DOM over the scene.
  */
 
-import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
-import { elementsAt, orbitPoints } from "@cpluspatch/orbit";
+import type { Elements, Vec3 } from "@cpluspatch/orbit";
+import { orbitPoints } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
 import {
     formatDistance,
@@ -16,6 +16,7 @@ import { readouts } from "../readouts.ts";
 import { h, setText } from "../ui/dom.ts";
 import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
+import { type Frame, positionOf } from "./frame.ts";
 import type { Rect } from "./geometry/labels.ts";
 import {
     blockSpots,
@@ -33,7 +34,7 @@ export type ReadoutsFrame = {
     camera: PerspectiveCamera;
     /** The floating origin, in metres. */
     origin: Vec3;
-    states: Map<string, State>;
+    frame: Frame;
     viewport: { width: number; height: number };
     /** Whether a ghost or the grips show. */
     hidden: boolean;
@@ -176,7 +177,7 @@ export const createReadouts = (
         update: ({
             camera,
             origin,
-            states,
+            frame,
             viewport: size,
             hidden,
             labels,
@@ -189,13 +190,13 @@ export const createReadouts = (
                     ? undefined
                     : world.scenario.bodies.find(({ id }) => id === selected);
             const parentR = body?.parent
-                ? states.get(body.parent)?.r
+                ? positionOf(frame, body.parent)
                 : undefined;
             if (hidden || !body || body.parent === null || !parentR) {
                 setShown(false);
                 return;
             }
-            const elements = elementsAt(body, world.clock.t);
+            const elements = frame.system.elementsAt(body.id, world.clock.t);
 
             viewport.width = size.width;
             viewport.height = size.height;
@@ -213,7 +214,7 @@ export const createReadouts = (
             const numbers = readouts(
                 world.scenario,
                 body.id,
-                states,
+                world.states(),
                 world.clock.t,
             );
             if (

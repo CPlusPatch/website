@@ -10,6 +10,7 @@ import type { World } from "../world.ts";
 import type { Assets } from "./assets.ts";
 import { createBodies } from "./bodies/bodies.ts";
 import { createRig } from "./camera.ts";
+import { positionOf } from "./frame.ts";
 import { type Band, centreShift } from "./geometry/framing.ts";
 import type { Rect } from "./geometry/labels.ts";
 import { createGrips } from "./grips/grips.ts";
@@ -293,7 +294,7 @@ const assemble = (
         camera,
         canvas,
         () => world.scenario,
-        world.states(),
+        { system: world.system, snapshot: world.snapshot() },
         world.focused,
     );
     cleanup.push(rig.dispose);
@@ -378,16 +379,16 @@ const assemble = (
         const nowT = unixMsToJ2000s(Date.now());
         advanceClock(world.clock, dt, lastNowT, nowT);
         lastNowT = nowT;
-        const states = world.states();
+        const current = { system: world.system, snapshot: world.snapshot() };
 
         satellites.check();
 
         offset(free);
-        rig.update(dt, states);
+        rig.update(dt, current);
         camera.updateMatrixWorld();
         orbits.update(
             rig.origin(),
-            states,
+            current,
             camera,
             world.clock.rate,
             world.clock.t,
@@ -395,21 +396,20 @@ const assemble = (
         const rooms = grips.update({
             camera,
             origin: rig.origin(),
-            states,
+            frame: current,
             viewport: size,
             parentOf: (id) =>
                 world.scenario.bodies.find((body) => body.id === id)?.parent,
         });
         points = bodies.update(
             camera,
-            world.clock.t,
             rig.origin(),
             rig.focusId(),
             world.selected,
-            states,
+            current,
             [...keepOut, ...rooms],
         );
-        const earth = host && states.get(host.id)?.r;
+        const earth = host && positionOf(current, host.id);
         if (earth) {
             const origin = rig.origin();
             earthOffset.x = (earth.x - origin.x) / 1000;
@@ -427,7 +427,7 @@ const assemble = (
         readouts.update({
             camera,
             origin: rig.origin(),
-            states,
+            frame: current,
             viewport: size,
             hidden: ghostShown || grips.shown(),
             labels: bodies.placed(),

@@ -1,4 +1,4 @@
-import type { Elements, OrbitingBody, State, Vec3 } from "@cpluspatch/orbit";
+import type { Elements, OrbitingBody, Vec3 } from "@cpluspatch/orbit";
 import { orbitPointsAt } from "@cpluspatch/orbit";
 import {
     type Color,
@@ -10,6 +10,7 @@ import {
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import { type Frame, positionOf } from "../frame.ts";
 import {
     arcLengthAt,
     nearAnomalies,
@@ -85,10 +86,10 @@ const parentAt = new Vector3();
 export const updateGhost = (
     ghost: Ghost,
     origin: Vec3,
-    states: Map<string, State>,
+    frame: Frame,
     camera: PerspectiveCamera,
 ): void => {
-    const parentR = states.get(ghost.body.parent)?.r;
+    const parentR = positionOf(frame, ghost.body.parent);
     if (!parentR) return;
 
     parentAt.set(

@@ -1,4 +1,4 @@
-import type { Body, BodyKind, Elements, State, Vec3 } from "@cpluspatch/orbit";
+import type { Body, BodyKind, Elements, Vec3 } from "@cpluspatch/orbit";
 import { precessionTurns } from "@cpluspatch/orbit";
 import {
     Color,
@@ -14,6 +14,7 @@ import {
 } from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import { type Frame, positionOf } from "../frame.ts";
 import {
     nearestPoint,
     orbitNear,
@@ -43,7 +44,7 @@ export type Orbits = {
      */
     update: (
         origin: Vec3,
-        states: Map<string, State>,
+        frame: Frame,
         camera: PerspectiveCamera,
         rate: number,
         t: number,
@@ -279,14 +280,14 @@ export const createOrbits = (
             // The new geometry has the static layout.
             if (orbit.near) restoreStatic(orbit);
         },
-        update: (origin, states, camera, rate, t) => {
+        update: (origin, frame, camera, rate, t) => {
             const fov = (camera.fov * Math.PI) / 180;
             const direction = rate < 0 ? -1 : 1;
             const dim = ghost?.line.visible ? GHOST_DIM : 1;
 
             for (const orbit of orbits) {
                 const { body, line, casing } = orbit;
-                const parentR = states.get(body.parent)?.r;
+                const parentR = positionOf(frame, body.parent);
                 if (!parentR) continue;
 
                 parentAt.set(
@@ -318,7 +319,7 @@ export const createOrbits = (
                     casing.material.opacity = fade;
                 }
 
-                const r = states.get(body.id)?.r;
+                const r = positionOf(frame, body.id);
                 const distance = r
                     ? camera.position.distanceTo(
                           target.set(
@@ -360,6 +361,7 @@ export const createOrbits = (
                 if (near) {
                     rebuildNear(
                         orbit,
+                        frame.system,
                         parentR,
                         r,
                         origin,
@@ -403,7 +405,7 @@ export const createOrbits = (
                 }
             }
 
-            if (ghost) updateGhost(ghost, origin, states, camera);
+            if (ghost) updateGhost(ghost, origin, frame, camera);
         },
         highlight: (id) => {
             pickedId = id;

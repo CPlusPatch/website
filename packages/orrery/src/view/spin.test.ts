@@ -1,12 +1,15 @@
 /// <reference types="deno" />
-import { bodyOrientation, type Vec3 } from "@cpluspatch/orbit";
+import { compile, solarSystem, type Vec3 } from "@cpluspatch/orbit";
 import { assert, assertAlmostEquals, assertExists } from "@std/assert";
+import { orientationOf } from "./frame.ts";
 import { spinMatrix } from "./spin.ts";
 
 const T = 7.5e8;
 
+const system = compile(solarSystem);
+
 const orientation = () => {
-    const o = bodyOrientation("earth", T);
+    const o = orientationOf({ system, snapshot: system.snapshot(T) }, "earth");
     assert(o);
 
     return o;
