@@ -10,18 +10,19 @@ const PORT = 4322;
 const OTHER_ENGINES = [
     {
         name: "firefox",
+        testDir: "tests/gallery",
         use: devices["Desktop Firefox"],
         testMatch: /(no-js|a11y|console)\.spec\.ts/,
     },
     {
         name: "webkit",
+        testDir: "tests/gallery",
         use: devices["Desktop Safari"],
         testMatch: /(no-js|a11y|console)\.spec\.ts/,
     },
 ];
 
 export default defineConfig({
-    testDir: "tests/gallery",
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
@@ -42,7 +43,18 @@ export default defineConfig({
         reuseExistingServer: !process.env.CI,
     },
     projects: [
-        { name: "chromium", use: devices["Desktop Chrome"] },
+        {
+            name: "chromium",
+            testDir: "tests/gallery",
+            use: devices["Desktop Chrome"],
+        },
+        {
+            name: "orrery",
+            testDir: "tests/orrery",
+            // The canvas baselines stay out of git: they're made locally, on a clean tree
+            snapshotPathTemplate: ".baselines/orrery/{arg}{ext}",
+            use: devices["Desktop Chrome"],
+        },
         ...(process.env.CI ? OTHER_ENGINES : []),
     ],
 });

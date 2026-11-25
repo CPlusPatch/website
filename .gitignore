@@ -42,3 +42,6 @@ src/data/radio/
 
 # gallery:diff reports
 /.gallery-diff/
+
+# Orrery canvas baselines, made locally with --update-snapshots
+/.baselines/
