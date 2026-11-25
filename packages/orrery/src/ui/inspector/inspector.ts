@@ -13,9 +13,9 @@ import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { type Component, flushSync, mount, unmount } from "svelte";
 import { bodyStats } from "../../body-stats.ts";
 import type { World } from "../../world.ts";
+import BurnEditor from "../BurnEditor.svelte";
 import { type BodyAdder, createBodyAdder } from "../body-adder.ts";
 import { showBodyMarker } from "../body-marker.ts";
-import { type BurnEditor, createBurnEditor } from "../burn-editor.ts";
 import ElementEditor from "../ElementEditor.svelte";
 import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";
@@ -157,7 +157,7 @@ export const createInspector = (
     let shown: string | null = null;
     let mode: Mode = "card";
     let editor: Exports<typeof ElementEditor> | null = null;
-    let burn: BurnEditor | null = null;
+    let burn: Exports<typeof BurnEditor> | null = null;
     let adder: BodyAdder | null = null;
     const buttons: ActionButtons = { focus: null, edit: null, burn: null };
 
@@ -312,7 +312,7 @@ export const createInspector = (
         buttons.focus = null;
         if (editor) unmount(editor);
         editor = null;
-        burn?.destroy();
+        if (burn) unmount(burn);
         burn = null;
         content.replaceChildren();
         adder?.destroy();
@@ -351,15 +351,18 @@ export const createInspector = (
                     onDraft: refresh,
                 },
             });
-        } else if (mode === "burn") {
-            burn = createBurnEditor(
-                world,
-                body.id,
-                scene.ghost,
-                () => closeForm("burn"),
-                refresh,
-            );
-            if (burn) content.append(burn.element);
+        } else if (parent && mode === "burn") {
+            burn = mount(BurnEditor, {
+                target: content,
+                context,
+                props: {
+                    id: body.id,
+                    ghost: scene.ghost,
+                    footTarget: element,
+                    done: () => closeForm("burn"),
+                    onDraft: refresh,
+                },
+            });
         }
         // The form's effects pin its Cancel and Apply row, and focus is set right after this.
         flushSync();
@@ -388,10 +391,6 @@ export const createInspector = (
             // The forms keep the card's head, with the plate under it.
             plate = createPlate(units, body.name, parent.name);
             content.before(plate.element);
-            if (burn) {
-                foot = burn.foot;
-                element.append(foot);
-            }
             refresh();
 
             return;
@@ -474,7 +473,7 @@ export const createInspector = (
             clearInterval(interval);
             children?.destroy();
             if (editor) unmount(editor);
-            burn?.destroy();
+            if (burn) unmount(burn);
             adder?.destroy();
             element.remove();
         },
