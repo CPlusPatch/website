@@ -25,11 +25,12 @@
         "radio": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/mixtape/src/cli.ts --out src/data/radio",
         "shorts": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/reel/src/cli.ts --out src/data/shorts",
         "test": "deno test --allow-read=packages packages",
-        "check": "biome check . && astro check && deno run theme:check && deno run test",
+        "check": "biome check . && astro check && svelte-check --tsconfig ./tsconfig.svelte.json --fail-on-warnings && deno run theme:check && deno run test",
         "test:gallery": "astro build && playwright test",
         "gallery:diff": "node tests/gallery/diff.ts"
     },
     "dependencies": {
+        "@astrojs/svelte": "9.0.1",
         "@cpluspatch/catalog": "workspace:*",
         "@cpluspatch/destructor": "workspace:*",
         "@cpluspatch/orbit": "workspace:*",
@@ -46,6 +47,7 @@
         "lightningcss": "^1.33.0",
         "sharp": "^0.35.5",
         "shiki": "^4.5.0",
+        "svelte": "5.57.3",
         "typescript": "^6.0.3",
         "uwuifier": "^4.2.2"
     },
@@ -57,6 +59,7 @@
         "@playwright/test": "~1.64.1",
         "@types/deno": "^2.7.0",
         "@types/node": "^22.20.5",
-        "playwright-core": "~1.64.1"
+        "playwright-core": "~1.64.1",
+        "svelte-check": "4.7.8"
     }
 }

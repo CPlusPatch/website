@@ -1,0 +1,6 @@
+{
+    // For svelte-check only: the whole site reports errors on .astro imports it can't resolve.
+    "extends": "./tsconfig.json",
+    "include": [".astro/types.d.ts", "packages/orrery/**/*"],
+    "exclude": ["dist", ".gallery-diff", "node_modules"]
+}

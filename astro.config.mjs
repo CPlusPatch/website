@@ -1,5 +1,6 @@
 // @ts-check
 
+import svelte from "@astrojs/svelte";
 import { defineConfig, fontProviders } from "astro/config";
 import icon from "astro-icon";
 import browserslist from "browserslist";
@@ -9,7 +10,7 @@ export default defineConfig({
     // Used for canonical and og:url links.
     site: "https://cpluspatch.com",
     // src/icons must exist, or the dev server stops watching src/. See its README.
-    integrations: [icon()],
+    integrations: [icon(), svelte()],
     build: {
         // Every page's CSS goes in its <style>, so the first paint waits on
         // the HTML alone rather than on stylesheet requests too. Measured with
