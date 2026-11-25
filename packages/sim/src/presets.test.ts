@@ -59,3 +59,34 @@ Deno.test("expandBody returns the same object when nothing changes", () => {
         gravity,
     );
 });
+
+Deno.test("expandBody leaves the appearance alone when the preset has none", () => {
+    const own = { ...plain, appearance: { color: "#fff" } };
+
+    assertStrictEquals(expandBody(own, { earth: {} }), own);
+    assertEquals(expandBody(plain, presets).appearance, undefined);
+});
+
+Deno.test("expandBody fills the appearance from the preset", () => {
+    const body = expandBody(plain, {
+        earth: { appearance: { color: "#00f" } },
+    });
+
+    assertEquals(body.appearance, { color: "#00f" });
+});
+
+Deno.test("expandBody keeps the appearance a body sets itself", () => {
+    const own = { ...plain, appearance: { color: "#fff" } };
+
+    assertStrictEquals(expandBody(own, { earth: {} }), own);
+    assertEquals(expandBody(own, { earth: { appearance: undefined } }), own);
+});
+
+Deno.test("expandBody merges the appearance by key, with the body winning", () => {
+    const body = expandBody(
+        { ...plain, appearance: { color: "#fff", glow: 1 } },
+        { earth: { appearance: { color: "#00f", rings: 2 } } },
+    );
+
+    assertEquals(body.appearance, { color: "#fff", rings: 2, glow: 1 });
+});
