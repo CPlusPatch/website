@@ -575,20 +575,115 @@ Deno.test("unknown keys are dropped and the input isn't mutated", () => {
     assertEquals(scenario, before);
 });
 
-Deno.test("time and color are kept only when present", () => {
+Deno.test("time and appearance are kept only when present", () => {
     const withBoth = structuredClone(valid);
 
     withBoth.time = 5;
-    at(withBoth.bodies, 0).color = "#ffd700";
+    at(withBoth.bodies, 0).appearance = { color: "#ffd700" };
 
     const kept = validateScenario(withBoth);
     const plain = validateScenario(valid);
 
     assert(kept.ok && plain.ok);
     assertEquals(kept.scenario.time, 5);
-    assertEquals(at(kept.scenario.bodies, 0).color, "#ffd700");
+    assertEquals(at(kept.scenario.bodies, 0).appearance, { color: "#ffd700" });
     assert(!("time" in plain.scenario));
-    assert(!("color" in at(plain.scenario.bodies, 0)));
+    assert(!("appearance" in at(plain.scenario.bodies, 0)));
+});
+
+Deno.test("an appearance round-trips untouched without a validator", () => {
+    const scenario = structuredClone(valid);
+    const appearance = { color: "red", clouds: { cover: 0.5 } };
+
+    at(scenario.bodies, 1).appearance = appearance;
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assertEquals(at(result.scenario.bodies, 1).appearance, appearance);
+});
+
+Deno.test("an appearance that isn't an object is rejected", () => {
+    for (const appearance of ["#fff", 5, null, ["a"]]) {
+        const errors = errorsAfter((s) => {
+            planet(s).appearance = appearance;
+        });
+
+        assertEquals(errors.length, 1);
+        assert(
+            errors[0]?.startsWith("earth.appearance: must be an object (got "),
+            String(errors[0]),
+        );
+    }
+});
+
+Deno.test("a version 3 body's top-level color is ignored", () => {
+    const scenario = structuredClone(valid);
+
+    Object.assign(at(scenario.bodies, 1), { color: "gold" });
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assert(!("color" in at(result.scenario.bodies, 1)));
+    assert(!("appearance" in at(result.scenario.bodies, 1)));
+});
+
+Deno.test("the appearance validator gets the path and its result is kept", () => {
+    const scenario = structuredClone(valid);
+    const calls: [string, unknown][] = [];
+
+    at(scenario.bodies, 1).appearance = { color: "bad" };
+
+    const result = validateScenario(scenario, {
+        appearance: (path, input, errors) => {
+            calls.push([path, input]);
+            errors.push(`${path}.color: nope`);
+
+            return { cleaned: true };
+        },
+    });
+
+    assertEquals(calls, [["earth.appearance", { color: "bad" }]]);
+    assert(!result.ok);
+    assertEquals(result.errors, ["earth.appearance.color: nope"]);
+
+    const clean = validateScenario(scenario, { appearance: () => ({ a: 1 }) });
+
+    assert(clean.ok);
+    assertEquals(at(clean.scenario.bodies, 1).appearance, { a: 1 });
+});
+
+Deno.test("the appearance validator doesn't run on bodies without one", () => {
+    let called = false;
+    const result = validateScenario(valid, {
+        appearance: () => {
+            called = true;
+
+            return {};
+        },
+    });
+
+    assert(result.ok);
+    assert(!called);
+});
+
+Deno.test("a version 2 colour becomes appearance.color", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).color = "#ffd700";
+
+    const result = validateScenario(old, {
+        appearance: () => {
+            throw new Error("the validator doesn't run on a migrated colour");
+        },
+    });
+
+    assert(result.ok);
+    assertEquals(at(result.scenario.bodies, 1).appearance, {
+        color: "#ffd700",
+    });
+    assert(!("color" in at(result.scenario.bodies, 1)));
 });
 
 Deno.test("a version 2 kind becomes the only tag", () => {
@@ -842,7 +937,7 @@ Deno.test("a body without precession has no precession key", () => {
     assert(!("precession" in at(result.scenario.bodies, 1)));
 });
 
-Deno.test("a colour that isn't #rgb or #rrggbb is rejected", () => {
+Deno.test("a version 2 colour that isn't #rgb or #rrggbb is rejected", () => {
     for (const color of [
         "gold",
         "#12",
@@ -851,27 +946,41 @@ Deno.test("a colour that isn't #rgb or #rrggbb is rejected", () => {
         "rgb(0 0 0)",
         "var(--x)",
     ]) {
-        const errors = errorsAfter((s) => {
-            planet(s).color = color;
-        });
+        const old = legacy(2);
 
-        assertEquals(errors, [
+        legacyBody(old, 1).color = color;
+
+        const result = validateScenario(old);
+
+        assert(!result.ok);
+        assertEquals(result.errors, [
             `earth.color: must be a #rgb or #rrggbb colour (got ${JSON.stringify(color)})`,
         ]);
     }
 });
 
-Deno.test("#rgb and #rrggbb colours are accepted in either case", () => {
+Deno.test("version 2 #rgb and #rrggbb colours are accepted in either case", () => {
     for (const color of ["#abc", "#AABBCC"]) {
-        const scenario = structuredClone(valid);
+        const old = legacy(2);
 
-        at(scenario.bodies, 0).color = color;
+        legacyBody(old, 0).color = color;
 
-        const result = validateScenario(scenario);
+        const result = validateScenario(old);
 
         assert(result.ok, color);
-        assertEquals(at(result.scenario.bodies, 0).color, color);
+        assertEquals(at(result.scenario.bodies, 0).appearance, { color });
     }
+});
+
+Deno.test("a version 2 colour that isn't a string is rejected", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).color = 5;
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
+    assertEquals(result.errors, ["earth.color: must be a string (got 5)"]);
 });
 
 Deno.test("a body name over the limit is rejected", () => {

@@ -19,6 +19,8 @@ orrery  →  catalog  →  sim
 
 Test files in `sim` and `render` may import `catalog`, since they use the built-in scenarios as fixtures. Runtime code may not. `.svelte` files and `svelte` imports belong in `orrery` only.
 
+`sim` stores a body's `appearance` without reading it. `render` validates it with `validateAppearance`, and `orrery/src/persistence.ts` passes that validator when it loads untrusted scenarios.
+
 `packages/boundaries.test.ts` enforces this table. It scans `src/` and `scripts/` of each package, including `new URL(…, import.meta.url)` asset paths.
 
 `render` sets `orrery__*` class names on the labels and grips it draws, and their styles are in `orrery/src/styles/scene.css`.

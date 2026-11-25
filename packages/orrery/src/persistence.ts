@@ -1,5 +1,6 @@
 import { solarSystem } from "@cpluspatch/catalog";
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
+import { validateAppearance } from "@cpluspatch/render";
 import {
     type Scenario,
     type ScenarioResult,
@@ -124,7 +125,7 @@ export const parseScenarioJson = (text: string): ScenarioResult => {
         return fail("The text isn't valid JSON.");
     }
 
-    return validateScenario(input);
+    return validateScenario(input, { appearance: validateAppearance });
 };
 
 /** The saved scenario, or `null` when nothing (readable) is saved. */
@@ -179,7 +180,9 @@ export const readList = (storage: SavedStorage): SavedScenario[] => {
         const { savedAt, scenario } = entry as Record<string, unknown>;
         if (typeof savedAt !== "number" || !Number.isFinite(savedAt)) continue;
 
-        const result = validateScenario(scenario);
+        const result = validateScenario(scenario, {
+            appearance: validateAppearance,
+        });
         if (result.ok) list.push({ savedAt, scenario: result.scenario });
     }
 

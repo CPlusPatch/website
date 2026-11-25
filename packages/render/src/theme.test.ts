@@ -13,7 +13,10 @@ const body = (
     name: id,
     tags: [tag],
     mass: { mu: 1, radius: 1 },
-    ...options,
+    ...(options.color === undefined
+        ? {}
+        : { appearance: { color: options.color } }),
+    ...(options.model === undefined ? {} : { model: options.model }),
 });
 
 Deno.test("an explicit colour wins over the model and the kind", () => {

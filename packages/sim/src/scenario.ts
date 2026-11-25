@@ -40,8 +40,8 @@ export type Body = {
     orbit?: BodyOrbit;
     /** Precession of the orbit, or none for a fixed orbit. Only allowed with an orbit. */
     precession?: Precession;
-    /** An optional CSS colour. */
-    color?: string;
+    /** Opaque to sim. The renderer validates it. */
+    appearance?: unknown;
     /** The built-in look: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
     model?: Model;
 };
@@ -112,6 +112,16 @@ export const MAX_NAME = 100;
 export const MAX_BODIES = 500;
 
 const ELEMENT_FIELDS = ["a", "e", "i", "raan", "argp", "m0", "epoch"] as const;
+
+/** Checks a body's `appearance` and returns the clean value. Pushes `<path>.<field>: ...` errors. */
+export type AppearanceValidator = (
+    path: string,
+    input: unknown,
+    errors: string[],
+) => unknown;
+
+/** Options for `validateScenario`. */
+export type ValidateOptions = { appearance?: AppearanceValidator };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === "object" && value !== null && !Array.isArray(value);
@@ -353,6 +363,7 @@ const validateBody = (
     version: 1 | 2 | 3,
     ids: Set<string>,
     errors: string[],
+    options: ValidateOptions,
 ): Body | null => {
     if (!isRecord(input)) {
         errors.push(`bodies[${index}]: must be an object (got ${show(input)})`);
@@ -374,6 +385,7 @@ const validateBody = (
         orbit,
         precession,
         color,
+        appearance,
         role,
         model,
     } = input;
@@ -492,9 +504,26 @@ const validateBody = (
         validMass = validateMass(label, mu, radius, errors);
     }
 
-    let validColor: string | undefined;
+    let validAppearance: unknown;
 
-    if (color !== undefined) {
+    if (version === 3) {
+        if (appearance !== undefined) {
+            if (!isRecord(appearance)) {
+                errors.push(
+                    `${label}.appearance: must be an object (got ${show(appearance)})`,
+                );
+            } else {
+                validAppearance =
+                    options.appearance === undefined
+                        ? appearance
+                        : options.appearance(
+                              `${label}.appearance`,
+                              appearance,
+                              errors,
+                          );
+            }
+        }
+    } else if (color !== undefined) {
         if (typeof color !== "string") {
             errors.push(
                 `${label}.color: must be a string (got ${show(color)})`,
@@ -504,7 +533,7 @@ const validateBody = (
                 `${label}.color: must be a #rgb or #rrggbb colour (got ${show(color)})`,
             );
         } else {
-            validColor = color;
+            validAppearance = { color };
         }
     }
 
@@ -567,7 +596,9 @@ const validateBody = (
         name: validName,
         tags: validTags,
         mass: validMass,
-        ...(validColor === undefined ? {} : { color: validColor }),
+        ...(validAppearance === undefined
+            ? {}
+            : { appearance: validAppearance }),
         ...(validModel === undefined ? {} : { model: validModel }),
     };
 
@@ -669,7 +700,10 @@ const validateTree = (
 };
 
 /** Checks unknown input and returns a clean scenario with wrapped angles, or every error. */
-export const validateScenario = (input: unknown): ScenarioResult => {
+export const validateScenario = (
+    input: unknown,
+    options: ValidateOptions = {},
+): ScenarioResult => {
     if (!isRecord(input)) {
         return {
             ok: false,
@@ -739,6 +773,7 @@ export const validateScenario = (input: unknown): ScenarioResult => {
                 validVersion ?? 2,
                 ids,
                 errors,
+                options,
             );
 
             if (valid) {

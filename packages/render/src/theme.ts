@@ -10,6 +10,7 @@ import {
     orbitClass,
 } from "@cpluspatch/sim";
 import { Color, SRGBColorSpace } from "three";
+import { appearanceOf } from "./appearance.ts";
 import { styleOf } from "./tags.ts";
 
 /** The colours of a scene, which come from the `--orrery-*` tokens. */
@@ -65,7 +66,9 @@ export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
 
 /** The CSS colour of a body: its own, its orbit class's, its model's, then its tag's. */
 export const colorOf = (body: Body, parent: Body | undefined): string => {
-    if (body.color !== undefined) return body.color;
+    const { color } = appearanceOf(body);
+
+    if (color !== undefined) return color;
 
     const style = styleOf(body);
 

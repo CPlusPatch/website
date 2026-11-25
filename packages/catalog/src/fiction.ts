@@ -45,7 +45,7 @@ const planet = (
     tags: ["planet"],
     mass: { mu: earthMasses * GM_EARTH, radius },
     orbit: { parent, elements },
-    color,
+    appearance: { color },
 });
 
 // Interstellar (2014). Kip Thorne, The Science of Interstellar: Gargantua has 100 million solar
@@ -65,7 +65,7 @@ export const gargantua: Scenario = {
             name: "Gargantua",
             tags: ["star"],
             mass: { mu: GARGANTUA_MU, radius: GARGANTUA_MU / C ** 2 },
-            color: "#2b2622",
+            appearance: { color: "#2b2622" },
         },
         // 130% of Earth's gravity, from the film.
         planet(
@@ -119,7 +119,7 @@ export const tauCeti: Scenario = {
             tags: ["star"],
             // Korolik et al. 2023 and Ibañez Bustos et al. 2026, via Wikipedia.
             mass: { mu: 0.8 * GM_SUN, radius: 0.801 * R_SUN },
-            color: "#ffe0a8",
+            appearance: { color: "#ffe0a8" },
         },
         planet(
             "tau-ceti-g",
@@ -169,7 +169,7 @@ export const eridani: Scenario = {
             name: "40 Eridani A",
             tags: ["star"],
             mass: { mu: 0.78 * GM_SUN, radius: 0.804 * R_SUN },
-            color: "#ffcf8a",
+            appearance: { color: "#ffcf8a" },
         },
         planet(
             "erid",
@@ -190,7 +190,7 @@ export const eridani: Scenario = {
                 parent: "40-eridani-a",
                 elements: orbit(400 * AU, 0, 0, 0, 0, 0),
             },
-            color: "#e8eeff",
+            appearance: { color: "#e8eeff" },
         },
         // The B–C orbit's 108° inclination is to the sky, so it isn't used here.
         {
@@ -202,7 +202,7 @@ export const eridani: Scenario = {
                 parent: "40-eridani-b",
                 elements: orbit(34.5 * AU, 0.4141, 0, 0, 0, 0),
             },
-            color: "#ff9a6a",
+            appearance: { color: "#ff9a6a" },
         },
     ],
 };
@@ -236,7 +236,7 @@ const ksp = (
     tags: [kind],
     mass: { mu, radius: km(radiusKm) },
     orbit: { parent, elements },
-    color,
+    appearance: { color },
 });
 
 /**
@@ -252,7 +252,7 @@ export const kerbol: Scenario = {
             name: "Kerbol",
             tags: ["star"],
             mass: { mu: 1.1723328e18, radius: km(261_600) },
-            color: "#fff1c4",
+            appearance: { color: "#fff1c4" },
         },
         ksp(
             "moho",

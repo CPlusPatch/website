@@ -25,6 +25,13 @@ import {
 
 const scenario = { ...solarSystem, time: 123456 };
 
+const badColour = {
+    ...scenario,
+    bodies: scenario.bodies.map((body, i) =>
+        i === 0 ? { ...body, appearance: { color: "red" } } : body,
+    ),
+};
+
 const memory = (): Pick<Storage, "getItem" | "setItem"> & {
     data: Map<string, string>;
 } => {
@@ -154,6 +161,16 @@ Deno.test("scenario JSON that fails to parse or validate is an error", () => {
     assertEquals(parseScenarioJson(JSON.stringify(scenario)).ok, true);
 });
 
+Deno.test("scenario JSON with a bad body colour is an error", () => {
+    const result = parseScenarioJson(JSON.stringify(badColour));
+
+    assert(!result.ok);
+    assertStringIncludes(
+        result.errors.join("\n"),
+        `${scenario.bodies[0]?.id}.appearance.color:`,
+    );
+});
+
 Deno.test("a saved scenario is read back, and nothing saved is null", () => {
     const storage = memory();
     assertEquals(readSaved(storage), null);
@@ -278,6 +295,21 @@ Deno.test("entries that aren't valid scenarios are dropped from the list", () =>
             null,
             "text",
         ]),
+    );
+
+    const list = readList(storage);
+
+    assertEquals(
+        list.map((saved) => saved.scenario.name),
+        ["Good"],
+    );
+});
+
+Deno.test("a saved entry with a bad body colour is dropped from the list", () => {
+    const storage = memory();
+    storage.setItem(
+        SAVED_LIST_KEY,
+        JSON.stringify([entry("Good"), { savedAt: 2, scenario: badColour }]),
     );
 
     const list = readList(storage);

@@ -40,12 +40,14 @@ export type { Readouts } from "./readouts.ts";
 export { distanceOf, readouts } from "./readouts.ts";
 export { KERBOL_LOCKED, ROTATION_MODELS } from "./rotation-models.ts";
 export type {
+    AppearanceValidator,
     Body,
     BodyOrbit,
     Mass,
     OrbitingBody,
     Scenario,
     ScenarioResult,
+    ValidateOptions,
 } from "./scenario.ts";
 export {
     fillModels,

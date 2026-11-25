@@ -106,14 +106,18 @@ Deno.test("update-body changes the patched fields", () => {
         apply(doc, {
             type: "update-body",
             id: "earth",
-            patch: { name: "Terra", mass: { mu: 1, radius: 1 }, color: "#00f" },
+            patch: {
+                name: "Terra",
+                mass: { mu: 1, radius: 1 },
+                appearance: { color: "#00f" },
+            },
         }),
     );
     const earth = find(next, "earth");
 
     assertEquals(earth?.name, "Terra");
     assertEquals(earth?.mass, { mu: 1, radius: 1 });
-    assertEquals(earth?.color, "#00f");
+    assertEquals(earth?.appearance, { color: "#00f" });
 });
 
 Deno.test("update-body can't change id or orbit", () => {

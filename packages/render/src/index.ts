@@ -3,6 +3,11 @@
  * The three.js scene of the Orrery, and the text and DOM helpers it shares with the UI.
  */
 
+export {
+    type Appearance,
+    appearanceOf,
+    validateAppearance,
+} from "./appearance.ts";
 export { createAssets } from "./assets.ts";
 export { ROLE_ICONS, type RoleKey, roleOf } from "./bodies/role-icons.ts";
 export { Clock, DEFAULT_RATE, presetOf, RATES, stepRate } from "./clock.ts";
