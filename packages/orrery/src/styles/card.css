@@ -156,8 +156,10 @@
         text-underline-offset: 3px;
         cursor: pointer;
 
-        &:hover {
-            text-decoration-color: var(--orrery-text);
+        @media (hover: hover) {
+            &:hover {
+                text-decoration-color: var(--orrery-text);
+            }
         }
     }
 
@@ -354,8 +356,10 @@
         white-space: nowrap;
         cursor: pointer;
 
-        &:hover {
-            background: var(--orrery-panel-raised);
+        @media (hover: hover) {
+            &:hover {
+                background: var(--orrery-panel-raised);
+            }
         }
     }
 
@@ -435,9 +439,11 @@
         text-underline-offset: 3px;
         cursor: pointer;
 
-        &:hover {
-            color: var(--orrery-text);
-            text-decoration-color: var(--orrery-text);
+        @media (hover: hover) {
+            &:hover {
+                color: var(--orrery-text);
+                text-decoration-color: var(--orrery-text);
+            }
         }
 
         &:focus-visible {
@@ -501,8 +507,10 @@
                 background: var(--orrery-frame);
             }
 
-            &:hover::before {
-                background: var(--orrery-muted);
+            @media (hover: hover) {
+                &:hover::before {
+                    background: var(--orrery-muted);
+                }
             }
 
             &:focus-visible {
