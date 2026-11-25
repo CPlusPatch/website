@@ -44,7 +44,7 @@ import { createHud } from "./ui/hud.ts";
 import Inspector from "./ui/inspector/Inspector.svelte";
 import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
-import { createNotices } from "./ui/notices.ts";
+import Notices from "./ui/Notices.svelte";
 import SatelliteCard from "./ui/SatelliteCard.svelte";
 import SatelliteMenu from "./ui/SatelliteMenu.svelte";
 import SoundMenu from "./ui/SoundMenu.svelte";
@@ -367,7 +367,14 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         history.replaceState(null, "", location.pathname + location.search);
     };
 
-    const notices = createNotices(() => scenarios?.focusToggle());
+    // Mounted detached, as `show` can be called before its element is placed.
+    const notices = mountComponent(Notices, {
+        target: document.createElement("div"),
+        props: { returnFocus: () => scenarios?.focusToggle() },
+    });
+    // Sets the component's `bind:this`, which `element()` returns, as `mount` doesn't run effects.
+    flushSync();
+    const noticesElement = notices.element();
     if (hashPayload(location.hash) !== null) stripHash();
 
     let fellBack = false;
@@ -397,7 +404,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         loading.reveal();
         const alert = webglAlert();
         // The top panel stays hidden, so the notice goes beside the alert.
-        container.append(alert, notices.element);
+        if (noticesElement) container.append(alert, noticesElement);
+        else container.append(alert);
         if (opened.notice) notices.show("warning", opened.notice);
 
         return {
@@ -407,7 +415,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 if (satellites) void unmount(satellites);
                 alert.remove();
                 live.remove();
-                notices.destroy();
+                void unmount(notices);
+                noticesElement?.remove();
             },
         };
     }
@@ -457,7 +466,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
               props: { root, units, openAdd },
           })
         : null;
-    top?.append(keys.toggle, notices.element);
+    top?.append(keys.toggle);
+    if (noticesElement) top?.append(noticesElement);
     // Mounted last, so the toggle can go right before the satellites menu.
     scenarios = top
         ? mountComponent(ScenarioMenu, {
@@ -581,7 +591,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const session = createSession({
         world,
         storage,
-        notices,
+        // `astro check` types a component's exports as `any`, which `Pick` rejects.
+        notices: { show: notices.show },
         page: {
             hash: () => location.hash,
             stripHash,
@@ -665,7 +676,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             viewState.destroy();
             documentStore.destroy();
             keys.destroy();
-            notices.destroy();
+            void unmount(notices);
+            noticesElement?.remove();
             parts?.destroy();
             assets.dispose();
             for (const panel of panels) panel.hidden = true;
