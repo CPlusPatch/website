@@ -44,8 +44,8 @@ import Inspector from "./ui/inspector/Inspector.svelte";
 import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
+import SatelliteCard from "./ui/SatelliteCard.svelte";
 import SoundMenu from "./ui/SoundMenu.svelte";
-import { createSatelliteCard } from "./ui/satellite-card.ts";
 import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import ScenarioMenu from "./ui/scenario-menu/ScenarioMenu.svelte";
 import Search from "./ui/search/Search.svelte";
@@ -248,11 +248,16 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 });
             }
 
-            const card = createSatelliteCard(view.satellite, () =>
-                search?.focusToggle(),
-            );
-            cleanup.push(card.destroy);
-            root.querySelector(".orrery__panel--right")?.append(card.element);
+            const card = side
+                ? mountComponent(SatelliteCard, {
+                      target: side,
+                      props: {
+                          satellite: view.satellite,
+                          restoreFocus: () => search?.focusToggle(),
+                      },
+                  })
+                : null;
+            if (card) cleanup.push(() => void unmount(card));
 
             currentView = view;
             view.bare(root.classList.contains("orrery--bare"));
@@ -321,7 +326,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                     }
                     offSatellite();
                     offChase();
-                    card.destroy();
+                    if (card) void unmount(card);
                     if (setSatellites === view.satelliteGroups) {
                         setSatellites = null;
                     }
