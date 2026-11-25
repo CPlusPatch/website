@@ -73,6 +73,8 @@ export {
     sortByDepth,
     validateScenario,
 } from "./scenario.ts";
+export type { Snapshot, System } from "./snapshot.ts";
+export { compile } from "./snapshot.ts";
 export { worldStates } from "./system.ts";
 export {
     j2000sToUnixMs,
