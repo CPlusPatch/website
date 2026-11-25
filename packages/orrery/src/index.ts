@@ -40,7 +40,7 @@ import { storeContext } from "./state/context.ts";
 import { DocumentStore } from "./state/document.svelte.ts";
 import { ViewState } from "./state/view.svelte.ts";
 import Crumbs from "./ui/Crumbs.svelte";
-import { createHud } from "./ui/hud.ts";
+import Hud from "./ui/Hud.svelte";
 import Inspector from "./ui/inspector/Inspector.svelte";
 import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
@@ -326,9 +326,14 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             const hudSlot = root.querySelector<HTMLElement>(
                 ".orrery__panel--hud",
             );
-            const removeHud = hudSlot
-                ? createHud(hudSlot, view, units, narrow)
-                : () => {};
+            // Ahead of the sound menu, which stays in the slot across rebuilds.
+            const hudComponent = hudSlot
+                ? mountComponent(Hud, {
+                      target: hudSlot,
+                      anchor: hudSlot.firstChild ?? undefined,
+                      props: { view, units, narrow },
+                  })
+                : null;
 
             return {
                 ready: view.ready,
@@ -345,7 +350,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                     if (setSatellites === view.satelliteGroups) {
                         setSatellites = null;
                     }
-                    removeHud();
+                    if (hudComponent) void unmount(hudComponent);
                     if (current) void unmount(current);
                     view.destroy();
                 },
