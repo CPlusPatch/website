@@ -42,6 +42,11 @@ export class ViewState {
         this.#world.focus(id);
     }
 
+    /** Selects a body, or clears the selection with `null`. The field follows once the world says so. */
+    select(id: string | null): void {
+        this.#world.select(id);
+    }
+
     /** The clock's time in seconds since J2000. Not reactive. */
     now(): number {
         return this.#world.clock.t;

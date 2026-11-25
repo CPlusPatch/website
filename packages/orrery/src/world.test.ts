@@ -323,6 +323,30 @@ Deno.test("adding a body with a bad parent or a taken id throws and emits nothin
     assertEquals(count, 0);
 });
 
+Deno.test("dispatch of add-body emits one bodies event, and a bad parent emits nothing", () => {
+    const world = make();
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    const added = world.dispatch({
+        type: "add-body",
+        body: rock("rock", "moon"),
+    });
+
+    assertEquals(added, { ok: true });
+    assertEquals(events, [{ type: "bodies", added: ["rock"], removed: [] }]);
+
+    const before = world.doc;
+    const bad = world.dispatch({
+        type: "add-body",
+        body: rock("rock2", "nowhere"),
+    });
+
+    assert(!bad.ok);
+    assert(world.doc === before);
+    assertEquals(events.length, 1);
+});
+
 Deno.test("adding a body made by newBody works", () => {
     const world = make();
     const earth = world.scenario.bodies.find((body) => body.id === "earth");

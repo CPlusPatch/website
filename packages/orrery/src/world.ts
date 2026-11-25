@@ -239,13 +239,19 @@ export class World {
     dispatch(
         cmd: Extract<
             Command,
-            { type: "set-orbit" | "schedule-burn" | "update-body" }
+            { type: "set-orbit" | "schedule-burn" | "update-body" | "add-body" }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {
         const result = apply(this.#doc, cmd);
         if (!result.ok) return { ok: false, errors: result.errors };
 
         this.#commit(result.doc);
+        if (cmd.type === "add-body") {
+            this.#emit({ type: "bodies", added: [cmd.body.id], removed: [] });
+
+            return { ok: true };
+        }
+
         this.#emit({
             type: "body",
             id: cmd.type === "update-body" ? cmd.id : cmd.bodyId,
