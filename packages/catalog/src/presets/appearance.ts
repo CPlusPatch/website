@@ -13,6 +13,7 @@ type PresetAppearance = {
     clouds?: { map: string };
     nightSide?: { map: string };
     rings?: { map: string; inner: number; outer: number };
+    satellites?: "orbitClass";
     // The mesh types and their params are in `packages/render/src/meshes/index.ts`.
     mesh?: {
         type: string;
@@ -54,6 +55,7 @@ export const APPEARANCE: Readonly<Record<string, PresetAppearance>> = {
         },
         clouds: { map: "earth-clouds" },
         nightSide: { map: "earth-night" },
+        satellites: "orbitClass",
     },
     moon: { color: "#cfd0d2", map: "moon" },
     mars: {

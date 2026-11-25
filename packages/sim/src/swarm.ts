@@ -18,6 +18,7 @@ import {
 } from "./catalogue.ts";
 import { type OrbitClass, orbitClass } from "./orbit-class.ts";
 import { j2Precession } from "./precession.ts";
+import type { Rotation } from "./rotation/index.ts";
 import type { Gravity } from "./scenario.ts";
 
 /** How far from the snapshot's epoch the swarm is drawn, in seconds. Drag and decay make it drift. */
@@ -56,13 +57,18 @@ export type Swarm = {
 };
 
 /**
- * Prepares `catalogue` for a host with gravitational parameter `host.mu` (m³/s²) and `host.gravity`.
+ * Prepares `catalogue` for a host with gravitational parameter `host.mu` (m³/s²), `host.radius` and `host.rotation`, which set the orbit classes, and `host.gravity`.
  * Without gravity the satellites don't precess.
  * The elements are TEME, which is taken as J2000 equatorial. That's about 0.4° off.
  */
 export const prepareSwarm = (
     catalogue: Catalogue,
-    host: { mu: number; gravity?: Gravity | undefined },
+    host: {
+        mu: number;
+        radius: number;
+        rotation?: Rotation | undefined;
+        gravity?: Gravity | undefined;
+    },
 ): Swarm => {
     const { mu: earthMu, gravity } = host;
     const count = catalogue.groups.length;
@@ -110,7 +116,7 @@ export const prepareSwarm = (
             ? j2Precession(elements, earthMu, gravity.j2, gravity.radius, POLE)
             : { nodeRate: 0, argpRate: 0 };
 
-        swarm.classes.push(orbitClass(elements));
+        swarm.classes.push(orbitClass(elements, host));
         swarm.a[k] = elements.a;
         swarm.e[k] = e;
         swarm.i[k] = i;

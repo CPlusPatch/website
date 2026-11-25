@@ -20,6 +20,8 @@ Deno.test("the group classes match the snapshot file", async () => {
     const earth = expandBody(solarEarth, PRESETS);
     const swarm = prepareSwarm(decodeCatalogue(bytes), {
         mu: earth.mass.mu,
+        radius: earth.mass.radius,
+        rotation: earth.rotation,
         gravity: earth.gravity,
     });
 

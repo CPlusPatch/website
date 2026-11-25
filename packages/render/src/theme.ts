@@ -12,7 +12,7 @@ import { styleOf } from "./tags.ts";
 export type Theme = {
     /** The colour of a body, given the body it orbits. */
     color: (body: Body, parent: Body | undefined) => Color;
-    /** The colour of an Earth satellite of an orbit class. */
+    /** The colour of a satellite of an orbit class, around a body that colours its satellites by it. */
     classColor: (orbitClass: OrbitClass) => Color;
     /** The colour of the page behind the scene. */
     background: () => Color;
@@ -22,7 +22,7 @@ export type Theme = {
     stop: () => void;
 };
 
-/** The token that colours Earth satellites of each orbit class. */
+/** The token that colours satellites of each orbit class. */
 export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     leo: "var(--orrery-orbit-leo)",
     meo: "var(--orrery-orbit-meo)",
@@ -30,7 +30,10 @@ export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     heo: "var(--orrery-orbit-heo)",
 };
 
-/** The CSS colour of a body with its preset filled in: its own, its orbit class's, then its tag's. */
+/**
+ * The CSS colour of a body with its preset filled in: its own, its orbit class's, then its tag's.
+ * The orbit class counts when `parent`, also with its preset filled in, has `satellites: "orbitClass"`.
+ */
 export const colorOf = (body: Body, parent: Body | undefined): string => {
     const { color } = appearanceOf(body);
 
@@ -38,8 +41,19 @@ export const colorOf = (body: Body, parent: Body | undefined): string => {
 
     const style = styleOf(body);
 
-    if (style.colorByOrbitClass && parent?.preset === "earth" && body.orbit) {
-        return ORBIT_CLASS_COLORS[orbitClass(body.orbit.elements)];
+    if (
+        style.colorByOrbitClass &&
+        parent !== undefined &&
+        appearanceOf(parent).satellites === "orbitClass" &&
+        body.orbit
+    ) {
+        return ORBIT_CLASS_COLORS[
+            orbitClass(body.orbit.elements, {
+                mu: parent.mass.mu,
+                radius: parent.mass.radius,
+                rotation: parent.rotation,
+            })
+        ];
     }
 
     return style.color;

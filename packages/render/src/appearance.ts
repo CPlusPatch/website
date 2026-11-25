@@ -29,6 +29,8 @@ export type Appearance = {
     nightSide?: { map: string };
     rings?: Rings;
     mesh?: MeshAppearance;
+    /** How the bodies orbiting this one are coloured: `"orbitClass"` colours spacecraft by their orbit class. */
+    satellites?: "orbitClass";
 };
 
 const validateColor: FieldValidator = (path, color, errors) => {
@@ -41,10 +43,19 @@ const validateColor: FieldValidator = (path, color, errors) => {
     }
 };
 
+const validateSatellites: FieldValidator = (path, value, errors) => {
+    if (value !== "orbitClass") {
+        errors.push(
+            `${path}.satellites: must be "orbitClass" (got ${show(value)})`,
+        );
+    }
+};
+
 /** The validator of each appearance field the renderer knows. Other fields are ignored. */
 const FIELDS: Readonly<Record<string, FieldValidator>> = {
     color: validateColor,
     mesh: validateMesh,
+    satellites: validateSatellites,
     ...Object.fromEntries(
         LAYERS.map(({ field, validate }) => [field, validate]),
     ),

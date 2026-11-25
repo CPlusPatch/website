@@ -18,7 +18,7 @@ export { apply } from "./commands.ts";
 export type { Document, TimelineEvent } from "./document.ts";
 export { documentOf } from "./document.ts";
 export { A_MAX, dragApsis, tiltInclination } from "./drag.ts";
-export type { OrbitClass } from "./orbit-class.ts";
+export type { OrbitClass, OrbitHost } from "./orbit-class.ts";
 export { orbitClass } from "./orbit-class.ts";
 export {
     bodyOrientation,

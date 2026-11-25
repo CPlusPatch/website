@@ -32,7 +32,19 @@ const MU = G * 5.97217e24;
 
 // WGS 84 / EGM2008, as in the catalog's Earth preset.
 const EARTH_GRAVITY = { j2: 1.08262668e-3, radius: EARTH_RADIUS };
-const HOST = { mu: MU, gravity: EARTH_GRAVITY };
+// The sidereal rate, which puts the geosynchronous radius at about 42,164 km.
+const EARTH_ROTATION = {
+    type: "uniform",
+    pole: { x: 0, y: 0, z: 1 },
+    w0: 0,
+    rate: 7.2921159e-5,
+} as const;
+const HOST = {
+    mu: MU,
+    radius: EARTH_RADIUS,
+    rotation: EARTH_ROTATION,
+    gravity: EARTH_GRAVITY,
+};
 const EPOCH_MS = Date.UTC(2026, 10, 23, 12);
 const EPOCH = unixMsToJ2000s(EPOCH_MS);
 
@@ -190,7 +202,10 @@ Deno.test("the node and periapsis rates are the J2 ones about the pole", () => {
 
 Deno.test("a host without gravity gives satellites that don't precess", () => {
     const sat = { a: 7.2e6, e: 0.02, i: 0.9, raan: 1, argp: 2, m0: 3 };
-    const swarm = prepareSwarm(catalogue([sat]), { mu: MU });
+    const swarm = prepareSwarm(catalogue([sat]), {
+        mu: MU,
+        radius: EARTH_RADIUS,
+    });
 
     assertEquals(swarm.nodeRate[0], 0);
     assertEquals(swarm.argpRate[0], 0);

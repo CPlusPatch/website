@@ -7,6 +7,7 @@ import {
     type Catalogue,
     type Gravity,
     prepareSwarm,
+    type Rotation,
     type Swarm,
 } from "@cpluspatch/sim";
 import { loadMapImage } from "./maps.ts";
@@ -25,8 +26,13 @@ export type Assets = {
     dispose: () => void;
 };
 
-/** The body a swarm orbits: its gravitational parameter and, if known, its gravity field. */
-export type SwarmHost = { mu: number; gravity?: Gravity | undefined };
+/** The body a swarm orbits: its gravitational parameter, radius and spin, which set the orbit classes, and its gravity field if known. */
+export type SwarmHost = {
+    mu: number;
+    radius: number;
+    rotation?: Rotation | undefined;
+    gravity?: Gravity | undefined;
+};
 
 /** The functions that fetch and decode each asset, so a test can replace them. */
 export type Loaders = {
@@ -85,13 +91,21 @@ export const createAssets = (
             return once(maps, id, () => promise);
         },
         swarm: (host) =>
-            once(swarms, JSON.stringify([host.mu, host.gravity]), async () =>
-                loaders.prepare(
-                    await once(catalogue, "catalogue", () =>
-                        loaders.catalogue(satellitesUrl, loading.signal),
+            once(
+                swarms,
+                JSON.stringify([
+                    host.mu,
+                    host.radius,
+                    host.rotation,
+                    host.gravity,
+                ]),
+                async () =>
+                    loaders.prepare(
+                        await once(catalogue, "catalogue", () =>
+                            loaders.catalogue(satellitesUrl, loading.signal),
+                        ),
+                        host,
                     ),
-                    host,
-                ),
             ),
         dispose: () => loading.abort(),
     };

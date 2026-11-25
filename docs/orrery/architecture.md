@@ -39,6 +39,7 @@ What a body draws comes from its `appearance`: the sphere's layers in `render/sr
 | `nightSide`  | `{ map }`                           | City lights on the night side                          |
 | `rings`      | `{ map, inner, outer }`             | A ring strip, `inner` and `outer` in m from the centre |
 | `mesh`       | `{ type, …params }`                 | A model in place of the sphere                         |
+| `satellites` | `"orbitClass"`                      | Colours the spacecraft orbiting it by orbit class      |
 
 An unknown mesh type draws the plain sphere. A `bus` without a `size` is scaled to the body's radius, and every other mesh is drawn at true size.
 
@@ -123,7 +124,7 @@ A perturbation turns an orbit's node and periapsis at a steady rate. `sim/src/pe
 
 `compile` resolves every body's precessions once. `System.precessions(id)` returns them, and `System.elementsAt(id, t)` applies them. A `j2` perturbation on a parent without gravity or rotation drifts by nothing. `validateScenario` reports it as an error when it's given `presets`, which `apply` and `persistence.ts` pass.
 
-The built-in scenarios still store `secular` rates. The satellite swarm takes its host's `mu` and `gravity` from the caller. Its pole is fixed at +z, Earth's pole in the catalogue's TEME frame, so a cloud around another host precesses about the wrong axis.
+The built-in scenarios still store `secular` rates. The satellite swarm takes its host's `mu`, `radius`, `rotation` and `gravity` from the caller. The radius and rotation set the orbit classes: LEO is measured from the radius, and GEO is where the period equals the host's spin. The swarm's pole is fixed at +z, Earth's pole in the catalogue's TEME frame, so a cloud around another host precesses about the wrong axis.
 
 ## Temporary exceptions
 

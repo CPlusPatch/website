@@ -98,6 +98,16 @@ Deno.test("good values for each layer's field are kept", () => {
     assertEquals(value, input);
 });
 
+Deno.test('satellites accepts "orbitClass" and nothing else', () => {
+    assertEquals(check({ satellites: "orbitClass" }).errors, []);
+    assertEquals(check({ satellites: "leo" }).errors, [
+        'earth.appearance.satellites: must be "orbitClass" (got "leo")',
+    ]);
+    assertEquals(check({ satellites: true }).errors, [
+        'earth.appearance.satellites: must be "orbitClass" (got boolean)',
+    ]);
+});
+
 Deno.test("a map key that isn't a known map is valid", () => {
     assertEquals(
         check({ map: "nowhere", clouds: { map: "nowhere" } }).errors,

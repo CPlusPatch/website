@@ -84,6 +84,8 @@ const counts = Object.fromEntries(
 // Through the file, so float32 rounding can't move a satellite across a class boundary.
 const swarm = prepareSwarm(decodeCatalogue(encodeCatalogue(entries)), {
     mu: earth.mass.mu,
+    radius: earth.mass.radius,
+    rotation: earth.rotation,
     gravity: earth.gravity,
 });
 for (let k = 0; k < swarm.count; k++) {

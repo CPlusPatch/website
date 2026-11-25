@@ -19,6 +19,11 @@ const body = (
     ...(options.preset === undefined ? {} : { preset: options.preset }),
 });
 
+const solarEarth = solarSystem.bodies.find(({ id }) => id === "earth");
+assert(solarEarth, "The solar system has no Earth.");
+// With Earth's mass and spin, which the orbit classes read.
+const realEarth = expandBody(solarEarth, PRESETS);
+
 const expanded = (...args: Parameters<typeof body>): Body =>
     expandBody(body(...args), PRESETS);
 
@@ -72,25 +77,47 @@ Deno.test("the Sun and every planet have a colour of their own", () => {
     }
 });
 
-const satellite = (color?: string): Body => ({
+const satellite = (color?: string, a = 7e6): Body => ({
     ...body("sat", "spacecraft", color === undefined ? {} : { color }),
     orbit: {
         parent: "host",
         // 7,000 km and circular: low Earth orbit.
-        elements: { a: 7e6, e: 0, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
+        elements: { a, e: 0, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
     },
 });
 
 Deno.test("a spacecraft around a body with preset earth takes its orbit class's colour", () => {
-    const host = expanded("home", "planet", { preset: "earth" });
-
-    assertEquals(colorOf(satellite(), host), ORBIT_CLASS_COLORS.leo);
+    assertEquals(colorOf(satellite(), realEarth), ORBIT_CLASS_COLORS.leo);
 });
 
-Deno.test("a spacecraft around a body named earth without the preset keeps its kind's colour", () => {
+Deno.test("a spacecraft around a body named earth without the preset or the field keeps its kind's colour", () => {
     const host = body("earth", "planet");
 
     assertEquals(colorOf(satellite(), host), "var(--orrery-text)");
+});
+
+Deno.test("a spacecraft around a plain body that asks for it is classed by that body's own numbers", () => {
+    const mu = 4e14;
+    const rate = 1e-4;
+    const host: Body = {
+        ...body("home", "planet"),
+        mass: { mu, radius: 1e6 },
+        appearance: { satellites: "orbitClass" },
+        rotation: {
+            type: "uniform",
+            pole: { x: 0, y: 0, z: 1 },
+            w0: 0,
+            rate,
+        },
+    };
+    assertEquals(
+        colorOf(satellite(undefined, 2.5e6), host),
+        ORBIT_CLASS_COLORS.leo,
+    );
+    assertEquals(
+        colorOf(satellite(undefined, Math.cbrt(mu / rate ** 2)), host),
+        ORBIT_CLASS_COLORS.geo,
+    );
 });
 
 Deno.test("a spacecraft around another body keeps its kind's colour", () => {
@@ -100,7 +127,5 @@ Deno.test("a spacecraft around another body keeps its kind's colour", () => {
 });
 
 Deno.test("a spacecraft's own colour wins over its orbit class", () => {
-    const host = expanded("home", "planet", { preset: "earth" });
-
-    assertEquals(colorOf(satellite("gold"), host), "gold");
+    assertEquals(colorOf(satellite("gold"), realEarth), "gold");
 });
