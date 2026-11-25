@@ -44,13 +44,13 @@ import Inspector from "./ui/inspector/Inspector.svelte";
 import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
+import SoundMenu from "./ui/SoundMenu.svelte";
 import { createSatelliteCard } from "./ui/satellite-card.ts";
 import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import ScenarioMenu from "./ui/scenario-menu/ScenarioMenu.svelte";
 import Search from "./ui/search/Search.svelte";
 import { sheetSpace } from "./ui/sheet.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
-import { createSoundMenu } from "./ui/sound-menu.ts";
 import TimeBar from "./ui/time/TimeBar.svelte";
 import { World } from "./world.ts";
 
@@ -401,8 +401,10 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     const sound = createSound(storage);
     // The views come and go, and the sound menu stays in the HUD panel beside them.
-    const soundMenu = createSoundMenu(sound);
-    root.querySelector(".orrery__panel--hud")?.append(soundMenu.element);
+    const hud = root.querySelector<HTMLElement>(".orrery__panel--hud");
+    const soundMenu = hud
+        ? mountComponent(SoundMenu, { target: hud, props: { sound } })
+        : null;
     const timeBar = bottom
         ? mountComponent(TimeBar, {
               target: bottom,
@@ -637,7 +639,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             satellites.destroy();
             if (search) void unmount(search);
             if (timeBar) void unmount(timeBar);
-            soundMenu.destroy();
+            if (soundMenu) void unmount(soundMenu);
             sound.destroy();
             if (crumbs) void unmount(crumbs);
             viewState.destroy();
