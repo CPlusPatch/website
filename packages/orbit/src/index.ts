@@ -71,6 +71,7 @@ export {
     MAX_BODIES,
     MAX_NAME,
     sortByDepth,
+    subtreeIds,
     validateScenario,
 } from "./scenario.ts";
 export type { Snapshot, System } from "./snapshot.ts";

@@ -662,3 +662,17 @@ export const sortByDepth = (scenario: Scenario): Body[] => {
 
     return sorted;
 };
+
+/** Body `id` and every body that orbits it, directly or not. */
+export const subtreeIds = (scenario: Scenario, id: string): string[] => {
+    const ids = [id];
+
+    // The array grows while it's walked, which makes this a queue.
+    for (const parent of ids) {
+        for (const body of scenario.bodies) {
+            if (body.parent === parent) ids.push(body.id);
+        }
+    }
+
+    return ids;
+};

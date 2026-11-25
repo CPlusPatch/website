@@ -14,9 +14,9 @@ import {
     compile,
     elementsAt,
     sortByDepth,
+    subtreeIds,
     validateScenario,
 } from "@cpluspatch/orbit";
-import { subtreeIds } from "./adding.ts";
 import type { Clock } from "./clock.ts";
 
 /** What a listener of a `World` is told about. */

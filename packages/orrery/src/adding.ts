@@ -1,5 +1,5 @@
 import type { Body, BodyKind, OrbitingBody, Scenario } from "@cpluspatch/orbit";
-import { G } from "@cpluspatch/orbit";
+import { G, subtreeIds } from "@cpluspatch/orbit";
 import { type AUnit, aMin, DEGREES, fieldError } from "./editing.ts";
 
 /** What the Add body form collects, in the units it shows. */
@@ -30,20 +30,6 @@ export const slugId = (name: string, taken: ReadonlySet<string>): string => {
     for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
 
     return id;
-};
-
-/** Body `id` and every body that orbits it, directly or not. */
-export const subtreeIds = (scenario: Scenario, id: string): string[] => {
-    const ids = [id];
-
-    // The array grows while it's walked, which makes this a queue.
-    for (const parent of ids) {
-        for (const body of scenario.bodies) {
-            if (body.parent === parent) ids.push(body.id);
-        }
-    }
-
-    return ids;
 };
 
 /** The body for `input`, with its orbit set at time `t`. */

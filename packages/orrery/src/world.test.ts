@@ -1,5 +1,11 @@
 /// <reference types="deno" />
-import { type Body, elementsAt, solarSystem, stateAt } from "@cpluspatch/orbit";
+import {
+    type Body,
+    elementsAt,
+    solarSystem,
+    stateAt,
+    subtreeIds,
+} from "@cpluspatch/orbit";
 import {
     assert,
     assertAlmostEquals,
@@ -7,7 +13,7 @@ import {
     assertNotEquals,
     assertThrows,
 } from "@std/assert";
-import { newBody, subtreeIds } from "./adding.ts";
+import { newBody } from "./adding.ts";
 import { Clock } from "./clock.ts";
 import { World, type WorldEvent } from "./world.ts";
 

@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { G, solarSystem } from "@cpluspatch/orbit";
+import { G, solarSystem, subtreeIds } from "@cpluspatch/orbit";
 import {
     assert,
     assertAlmostEquals,
@@ -12,7 +12,6 @@ import {
     newBody,
     removalNote,
     slugId,
-    subtreeIds,
 } from "./adding.ts";
 import { aMin, fieldError } from "./editing.ts";
 
