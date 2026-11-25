@@ -2,6 +2,7 @@
 import {
     bodyOrientation,
     compile,
+    documentOf,
     solarSystem,
     sortByDepth,
     worldStates,
@@ -11,7 +12,7 @@ import { type Frame, orientationOf, positionOf, velocityOf } from "./frame.ts";
 
 const T = 7.5e8;
 
-const system = compile(solarSystem);
+const system = compile(documentOf(solarSystem));
 const frame: Frame = { system, snapshot: system.snapshot(T) };
 const states = worldStates(solarSystem, sortByDepth(solarSystem), T);
 

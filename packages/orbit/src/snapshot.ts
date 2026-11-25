@@ -1,7 +1,7 @@
+import type { Document } from "./document.ts";
 import type { Elements } from "./kepler.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
-import type { Scenario } from "./scenario.ts";
 import { sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
 
@@ -31,8 +31,9 @@ export type System = {
     elementsAt(id: string, t: number): Elements;
 };
 
-/** Compiles `scenario` into a `System`. */
-export const compile = (scenario: Scenario): System => {
+/** Compiles the scenario of `doc` into a `System`. */
+export const compile = (doc: Document): System => {
+    const { scenario } = doc;
     const order = sortByDepth(scenario);
     const ids = order.map((body) => body.id);
     const index = new Map(ids.map((id, i) => [id, i]));

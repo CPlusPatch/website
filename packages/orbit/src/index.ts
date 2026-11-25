@@ -5,6 +5,8 @@
 
 export type { Burn } from "./burn.ts";
 export { applyBurn } from "./burn.ts";
+export type { BodyPatch, Command, DocumentResult } from "./commands.ts";
+export { apply } from "./commands.ts";
 export {
     AU,
     DAY,
@@ -21,6 +23,8 @@ export {
     EARTH_J2,
 } from "./data/satellites.ts";
 export { solarSystem } from "./data/solar-system.ts";
+export type { Document, TimelineEvent } from "./document.ts";
+export { documentOf } from "./document.ts";
 export type { ElementsResult } from "./elements.ts";
 export { elementsFromState, nextApsisTime, reepoch } from "./elements.ts";
 export { equatorialToEcliptic, rotateEquatorialToEcliptic } from "./frames.ts";

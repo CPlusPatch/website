@@ -7,6 +7,7 @@ import {
     assertThrows,
 } from "@std/assert";
 import { builtInScenarios } from "./data/built-in.ts";
+import { documentOf } from "./document.ts";
 import golden from "./golden.json" with { type: "json" };
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
@@ -18,7 +19,7 @@ const TIMES = [...golden.times, -3.15576e9, 123_456_789.5];
 
 for (const scenario of builtInScenarios) {
     Deno.test(`snapshot: ${scenario.name} matches worldStates and bodyOrientation exactly`, () => {
-        const system = compile(scenario);
+        const system = compile(documentOf(scenario));
         const order = sortByDepth(scenario);
 
         for (const t of TIMES) {
@@ -63,7 +64,7 @@ for (const scenario of builtInScenarios) {
     });
 
     Deno.test(`snapshot: ${scenario.name} lists parents before children and index inverts ids`, () => {
-        const system = compile(scenario);
+        const system = compile(documentOf(scenario));
 
         assertEquals(
             [...system.ids].sort(),
@@ -93,7 +94,7 @@ const scenario = builtInScenarios[0];
 assert(scenario, "no built-in scenario");
 
 Deno.test("snapshot returns the same object for the same time and a new one for another", () => {
-    const system = compile(scenario);
+    const system = compile(documentOf(scenario));
     const first = system.snapshot(100);
 
     assertStrictEquals(system.snapshot(100), first);
@@ -101,11 +102,11 @@ Deno.test("snapshot returns the same object for the same time and a new one for 
 });
 
 Deno.test("snapshot has no clouds yet", () => {
-    assertEquals(compile(scenario).snapshot(0).clouds.size, 0);
+    assertEquals(compile(documentOf(scenario)).snapshot(0).clouds.size, 0);
 });
 
 Deno.test("elementsAt matches the precession module for an orbiting body", () => {
-    const system = compile(scenario);
+    const system = compile(documentOf(scenario));
 
     for (const body of scenario.bodies) {
         if (body.parent === null) {
@@ -122,12 +123,16 @@ Deno.test("elementsAt throws for the root body", () => {
     const root = scenario.bodies.find((body) => body.parent === null);
 
     assert(root, "no root body");
-    assertThrows(() => compile(scenario).elementsAt(root.id, 0), Error, "root");
+    assertThrows(
+        () => compile(documentOf(scenario)).elementsAt(root.id, 0),
+        Error,
+        "root",
+    );
 });
 
 Deno.test("elementsAt throws for an unknown id", () => {
     assertThrows(
-        () => compile(scenario).elementsAt("no-such-body", 0),
+        () => compile(documentOf(scenario)).elementsAt("no-such-body", 0),
         Error,
         "Unknown body",
     );

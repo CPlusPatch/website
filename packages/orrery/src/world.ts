@@ -12,6 +12,7 @@ import type {
 import {
     applyBurn,
     compile,
+    documentOf,
     elementsAt,
     sortByDepth,
     subtreeIds,
@@ -72,7 +73,7 @@ export class World {
 
     /** The scenario compiled for evaluation. Compiled on first use and again after a change. */
     get system(): System {
-        this.#system ??= compile(this.scenario);
+        this.#system ??= compile(documentOf(this.scenario));
 
         return this.#system;
     }
