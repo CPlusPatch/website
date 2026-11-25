@@ -18,6 +18,7 @@ import {
 } from "@cpluspatch/render";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
+import { mount as mountComponent, unmount } from "svelte";
 import {
     announcement,
     bareAnnouncement,
@@ -34,7 +35,10 @@ import {
     startTime,
 } from "./persistence.ts";
 import { createSession } from "./session.ts";
-import { createCrumbs } from "./ui/crumbs.ts";
+import { storeContext } from "./state/context.ts";
+import { DocumentStore } from "./state/document.svelte.ts";
+import { ViewState } from "./state/view.svelte.ts";
+import Crumbs from "./ui/Crumbs.svelte";
 import { createHud } from "./ui/hud.ts";
 import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
@@ -251,7 +255,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                     k === null ? null : (view.satellite.facts(k)?.name ?? null);
 
                 if (event.type === "focus") {
-                    crumbs.setSatellite(
+                    crumbs?.setSatellite(
                         k === null || name === null
                             ? null
                             : { name, onClick: () => view.satellite.focus(k) },
@@ -306,7 +310,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                     if (inspector === current) inspector = null;
                     if (currentView === view) {
                         currentView = null;
-                        crumbs.setSatellite(null);
+                        crumbs?.setSatellite(null);
                     }
                     offSatellite();
                     offChase();
@@ -322,7 +326,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         } catch (error) {
             if (currentView === view) {
                 currentView = null;
-                crumbs.setSatellite(null);
+                crumbs?.setSatellite(null);
             }
             if (setSatellites === view.satelliteGroups) setSatellites = null;
             for (const undo of cleanup.toReversed()) undo();
@@ -395,7 +399,17 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     const timeBar = createTimeBar(world, storage);
     root.querySelector(".orrery__panel--bottom")?.append(timeBar.element);
     // The page has the spacer between them. The notices come last.
-    const crumbs = createCrumbs(world);
+    const documentStore = new DocumentStore(world);
+    const viewState = new ViewState(world);
+    // Taken before createSearch so the crumbs and the search toggle stay first in the bar.
+    const firstInTop = top?.firstChild ?? null;
+    const crumbs = top
+        ? mountComponent(Crumbs, {
+              target: top,
+              anchor: firstInTop ?? undefined,
+              context: storeContext(documentStore, viewState),
+          })
+        : null;
     const keys = createKeys();
     const openAdd = (name?: string) => {
         // The keys card hides the orbit card, so the form wouldn't show.
@@ -404,7 +418,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     };
     // The search panel isn't in a .orrery__panel, so it covers the scene without moving the labels.
     search = createSearch(root, world, units, openAdd);
-    top?.prepend(crumbs.element, search.toggle);
+    top?.insertBefore(search.toggle, firstInTop);
     const scenarios = createScenarios(root, world, storage, () => openAdd());
     top?.append(
         scenarios.toggle,
@@ -606,7 +620,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             timeBar.destroy();
             soundMenu.destroy();
             sound.destroy();
-            crumbs.destroy();
+            if (crumbs) void unmount(crumbs);
+            viewState.destroy();
+            documentStore.destroy();
             keys.destroy();
             notices.destroy();
             parts?.destroy();

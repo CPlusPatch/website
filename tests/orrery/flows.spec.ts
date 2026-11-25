@@ -110,3 +110,27 @@ test("search opens with / and a clicked result is selected", async ({
     ).toBeVisible();
     expect(problems).toEqual([]);
 });
+
+test("the crumbs follow the focus and keep keyboard focus when clicked", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    const crumbs = page.getByRole("navigation", { name: "Focus" });
+    const buttons = crumbs.getByRole("button");
+
+    await selectBody(page, "Moon");
+    await card(page).getByRole("button", { name: "Focus" }).click();
+
+    await expect(buttons).toHaveText(["Sun", "Earth", "Moon"]);
+    await expect(crumbs.locator("[aria-current]")).toHaveCount(1);
+    await expect(buttons.nth(2)).toHaveAttribute("aria-current", "location");
+
+    await buttons.nth(1).focus();
+    await buttons.nth(1).click();
+
+    await expect(buttons.nth(1)).toHaveAttribute("aria-current", "location");
+    await expect(crumbs.locator("[aria-current]")).toHaveCount(1);
+    await expect(buttons.nth(1)).toBeFocused();
+    expect(problems).toEqual([]);
+});

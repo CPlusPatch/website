@@ -23,6 +23,21 @@ Test files in `sim` and `render` may import `catalog`, since they use the built-
 
 `render` sets `orrery__*` class names on the labels and grips it draws, and their styles are in `orrery/src/styles/scene.css`.
 
+## Svelte bridge
+
+`World` still holds the state. Svelte components don't read it directly. They go through two stores in `src/state/`:
+
+| Store           | Holds                                                    | Writes                         |
+| --------------- | -------------------------------------------------------- | ------------------------------ |
+| `DocumentStore` | The scenario document and the system, as reactive fields | None yet                       |
+| `ViewState`     | The focused and selected body ids                        | `setFocus` calls `world.focus` |
+
+Each store listens to the world's events and copies the new values into its fields. A write goes to the world, and the field changes when the world's event comes back. Call `destroy()` to stop listening. Components update in Svelte's next microtask, not inside the world's event, so code that reads their DOM right after a world call sees the old DOM.
+
+`mount()` gets the stores through `storeContext()`, and components read them with `getDocument()` and `getView()`. Today only the focus crumbs (`ui/Crumbs.svelte`) are a component. They're mounted into the vanilla shell in `index.ts`.
+
+When the Svelte shell replaces `World`, the stores hold the state themselves and the bridge is deleted.
+
 ## Temporary exceptions
 
 These break the rules above until a later step of the rewrite removes them.

@@ -63,6 +63,11 @@ export class World {
         return this.view.selected;
     }
 
+    /** The scenario with its command history. */
+    get doc(): Document {
+        return this.#doc;
+    }
+
     /** The bodies and their orbits. */
     get scenario(): Scenario {
         return this.#doc.scenario;
