@@ -1,19 +1,19 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
-import { iconSvg } from "@cpluspatch/ui";
-import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import {
     type DateParts,
     formatYear,
     fromParts,
+    h,
     PART_NAMES,
     type PartName,
     parsePasted,
     partsProblem,
     stepPart,
     toParts,
-} from "../date-parts.ts";
+} from "@cpluspatch/render";
+import { iconSvg } from "@cpluspatch/ui";
+import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import type { World } from "../world.ts";
-import { h } from "./dom.ts";
 
 /** The date editor's element and how to drive it. */
 export type DateEditor = {

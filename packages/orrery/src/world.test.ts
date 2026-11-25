@@ -1,6 +1,7 @@
 /// <reference types="deno" />
 import { solarSystem } from "@cpluspatch/catalog";
 import { stateAt } from "@cpluspatch/orbit";
+import { Clock } from "@cpluspatch/render";
 import { type Body, elementsAt, subtreeIds } from "@cpluspatch/sim";
 import {
     assert,
@@ -10,7 +11,6 @@ import {
     assertThrows,
 } from "@std/assert";
 import { newBody } from "./adding.ts";
-import { Clock } from "./clock.ts";
 import { World, type WorldEvent } from "./world.ts";
 
 const make = (): World => new World(solarSystem, new Clock(0, 1, false));

@@ -3,8 +3,7 @@
  * What the satellite snapshot holds. Written by `scripts/build-satellites.ts`: don't edit by hand.
  */
 
-import type { OrbitClass } from "@cpluspatch/sim";
-import type { SatelliteGroup } from "./catalogue.ts";
+import type { OrbitClass, SatelliteGroup } from "@cpluspatch/sim";
 
 /** The satellites in each group of `assets/satellites.bin`, by orbit class. */
 export const GROUP_CLASSES: Record<

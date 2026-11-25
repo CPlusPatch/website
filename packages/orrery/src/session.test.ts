@@ -1,8 +1,8 @@
 /// <reference types="deno" />
 import { solarSystem } from "@cpluspatch/catalog";
+import { Clock } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import { assert, assertEquals } from "@std/assert";
-import { Clock } from "./clock.ts";
 import {
     encodeScenario,
     HASH_PREFIX,

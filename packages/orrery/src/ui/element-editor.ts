@@ -1,23 +1,26 @@
 import { AU, type Elements, wrapAngle } from "@cpluspatch/orbit";
+import {
+    type AUnit,
+    aUnit,
+    DEGREES,
+    type EditScene,
+    type Field,
+    fromMetres,
+    h,
+    otherUnit,
+    toMetres,
+    type Units,
+} from "@cpluspatch/render";
 import { elementsAt } from "@cpluspatch/sim";
 import { cue } from "../audio/cues.ts";
 import {
-    type AUnit,
     aMin,
-    aUnit,
-    DEGREES,
     draftElements,
-    type EditScene,
-    type Field,
     fieldError,
     fieldValue,
-    fromMetres,
     passesThroughParent,
-    toMetres,
 } from "../editing.ts";
-import { otherUnit, type Units } from "../units.ts";
 import type { World } from "../world.ts";
-import { h } from "./dom.ts";
 import { createForm, createStepper, type Stepper } from "./form.ts";
 import { createWarning } from "./warning.ts";
 

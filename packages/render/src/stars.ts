@@ -100,7 +100,7 @@ export const skyUv = (direction: {
     y: number;
     z: number;
 }): { u: number; v: number } => {
-    // Must match MILKY_WAY_FRAGMENT in view/sky.ts.
+    // Must match MILKY_WAY_FRAGMENT in sky.ts.
     const cos = Math.cos(OBLIQUITY_J2000);
     const sin = Math.sin(OBLIQUITY_J2000);
     const x = direction.x;

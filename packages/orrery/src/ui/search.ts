@@ -1,12 +1,16 @@
-import type { Body } from "@cpluspatch/sim";
-import type { AUnit } from "../editing.ts";
-import { formatRange, listUnit } from "../format.ts";
-import { distanceOf } from "../readouts.ts";
+import {
+    type AUnit,
+    formatRange,
+    h,
+    listUnit,
+    NARROW_QUERY,
+    setText,
+    type Units,
+} from "@cpluspatch/render";
+import { type Body, distanceOf } from "@cpluspatch/sim";
 import { found, treeOrder } from "../search.ts";
 import { leftPane, system } from "../systems.ts";
-import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
-import { h, NARROW_QUERY, setText } from "./dom.ts";
 import {
     headRows,
     leftRows,

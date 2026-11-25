@@ -1,5 +1,5 @@
+import { h } from "@cpluspatch/render";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
-import { h } from "./dom.ts";
 
 // Lucide's triangle-alert (ISC); @cpluspatch/ui only ships the icons its components draw.
 const TRIANGLE_ALERT =

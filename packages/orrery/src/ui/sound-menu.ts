@@ -1,6 +1,6 @@
+import { h, setText } from "@cpluspatch/render";
 import { iconSvg } from "@cpluspatch/ui";
 import type { Sound } from "../audio/sound.ts";
-import { h, setText } from "./dom.ts";
 import { attachMenu } from "./menu.ts";
 
 /** The sound button, its menu and how to remove them. */

@@ -1,8 +1,6 @@
+import { type AUnit, h, otherUnit } from "@cpluspatch/render";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { nudge } from "../burning.ts";
-import type { AUnit } from "../editing.ts";
-import { otherUnit } from "../units.ts";
-import { h } from "./dom.ts";
 
 /** A number field with − and + buttons, a unit and a line for an error. */
 export type Stepper = {

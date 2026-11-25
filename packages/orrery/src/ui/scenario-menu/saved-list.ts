@@ -1,7 +1,6 @@
+import { dateText, h } from "@cpluspatch/render";
 import type { Scenario } from "@cpluspatch/sim";
 import { type SavedScenario, startTime } from "../../persistence.ts";
-import { dateText } from "../../time-text.ts";
-import { h } from "../dom.ts";
 import { button } from "./buttons.ts";
 
 /** The body count of a scenario, like "12 bodies". */

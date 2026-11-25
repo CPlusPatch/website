@@ -10,6 +10,7 @@
     "dependencies": {
         "@cpluspatch/catalog": "workspace:*",
         "@cpluspatch/orbit": "workspace:*",
+        "@cpluspatch/render": "workspace:*",
         "@cpluspatch/sim": "workspace:*",
         "@cpluspatch/ui": "workspace:*",
         "three": "^0.187.0"

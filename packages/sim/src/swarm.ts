@@ -3,21 +3,22 @@
  * The satellite snapshot as a swarm of points: propagation in bulk, with no DOM.
  */
 
-import { EARTH_J2 } from "@cpluspatch/catalog";
 import {
     DAY,
+    EARTH_J2,
     EARTH_RADIUS,
     OBLIQUITY_J2000,
     solveKepler,
     unixMsToJ2000s,
     wrapAngle,
 } from "@cpluspatch/orbit";
-import { j2Precession, type OrbitClass, orbitClass } from "@cpluspatch/sim";
 import {
     type Catalogue,
     SATELLITE_GROUPS,
     type SatelliteGroup,
 } from "./catalogue.ts";
+import { type OrbitClass, orbitClass } from "./orbit-class.ts";
+import { j2Precession } from "./precession.ts";
 
 /** How far from the snapshot's epoch the swarm is drawn, in seconds. Drag and decay make it drift. */
 export const SNAPSHOT_WINDOW = 365 * DAY;

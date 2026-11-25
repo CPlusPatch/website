@@ -1,4 +1,21 @@
-import type { AUnit } from "./editing.ts";
+import { AU } from "@cpluspatch/orbit";
+
+/** The unit a semi-major axis is shown in. */
+export type AUnit = "km" | "AU";
+
+/** Degrees in a radian. */
+export const DEGREES = 180 / Math.PI;
+
+/** The unit a semi-major axis of `a` metres is shown in: km under 0.1 AU. */
+export const aUnit = (a: number): AUnit => (a < 0.1 * AU ? "km" : "AU");
+
+/** A distance in metres in `unit`. */
+export const fromMetres = (m: number, unit: AUnit): number =>
+    unit === "km" ? m / 1000 : m / AU;
+
+/** A distance in `unit` in metres. */
+export const toMetres = (x: number, unit: AUnit): number =>
+    unit === "km" ? x * 1000 : x * AU;
 
 /** The other unit of the pair. */
 export const otherUnit = (unit: AUnit): AUnit => (unit === "km" ? "AU" : "km");

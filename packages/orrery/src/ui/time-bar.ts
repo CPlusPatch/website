@@ -1,14 +1,22 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
+import {
+    h,
+    isLive,
+    offsetText,
+    PART_NAMES,
+    type PartName,
+    presetOf,
+    RATES,
+    rateText,
+    setText,
+    stampParts,
+} from "@cpluspatch/render";
 import { iconSvg } from "@cpluspatch/ui";
 import { cue } from "../audio/cues.ts";
-import { presetOf, RATES } from "../clock.ts";
-import { PART_NAMES, type PartName } from "../date-parts.ts";
 import type { SavedStorage } from "../persistence.ts";
-import { isLive, offsetText, rateText, stampParts } from "../time-text.ts";
 import { nowFlagLeft } from "../timeline.ts";
 import type { World } from "../world.ts";
 import { createDateEditor } from "./date-editor.ts";
-import { h, setText } from "./dom.ts";
 import type { NowMark } from "./timeline/draw.ts";
 import { createTimeline } from "./timeline/timeline.ts";
 

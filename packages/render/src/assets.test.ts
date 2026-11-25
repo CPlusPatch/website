@@ -1,14 +1,16 @@
 /// <reference types="deno" />
+
+import type { Catalogue, Swarm } from "@cpluspatch/sim";
 import {
     assert,
     assertEquals,
     assertRejects,
     assertStrictEquals,
 } from "@std/assert";
-import type { Catalogue } from "../catalogue.ts";
-import type { Swarm } from "../swarm.ts";
 import { createAssets, type Loaders } from "./assets.ts";
 import type { SkyData } from "./sky.ts";
+
+const SATELLITES = new URL("file:///satellites.bin");
 
 const fake = <T>(): T => ({}) as T;
 
@@ -46,7 +48,7 @@ const loaders = (overrides: Partial<Loaders> = {}) => {
 
 Deno.test("two sky calls fetch once and share the data", async () => {
     const { calls, all } = loaders();
-    const assets = createAssets(all);
+    const assets = createAssets(SATELLITES, all);
 
     const first = await assets.sky();
     const second = await assets.sky();
@@ -64,7 +66,7 @@ Deno.test("a failed swarm load isn't cached", async () => {
             return Promise.resolve(fake<Catalogue>());
         },
     });
-    const assets = createAssets(all);
+    const assets = createAssets(SATELLITES, all);
 
     await assertRejects(() => assets.swarm(1), Error, "offline");
     fail = false;
@@ -75,7 +77,7 @@ Deno.test("a failed swarm load isn't cached", async () => {
 
 Deno.test("the swarm decodes the catalogue once and prepares once per mu", async () => {
     const { calls, all } = loaders();
-    const assets = createAssets(all);
+    const assets = createAssets(SATELLITES, all);
 
     const a = await assets.swarm(1);
     const b = await assets.swarm(2);
@@ -89,7 +91,7 @@ Deno.test("the swarm decodes the catalogue once and prepares once per mu", async
 
 Deno.test("an unknown map is null and isn't cached", async () => {
     const { calls, all } = loaders();
-    const assets = createAssets(all);
+    const assets = createAssets(SATELLITES, all);
 
     assertEquals(assets.map("nowhere"), null);
     assertEquals(assets.map("nowhere"), null);

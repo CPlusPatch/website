@@ -1,6 +1,13 @@
 /// <reference types="deno" />
+import { AU } from "@cpluspatch/orbit";
 import { assertEquals } from "@std/assert";
-import { createUnits, otherUnit } from "./units.ts";
+import {
+    aUnit,
+    createUnits,
+    fromMetres,
+    otherUnit,
+    toMetres,
+} from "./units.ts";
 
 Deno.test("units start automatic and keep what is set", () => {
     const units = createUnits();
@@ -44,4 +51,13 @@ Deno.test("listeners hear a change once and stop after they unsubscribe", () => 
 Deno.test("otherUnit swaps km and AU", () => {
     assertEquals(otherUnit("km"), "AU");
     assertEquals(otherUnit("AU"), "km");
+});
+
+Deno.test("a is shown in km under 0.1 AU and in AU from there", () => {
+    assertEquals(aUnit(0.099 * AU), "km");
+    assertEquals(aUnit(0.1 * AU), "AU");
+    assertEquals(fromMetres(7e6, "km"), 7000);
+    assertEquals(fromMetres(2 * AU, "AU"), 2);
+    assertEquals(toMetres(7000, "km"), 7e6);
+    assertEquals(toMetres(2, "AU"), 2 * AU);
 });

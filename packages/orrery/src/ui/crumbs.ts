@@ -1,8 +1,7 @@
+import { colorOf, h } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
-import { colorOf } from "../view/theme.ts";
 import type { World } from "../world.ts";
 import { showBodyMarker } from "./body-marker.ts";
-import { h } from "./dom.ts";
 
 /** The crumbs' element and how to remove it. */
 export type Crumbs = {

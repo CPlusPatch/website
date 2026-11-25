@@ -1,4 +1,5 @@
 import { builtInScenarios } from "@cpluspatch/catalog";
+import { h } from "@cpluspatch/render";
 import { cue } from "../../audio/cues.ts";
 import {
     encodeScenario,
@@ -15,7 +16,6 @@ import {
     writeList,
 } from "../../persistence.ts";
 import type { World } from "../../world.ts";
-import { h } from "../dom.ts";
 import { createArming } from "./buttons.ts";
 import { createScenarioDialog } from "./dialog.ts";
 import { current, download, fileName } from "./files.ts";

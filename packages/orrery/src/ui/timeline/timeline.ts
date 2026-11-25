@@ -1,15 +1,14 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
+import { h, isLive } from "@cpluspatch/render";
+import { readouts } from "@cpluspatch/sim";
 import {
     readList,
     SAVED_CHANGED,
     type SavedStorage,
     startTime,
 } from "../../persistence.ts";
-import { readouts } from "../../readouts.ts";
-import { isLive } from "../../time-text.ts";
 import { clampT, tipText, windowHalf, windowLabel } from "../../timeline.ts";
 import type { World } from "../../world.ts";
-import { h } from "../dom.ts";
 import {
     type Colors,
     drawTimeline,

@@ -2485,6 +2485,15 @@
           ]
         }
       },
+      "packages/render": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@jsr/std__assert@1",
+            "npm:@types/three@0.187",
+            "npm:three@0.187"
+          ]
+        }
+      },
       "packages/sim": {
         "packageJson": {
           "dependencies": [

@@ -1,4 +1,4 @@
-import { SATELLITE_GROUPS, type SatelliteGroup } from "./catalogue.ts";
+import { SATELLITE_GROUPS, type SatelliteGroup } from "@cpluspatch/sim";
 import type { SavedStorage } from "./persistence.ts";
 
 /** The `localStorage` key of the satellite groups that are on. */

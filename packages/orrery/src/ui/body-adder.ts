@@ -1,13 +1,19 @@
 import { solarSystem } from "@cpluspatch/catalog";
 import { AU } from "@cpluspatch/orbit";
+import {
+    type AUnit,
+    aUnit,
+    fromMetres,
+    h,
+    otherUnit,
+    toMetres,
+    type Units,
+} from "@cpluspatch/render";
 import type { Body, BodyKind } from "@cpluspatch/sim";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { type AddField, addErrors, newBody, slugId } from "../adding.ts";
 import { cue } from "../audio/cues.ts";
-import { type AUnit, aUnit, fromMetres, toMetres } from "../editing.ts";
-import { otherUnit, type Units } from "../units.ts";
 import type { World } from "../world.ts";
-import { h } from "./dom.ts";
 import { createForm, createStepper } from "./form.ts";
 
 /** The Add body form's element and how to use it. */

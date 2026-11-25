@@ -1,6 +1,6 @@
+import { h } from "@cpluspatch/render";
 import type { Scenario } from "@cpluspatch/sim";
 import type { World } from "../../world.ts";
-import { h } from "../dom.ts";
 
 /** The scenario as it is now, with the clock's time. */
 export const current = (world: World): Scenario => ({

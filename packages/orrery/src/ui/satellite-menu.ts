@@ -1,8 +1,14 @@
 import { CURATED_CATALOG_NUMBERS, CURATED_NAMES } from "@cpluspatch/catalog";
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
-import type { OrbitClass } from "@cpluspatch/sim";
+import { h, setText } from "@cpluspatch/render";
+import {
+    type OrbitClass,
+    SATELLITE_GROUPS,
+    type SatelliteGroup,
+    SNAPSHOT_WINDOW,
+    snapshotGap,
+} from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
-import { SATELLITE_GROUPS, type SatelliteGroup } from "../catalogue.ts";
 import {
     GROUP_CLASSES,
     SNAPSHOT_DATE,
@@ -10,9 +16,7 @@ import {
 } from "../catalogue-snapshot.ts";
 import type { SavedStorage } from "../persistence.ts";
 import { readSatellites, writeSatellites } from "../satellite-settings.ts";
-import { SNAPSHOT_WINDOW, snapshotGap } from "../swarm.ts";
 import { roleMarker } from "./body-marker.ts";
-import { h, setText } from "./dom.ts";
 import { attachMenu } from "./menu.ts";
 
 /** What the menu needs from the world clock. */

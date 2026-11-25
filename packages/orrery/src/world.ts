@@ -6,6 +6,7 @@ import {
     type State,
     type Vec3,
 } from "@cpluspatch/orbit";
+import type { Clock } from "@cpluspatch/render";
 import {
     apply,
     type Body,
@@ -19,7 +20,6 @@ import {
     sortByDepth,
     subtreeIds,
 } from "@cpluspatch/sim";
-import type { Clock } from "./clock.ts";
 import type { ViewState } from "./view-state.ts";
 
 /** What a listener of a `World` is told about. */

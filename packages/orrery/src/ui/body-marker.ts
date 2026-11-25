@@ -1,6 +1,5 @@
+import { colorOf, ROLE_ICONS, type RoleKey, roleOf } from "@cpluspatch/render";
 import type { Body, BodyKind } from "@cpluspatch/sim";
-import { ROLE_ICONS, type RoleKey, roleOf } from "../view/bodies/role-icons.ts";
-import { colorOf } from "../view/theme.ts";
 
 const PATHS: Record<Exclude<BodyKind, "spacecraft">, string> = {
     star: '<circle cx="8" cy="8" r="3.5" fill="currentColor"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',

@@ -1,8 +1,6 @@
+import { type AUnit, aUnit, stepRate, type Units } from "@cpluspatch/render";
+import { readouts } from "@cpluspatch/sim";
 import { cue } from "../audio/cues.ts";
-import { stepRate } from "../clock.ts";
-import { type AUnit, aUnit } from "../editing.ts";
-import { readouts } from "../readouts.ts";
-import type { Units } from "../units.ts";
 import type { World } from "../world.ts";
 
 const TEXT = "input, select, textarea, [contenteditable], dialog";

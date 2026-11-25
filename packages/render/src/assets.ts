@@ -3,8 +3,7 @@
  * The sky, the maps and the satellites, fetched and decoded once per page.
  */
 
-import type { Catalogue } from "../catalogue.ts";
-import { prepareSwarm, type Swarm } from "../swarm.ts";
+import { type Catalogue, prepareSwarm, type Swarm } from "@cpluspatch/sim";
 import { loadMapImage } from "./maps.ts";
 import { fetchSky, type SkyData } from "./sky.ts";
 import { fetchCatalogue } from "./swarm.ts";
@@ -54,8 +53,11 @@ const once = <K, V>(
     return promise;
 };
 
-/** Assets that load on first use. */
-export const createAssets = (loaders: Loaders = defaultLoaders): Assets => {
+/** Assets that load on first use. `satellitesUrl` is the satellite file, which the caller owns. */
+export const createAssets = (
+    satellitesUrl: URL,
+    loaders: Loaders = defaultLoaders,
+): Assets => {
     const loading = new AbortController();
     const sky = new Map<"sky", Promise<SkyData>>();
     const maps = new Map<string, Promise<HTMLImageElement>>();
@@ -78,7 +80,7 @@ export const createAssets = (loaders: Loaders = defaultLoaders): Assets => {
             once(swarms, earthMu, async () =>
                 loaders.prepare(
                     await once(catalogue, "catalogue", () =>
-                        loaders.catalogue(loading.signal),
+                        loaders.catalogue(satellitesUrl, loading.signal),
                     ),
                     earthMu,
                 ),

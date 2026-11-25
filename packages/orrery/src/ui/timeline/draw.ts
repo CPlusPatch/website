@@ -1,4 +1,4 @@
-import type { Readouts } from "../../readouts.ts";
+import type { Readouts } from "@cpluspatch/sim";
 import {
     apsisMarks,
     FADE_PX,

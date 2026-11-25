@@ -4,6 +4,18 @@
  */
 
 import { solarSystem } from "@cpluspatch/catalog";
+import {
+    type Band,
+    Clock,
+    createAssets,
+    createUnits,
+    createView,
+    DEFAULT_RATE,
+    h,
+    NARROW_QUERY,
+    type Rect,
+    type View,
+} from "@cpluspatch/render";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import {
@@ -15,7 +27,6 @@ import {
 } from "./announce.ts";
 import { cue } from "./audio/cues.ts";
 import { createSound } from "./audio/sound.ts";
-import { Clock, DEFAULT_RATE } from "./clock.ts";
 import {
     hashPayload,
     openScenario,
@@ -24,7 +35,6 @@ import {
 } from "./persistence.ts";
 import { createSession } from "./session.ts";
 import { createCrumbs } from "./ui/crumbs.ts";
-import { h, NARROW_QUERY } from "./ui/dom.ts";
 import { createHud } from "./ui/hud.ts";
 import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
 import { createKeys } from "./ui/keys.ts";
@@ -38,11 +48,6 @@ import { sheetSpace } from "./ui/sheet.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createSoundMenu } from "./ui/sound-menu.ts";
 import { createTimeBar } from "./ui/time-bar.ts";
-import { createUnits } from "./units.ts";
-import { createAssets } from "./view/assets.ts";
-import type { Band } from "./view/geometry/framing.ts";
-import type { Rect } from "./view/geometry/labels.ts";
-import { createView, type View } from "./view/scene.ts";
 import { World } from "./world.ts";
 
 /** A mounted Orrery. */
@@ -186,7 +191,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     let builtHost: string | undefined;
 
     // Outlives the views, so a rebuilt one doesn't fetch the sky, maps and satellites again.
-    const assets = createAssets();
+    const assets = createAssets(
+        new URL("./assets/satellites.bin", import.meta.url),
+    );
 
     // The view and the panels that depend on the scenario. Only the first build reports loading.
     const build = (
@@ -205,6 +212,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             units,
             assets,
             onLoading,
+            () => cue("tick"),
         );
         if (!view) return null;
 

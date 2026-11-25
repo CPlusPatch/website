@@ -1,4 +1,4 @@
-import type { SpectralClass, Star } from "../src/stars.ts";
+import type { SpectralClass, Star } from "../../render/src/stars.ts";
 
 const HEADER_BYTES = 28;
 const ENTRY_BYTES = 32;

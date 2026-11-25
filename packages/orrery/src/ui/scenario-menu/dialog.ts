@@ -1,6 +1,6 @@
+import { h } from "@cpluspatch/render";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
-import { h } from "../dom.ts";
 import { button } from "./buttons.ts";
 
 /** The dialog's elements, and the ones the menu reads or listens to. */

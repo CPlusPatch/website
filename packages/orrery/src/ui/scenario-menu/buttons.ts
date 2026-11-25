@@ -1,5 +1,5 @@
+import { h } from "@cpluspatch/render";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
-import { h } from "../dom.ts";
 
 /** A small button of the dialog. */
 export const button = (

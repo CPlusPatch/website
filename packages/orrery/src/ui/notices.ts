@@ -1,3 +1,4 @@
+import { h } from "@cpluspatch/render";
 import { iconSvg } from "@cpluspatch/ui";
 import {
     type AlertVariant,
@@ -5,7 +6,6 @@ import {
     alertPrefix,
 } from "@cpluspatch/ui/components/alert.ts";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
-import { h } from "./dom.ts";
 
 /** The kinds of notice. */
 export type NoticeVariant = Extract<

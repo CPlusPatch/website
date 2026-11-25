@@ -1,5 +1,5 @@
+import type { SatelliteEvent } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
-import type { SatelliteEvent } from "./view/scene.ts";
 import type { WorldEvent } from "./world.ts";
 
 /** What a screen reader says for a selection or focus change, or `null` for any other event. */

@@ -8,7 +8,7 @@ import {
     sub,
     trueAnomalyAt,
 } from "@cpluspatch/orbit";
-import type { Body, Scenario } from "@cpluspatch/sim";
+import type { Body, Scenario } from "./scenario.ts";
 
 /** A body's orbit around its parent, in SI units and radians. */
 export type Readouts = {

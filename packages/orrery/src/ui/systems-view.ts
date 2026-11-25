@@ -1,17 +1,17 @@
 import { AU } from "@cpluspatch/orbit";
-import type { Body } from "@cpluspatch/sim";
-import type { AUnit } from "../editing.ts";
 import {
+    type AUnit,
+    colorOf,
     formatDuration,
     formatRadius,
     formatRange,
+    h,
     listUnit,
-} from "../format.ts";
+} from "@cpluspatch/render";
+import type { Body } from "@cpluspatch/sim";
 import { marked } from "../search.ts";
 import { facts, type Group, leftPane, rail, system } from "../systems.ts";
-import { colorOf } from "../view/theme.ts";
 import { showBodyMarker } from "./body-marker.ts";
-import { h } from "./dom.ts";
 import { KIND_LABELS, ROLE_LABELS } from "./labels.ts";
 
 /** What the builders read: the bodies, the picked one and the live range of a body. */

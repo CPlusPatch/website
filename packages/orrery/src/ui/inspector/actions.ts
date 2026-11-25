@@ -1,7 +1,7 @@
+import { h } from "@cpluspatch/render";
 import { removalNote } from "../../adding.ts";
 import { cue } from "../../audio/cues.ts";
 import type { World } from "../../world.ts";
-import { h } from "../dom.ts";
 
 const SVG = (body: string) =>
     `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">${body}</svg>`;

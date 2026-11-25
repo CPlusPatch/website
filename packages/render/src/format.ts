@@ -1,5 +1,5 @@
 import { AU, wrapAngle } from "@cpluspatch/orbit";
-import { type AUnit, aUnit } from "./editing.ts";
+import { type AUnit, aUnit } from "./units.ts";
 
 // A fixed locale keeps every reader's text, and the readouts' widths, the same.
 const unit = (

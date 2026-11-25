@@ -5,6 +5,19 @@
 
 import { EARTH_RADIUS, type Vec3 } from "@cpluspatch/orbit";
 import {
+    type Catalogue,
+    decodeCatalogue,
+    inSnapshotWindow,
+    SATELLITE_GROUPS,
+    type SatelliteFacts,
+    type SatelliteGroup,
+    type Swarm,
+    satelliteFacts,
+    satelliteOrbit,
+    selectShown,
+    writePositions,
+} from "@cpluspatch/sim";
+import {
     BufferAttribute,
     BufferGeometry,
     DynamicDrawUsage,
@@ -18,33 +31,17 @@ import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
-import {
-    type Catalogue,
-    decodeCatalogue,
-    SATELLITE_GROUPS,
-    type SatelliteGroup,
-} from "../catalogue.ts";
-import {
-    inSnapshotWindow,
-    type SatelliteFacts,
-    type Swarm,
-    satelliteFacts,
-    satelliteOrbit,
-    selectShown,
-    writePositions,
-} from "../swarm.ts";
 import { projectedRadiusPx } from "./geometry/visibility.ts";
 import { SELECTED_LINE_PX } from "./orbits/line-geometry.ts";
 import { pickNearest } from "./picking.ts";
 import type { Theme } from "./theme.ts";
 
-const SATELLITES_URL = new URL("../assets/satellites.bin", import.meta.url);
-
-/** Fetches and decodes the satellite file. Rejects if `signal` aborts or the fetch fails. */
+/** Fetches and decodes the satellite file at `url`. Rejects if `signal` aborts or the fetch fails. */
 export const fetchCatalogue = async (
+    url: URL,
     signal: AbortSignal,
 ): Promise<Catalogue> => {
-    const response = await fetch(SATELLITES_URL, { signal });
+    const response = await fetch(url, { signal });
     if (!response.ok) {
         throw new Error(
             `The satellite file gave ${response.status} ${response.statusText}.`,

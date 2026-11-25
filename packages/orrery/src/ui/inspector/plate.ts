@@ -1,16 +1,17 @@
 import { AU, type Elements } from "@cpluspatch/orbit";
-import type { AUnit } from "../../editing.ts";
 import {
+    type AUnit,
     formatPlateDistance,
     formatScaleLength,
     formatSoon,
+    h,
     listUnit,
-} from "../../format.ts";
+    otherUnit,
+    setText,
+    type Units,
+} from "@cpluspatch/render";
+import type { Readouts } from "@cpluspatch/sim";
 import { type Point, plateGeometry } from "../../plate.ts";
-import type { Readouts } from "../../readouts.ts";
-import type { Units } from "../../units.ts";
-import { otherUnit } from "../../units.ts";
-import { h, setText } from "../dom.ts";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

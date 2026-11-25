@@ -5,16 +5,14 @@
  */
 
 import { type Elements, type Vec3, wrapAngle } from "@cpluspatch/orbit";
+import { dragApsis, tiltInclination } from "@cpluspatch/sim";
 import { type PerspectiveCamera, Vector3 } from "three";
-import { cue } from "../../audio/cues.ts";
-import { dragApsis, type GripTarget, tiltInclination } from "../../editing.ts";
+import { h, setText } from "../dom.ts";
 import {
     formatApsisChange,
     formatInclinationChange,
     formatNodeChange,
-} from "../../format.ts";
-import { h, setText } from "../../ui/dom.ts";
-import type { Units } from "../../units.ts";
+} from "../format.ts";
 import { type Frame, positionOf } from "../frame.ts";
 import {
     axisPosition,
@@ -28,6 +26,8 @@ import type { Rect } from "../geometry/labels.ts";
 import { type Clearance, firstClear } from "../geometry/notes.ts";
 import { projectedRadiusPx } from "../geometry/visibility.ts";
 import { createMeasure } from "../measure.ts";
+import type { Units } from "../units.ts";
+import type { GripTarget } from "./types.ts";
 
 /** What the grips need each frame. */
 export type GripsFrame = {
@@ -90,7 +90,11 @@ const move = (element: HTMLElement, x: number, y: number) => {
 };
 
 /** The grips of the orbit being edited, in `host`, the labels layer. */
-export const createGrips = (host: HTMLElement, units: Units): Grips => {
+export const createGrips = (
+    host: HTMLElement,
+    units: Units,
+    onTick?: () => void,
+): Grips => {
     const container = host.parentElement ?? host;
     const specs: { kind: Kind; name: string }[] = [
         { kind: "pe", name: "Pe" },
@@ -246,7 +250,7 @@ export const createGrips = (host: HTMLElement, units: Units): Grips => {
         const { kind, target, el0 } = drag;
         if (t !== drag.last) {
             drag.last = t;
-            cue("tick");
+            onTick?.();
         }
         if (kind === "node") {
             target.set({ raan: wrapAngle(el0.raan + (t - drag.t0)) });

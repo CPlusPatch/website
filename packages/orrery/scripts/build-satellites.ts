@@ -17,15 +17,15 @@
  */
 
 import { CURATED_CATALOG_NUMBERS, solarSystem } from "@cpluspatch/catalog";
-import type { OrbitClass } from "@cpluspatch/sim";
 import {
     type CatalogueEntry,
     decodeCatalogue,
     encodeCatalogue,
+    type OrbitClass,
+    prepareSwarm,
     SATELLITE_GROUPS,
     type SatelliteGroup,
-} from "../src/catalogue.ts";
-import { prepareSwarm } from "../src/swarm.ts";
+} from "@cpluspatch/sim";
 import { parseOmmCsv, satelliteGroup } from "./celestrak.ts";
 
 const [csv] = Deno.args;
@@ -108,7 +108,7 @@ await Deno.writeTextFile(
  * What the satellite snapshot holds. Written by \`scripts/build-satellites.ts\`: don't edit by hand.
  */
 
-import type { SatelliteGroup } from "./catalogue.ts";
+import type { OrbitClass, SatelliteGroup } from "@cpluspatch/sim";
 
 /** The satellites in each group of \`assets/satellites.bin\`, by orbit class. */
 export const GROUP_CLASSES: Record<SatelliteGroup, Record<OrbitClass, number>> = {

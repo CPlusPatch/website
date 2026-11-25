@@ -3,7 +3,6 @@ import type { Body, Scenario } from "@cpluspatch/sim";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { kmPerPx } from "../scale.ts";
 import { type Frame, positionOf as positionIn, velocityOf } from "./frame.ts";
 import { behindDirection, chaseFrame, chaseView } from "./geometry/chase.ts";
 import {
@@ -15,6 +14,7 @@ import {
     reachKm,
 } from "./geometry/framing.ts";
 import { type Glide, stepGlide } from "./geometry/glide.ts";
+import { kmPerPx } from "./scale.ts";
 
 /** A state relative to the parent, in metres and metres per second. */
 export type Relative = { r: Vec3; v: Vec3 };

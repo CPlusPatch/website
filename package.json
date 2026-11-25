@@ -35,6 +35,7 @@
         "@cpluspatch/orbit": "workspace:*",
         "@cpluspatch/orrery": "workspace:*",
         "@cpluspatch/palette": "workspace:*",
+        "@cpluspatch/render": "workspace:*",
         "@cpluspatch/sim": "workspace:*",
         "@cpluspatch/ui": "workspace:*",
         "@gouvfr/dsfr": "~1.14.4",

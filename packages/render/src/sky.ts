@@ -32,7 +32,7 @@ import {
     starBrightness,
     starDirections,
     starSize,
-} from "../stars.ts";
+} from "./stars.ts";
 
 /** How bright the Milky Way is, so it stays faint behind the bodies. */
 const MILKY_WAY_STRENGTH = 0.1;
@@ -46,8 +46,8 @@ const MILKY_WAY_KNEE = 0.01;
 /** How long the sky takes to fade in, in ms. */
 const FADE_MS = 600;
 
-const STARS_URL = new URL("../assets/stars.bin", import.meta.url);
-const MILKY_WAY_URL = new URL("../assets/milky-way.webp", import.meta.url);
+const STARS_URL = new URL("./assets/stars.bin", import.meta.url);
+const MILKY_WAY_URL = new URL("./assets/milky-way.webp", import.meta.url);
 
 type Disposable = { dispose: () => void };
 

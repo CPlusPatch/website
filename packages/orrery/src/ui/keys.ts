@@ -1,12 +1,10 @@
+import { h, ORBIT_CLASS_COLORS, type RoleKey } from "@cpluspatch/render";
 import type { OrbitClass } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { TRACKS } from "../audio/music.ts";
-import type { RoleKey } from "../view/bodies/role-icons.ts";
-import { ORBIT_CLASS_COLORS } from "../view/theme.ts";
 import { roleMarker } from "./body-marker.ts";
-import { h } from "./dom.ts";
 import { ROLE_LABELS } from "./labels.ts";
 
 /** The keys card, the button that opens it and how to remove them. */

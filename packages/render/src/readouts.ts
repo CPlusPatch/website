@@ -4,17 +4,15 @@
  */
 
 import { type Elements, orbitPoints, type Vec3 } from "@cpluspatch/orbit";
+import { readouts } from "@cpluspatch/sim";
 import { type PerspectiveCamera, Vector3 } from "three";
+import { h, setText } from "./dom.ts";
 import {
     formatDistance,
     formatDuration,
     formatSoon,
     formatSpeed,
-} from "../format.ts";
-import { readouts } from "../readouts.ts";
-import { h, setText } from "../ui/dom.ts";
-import type { Units } from "../units.ts";
-import type { World } from "../world.ts";
+} from "./format.ts";
 import { type Frame, positionOf } from "./frame.ts";
 import type { Rect } from "./geometry/labels.ts";
 import {
@@ -27,6 +25,8 @@ import {
 } from "./geometry/notes.ts";
 import { orbitShown, projectedRadiusPx } from "./geometry/visibility.ts";
 import { createMeasure } from "./measure.ts";
+import type { SceneSource } from "./source.ts";
+import type { Units } from "./units.ts";
 
 /** What the readouts need each frame. */
 export type ReadoutsFrame = {
@@ -92,7 +92,7 @@ const move = (element: HTMLElement, x: number, y: number) => {
 export const createReadouts = (
     container: HTMLElement,
     host: HTMLElement,
-    world: World,
+    world: SceneSource,
     units: Units,
 ): SceneReadouts => {
     const apsides: Apsis[] = [

@@ -4,13 +4,12 @@
  */
 
 import { EARTH_RADIUS, type Vec3 } from "@cpluspatch/orbit";
-import type { Body } from "@cpluspatch/sim";
+import type { Body, SatelliteFacts } from "@cpluspatch/sim";
 import type { PerspectiveCamera } from "three";
-import type { SatelliteFacts } from "../swarm.ts";
-import type { World, WorldEvent } from "../world.ts";
 import type { Relative, Rig } from "./camera.ts";
 import { positionOf } from "./frame.ts";
 import { pointFrameDistanceKm } from "./geometry/framing.ts";
+import type { SceneEvent, SceneSource } from "./source.ts";
 import type { SwarmLayer } from "./swarm.ts";
 
 /** What a listener of `View.satellite` is told about. */
@@ -58,7 +57,7 @@ export const finiteVelocity = (
 
 /** What the satellite selection and focus take from the view. */
 export type SatelliteFocusDeps = {
-    world: World;
+    world: SceneSource;
     swarm: SwarmLayer;
     /** The body with model "earth", or `undefined` when the scenario has no satellites. */
     host: Body | undefined;
@@ -88,7 +87,7 @@ export type SatelliteFocus = {
     /** Drops a satellite that is gone, each frame. */
     check: () => void;
     /** Takes a world selection or focus change as the user's, which ends the satellite's. */
-    onWorld: (event: WorldEvent) => void;
+    onWorld: (event: SceneEvent) => void;
 };
 
 /** The satellite selection and focus of a view. */

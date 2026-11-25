@@ -179,7 +179,7 @@
     .orrery__grip {
         /* The hit area, with the drawn square at its centre. */
         --grip-size: 28px;
-        /* `SQUARE_PX` in view/grips/grips.ts keeps labels clear of this square. */
+        /* `SQUARE_PX` in render/src/grips/grips.ts keeps labels clear of this square. */
         --grip-square: 9px;
         --grip-border: 2px;
         position: absolute;

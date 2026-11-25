@@ -1,4 +1,4 @@
-import type { SatelliteGroup } from "../src/catalogue.ts";
+import type { SatelliteGroup } from "@cpluspatch/sim";
 
 /** One row of a CelesTrak OMM CSV. Angles are in radians. */
 export type OmmRecord = {

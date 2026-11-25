@@ -1,13 +1,7 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
-import type { Body } from "@cpluspatch/sim";
+import type { Body, SatelliteFacts, SatelliteGroup } from "@cpluspatch/sim";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
-import type { SatelliteGroup } from "../catalogue.ts";
-import type { EditScene } from "../editing.ts";
-import type { SatelliteFacts } from "../swarm.ts";
-import { advanceClock } from "../time-text.ts";
-import type { Units } from "../units.ts";
-import type { World } from "../world.ts";
 import type { Assets } from "./assets.ts";
 import { createBodies } from "./bodies/bodies.ts";
 import { createRig } from "./camera.ts";
@@ -15,6 +9,7 @@ import { positionOf } from "./frame.ts";
 import { type Band, centreShift } from "./geometry/framing.ts";
 import type { Rect } from "./geometry/labels.ts";
 import { createGrips } from "./grips/grips.ts";
+import type { EditScene } from "./grips/types.ts";
 import { createLoadingProgress } from "./loading-progress.ts";
 import { createOrbits } from "./orbits/orbits.ts";
 import { type PickPoint, pickBody } from "./picking.ts";
@@ -27,9 +22,12 @@ import {
     satelliteIndex,
 } from "./satellite-focus.ts";
 import { createSky } from "./sky.ts";
+import type { SceneSource } from "./source.ts";
 import { createSwarm } from "./swarm.ts";
 import { createTheme } from "./theme.ts";
+import { advanceClock } from "./time-text.ts";
 import { neutralNoToe } from "./tone-mapping.ts";
+import type { Units } from "./units.ts";
 
 /** How much brighter the mapped spheres are drawn, before tone mapping. */
 const EXPOSURE = 2.0;
@@ -86,15 +84,17 @@ export type View = EditScene & {
  * `onLoading` hears the files done of the files started, for the sky and the maps, and how full the bar is, from 0 to 1.
  * The sky counts as one file, and fills the bar by the bytes it has received.
  * `assets` holds the sky, maps and satellites, which are fetched once for every view built on it.
+ * `onTick` is called each time a grip drag moves to a new step.
  */
 export const createView = (
     container: HTMLElement,
-    world: World,
+    world: SceneSource,
     blocked: () => Rect[],
     band: () => Band,
     units: Units,
     assets: Assets,
     onLoading?: (done: number, total: number, fill: number) => void,
+    onTick?: () => void,
 ): View | null => {
     let renderer: WebGLRenderer;
     try {
@@ -119,6 +119,7 @@ export const createView = (
             units,
             assets,
             onLoading,
+            onTick,
         );
     } catch (error) {
         for (const undo of cleanup.toReversed()) undo();
@@ -132,12 +133,13 @@ const assemble = (
     renderer: WebGLRenderer,
     cleanup: (() => void)[],
     container: HTMLElement,
-    world: World,
+    world: SceneSource,
     blocked: () => Rect[],
     band: () => Band,
     units: Units,
     assets: Assets,
     onLoading?: (done: number, total: number, fill: number) => void,
+    onTick?: () => void,
 ): View => {
     cleanup.push(() => {
         renderer.forceContextLoss();
@@ -206,7 +208,7 @@ const assemble = (
     cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };
 
-    const grips = createGrips(labels.domElement, units);
+    const grips = createGrips(labels.domElement, units, onTick);
     cleanup.push(grips.dispose);
     const readouts = createReadouts(container, labels.domElement, world, units);
     cleanup.push(readouts.dispose);

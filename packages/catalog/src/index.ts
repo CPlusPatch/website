@@ -8,7 +8,6 @@ export { eridani, gargantua, kerbol, tauCeti } from "./fiction.ts";
 export {
     CURATED_CATALOG_NUMBERS,
     CURATED_NAMES,
-    EARTH_J2,
     satellites,
 } from "./satellites.ts";
 export { solarSystem } from "./solar-system.ts";

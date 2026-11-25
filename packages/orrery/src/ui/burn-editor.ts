@@ -4,14 +4,13 @@ import {
     nextApsisTime,
     period,
 } from "@cpluspatch/orbit";
+import { formatDuration, h } from "@cpluspatch/render";
 import { elementsAt } from "@cpluspatch/sim";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
 import { cue } from "../audio/cues.ts";
 import { failureMessage, isZero, STEPS, sameElements } from "../burning.ts";
-import { formatDuration } from "../format.ts";
 import type { World } from "../world.ts";
-import { h } from "./dom.ts";
 import { createForm, createStepper } from "./form.ts";
 import { createWarning } from "./warning.ts";
 

@@ -1,6 +1,7 @@
 import {
     DAY,
     deg,
+    EARTH_J2,
     EARTH_RADIUS,
     type Elements,
     equatorialToEcliptic,
@@ -8,10 +9,6 @@ import {
     unixMsToJ2000s,
 } from "@cpluspatch/orbit";
 import { type Body, j2Precession, type SpacecraftRole } from "@cpluspatch/sim";
-
-// From WGS 84 / EGM2008.
-/** The J2 of Earth's geopotential. */
-export const EARTH_J2 = 1.08262668e-3;
 
 /** Converts a TLE to ecliptic elements around a parent with gravitational parameter `mu`. */
 const fromTle = (line1: string, line2: string, mu: number): Elements => {

@@ -1,12 +1,13 @@
-import type { AUnit } from "../../editing.ts";
 import {
+    type AUnit,
     formatAngle,
     formatDistance,
     formatDuration,
     formatSpeed,
-} from "../../format.ts";
-import type { Readouts } from "../../readouts.ts";
-import { h, setText } from "../dom.ts";
+    h,
+    setText,
+} from "@cpluspatch/render";
+import type { Readouts } from "@cpluspatch/sim";
 
 /** The sentence for a screen reader: the apsides, the speed and the period. */
 const spoken = (r: Readouts, unit: AUnit | null): string =>

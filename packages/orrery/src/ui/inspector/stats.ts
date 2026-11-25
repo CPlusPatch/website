@@ -1,4 +1,3 @@
-import type { BodyStats } from "../../body-stats.ts";
 import {
     formatAngle,
     formatDuration,
@@ -6,8 +5,9 @@ import {
     formatGravity,
     formatMass,
     formatRadius,
-} from "../../format.ts";
-import { h } from "../dom.ts";
+    h,
+} from "@cpluspatch/render";
+import type { BodyStats } from "../../body-stats.ts";
 
 /** The stats section of the card, or null if the body has none to show. */
 export const createStatsSection = (stats: BodyStats): HTMLElement | null => {

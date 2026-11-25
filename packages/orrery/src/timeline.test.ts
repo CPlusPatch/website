@@ -1,8 +1,7 @@
 /// <reference types="deno" />
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
+import { fromParts, RATES, toParts } from "@cpluspatch/render";
 import { assert, assertEquals, assertExists } from "@std/assert";
-import { RATES } from "./clock.ts";
-import { fromParts, toParts } from "./date-parts.ts";
 import {
     apsisMarks,
     clampT,

@@ -1,0 +1,20 @@
+{
+    "name": "@cpluspatch/render",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "dependencies": {
+        "@cpluspatch/orbit": "workspace:*",
+        "@cpluspatch/sim": "workspace:*",
+        "@cpluspatch/ui": "workspace:*",
+        "three": "^0.187.0"
+    },
+    "devDependencies": {
+        "@cpluspatch/catalog": "workspace:*",
+        "@std/assert": "jsr:^1.0.0",
+        "@types/three": "^0.187.0"
+    }
+}

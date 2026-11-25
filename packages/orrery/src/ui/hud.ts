@@ -1,7 +1,11 @@
-import { scaleBar } from "../scale.ts";
-import type { Units } from "../units.ts";
-import type { ChaseState, View } from "../view/scene.ts";
-import { h, setText } from "./dom.ts";
+import {
+    type ChaseState,
+    h,
+    scaleBar,
+    setText,
+    type Units,
+    type View,
+} from "@cpluspatch/render";
 
 /** The scale bar's target length in px, which is shorter where the bar stacks over its label. */
 const TARGET_PX = 70;

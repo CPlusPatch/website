@@ -1,11 +1,16 @@
+import {
+    formatAngle,
+    formatDistance,
+    formatDuration,
+    h,
+    setText,
+    type View,
+} from "@cpluspatch/render";
+import type { SatelliteFacts } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { SNAPSHOT_DATE } from "../catalogue-snapshot.ts";
-import { formatAngle, formatDistance, formatDuration } from "../format.ts";
-import type { SatelliteFacts } from "../swarm.ts";
-import type { View } from "../view/scene.ts";
-import { h, setText } from "./dom.ts";
 import { FOCUS_ICON, iconButton } from "./inspector/actions.ts";
 import { LABELS } from "./satellite-menu.ts";
 

@@ -1,18 +1,20 @@
 import { apoapsis, periapsis, trueAnomalyAt } from "@cpluspatch/orbit";
-import { elementsAt } from "@cpluspatch/sim";
+import {
+    colorOf,
+    type EditScene,
+    h,
+    setText,
+    type Units,
+} from "@cpluspatch/render";
+import { elementsAt, readouts } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { bodyStats } from "../../body-stats.ts";
-import type { EditScene } from "../../editing.ts";
-import { readouts } from "../../readouts.ts";
-import type { Units } from "../../units.ts";
-import { colorOf } from "../../view/theme.ts";
 import type { World } from "../../world.ts";
 import { type BodyAdder, createBodyAdder } from "../body-adder.ts";
 import { showBodyMarker } from "../body-marker.ts";
 import { type BurnEditor, createBurnEditor } from "../burn-editor.ts";
-import { h, setText } from "../dom.ts";
 import { createElementEditor, type ElementEditor } from "../element-editor.ts";
 import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";

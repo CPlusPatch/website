@@ -1,14 +1,14 @@
 import { j2000sToUnixMs } from "@cpluspatch/orbit";
-import { presetOf } from "./clock.ts";
 import {
     fromParts,
     MAX_YEAR,
     MIN_YEAR,
     MONTHS,
+    presetOf,
     toParts,
     formatYear as year,
-} from "./date-parts.ts";
-import type { Readouts } from "./readouts.ts";
+} from "@cpluspatch/render";
+import type { Readouts } from "@cpluspatch/sim";
 
 /** What a labelled tick shows: a time with seconds, a time of day, a day, a month or a year. */
 export type TickKind = "seconds" | "time" | "day" | "month" | "year";

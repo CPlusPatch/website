@@ -1,5 +1,5 @@
 import { AU } from "@cpluspatch/orbit";
-import { type AUnit, aUnit } from "./editing.ts";
+import { type AUnit, aUnit } from "./units.ts";
 
 const AU_KM = AU / 1000;
 const COUNT = new Intl.NumberFormat("en", { maximumFractionDigits: 20 });

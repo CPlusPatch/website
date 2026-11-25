@@ -1,7 +1,6 @@
 /// <reference types="deno" />
 import { solarSystem } from "@cpluspatch/catalog";
 import { AU } from "@cpluspatch/orbit";
-import { sortByDepth, worldStates } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,
@@ -9,6 +8,8 @@ import {
     assertThrows,
 } from "@std/assert";
 import { distanceOf, readouts } from "./readouts.ts";
+import { sortByDepth } from "./scenario.ts";
+import { worldStates } from "./system.ts";
 
 const at = (id: string, t: number) =>
     readouts(

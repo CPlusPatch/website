@@ -1,8 +1,8 @@
 /// <reference types="deno" />
 /**
  * @module
- * Builds the Orrery's body maps into `src/assets/maps/` as WebP files: 2048x1024 for the planets
- * and Pluto, 1024x512 for the moons, Ceres and Vesta.
+ * Builds the Orrery's body maps into `packages/render/src/assets/maps/` as WebP files: 2048x1024
+ * for the planets and Pluto, 1024x512 for the moons, Ceres and Vesta.
  *
  * Sources:
  * - Solar System Scope 2K textures (CC BY 4.0): https://www.solarsystemscope.com/textures/
@@ -92,7 +92,7 @@ const PLUTO: Filled = {
 // Albedos are visual geometric albedos. The satellites' are from the NASA NSSDCA fact sheets,
 // https://nssdc.gsfc.nasa.gov/planetary/factsheet/, and Iapetus is the mean of its 0.05 and 0.5
 // sides. Ceres 0.09 and Vesta 0.42 are from the JPL Small-Body Database.
-// Tints are the `BODY_COLORS` in `src/view/theme.ts`, which imports three and so isn't imported here.
+// Tints are the `BODY_COLORS` in `packages/render/src/theme.ts`, which imports three and so isn't imported here.
 const MOONS: Filled[] = (
     [
         {
@@ -270,7 +270,7 @@ if (
     Deno.exit(2);
 }
 
-const maps = new URL("../src/assets/maps/", import.meta.url);
+const maps = new URL("../../render/src/assets/maps/", import.meta.url);
 await Deno.mkdir(maps, { recursive: true });
 
 const oiio = async (args: string[]): Promise<void> => {

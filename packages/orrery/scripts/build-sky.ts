@@ -1,7 +1,8 @@
 /// <reference types="deno" />
 /**
  * @module
- * Builds the Orrery's sky assets: `src/assets/stars.bin` and `src/assets/milky-way.webp`.
+ * Builds the Orrery's sky assets: `packages/render/src/assets/stars.bin` and
+ * `packages/render/src/assets/milky-way.webp`.
  *
  * Sources:
  * - Yale Bright Star Catalogue (BSC5): http://tdc-www.harvard.edu/catalogs/BSC5
@@ -16,7 +17,7 @@
  */
 
 import { fileURLToPath } from "node:url";
-import { encodeStars } from "../src/stars.ts";
+import { encodeStars } from "../../render/src/stars.ts";
 import { parseBsc5 } from "./bsc5.ts";
 
 const MAX_MAG = 6.5;
@@ -27,7 +28,7 @@ if (!catalogue || !milkyWay) {
     Deno.exit(2);
 }
 
-const assets = new URL("../src/assets/", import.meta.url);
+const assets = new URL("../../render/src/assets/", import.meta.url);
 await Deno.mkdir(assets, { recursive: true });
 
 const stars = parseBsc5(await Deno.readFile(catalogue)).filter(
