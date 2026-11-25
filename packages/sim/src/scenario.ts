@@ -1,6 +1,5 @@
 import {
     type Elements,
-    length,
     MAX_TIME,
     MAX_YEAR,
     MIN_TIME,
@@ -10,6 +9,8 @@ import {
 import type { Model } from "./models.ts";
 import { isModel } from "./models.ts";
 import type { Precession } from "./precession.ts";
+import { type Rotation, validateRotation } from "./rotation/index.ts";
+import { finite, isRecord, show, validatePole } from "./validate.ts";
 
 /** What a body is made of. */
 export type Mass = {
@@ -50,6 +51,8 @@ export type Body = {
     appearance?: unknown;
     /** The built-in preset: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
     preset?: Model;
+    /** How the body turns. Absent means the preset's rotation, if it has one. */
+    rotation?: Rotation;
 };
 
 /** A body that orbits another. */
@@ -131,35 +134,6 @@ export type AppearanceValidator = (
 
 /** Options for `validateScenario`. */
 export type ValidateOptions = { appearance?: AppearanceValidator };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-    typeof value === "object" && value !== null && !Array.isArray(value);
-
-const show = (value: unknown): string => {
-    if (typeof value === "number") {
-        return String(value);
-    }
-
-    if (value === null) {
-        return "null";
-    }
-
-    return typeof value === "string" ? JSON.stringify(value) : typeof value;
-};
-
-const finite = (
-    path: string,
-    value: unknown,
-    errors: string[],
-): value is number => {
-    if (typeof value === "number" && Number.isFinite(value)) {
-        return true;
-    }
-
-    errors.push(`${path}: must be a finite number (got ${show(value)})`);
-
-    return false;
-};
 
 /** Checks one rule on a finite number and records the error if it fails. */
 const inRange = (
@@ -263,33 +237,7 @@ const validatePrecession = (
 
     const before = errors.length;
     const { pole, nodeRate, argpRate } = input;
-    let unit: Precession["pole"] | null = null;
-
-    if (!isRecord(pole)) {
-        errors.push(`${path}.pole: must be an object (got ${show(pole)})`);
-    } else {
-        const { x, y, z } = pole;
-        const px = finite(`${path}.pole.x`, x, errors) ? x : null;
-        const py = finite(`${path}.pole.y`, y, errors) ? y : null;
-        const pz = finite(`${path}.pole.z`, z, errors) ? z : null;
-
-        if (px !== null && py !== null && pz !== null) {
-            const v = { x: px, y: py, z: pz };
-            const len = length(v);
-
-            if (Math.abs(len - 1) > 1e-6) {
-                errors.push(
-                    `${path}.pole: must be a unit vector (got length ${len})`,
-                );
-            } else {
-                // A pole that's already unit to rounding is kept, so a saved scenario loads back unchanged.
-                unit =
-                    Math.abs(len - 1) < 1e-12
-                        ? v
-                        : { x: v.x / len, y: v.y / len, z: v.z / len };
-            }
-        }
-    }
+    const unit = validatePole(`${path}.pole`, pole, errors);
 
     const node = finite(`${path}.nodeRate`, nodeRate, errors) ? nodeRate : null;
     const apsis = finite(`${path}.argpRate`, argpRate, errors)
@@ -514,6 +462,7 @@ const validateBody = (
         role,
         model,
         preset,
+        rotation,
     } = input;
     const validId = typeof id === "string" && SLUG.test(id) ? id : null;
     const label = validId ?? `bodies[${index}]`;
@@ -680,6 +629,12 @@ const validateBody = (
         );
     }
 
+    // Versions 1 and 2 have no rotation field.
+    const validRotation =
+        version === 3 && rotation !== undefined
+            ? validateRotation(`${label}.rotation`, rotation, errors)
+            : null;
+
     let parsed: Elements | null = null;
 
     if (version === 3) {
@@ -747,6 +702,7 @@ const validateBody = (
             ? {}
             : { appearance: validAppearance }),
         ...(validPreset === undefined ? {} : { preset: validPreset }),
+        ...(validRotation ? { rotation: validRotation } : {}),
     };
 
     if (validParent === null) {

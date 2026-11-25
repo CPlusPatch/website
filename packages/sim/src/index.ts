@@ -1,6 +1,6 @@
 /**
  * @module
- * Scenarios, rotation models, documents and the simulation that turns them into body states.
+ * Scenarios, rotations, documents and the simulation that turns them into body states.
  */
 
 export type {
@@ -22,10 +22,8 @@ export type { Model } from "./models.ts";
 export { isModel, MODELS } from "./models.ts";
 export type { OrbitClass } from "./orbit-class.ts";
 export { orbitClass } from "./orbit-class.ts";
-export type { Orientation, RotationModel } from "./orientation.ts";
 export {
     bodyOrientation,
-    orientationFromPole,
     rotationPeriod,
     spinAxis,
 } from "./orientation.ts";
@@ -36,9 +34,19 @@ export {
     precess,
     precessionTurns,
 } from "./precession.ts";
+export type { Preset, Presets } from "./presets.ts";
+export { expandBody, expandPresets } from "./presets.ts";
 export type { Readouts } from "./readouts.ts";
 export { distanceOf, readouts } from "./readouts.ts";
-export { KERBOL_LOCKED, ROTATION_MODELS } from "./rotation-models.ts";
+export type {
+    IauAngle,
+    IauRotation,
+    Orientation,
+    Rotation,
+    Series,
+    UniformRotation,
+} from "./rotation/index.ts";
+export { iauAngles, orientationFromPole } from "./rotation/index.ts";
 export type {
     AppearanceValidator,
     Body,

@@ -9,15 +9,11 @@ import {
     scale,
     stateAt,
 } from "@cpluspatch/orbit";
-import {
-    bodyOrientation,
-    isOrbiting,
-    KERBOL_LOCKED,
-    validateScenario,
-} from "@cpluspatch/sim";
+import { bodyOrientation, isOrbiting, validateScenario } from "@cpluspatch/sim";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import { builtInScenarios } from "./built-in.ts";
 import { gargantua, kerbol } from "./fiction.ts";
+import { KERBOL_LOCKED, PRESETS } from "./presets/index.ts";
 
 Deno.test("every built-in scenario is valid and keeps its values", () => {
     for (const scenario of builtInScenarios) {
@@ -74,15 +70,15 @@ Deno.test("the Mun's prime meridian faces Kerbin years after the epoch", () => {
 
     const { r } = stateAt(mun.orbit.elements, kerbin.mass.mu + mun.mass.mu, t);
     const toKerbin = scale(r, -1 / length(r));
-    const orientation = bodyOrientation("mun", t);
+    const orientation = bodyOrientation(PRESETS.mun?.rotation, t);
 
     assert(orientation);
     assertAlmostEquals(dot(orientation.x, toKerbin), 1, 1e-6);
 });
 
 Deno.test("Kerbin turns once in the game's 21,549.425 seconds, about the ecliptic pole", () => {
-    const start = bodyOrientation("kerbin", 1e6);
-    const end = bodyOrientation("kerbin", 1e6 + 21_549.425);
+    const start = bodyOrientation(PRESETS.kerbin?.rotation, 1e6);
+    const end = bodyOrientation(PRESETS.kerbin?.rotation, 1e6 + 21_549.425);
 
     assert(start && end);
     assertAlmostEquals(dot(start.x, end.x), 1, 1e-9);

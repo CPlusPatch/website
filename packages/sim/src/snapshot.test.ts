@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 
-import { builtInScenarios } from "@cpluspatch/catalog";
+import { builtInScenarios, PRESETS } from "@cpluspatch/catalog";
 import golden from "@cpluspatch/catalog/golden.json" with { type: "json" };
 import {
     assert,
@@ -12,6 +12,7 @@ import {
 import { documentOf } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
+import { expandPresets } from "./presets.ts";
 import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { compile, statesAt } from "./snapshot.ts";
 import { worldStates } from "./system.ts";
@@ -20,12 +21,13 @@ const TIMES = [...golden.times, -3.15576e9, 123_456_789.5];
 
 for (const scenario of builtInScenarios) {
     Deno.test(`snapshot: ${scenario.name} matches worldStates and bodyOrientation exactly`, () => {
-        const system = compile(documentOf(scenario));
-        const order = sortByDepth(scenario);
+        const system = compile(documentOf(scenario), PRESETS);
+        const expanded = expandPresets(scenario, PRESETS);
+        const order = sortByDepth(expanded);
 
         for (const t of TIMES) {
             const snapshot = system.snapshot(t);
-            const states = worldStates(scenario, order, t);
+            const states = worldStates(expanded, order, t);
 
             assertEquals(snapshot.t, t);
             assertEquals(snapshot.r.length, 3 * order.length);
@@ -52,7 +54,7 @@ for (const scenario of builtInScenarios) {
                 const actual = [
                     ...snapshot.orientation.subarray(9 * i, 9 * i + 9),
                 ];
-                const orientation = bodyOrientation(body.preset, t);
+                const orientation = bodyOrientation(body.rotation, t);
                 const expected = orientation
                     ? [orientation.x, orientation.y, orientation.z].flatMap(
                           (axis) => [axis.x, axis.y, axis.z],
@@ -65,7 +67,7 @@ for (const scenario of builtInScenarios) {
     });
 
     Deno.test(`snapshot: ${scenario.name} lists parents before children and index inverts ids`, () => {
-        const system = compile(documentOf(scenario));
+        const system = compile(documentOf(scenario), PRESETS);
 
         assertEquals(
             [...system.ids].sort(),
@@ -95,7 +97,7 @@ const scenario = builtInScenarios[0];
 assert(scenario, "no built-in scenario");
 
 Deno.test("snapshot returns the same object for the same time and a new one for another", () => {
-    const system = compile(documentOf(scenario));
+    const system = compile(documentOf(scenario), PRESETS);
     const first = system.snapshot(100);
 
     assertStrictEquals(system.snapshot(100), first);
@@ -103,11 +105,14 @@ Deno.test("snapshot returns the same object for the same time and a new one for 
 });
 
 Deno.test("snapshot has no clouds yet", () => {
-    assertEquals(compile(documentOf(scenario)).snapshot(0).clouds.size, 0);
+    assertEquals(
+        compile(documentOf(scenario), PRESETS).snapshot(0).clouds.size,
+        0,
+    );
 });
 
 Deno.test("elementsAt matches the precession module for an orbiting body", () => {
-    const system = compile(documentOf(scenario));
+    const system = compile(documentOf(scenario), PRESETS);
 
     for (const body of scenario.bodies) {
         if (!isOrbiting(body)) {
@@ -125,7 +130,7 @@ Deno.test("elementsAt throws for the root body", () => {
 
     assert(root, "no root body");
     assertThrows(
-        () => compile(documentOf(scenario)).elementsAt(root.id, 0),
+        () => compile(documentOf(scenario), PRESETS).elementsAt(root.id, 0),
         Error,
         "root",
     );
@@ -133,14 +138,18 @@ Deno.test("elementsAt throws for the root body", () => {
 
 Deno.test("elementsAt throws for an unknown id", () => {
     assertThrows(
-        () => compile(documentOf(scenario)).elementsAt("no-such-body", 0),
+        () =>
+            compile(documentOf(scenario), PRESETS).elementsAt(
+                "no-such-body",
+                0,
+            ),
         Error,
         "Unknown body",
     );
 });
 
 Deno.test("statesAt holds the worldStates of every body", () => {
-    const system = compile(documentOf(scenario));
+    const system = compile(documentOf(scenario), PRESETS);
     const order = sortByDepth(scenario);
 
     for (const t of TIMES) {

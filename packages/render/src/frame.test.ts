@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/catalog";
+import { PRESETS, solarSystem } from "@cpluspatch/catalog";
 import {
     bodyOrientation,
     compile,
@@ -12,7 +12,7 @@ import { type Frame, orientationOf, positionOf, velocityOf } from "./frame.ts";
 
 const T = 7.5e8;
 
-const system = compile(documentOf(solarSystem));
+const system = compile(documentOf(solarSystem), PRESETS);
 const frame: Frame = { system, snapshot: system.snapshot(T) };
 const states = worldStates(solarSystem, sortByDepth(solarSystem), T);
 
@@ -33,7 +33,10 @@ Deno.test("orientation matches bodyOrientation", () => {
         );
         assert(body);
 
-        assertEquals(orientationOf(frame, id), bodyOrientation(body.preset, T));
+        assertEquals(
+            orientationOf(frame, id),
+            bodyOrientation(PRESETS[body.preset ?? ""]?.rotation, T),
+        );
     }
 });
 

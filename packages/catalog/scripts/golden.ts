@@ -3,12 +3,14 @@
 import { unixMsToJ2000s, type Vec3 } from "@cpluspatch/orbit";
 import {
     bodyOrientation,
+    expandPresets,
     type Scenario,
     sortByDepth,
     validateScenario,
     worldStates,
 } from "@cpluspatch/sim";
 import { builtInScenarios } from "../src/built-in.ts";
+import { PRESETS } from "../src/presets/index.ts";
 
 /** One body in the fixture. `orientation` is the x, y and z axes, nine numbers. */
 type GoldenBody = { r: number[]; v: number[]; orientation?: number[] };
@@ -34,11 +36,12 @@ const times = [
 
 /** The states and orientations of every body of a scenario at each time. */
 const snapshot = (scenario: Scenario): Snapshot => {
-    const order = sortByDepth(scenario);
+    const expanded = expandPresets(scenario, PRESETS);
+    const order = sortByDepth(expanded);
     const byTime: Snapshot = {};
 
     for (const t of times) {
-        const states = worldStates(scenario, order, t);
+        const states = worldStates(expanded, order, t);
         const bodies: Record<string, GoldenBody> = {};
 
         for (const body of order) {
@@ -49,7 +52,7 @@ const snapshot = (scenario: Scenario): Snapshot => {
             }
 
             const entry: GoldenBody = { r: flat(state.r), v: flat(state.v) };
-            const orientation = bodyOrientation(body.preset, t);
+            const orientation = bodyOrientation(body.rotation, t);
 
             if (orientation) {
                 entry.orientation = flat(

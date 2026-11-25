@@ -60,14 +60,26 @@ The clock isn't held. It ticks in one `requestAnimationFrame` loop in `Shell.sve
 
 When Orrery's startup throws, it replaces the loading text with an error. When its chunk won't download, Astro fires `astro:hydration-error` on the island, and the page script shows the same text.
 
+## Rotation
+
+A body's `rotation` is data. `sim/src/rotation/index.ts` is the registry, keyed by `Rotation["type"]`, and each kind supplies its orientation, spin rate and validation. `sim` knows no body names.
+
+| Type      | Units                                                  | Used for                |
+| --------- | ------------------------------------------------------ | ----------------------- |
+| `uniform` | SI: a fixed ecliptic pole, `w0` in rad, `rate` in rad/s | The Kerbol bodies       |
+| `iau`     | Degrees, Julian centuries and days, as in NAIF         | The solar system bodies |
+
+`iau` records keep NAIF's units, so the tables in `catalog/src/presets/` can be checked against `pck00011.tpc`. Everything else in `sim` is SI.
+
+A preset in `catalog/src/presets/` fills a body's missing `rotation`. `compile(doc, presets)` and `expandPresets` do it, and a field set on the body wins. The document keeps bodies as written.
+
 ## Temporary exceptions
 
 These break the rules above until a later step of the rewrite removes them.
 
 | Exception                                                                                       | Removed when                                     |
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `sim` keeps the closed model list (`models.ts`) and rotation tables keyed by model name         | Rotation and appearance become body data         |
-| Kerbol's tidally locked rotations are literals in `sim/src/rotation-models.ts`; a catalog test checks them against the scenario | Rotation becomes body data |
+| `sim` keeps the closed model list (`models.ts`)                                                 | Appearance becomes body data                     |
 | `TagStyle.corona` makes `render` draw a star's emissive material and corona sprite from a tag | Star appearance becomes body data |
 | `TagStyle.craftMesh` makes `render` pick the spacecraft mesh from a tag | Spacecraft models become body data |
 | The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |

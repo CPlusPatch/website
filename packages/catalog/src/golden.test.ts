@@ -3,6 +3,7 @@
 import type { Vec3 } from "@cpluspatch/orbit";
 import {
     bodyOrientation,
+    expandPresets,
     type Scenario,
     sortByDepth,
     validateScenario,
@@ -17,6 +18,7 @@ import solarSystemV2 from "./fixtures/solar-system-v2.json" with {
 };
 import v1 from "./fixtures/v1.json" with { type: "json" };
 import golden from "./golden.json" with { type: "json" };
+import { PRESETS } from "./presets/index.ts";
 
 const R_TOLERANCE = 1;
 const V_TOLERANCE = 1e-6;
@@ -44,14 +46,15 @@ const compare = (
     assert(expectedTimes, `no fixture for ${scenario.name}`);
     assertEquals(Object.keys(expectedTimes).length, golden.times.length);
 
-    const order = sortByDepth(scenario);
+    const expanded = expandPresets(scenario, PRESETS);
+    const order = sortByDepth(expanded);
 
     for (const t of golden.times) {
         const expectedBodies = expectedTimes[String(t)];
 
         assert(expectedBodies, `no fixture for ${scenario.name} at ${t}`);
 
-        const states = worldStates(scenario, order, t);
+        const states = worldStates(expanded, order, t);
 
         assertEquals(
             [...states.keys()].sort(),
@@ -70,7 +73,7 @@ const compare = (
             assert(distance(expected.r, state.r) <= R_TOLERANCE, `${label}: r`);
             assert(distance(expected.v, state.v) <= V_TOLERANCE, `${label}: v`);
 
-            const orientation = bodyOrientation(body.preset, t);
+            const orientation = bodyOrientation(body.rotation, t);
 
             assertEquals(
                 expected.orientation !== undefined,

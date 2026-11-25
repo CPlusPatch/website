@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/catalog";
+import { PRESETS, solarSystem } from "@cpluspatch/catalog";
 import type { Vec3 } from "@cpluspatch/orbit";
 import { compile, documentOf } from "@cpluspatch/sim";
 import { assert, assertAlmostEquals, assertExists } from "@std/assert";
@@ -8,7 +8,7 @@ import { spinMatrix } from "./spin.ts";
 
 const T = 7.5e8;
 
-const system = compile(documentOf(solarSystem));
+const system = compile(documentOf(solarSystem), PRESETS);
 
 const orientation = () => {
     const o = orientationOf({ system, snapshot: system.snapshot(T) }, "earth");

@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/catalog";
+import { PRESETS, solarSystem } from "@cpluspatch/catalog";
 import type { Elements } from "@cpluspatch/orbit";
 import { compile, documentOf } from "@cpluspatch/sim";
 import {
@@ -77,7 +77,7 @@ Deno.test("an escape message names the parent and a degenerate one the body", ()
 });
 
 Deno.test("previewing a burn gives the new orbit of a body with a parent", () => {
-    const system = compile(documentOf(solarSystem));
+    const system = compile(documentOf(solarSystem), PRESETS);
     const dv = { prograde: 100, normal: 0, radial: 0 };
 
     const result = previewBurn(solarSystem, system, "moon", 0, dv);
@@ -88,7 +88,7 @@ Deno.test("previewing a burn gives the new orbit of a body with a parent", () =>
 });
 
 Deno.test("previewing a burn throws for an unknown body or one with no orbit", () => {
-    const system = compile(documentOf(solarSystem));
+    const system = compile(documentOf(solarSystem), PRESETS);
     const dv = { prograde: 100, normal: 0, radial: 0 };
 
     assertThrows(() => previewBurn(solarSystem, system, "nowhere", 0, dv));

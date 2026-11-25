@@ -1,3 +1,4 @@
+import { PRESETS } from "@cpluspatch/catalog";
 import type { Burn, Elements, ElementsResult, State } from "@cpluspatch/orbit";
 import type { Clock, SceneEvent } from "@cpluspatch/render";
 import {
@@ -105,7 +106,7 @@ export class Scene {
         const doc = this.#held.doc;
 
         if (this.#system?.doc !== doc) {
-            this.#system = { doc, system: compile(doc) };
+            this.#system = { doc, system: compile(doc, PRESETS) };
         }
 
         return this.#system.system;

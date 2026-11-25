@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 
-import { solarSystem } from "@cpluspatch/catalog";
+import { PRESETS, solarSystem } from "@cpluspatch/catalog";
 import {
     cross,
     DAY,
@@ -15,16 +15,14 @@ import {
 import { assertVecClose } from "@cpluspatch/orbit/fixture";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import type { Model } from "./models.ts";
-import { MODELS } from "./models.ts";
-import type { Orientation } from "./orientation.ts";
-import {
-    bodyOrientation,
-    orientationFromPole,
-    rotationPeriod,
-    spinAxis,
-} from "./orientation.ts";
+import { isModel } from "./models.ts";
+import { bodyOrientation, rotationPeriod, spinAxis } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
-import { ROTATION_MODELS } from "./rotation-models.ts";
+import {
+    type Orientation,
+    orientationFromPole,
+    type Rotation,
+} from "./rotation/index.ts";
 import { isOrbiting } from "./scenario.ts";
 
 const RAD = Math.PI / 180;
@@ -37,8 +35,11 @@ const find = (id: string) => {
     return body;
 };
 
+const rotationOf = (model: Model | undefined) =>
+    model === undefined ? undefined : PRESETS[model]?.rotation;
+
 const orientationOf = (model: Model | undefined, t: number): Orientation => {
-    const orientation = bodyOrientation(model, t);
+    const orientation = bodyOrientation(rotationOf(model), t);
 
     assert(orientation, `no orientation for ${model}`);
 
@@ -56,7 +57,7 @@ const inverse = (v: Vec3): Vec3 => {
 };
 
 Deno.test("the axes are unit length, orthogonal and right-handed for every model", () => {
-    for (const model of MODELS.filter((m) => ROTATION_MODELS[m])) {
+    for (const model of Object.keys(PRESETS).filter(isModel)) {
         for (const days of [-9000, 0, 1234.5, 8000]) {
             const { x, y, z } = orientationOf(model, days * DAY);
 
@@ -122,9 +123,10 @@ Deno.test("a body's pole is tilted from its orbit normal by its obliquity", () =
 });
 
 Deno.test("a body's sidereal rotation period comes from its rotation model", () => {
-    const hours = (model: Model) => (rotationPeriod(model, 0) ?? 0) / 3600;
+    const hours = (model: Model) =>
+        (rotationPeriod(rotationOf(model), 0) ?? 0) / 3600;
 
-    assertAlmostEquals(rotationPeriod("earth", 0) ?? 0, 86164.1, 1);
+    assertAlmostEquals(rotationPeriod(rotationOf("earth"), 0) ?? 0, 86164.1, 1);
     assertAlmostEquals(hours("moon") / 24, 27.32, 0.01);
     assertAlmostEquals(hours("jupiter"), 9.925, 0.01);
     assertAlmostEquals(hours("venus") / 24, 243.0, 0.1);
@@ -145,7 +147,7 @@ Deno.test("the spin axis is tilted from the orbit normal by the usual obliquity"
             y: -Math.sin(i) * Math.cos(raan),
             z: Math.cos(i),
         };
-        const axis = spinAxis(find(id).preset, 0);
+        const axis = spinAxis(rotationOf(find(id).preset), 0);
         assert(axis, `no spin axis for ${id}`);
 
         const angle = angleBetween(axis, normal) / RAD;
@@ -294,6 +296,64 @@ Deno.test("Ceres and Vesta have their pck pole at d = 0", () => {
 });
 
 Deno.test("a body with no rotation model has no orientation", () => {
-    assertEquals(bodyOrientation("iss", 0), null);
+    assertEquals(bodyOrientation(rotationOf("iss"), 0), null);
     assertEquals(bodyOrientation(undefined, 0), null);
+});
+
+Deno.test("a uniform rotation turns at its rate about its ecliptic pole", () => {
+    const rate = (2 * Math.PI) / 1000;
+    const rotation: Rotation = {
+        type: "uniform",
+        pole: { x: 0, y: 0, z: 1 },
+        w0: 0.3,
+        rate,
+    };
+
+    assertAlmostEquals(rotationPeriod(rotation, 0) ?? 0, 1000, 1e-9);
+    assertAlmostEquals(rotationPeriod(rotation, 5e6) ?? 0, 1000, 1e-9);
+
+    const axis = spinAxis(rotation, 0);
+
+    assert(axis);
+    assertVecClose(axis, { x: 0, y: 0, z: 1 }, 1e-12);
+
+    const start = bodyOrientation(rotation, 0);
+    const end = bodyOrientation(rotation, 250);
+
+    assert(start && end);
+    assertVecClose(start.z, { x: 0, y: 0, z: 1 }, 1e-12);
+    assertAlmostEquals(dot(start.x, end.x), Math.cos(Math.PI / 2), 1e-12);
+});
+
+Deno.test("a uniform rotation with a negative rate flips its spin axis", () => {
+    const rotation: Rotation = {
+        type: "uniform",
+        pole: { x: 0, y: 0, z: 1 },
+        w0: 0,
+        rate: -1e-4,
+    };
+
+    assertAlmostEquals(rotationPeriod(rotation, 0) ?? 0, 2e4 * Math.PI, 1e-6);
+
+    const axis = spinAxis(rotation, 0);
+
+    assert(axis);
+    assertVecClose(axis, { x: 0, y: 0, z: -1 }, 1e-12);
+});
+
+Deno.test("a uniform rotation with a zero rate has no period", () => {
+    const rotation: Rotation = {
+        type: "uniform",
+        pole: { x: 0, y: 0, z: 1 },
+        w0: 0,
+        rate: 0,
+    };
+
+    assertEquals(rotationPeriod(rotation, 0), null);
+});
+
+Deno.test("a body with no rotation has no orientation, period or spin axis", () => {
+    assertEquals(bodyOrientation(undefined, 0), null);
+    assertEquals(rotationPeriod(undefined, 0), null);
+    assertEquals(spinAxis(undefined, 0), null);
 });

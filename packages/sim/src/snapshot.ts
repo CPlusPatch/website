@@ -2,6 +2,7 @@ import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
+import { expandPresets, type Presets } from "./presets.ts";
 import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
 
@@ -31,9 +32,9 @@ export type System = {
     elementsAt(id: string, t: number): Elements;
 };
 
-/** Compiles the scenario of `doc` into a `System`. */
-export const compile = (doc: Document): System => {
-    const { scenario } = doc;
+/** Compiles the scenario of `doc` into a `System`, with `presets` filling what its bodies leave out. */
+export const compile = (doc: Document, presets: Presets): System => {
+    const scenario = expandPresets(doc.scenario, presets);
     const order = sortByDepth(scenario);
     const ids = order.map((body) => body.id);
     const index = new Map(ids.map((id, i) => [id, i]));
@@ -61,7 +62,7 @@ export const compile = (doc: Document): System => {
             r.set([state.r.x, state.r.y, state.r.z], 3 * i);
             v.set([state.v.x, state.v.y, state.v.z], 3 * i);
 
-            const axes = bodyOrientation(body.preset, t);
+            const axes = bodyOrientation(body.rotation, t);
 
             if (axes) {
                 orientation.set(

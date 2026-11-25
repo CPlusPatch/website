@@ -12,7 +12,8 @@ import {
     stateAt,
     type Vec3,
 } from "@cpluspatch/orbit";
-import { type Body, ROTATION_MODELS } from "@cpluspatch/sim";
+import { type Body, iauAngles } from "@cpluspatch/sim";
+import { PRESETS } from "./presets/index.ts";
 
 /** The north pole of a reference plane in ICRF, in degrees. */
 export type Pole = { ra: number; dec: number };
@@ -58,9 +59,10 @@ export type MoonRow = {
 const URANUS_POLE: Pole = { ra: 77.311, dec: 15.175 };
 const PLUTO_POLE: Pole = { ra: 132.993, dec: -6.163 };
 // Triton's frame is Neptune's equator at J2000, taken from the IAU model so it can't drift from it.
-const neptune = ROTATION_MODELS.neptune;
-if (!neptune) throw new Error("Neptune has no rotation model.");
-const NEPTUNE_POLE: Pole = neptune(0);
+const neptune = PRESETS.neptune?.rotation;
+if (neptune?.type !== "iau") throw new Error("Neptune has no IAU rotation.");
+const { ra: neptuneRa, dec: neptuneDec } = iauAngles(neptune, 0);
+const NEPTUNE_POLE: Pole = { ra: neptuneRa, dec: neptuneDec };
 
 // JPL, Planetary Satellite Mean Elements, epoch 2000-01-01.5 TDB (J2000, so the epoch is 0):
 // https://ssd.jpl.nasa.gov/sats/elem/

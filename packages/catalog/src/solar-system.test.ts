@@ -29,6 +29,7 @@ import {
 } from "@cpluspatch/sim";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import { MOON_ROWS, moonPole } from "./moons.ts";
+import { PRESETS } from "./presets/index.ts";
 import { solarSystem } from "./solar-system.ts";
 
 const find = (id: string) => {
@@ -247,8 +248,8 @@ Deno.test("every moon's orbit is inclined to its reference pole by the table inc
 });
 
 Deno.test("Iapetus's Laplace pole is 14.8 degrees from Saturn's pole and Io's is Jupiter's", () => {
-    const saturn = bodyOrientation("saturn", 0);
-    const jupiter = bodyOrientation("jupiter", 0);
+    const saturn = bodyOrientation(PRESETS.saturn?.rotation, 0);
+    const jupiter = bodyOrientation(PRESETS.jupiter?.rotation, 0);
 
     assert(saturn && jupiter);
     assertAlmostEquals(
@@ -260,7 +261,7 @@ Deno.test("Iapetus's Laplace pole is 14.8 degrees from Saturn's pole and Io's is
 });
 
 Deno.test("the Uranus moons orbit with the planet's retrograde spin", () => {
-    const uranus = bodyOrientation("uranus", 0);
+    const uranus = bodyOrientation(PRESETS.uranus?.rotation, 0);
 
     assert(uranus);
 
@@ -272,7 +273,7 @@ Deno.test("the Uranus moons orbit with the planet's retrograde spin", () => {
 });
 
 Deno.test("Triton is retrograde around Neptune", () => {
-    const neptune = bodyOrientation("neptune", 0);
+    const neptune = bodyOrientation(PRESETS.neptune?.rotation, 0);
     const triton = find("triton");
 
     assert(neptune);
@@ -437,7 +438,7 @@ Deno.test("every Mars, Moon and Jupiter probe precesses about its parent's pole"
 
     for (const body of probes) {
         const pole = bodyOrientation(
-            find(body.orbit?.parent ?? "").preset,
+            PRESETS[find(body.orbit?.parent ?? "").preset ?? ""]?.rotation,
             body.orbit?.elements.epoch ?? 0,
         );
 

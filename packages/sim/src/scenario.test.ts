@@ -3,6 +3,8 @@
 import { builtInScenarios, kerbol, solarSystem } from "@cpluspatch/catalog";
 import { MAX_TIME, MIN_TIME } from "@cpluspatch/orbit";
 import { assert, assertEquals, assertExists } from "@std/assert";
+import { expandPresets, type Presets } from "./presets.ts";
+import type { Rotation } from "./rotation/index.ts";
 import type { OrbitingBody, Scenario } from "./scenario.ts";
 import {
     isOrbiting,
@@ -1158,6 +1160,210 @@ Deno.test("a stale precession key is ignored in version 3", () => {
     assert(result.ok);
     assert(!("perturbations" in at(result.scenario.bodies, 1)));
     assert(!("precession" in at(result.scenario.bodies, 1)));
+});
+
+const uniform: Rotation = {
+    type: "uniform",
+    pole: { x: 0, y: 0, z: 1 },
+    w0: 0.5,
+    rate: -7e-5,
+};
+
+const iau: Rotation = {
+    type: "iau",
+    ra: { poly: [286.13, 0.1], periodic: [0.7] },
+    dec: { poly: [63.87] },
+    w: { poly: [84.176, 14.1844, 1e-12] },
+    angles: [
+        [357.85, 52.316],
+        [1, 2, 3],
+    ],
+};
+
+/** The tiny scenario with `rotation` on the planet. */
+const withRotation = (rotation: unknown): Record<string, unknown> => {
+    const scenario = structuredClone(valid) as Record<string, unknown>;
+
+    at(scenario.bodies as Record<string, unknown>[], 1).rotation = rotation;
+
+    return scenario;
+};
+
+const rotationErrors = (rotation: unknown): string[] => {
+    const result = validateScenario(withRotation(rotation));
+
+    assert(!result.ok);
+
+    return result.errors;
+};
+
+Deno.test("a version 3 body's own rotation is accepted and round-trips", () => {
+    for (const rotation of [uniform, iau]) {
+        const result = validateScenario(withRotation(rotation));
+
+        assert(result.ok);
+        assertEquals(at(result.scenario.bodies, 1).rotation, rotation);
+
+        const again = validateScenario(
+            JSON.parse(JSON.stringify(result.scenario)),
+        );
+
+        assert(again.ok);
+        assertEquals(again.scenario, result.scenario);
+    }
+});
+
+Deno.test("a rotation keeps only its known keys", () => {
+    const result = validateScenario(withRotation({ ...uniform, extra: 1 }));
+
+    assert(result.ok);
+    assertEquals(Object.keys(at(result.scenario.bodies, 1).rotation ?? {}), [
+        "type",
+        "pole",
+        "w0",
+        "rate",
+    ]);
+});
+
+Deno.test("a rotation that isn't an object or has an unknown type is rejected", () => {
+    assertEquals(rotationErrors(3), [
+        "earth.rotation: must be an object (got 3)",
+    ]);
+    assertEquals(rotationErrors({ ...uniform, type: "x" }), [
+        'earth.rotation.type: must be one of "uniform", "iau" (got "x")',
+    ]);
+    assertEquals(rotationErrors({ pole: uniform }), [
+        'earth.rotation.type: must be one of "uniform", "iau" (got undefined)',
+    ]);
+});
+
+Deno.test("a uniform rotation needs a unit pole and finite w0 and rate", () => {
+    const pole = rotationErrors({ ...uniform, pole: { x: 0, y: 0, z: 1.01 } });
+    const missing = rotationErrors({ ...uniform, pole: 3 });
+    const w0 = rotationErrors({ ...uniform, w0: Number.NaN });
+    const rate = rotationErrors({ ...uniform, rate: "fast" });
+
+    assert(
+        at(pole, 0).startsWith("earth.rotation.pole: must be a unit vector"),
+    );
+    assertEquals(missing, ["earth.rotation.pole: must be an object (got 3)"]);
+    assertEquals(w0, ["earth.rotation.w0: must be a finite number (got NaN)"]);
+    assertEquals(rate, [
+        'earth.rotation.rate: must be a finite number (got "fast")',
+    ]);
+});
+
+Deno.test("an iau series needs 1 to 3 finite coefficients", () => {
+    assertEquals(rotationErrors({ ...iau, ra: 3 }), [
+        "earth.rotation.ra: must be an object (got 3)",
+    ]);
+    assertEquals(rotationErrors({ ...iau, w: { poly: [] } }), [
+        "earth.rotation.w.poly: must have 1 to 3 numbers (got 0)",
+    ]);
+    assertEquals(rotationErrors({ ...iau, w: { poly: [1, 2, 3, 4] } }), [
+        "earth.rotation.w.poly: must have 1 to 3 numbers (got 4)",
+    ]);
+    assertEquals(rotationErrors({ ...iau, dec: {} }), [
+        "earth.rotation.dec.poly: must be an array (got undefined)",
+    ]);
+    assertEquals(rotationErrors({ ...iau, dec: { poly: [1, "x"] } }), [
+        'earth.rotation.dec.poly[1]: must be a finite number (got "x")',
+    ]);
+});
+
+Deno.test("iau periodic terms need angles and at most one per angle", () => {
+    const { angles: _, ...noAngles } = iau;
+
+    assertEquals(rotationErrors({ ...noAngles }), [
+        "earth.rotation.ra.periodic: must be omitted unless the rotation has angles",
+    ]);
+    assertEquals(
+        rotationErrors({ ...iau, ra: { poly: [1], periodic: [1, 2, 3] } }),
+        [
+            "earth.rotation.ra.periodic: must have at most 2 numbers, one per angle (got 3)",
+        ],
+    );
+    assertEquals(
+        rotationErrors({
+            ...iau,
+            ra: { poly: [1], periodic: [1, Number.NaN] },
+        }),
+        ["earth.rotation.ra.periodic[1]: must be a finite number (got NaN)"],
+    );
+});
+
+Deno.test("iau angles are arrays of 2 or 3 finite numbers", () => {
+    assertEquals(rotationErrors({ ...iau, angles: 3 }), [
+        "earth.rotation.angles: must be an array (got 3)",
+    ]);
+    assertEquals(rotationErrors({ ...iau, angles: [[1]] }), [
+        "earth.rotation.angles[0]: must have 2 to 3 numbers (got 1)",
+    ]);
+    assertEquals(rotationErrors({ ...iau, angles: [[1, 2, 3, 4]] }), [
+        "earth.rotation.angles[0]: must have 2 to 3 numbers (got 4)",
+    ]);
+    assertEquals(rotationErrors({ ...iau, angles: [[1, "x"]] }), [
+        'earth.rotation.angles[0][1]: must be a finite number (got "x")',
+    ]);
+});
+
+Deno.test("a stale rotation key is ignored before version 3", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).rotation = uniform;
+
+    const result = validateScenario(old);
+
+    assert(result.ok);
+    assert(!("rotation" in at(result.scenario.bodies, 1)));
+});
+
+const presets: Presets = { earth: { rotation: uniform }, bare: {} };
+
+const withPreset = (preset: unknown, rotation?: Rotation): Scenario => {
+    const scenario = structuredClone(valid);
+    const body = at(scenario.bodies, 1);
+
+    Object.assign(body, { preset, rotation });
+
+    if (rotation === undefined) {
+        delete body.rotation;
+    }
+
+    return scenario;
+};
+
+Deno.test("expandPresets fills a missing rotation from the preset", () => {
+    const expanded = expandPresets(withPreset("earth"), presets);
+
+    assertEquals(at(expanded.bodies, 1).rotation, uniform);
+});
+
+Deno.test("a body's own rotation wins over its preset's", () => {
+    const expanded = expandPresets(withPreset("earth", iau), presets);
+
+    assertEquals(at(expanded.bodies, 1).rotation, iau);
+});
+
+Deno.test("expandPresets leaves a body with no preset or no entry unchanged", () => {
+    for (const preset of [undefined, "mars", "bare"]) {
+        const scenario = withPreset(preset);
+        const expanded = expandPresets(scenario, presets);
+
+        assert(expanded === scenario);
+
+        for (const [i, body] of scenario.bodies.entries()) {
+            assert(at(expanded.bodies, i) === body);
+        }
+    }
+});
+
+Deno.test("expandPresets doesn't change its input", () => {
+    const scenario = withPreset("earth");
+
+    expandPresets(scenario, presets);
+
+    assert(!("rotation" in at(scenario.bodies, 1)));
 });
 
 Deno.test("a version 2 colour that isn't #rgb or #rrggbb is rejected", () => {

@@ -1,7 +1,9 @@
+import { PRESETS } from "@cpluspatch/catalog";
 import { dot, G } from "@cpluspatch/orbit";
 import { styleOf } from "@cpluspatch/render";
 import {
     elementsAt,
+    expandBody,
     isOrbiting,
     rotationPeriod,
     type Scenario,
@@ -37,7 +39,8 @@ export const bodyStats = (
     // A spacecraft's radius is nominal.
     const { sized } = styleOf(body);
 
-    const axis = spinAxis(body.preset, t);
+    const { rotation } = expandBody(body, PRESETS);
+    const axis = spinAxis(rotation, t);
     const elements = isOrbiting(body) ? elementsAt(body, t) : null;
     // The root has no orbit, so its tilt is from the ecliptic pole.
     const normal = elements
@@ -55,7 +58,7 @@ export const bodyStats = (
         escapeSpeed: massive
             ? Math.sqrt((2 * body.mass.mu) / body.mass.radius)
             : null,
-        day: rotationPeriod(body.preset, t),
+        day: rotationPeriod(rotation, t),
         tilt: axis
             ? Math.acos(Math.min(1, Math.max(-1, dot(axis, normal))))
             : null,
