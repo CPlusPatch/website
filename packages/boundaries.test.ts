@@ -186,3 +186,58 @@ Deno.test("a .svelte file outside orrery is reported", () => {
         [],
     );
 });
+
+/** The comparisons that single out a body by its preset, model or id. Code should read its data instead. */
+const SPECIAL_CASE = /\bpreset ===|\bmodel ===|\.id === "/;
+
+/** One `path:line` for each special case of a preset, model or id in `files`' code. */
+export const specialCases = (files: SourceFile[]): string[] => {
+    const found: string[] = [];
+
+    for (const { path, source } of files) {
+        if (path.endsWith(".test.ts")) continue;
+
+        // Blank out comments but keep their lines, so the numbers still match.
+        const code = source.replace(COMMENT, (comment) =>
+            comment.replace(/[^\n]/g, ""),
+        );
+
+        code.split("\n").forEach((line, index) => {
+            if (SPECIAL_CASE.test(line)) found.push(`${path}:${index + 1}`);
+        });
+    }
+
+    return found;
+};
+
+Deno.test("render and orrery don't branch on a body's preset, model or id", () => {
+    const files = ["render", "orrery"].flatMap((name) =>
+        sourcesIn(`${root}/${name}/src`, `packages/${name}/src`),
+    );
+
+    assertEquals(specialCases(files), []);
+});
+
+Deno.test("a comparison of a preset, model or id is reported, in code and not in comments", () => {
+    const found = specialCases([
+        {
+            path: "packages/render/src/a.ts",
+            source: [
+                "// parent.preset === 1",
+                "const a = 1;",
+                'const b = body.id === "earth";',
+                "/* model ===",
+                "   x */ const c = model === 2;",
+            ].join("\n"),
+        },
+        {
+            path: "packages/render/src/a.test.ts",
+            source: 'const b = body.id === "earth";',
+        },
+    ]);
+
+    assertEquals(found, [
+        "packages/render/src/a.ts:3",
+        "packages/render/src/a.ts:5",
+    ]);
+});

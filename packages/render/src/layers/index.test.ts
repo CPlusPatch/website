@@ -1,7 +1,8 @@
 /// <reference types="deno" />
 
+import type { Body } from "@cpluspatch/sim";
 import { assertEquals } from "@std/assert";
-import type { Appearance } from "../appearance.ts";
+import { type Appearance, appearanceOf } from "../appearance.ts";
 import { LAYERS, mapKeys } from "./index.ts";
 
 const MADE_UP: Appearance = {
@@ -38,6 +39,19 @@ Deno.test("a made-up body's appearance turns on its layers, with no preset", () 
         ["atmosphere", "rings"],
     );
     assertEquals(asking({}), []);
+});
+
+Deno.test("a planet with no preset gets rings and an atmosphere from its appearance alone", () => {
+    const planet: Body = {
+        id: "made-up",
+        name: "Made up",
+        tags: ["planet"],
+        mass: { mu: 1, radius: 1 },
+        appearance: { rings: MADE_UP.rings, atmosphere: MADE_UP.atmosphere },
+    };
+
+    assertEquals(planet.preset, undefined);
+    assertEquals(asking(appearanceOf(planet)), ["atmosphere", "rings"]);
 });
 
 Deno.test("an appearance lists the maps its layers load", () => {
