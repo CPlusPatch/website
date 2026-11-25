@@ -92,7 +92,7 @@ const PLUTO: Filled = {
 // Albedos are visual geometric albedos. The satellites' are from the NASA NSSDCA fact sheets,
 // https://nssdc.gsfc.nasa.gov/planetary/factsheet/, and Iapetus is the mean of its 0.05 and 0.5
 // sides. Ceres 0.09 and Vesta 0.42 are from the JPL Small-Body Database.
-// Tints are the `BODY_COLORS` in `packages/render/src/theme.ts`, which imports three and so isn't imported here.
+// Tints are the colours in `packages/catalog/src/presets/appearance.ts`, which this script doesn't import.
 const MOONS: Filled[] = (
     [
         {

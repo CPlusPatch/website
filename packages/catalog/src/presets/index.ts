@@ -1,4 +1,5 @@
 import type { Presets } from "@cpluspatch/sim";
+import { APPEARANCE } from "./appearance.ts";
 import { GRAVITY } from "./gravity.ts";
 import { IAU_ROTATIONS } from "./iau.ts";
 import { KERBOL_ROTATIONS } from "./kerbol.ts";
@@ -7,10 +8,20 @@ export { KERBOL_LOCKED } from "./kerbol.ts";
 
 const ROTATIONS = { ...IAU_ROTATIONS, ...KERBOL_ROTATIONS };
 
-/** The preset of each model that has a rotation: the solar system bodies and the Kerbol bodies, with gravity where known. */
+const IDS = new Set([
+    ...Object.keys(ROTATIONS),
+    ...Object.keys(GRAVITY),
+    ...Object.keys(APPEARANCE),
+]);
+
+/** The preset of each model that has a rotation, gravity or appearance: the solar system and Kerbol bodies. */
 export const PRESETS: Presets = Object.fromEntries(
-    Object.entries(ROTATIONS).map(([id, rotation]) => [
+    [...IDS].map((id) => [
         id,
-        { rotation, ...(GRAVITY[id] ? { gravity: GRAVITY[id] } : {}) },
+        {
+            ...(ROTATIONS[id] ? { rotation: ROTATIONS[id] } : {}),
+            ...(GRAVITY[id] ? { gravity: GRAVITY[id] } : {}),
+            ...(APPEARANCE[id] ? { appearance: APPEARANCE[id] } : {}),
+        },
     ]),
 );

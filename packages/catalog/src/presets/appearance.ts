@@ -1,0 +1,28 @@
+/** The look of each model by preset, for the bodies that have one of their own. */
+export const APPEARANCE: Readonly<Record<string, { color: string }>> = {
+    sun: { color: "#ffd27a" },
+    mercury: { color: "#b9b2a6" },
+    venus: { color: "#e9cf98" },
+    earth: { color: "#62a7ff" },
+    moon: { color: "#cfd0d2" },
+    mars: { color: "#ec6f4a" },
+    jupiter: { color: "#dcae7c" },
+    saturn: { color: "#e8d59a" },
+    uranus: { color: "#93e0dc" },
+    neptune: { color: "#7c8cff" },
+    pluto: { color: "#c8a593" },
+    // Only bodies with a look of their own; grey moons keep their kind's colour.
+    io: { color: "#e6cf63" },
+    europa: { color: "#dccdb2" },
+    ganymede: { color: "#aa9f90" },
+    callisto: { color: "#6f6a66" },
+    titan: { color: "#e0a452" },
+    enceladus: { color: "#eef4f7" },
+    triton: { color: "#dbc1b6" },
+    ceres: { color: "#a7a199" },
+    eris: { color: "#e8e6e2" },
+    haumea: { color: "#c9cfd4" },
+    makemake: { color: "#c99877" },
+    vesta: { color: "#bcae9a" },
+    halley: { color: "#b5c9d6" },
+};

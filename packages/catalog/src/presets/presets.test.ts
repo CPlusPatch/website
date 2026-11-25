@@ -57,6 +57,12 @@ Deno.test("every preset is a known name", () => {
     }
 });
 
-Deno.test("the presets are the bodies that had a rotation model", () => {
-    assertEquals(Object.keys(PRESETS).sort(), [...WITH_ROTATION].sort());
+// These have a colour but no rotation model.
+const COLOUR_ONLY = ["titan", "eris", "haumea", "makemake", "halley"];
+
+Deno.test("the presets are the bodies with a rotation model or a colour", () => {
+    assertEquals(
+        Object.keys(PRESETS).sort(),
+        [...WITH_ROTATION, ...COLOUR_ONLY].sort(),
+    );
 });

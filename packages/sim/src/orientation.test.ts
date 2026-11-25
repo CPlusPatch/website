@@ -56,7 +56,9 @@ const inverse = (v: Vec3): Vec3 => {
 };
 
 Deno.test("the axes are unit length, orthogonal and right-handed for every model", () => {
-    for (const model of Object.keys(PRESETS)) {
+    const models = Object.keys(PRESETS).filter((id) => PRESETS[id]?.rotation);
+
+    for (const model of models) {
         for (const days of [-9000, 0, 1234.5, 8000]) {
             const { x, y, z } = orientationOf(model, days * DAY);
 
