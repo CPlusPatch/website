@@ -18,7 +18,11 @@ export {
 } from "./constants.ts";
 export type { ElementsResult } from "./elements.ts";
 export { elementsFromState, nextApsisTime, reepoch } from "./elements.ts";
-export { equatorialToEcliptic, rotateEquatorialToEcliptic } from "./frames.ts";
+export {
+    equatorialToEcliptic,
+    rotateEclipticToEquatorial,
+    rotateEquatorialToEcliptic,
+} from "./frames.ts";
 export type { Elements, State } from "./kepler.ts";
 export {
     apoapsis,

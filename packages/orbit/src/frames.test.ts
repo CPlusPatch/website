@@ -2,7 +2,11 @@
 import { assertAlmostEquals } from "@std/assert";
 import { OBLIQUITY_J2000 } from "./constants.ts";
 import { assertVecClose, MU, mulberry32, randomElements } from "./fixture.ts";
-import { equatorialToEcliptic, rotateEquatorialToEcliptic } from "./frames.ts";
+import {
+    equatorialToEcliptic,
+    rotateEclipticToEquatorial,
+    rotateEquatorialToEcliptic,
+} from "./frames.ts";
 import type { Elements } from "./kepler.ts";
 import { stateAt } from "./kepler.ts";
 import type { Vec3 } from "./vec.ts";
@@ -44,4 +48,17 @@ Deno.test("rotating the new state back gives the original state", () => {
 Deno.test("the obliquity is about 23.44 degrees", () => {
     assertAlmostEquals((OBLIQUITY_J2000 * 180) / Math.PI, 23.4393, 1e-4);
     assertAlmostEquals(rotateEquatorialToEcliptic({ x: 1, y: 0, z: 0 }).x, 1);
+});
+
+Deno.test("ecliptic to equatorial undoes equatorial to ecliptic", () => {
+    const v = { x: 0.3, y: -1.2, z: 2.5 };
+
+    assertVecClose(
+        rotateEclipticToEquatorial(rotateEquatorialToEcliptic(v)),
+        v,
+    );
+    assertVecClose(
+        rotateEquatorialToEcliptic(rotateEclipticToEquatorial(v)),
+        v,
+    );
 });
