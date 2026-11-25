@@ -32,7 +32,14 @@ export class DocumentStore {
     dispatch(
         cmd: Extract<
             Command,
-            { type: "set-orbit" | "schedule-burn" | "update-body" | "add-body" }
+            {
+                type:
+                    | "set-orbit"
+                    | "schedule-burn"
+                    | "update-body"
+                    | "add-body"
+                    | "remove-body";
+            }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {
         return this.#world.dispatch(cmd);

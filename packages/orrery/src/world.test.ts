@@ -250,6 +250,42 @@ Deno.test("dispatch reports a rejected command and changes nothing", () => {
     assertEquals(count, 0);
 });
 
+Deno.test("dispatch of remove-body removes the subtree and moves the focus and selection", () => {
+    const world = make();
+    world.focus("moon");
+    world.select("moon");
+    const events: WorldEvent[] = [];
+    world.on((e) => events.push(e));
+
+    const result = world.dispatch({ type: "remove-body", id: "earth" });
+
+    assertEquals(result, { ok: true });
+    assert(!world.scenario.bodies.some((body) => body.id === "moon"));
+    assertEquals(world.focused, "sun");
+    assertEquals(world.selected, null);
+    assertEquals(
+        events.map((e) => e.type),
+        ["bodies", "focus", "selection"],
+    );
+});
+
+Deno.test("dispatch of remove-body reports the root or an unknown body and emits nothing", () => {
+    const world = make();
+    const before = world.doc;
+    let count = 0;
+    world.on(() => count++);
+
+    for (const id of ["sun", "nowhere"]) {
+        const result = world.dispatch({ type: "remove-body", id });
+
+        assert(!result.ok);
+        assert(result.errors.length > 0);
+    }
+
+    assert(world.doc === before);
+    assertEquals(count, 0);
+});
+
 Deno.test("burning a body with no orbit throws", () => {
     const world = make();
 

@@ -1,10 +1,4 @@
-import type {
-    Burn,
-    Elements,
-    ElementsResult,
-    State,
-    Vec3,
-} from "@cpluspatch/orbit";
+import type { Burn, Elements, ElementsResult, State } from "@cpluspatch/orbit";
 import type { Clock } from "@cpluspatch/render";
 import {
     apply,
@@ -17,6 +11,7 @@ import {
     type Snapshot,
     type System,
     sortByDepth,
+    statesAt,
     subtreeIds,
 } from "@cpluspatch/sim";
 import { previewBurn } from "./burning.ts";
@@ -104,18 +99,7 @@ export class World {
         const t = this.clock.t;
 
         if (this.#cache?.t !== t) {
-            const { r, v } = this.snapshot();
-            const states = new Map<string, State>();
-
-            const at = (data: Float64Array, i: number): Vec3 => {
-                const [x = 0, y = 0, z = 0] = data.subarray(3 * i, 3 * i + 3);
-
-                return { x, y, z };
-            };
-
-            for (const [id, i] of this.system.index) {
-                states.set(id, { r: at(r, i), v: at(v, i) });
-            }
+            const states = statesAt(this.system, t);
 
             this.#cache = { t, states };
         }
@@ -239,11 +223,25 @@ export class World {
     dispatch(
         cmd: Extract<
             Command,
-            { type: "set-orbit" | "schedule-burn" | "update-body" | "add-body" }
+            {
+                type:
+                    | "set-orbit"
+                    | "schedule-burn"
+                    | "update-body"
+                    | "add-body"
+                    | "remove-body";
+            }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {
         const result = apply(this.#doc, cmd);
         if (!result.ok) return { ok: false, errors: result.errors };
+
+        // Not committed here: `removeBody` also moves the focus and selection.
+        if (cmd.type === "remove-body") {
+            this.removeBody(cmd.id);
+
+            return { ok: true };
+        }
 
         this.#commit(result.doc);
         if (cmd.type === "add-body") {
