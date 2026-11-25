@@ -26,10 +26,10 @@ export const show = (value: unknown): string => {
     return typeof value === "string" ? JSON.stringify(value) : typeof value;
 };
 
-const isObject = (value: unknown): value is Record<string, unknown> =>
+export const isObject = (value: unknown): value is Record<string, unknown> =>
     typeof value === "object" && value !== null && !Array.isArray(value);
 
-const isNumber = (value: unknown): value is number =>
+export const isNumber = (value: unknown): value is number =>
     typeof value === "number" && Number.isFinite(value);
 
 const checkMap = (path: string, value: unknown, errors: string[]): void => {
@@ -38,7 +38,7 @@ const checkMap = (path: string, value: unknown, errors: string[]): void => {
     }
 };
 
-const checkPositive = (
+export const checkPositive = (
     path: string,
     value: unknown,
     errors: string[],
@@ -67,7 +67,7 @@ const checkHex = (path: string, value: unknown, errors: string[]): void => {
 };
 
 /** A validator for a field that's an object, which checks each of its own fields. */
-const objectOf =
+export const objectOf =
     (name: string, checks: Record<string, FieldValidator>): FieldValidator =>
     (path, value, errors) => {
         if (!isObject(value)) {

@@ -14,12 +14,11 @@ import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import { appearanceOf } from "../appearance.ts";
 import type { Placement } from "../geometry/labels.ts";
 import { createExtras, mapKeys } from "../layers/index.ts";
-import { styleOf } from "../tags.ts";
+import { createMesh } from "../meshes/index.ts";
 import { createCorona } from "./corona.ts";
 import { CENTERS } from "./labels.ts";
 import { type Shape, shapeOf } from "./markers.ts";
 import type { Extra } from "./patches.ts";
-import { createSpacecraftModel } from "./spacecraft.ts";
 import { createStarMaterial } from "./star.ts";
 
 /** Everything one body has in the scene: its group, the parts of it, and its label. */
@@ -61,7 +60,6 @@ export const createEntry = (
     coronaTexture: CanvasTexture,
 ): Entry => {
     const group = new Group();
-    const style = styleOf(body);
     const appearance = appearanceOf(body);
 
     const sphere = new Mesh(
@@ -104,7 +102,7 @@ export const createEntry = (
     label.center.set(...CENTERS.right);
 
     // The sphere stays for occlusion, picking and framing.
-    const model = style.craftMesh ? createSpacecraftModel(body) : null;
+    const model = appearance.mesh ? createMesh(body, appearance.mesh) : null;
     if (model) {
         sphere.material.visible = false;
         group.add(model);

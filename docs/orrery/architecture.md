@@ -27,7 +27,7 @@ Test files in `sim` and `render` may import `catalog`, since they use the built-
 
 Bodies carry free-form `tags`, and nothing branches on one outside `render/src/tags.ts`. Its `TAG_STYLES` table maps a tag to its look and behaviour, and `styleOf(body)` returns the style of the body's first tag that has an entry.
 
-What a body's sphere draws comes from its `appearance`, through the layers in `render/src/layers/index.ts`. Nothing branches on a preset name for it. The fields:
+What a body draws comes from its `appearance`: the sphere's layers in `render/src/layers/index.ts`, and the mesh in `render/src/meshes/index.ts`. Nothing branches on a preset name for it. The fields:
 
 | Field        | Shape                               | Draws                                                  |
 | ------------ | ----------------------------------- | ------------------------------------------------------ |
@@ -38,6 +38,9 @@ What a body's sphere draws comes from its `appearance`, through the layers in `r
 | `clouds`     | `{ map }`                           | A cloud shell                                          |
 | `nightSide`  | `{ map }`                           | City lights on the night side                          |
 | `rings`      | `{ map, inner, outer }`             | A ring strip, `inner` and `outer` in m from the centre |
+| `mesh`       | `{ type, …params }`                 | A model in place of the sphere                         |
+
+An unknown mesh type draws the plain sphere. A `bus` without a `size` is scaled to the body's radius, and every other mesh is drawn at true size.
 
 A body's appearance is its tag's default (`TagStyle.appearance`), then its preset's fields, then its own. Each later one wins per field. A map key that `render` has no map for draws nothing.
 
@@ -128,5 +131,4 @@ These break the rules above until a later step of the rewrite removes them.
 
 | Exception                                                                                                                      | Removed when                             |
 | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| `TagStyle.craftMesh` makes `render` pick the spacecraft mesh from a tag                                                        | Spacecraft models become body data       |
 | The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |

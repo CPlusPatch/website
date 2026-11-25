@@ -55,8 +55,6 @@ export type TagStyle = {
     isMoon: boolean;
     /** The appearance fields the body has unless its preset or its own sets them. */
     appearance: Appearance;
-    /** Whether it has a 3D craft mesh. */
-    craftMesh: boolean;
 };
 
 // The defaults most tags share.
@@ -83,7 +81,6 @@ const base: TagStyle = {
     adder: false,
     isMoon: false,
     appearance: {},
-    craftMesh: false,
 };
 
 const asteroid: TagStyle = {
@@ -184,7 +181,7 @@ export const TAG_STYLES: Readonly<Record<string, TagStyle>> = {
         sized: false,
         canParent: false,
         adder: true,
-        craftMesh: true,
+        appearance: { mesh: { type: "bus" } },
     },
 };
 

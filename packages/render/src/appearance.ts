@@ -5,12 +5,17 @@
 
 import type { AppearanceValidator, Body } from "@cpluspatch/sim";
 import type { Atmosphere } from "./bodies/atmospheres.ts";
+import type { Bus } from "./bodies/spacecraft.ts";
 import { type FieldValidator, HEX_COLOR, show } from "./layers/fields.ts";
 import { LAYERS } from "./layers/index.ts";
+import { validateMesh } from "./meshes/index.ts";
 import { styleOf } from "./tags.ts";
 
 /** A ring strip: its map, and its edges in m from the body's centre. */
 export type Rings = { map: string; inner: number; outer: number };
+
+/** A mesh drawn in place of the sphere: its `type` in `MESHES`, and the params of that type. */
+export type MeshAppearance = { type: string } & Partial<Bus>;
 
 /** The renderer's view of `Body.appearance`. Each field after `color` belongs to a layer. */
 export type Appearance = {
@@ -23,6 +28,7 @@ export type Appearance = {
     clouds?: { map: string };
     nightSide?: { map: string };
     rings?: Rings;
+    mesh?: MeshAppearance;
 };
 
 const validateColor: FieldValidator = (path, color, errors) => {
@@ -38,6 +44,7 @@ const validateColor: FieldValidator = (path, color, errors) => {
 /** The validator of each appearance field the renderer knows. Other fields are ignored. */
 const FIELDS: Readonly<Record<string, FieldValidator>> = {
     color: validateColor,
+    mesh: validateMesh,
     ...Object.fromEntries(
         LAYERS.map(({ field, validate }) => [field, validate]),
     ),

@@ -1,31 +1,29 @@
 /**
  * @module
- * Low-poly models of the Earth satellites, at true size.
+ * The low-poly parts, palette and materials of the spacecraft meshes.
  */
 
-import type { Body } from "@cpluspatch/sim";
 import {
-    Box3,
     BoxGeometry,
-    type BufferGeometry,
     CylinderGeometry,
-    Group,
+    type Group,
     Mesh,
     MeshStandardMaterial,
-    Sphere,
-    Vector3,
 } from "three";
 
-type Palette = Record<
-    "white" | "grey" | "dark" | "gold" | "array",
+/** The materials of a mesh's parts. */
+export type Palette = Record<
+    "white" | "grey" | "dark" | "gold" | "array" | "amber",
     MeshStandardMaterial
 >;
 
 type Axis = "x" | "y" | "z";
 
-type Vec = [number, number, number];
+/** A size or position along x, y and z. */
+export type Vec = [number, number, number];
 
-type Bus = {
+/** The parts of a generic spacecraft bus. */
+export type Bus = {
     /** The bus's size along x, y and z, in m. */
     size: Vec;
     /** The wings on the mast along y, 1 or 2. */
@@ -73,13 +71,20 @@ const material = (
     return made;
 };
 
-const palette = (): Palette => ({
-    white: material(0xe6e6e8, 0.5),
-    grey: material(0x8e9299, 0.6),
-    dark: material(0x25262b, 0.8, 0xb3b3b3),
-    gold: material(0xb8903a, 0.6),
-    array: material(0x1f2838, 0.85, 0xb3b3b3),
-});
+/** A new set of materials, which the mesh owns and `disposeMesh` frees. */
+export const palette = (): Palette => {
+    const amber = material(0xc99a2e, 0.35);
+    amber.metalness = 0.5;
+
+    return {
+        white: material(0xe6e6e8, 0.5),
+        grey: material(0x8e9299, 0.6),
+        dark: material(0x25262b, 0.8, 0xb3b3b3),
+        gold: material(0xb8903a, 0.6),
+        array: material(0x1f2838, 0.85, 0xb3b3b3),
+        amber,
+    };
+};
 
 const box = (
     group: Group,
@@ -114,7 +119,7 @@ const cylinder = (
 };
 
 // Dimensions are approximate.
-const iss = (group: Group, m: Palette, amber: MeshStandardMaterial): void => {
+export const iss = (group: Group, m: Palette): void => {
     // Pressurised modules from the Progress at the aft end to a visiting capsule.
     const modules: [MeshStandardMaterial, number, number][] = [
         [m.grey, 7, 1.35],
@@ -143,7 +148,7 @@ const iss = (group: Group, m: Palette, amber: MeshStandardMaterial): void => {
             for (const end of [-1, 1]) {
                 const cx = trussX + end * (1.7 + 17.5);
                 const cy = side * station;
-                box(group, amber, [35, 12, 0.2], [cx, cy, trussZ]);
+                box(group, m.amber, [35, 12, 0.2], [cx, cy, trussZ]);
 
                 // Dark seams so the wing reads as a grid of cells, not a slab.
                 for (let k = -4; k <= 4; k++) {
@@ -163,7 +168,7 @@ const iss = (group: Group, m: Palette, amber: MeshStandardMaterial): void => {
     }
 };
 
-const hubble = (group: Group, m: Palette): void => {
+export const hubble = (group: Group, m: Palette): void => {
     cylinder(group, m.gold, "x", 2.1, 4.5, [-4.35, 0, 0]);
     cylinder(group, m.white, "x", 2.1, 8.7, [2.25, 0, 0]);
     cylinder(group, m.dark, "x", 1.85, 0.2, [6.6, 0, 0]);
@@ -179,7 +184,7 @@ const hubble = (group: Group, m: Palette): void => {
     }
 };
 
-const tiangong = (group: Group, m: Palette): void => {
+export const tiangong = (group: Group, m: Palette): void => {
     // Greyer than the shared white so the modules stand out from bright cloud.
     const hull = material(0xd0d2d6, 0.5);
     cylinder(group, hull, "x", 2.1, 16.6, [0, 0, 0]);
@@ -201,7 +206,7 @@ const tiangong = (group: Group, m: Palette): void => {
 };
 
 // The Ariane 6 upper stage, 5.4 m across and 11.6 m long, with a 3U CubeSat still on its side.
-const parisat = (group: Group, m: Palette): void => {
+export const parisat = (group: Group, m: Palette): void => {
     cylinder(group, m.white, "x", 2.7, 11.6, [0, 0, 0]);
     box(group, m.gold, [0.34, 0.1, 0.1], [4, 2.75, 0]);
 };
@@ -229,7 +234,7 @@ const dish = (
 };
 
 // The spin-stabilised hexagonal bus, with three wings 120 degrees apart around z.
-const juno = (group: Group, m: Palette): void => {
+export const juno = (group: Group, m: Palette): void => {
     const radius = 1.75;
     // The wings meet the hexagon's flat faces, which are closer in than its corners.
     const apothem = radius * Math.cos(Math.PI / 6);
@@ -264,7 +269,7 @@ const juno = (group: Group, m: Palette): void => {
     }
 };
 
-const bus = (group: Group, m: Palette, config: Bus): void => {
+export const bus = (group: Group, m: Palette, config: Bus): void => {
     const [bx, by, bz] = config.size;
     box(group, m.gold, config.size, [0, 0, 0]);
 
@@ -310,165 +315,10 @@ const bus = (group: Group, m: Palette, config: Bus): void => {
     }
 };
 
-// Each spacecraft's bus, by preset.
-const BUSES: Readonly<Record<string, Bus>> = {
-    "landsat-9": {
-        size: [3, 2.4, 4.3],
-        wings: 1,
-        wingLength: 9.4,
-        wingWidth: 2.6,
-    },
-    "gps-biii-1": {
-        size: [2.5, 2.5, 2.5],
-        wings: 2,
-        wingLength: 6.65,
-        wingWidth: 1.9,
-        antenna: [1.6, 1.6],
-    },
-    "goes-19": {
-        size: [6, 5.6, 3.9],
-        wings: 1,
-        wingLength: 12,
-        wingWidth: 3,
-        boom: 8,
-    },
-    "meridian-10": {
-        size: [1.5, 1.5, 2.5],
-        wings: 2,
-        wingLength: 3.75,
-        wingWidth: 1.8,
-    },
-    mro: {
-        size: [3, 2.5, 2.5],
-        wings: 2,
-        wingLength: 5.35,
-        wingWidth: 2.53,
-        dish: 3,
-    },
-    "mars-express": {
-        size: [1.5, 1.8, 1.4],
-        wings: 2,
-        wingLength: 5.3,
-        wingWidth: 1.9,
-        dish: 1.6,
-    },
-    "mars-odyssey": {
-        size: [2.2, 1.7, 2.6],
-        wings: 1,
-        wingLength: 3.4,
-        wingWidth: 2.1,
-        dish: 1.3,
-        boom: 6.2,
-    },
-    tgo: {
-        size: [3.2, 2, 2],
-        wings: 2,
-        wingLength: 7.5,
-        wingWidth: 2.2,
-        dish: 2.2,
-    },
-    hope: {
-        size: [2.4, 2.9, 2.4],
-        wings: 2,
-        wingLength: 2.5,
-        wingWidth: 1.8,
-        dish: 1.85,
-    },
-    lro: {
-        size: [1.9, 1.9, 2.7],
-        wings: 1,
-        wingLength: 3.3,
-        wingWidth: 2.4,
-        dish: 0.75,
-    },
-    "chandrayaan-2": {
-        size: [3.2, 2.2, 2.2],
-        wings: 1,
-        wingLength: 3,
-        wingWidth: 2,
-        dish: 1,
-    },
-    danuri: {
-        size: [2.14, 1.82, 2.19],
-        wings: 2,
-        wingLength: 2.3,
-        wingWidth: 1.2,
-        dish: 2.6,
-    },
-    "parker-solar-probe": {
-        size: [1, 1, 1.4],
-        wings: 2,
-        wingLength: 1.1,
-        wingWidth: 0.6,
-        shield: { shape: "disc", size: 2.3, thickness: 0.115 },
-    },
-    "solar-orbiter": {
-        size: [2.5, 3.1, 2.7],
-        wings: 2,
-        wingLength: 6.5,
-        wingWidth: 1.2,
-        dish: 1.1,
-        boom: 4.4,
-        shield: { shape: "plate", size: 3.1, thickness: 0.3 },
-    },
-};
-
-const GENERIC: Bus = {
+/** The bus a `bus` mesh fills its missing params from. */
+export const GENERIC: Bus = {
     size: [2, 2, 2],
     wings: 2,
     wingLength: 3,
     wingWidth: 1.5,
-};
-
-const busOf = (model: string | undefined): Bus =>
-    (model === undefined ? undefined : BUSES[model]) ?? GENERIC;
-
-/**
- * A model of `body` in km, nadir-pointing when it's turned by `lvlhMatrix`.
- *
- * Its x is along the track, y the orbit normal and z up. Dimensions are approximate.
- */
-export const createSpacecraftModel = (body: Body): Group => {
-    const parts = new Group();
-    const m = palette();
-    const amber = material(0xc99a2e, 0.35);
-    amber.metalness = 0.5;
-
-    const { preset } = body;
-
-    if (preset === "iss") iss(parts, m, amber);
-    else if (preset === "hubble") hubble(parts, m);
-    else if (preset === "tiangong") tiangong(parts, m);
-    else if (preset === "parisat") parisat(parts, m);
-    else if (preset === "juno") juno(parts, m);
-    else bus(parts, m, busOf(preset));
-
-    // The group's origin is the body's position, so the bounding box is centred on it.
-    const box = new Box3().setFromObject(parts);
-    parts.position.copy(box.getCenter(new Vector3()).negate());
-
-    const group = new Group();
-    group.add(parts);
-
-    // A spacecraft without a model of its own is drawn at the size it declares.
-    const known =
-        preset !== undefined &&
-        (Object.hasOwn(BUSES, preset) ||
-            ["iss", "hubble", "tiangong", "parisat", "juno"].includes(preset));
-    const radius = known
-        ? 1
-        : body.mass.radius / box.getBoundingSphere(new Sphere()).radius;
-    group.scale.setScalar(radius / 1000);
-
-    return group;
-};
-
-/** Frees the geometries and materials of a model. */
-export const disposeModel = (group: Group): void => {
-    group.traverse((object) => {
-        if (!(object instanceof Mesh)) return;
-
-        (object.geometry as BufferGeometry).dispose();
-        (object.material as MeshStandardMaterial).dispose();
-    });
 };

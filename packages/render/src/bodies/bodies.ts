@@ -31,6 +31,7 @@ import {
     settleLabels,
 } from "../geometry/screen-pass.ts";
 import { createMaps } from "../maps.ts";
+import { disposeMesh } from "../meshes/index.ts";
 import { type LabelRect, type PickPoint, pickLabel } from "../picking.ts";
 import { spinMatrix } from "../spin.ts";
 import { styleOf } from "../tags.ts";
@@ -38,7 +39,6 @@ import { coronaTexture } from "./corona.ts";
 import { createEntry, type Entry } from "./entry.ts";
 import { CENTERS, createLabels } from "./labels.ts";
 import { markerPx, markerTexture, SHAPES, type Shape } from "./markers.ts";
-import { disposeModel } from "./spacecraft.ts";
 
 /** The bodies of a scene: a sphere, a marker and a label each, and the light. */
 export type Bodies = {
@@ -143,7 +143,7 @@ export const createBodies = (
         extras,
     }: Entry) => {
         extras.dispose();
-        if (model) disposeModel(model);
+        if (model) disposeMesh(model);
         label.removeFromParent();
         group.removeFromParent();
         sphere.material.dispose();
