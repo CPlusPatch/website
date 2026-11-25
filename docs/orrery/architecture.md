@@ -38,7 +38,7 @@ The `Scene` has no state of its own. It reads and writes a `Held` object (docume
 
 Deno can't run `.svelte.ts` files. The logic and its tests stay in plain `.ts`, and only the thin holder and stores are rune modules.
 
-The clock isn't held. `render` ticks it every frame, so `ViewState.clock` copies its flags from the scene's `clock` and `scenario` events, and `now()` reads its time. Components update in Svelte's next microtask, so code that reads their DOM right after a scene call sees the old DOM.
+The clock isn't held. It ticks in one `requestAnimationFrame` loop in `Shell.svelte`, and the `render` loop only reads it. So `ViewState.clock` copies its flags from the scene's `clock` and `scenario` events, and `now()` reads its time. Components update in Svelte's next microtask, so code that reads their DOM right after a scene call sees the old DOM.
 
 `ui/Shell.svelte` makes the stores and passes them down with `setStores()`. Components read them with `getDocument()` and `getView()`.
 
@@ -65,4 +65,3 @@ These break the rules above until a later step of the rewrite removes them.
 | `sim` keeps the closed model list (`models.ts`) and rotation tables keyed by model name         | Rotation and appearance become body data         |
 | Kerbol's tidally locked rotations are literals in `sim/src/rotation-models.ts`; a catalog test checks them against the scenario | Rotation becomes body data |
 | The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |
-| `render`'s `SceneSource` calls `select` and `focus` on the `Scene`                              | The clock and `createRenderer` step (17c)        |

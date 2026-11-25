@@ -57,7 +57,11 @@ export const finiteVelocity = (
 
 /** What the satellite selection and focus take from the view. */
 export type SatelliteFocusDeps = {
-    world: SceneSource;
+    source: SceneSource;
+    /** Clears the body selection. Must act before it returns. */
+    onSelect: (id: string | null) => void;
+    /** Focuses a body. Must act before it returns, as `focusing` relies on it. */
+    onFocus: (id: string) => void;
     swarm: SwarmLayer;
     /** The body with model "earth", or `undefined` when the scenario has no satellites. */
     host: Body | undefined;
@@ -69,15 +73,15 @@ export type SatelliteFocusDeps = {
     describe: () => void;
 };
 
-/** The satellite selection and focus, which sit beside the world's own. */
+/** The satellite selection and focus, which sit beside the source's own. */
 export type SatelliteFocus = {
     selected: () => number | null;
     focused: () => number | null;
-    /** Selects satellite `k`, which clears the world's selection, or clears the satellite selection for `null`. */
+    /** Selects satellite `k`, which clears the source's selection, or clears the satellite selection for `null`. */
     select: (k: number | null) => void;
-    /** Selects satellite `k` and clears the world's selection. */
+    /** Selects satellite `k` and clears the source's selection. */
     pick: (k: number) => void;
-    /** Clears the satellite selection and leaves the world's alone. */
+    /** Clears the satellite selection and leaves the source's alone. */
     clear: () => void;
     /** Selects satellite `k` and follows it, framing its orbit. */
     focus: (k: number) => void;
@@ -86,13 +90,15 @@ export type SatelliteFocus = {
     on: (fn: (e: SatelliteEvent) => void) => () => void;
     /** Drops a satellite that is gone, each frame. */
     check: () => void;
-    /** Takes a world selection or focus change as the user's, which ends the satellite's. */
+    /** Takes a source selection or focus change as the user's, which ends the satellite's. */
     onWorld: (event: SceneEvent) => void;
 };
 
 /** The satellite selection and focus of a view. */
 export const createSatelliteFocus = ({
-    world,
+    source,
+    onSelect,
+    onFocus,
     swarm,
     host,
     rig,
@@ -102,7 +108,7 @@ export const createSatelliteFocus = ({
 }: SatelliteFocusDeps): SatelliteFocus => {
     let selected: number | null = null;
     let focused: number | null = null;
-    // Set while the view's own `world.focus` runs, so its event isn't taken for a user's.
+    // Set while the view's own `onFocus` runs, so its event isn't taken for a user's.
     let focusing = false;
     const listeners = new Set<(e: SatelliteEvent) => void>();
     // Passed as Earth's position, which gives a satellite's position relative to Earth.
@@ -119,18 +125,18 @@ export const createSatelliteFocus = ({
     };
     // A satellite and a body are never selected together.
     const pick = (k: number) => {
-        if (world.selected !== null) world.select(null);
+        if (source.selected !== null) onSelect(null);
         selectOnly(k);
     };
 
     const focus = (k: number) => {
         pick(k);
 
-        const facts = swarm.facts(k, world.clock.t);
+        const facts = swarm.facts(k, source.clock.t);
         if (!facts || !host) return;
 
         focusing = true;
-        world.focus(host.id);
+        onFocus(host.id);
         focusing = false;
 
         const fov = (camera.fov * Math.PI) / 180;
@@ -138,18 +144,18 @@ export const createSatelliteFocus = ({
         rig.focusPoint(
             () => {
                 const frame = {
-                    system: world.system,
-                    snapshot: world.snapshot(),
+                    system: source.system,
+                    snapshot: source.snapshot(),
                 };
                 const earth = positionOf(frame, host.id) ?? rig.origin();
 
-                return swarm.positionOf(k, world.clock.t, earth) ?? earth;
+                return swarm.positionOf(k, source.clock.t, earth) ?? earth;
             },
             pointFrameDistanceKm(apogeeKm, fov, camera.aspect),
             () =>
                 finiteVelocity(
                     (t) => swarm.positionOf(k, t, earthCentre),
-                    world.clock.t,
+                    source.clock.t,
                     VELOCITY_HALF_SPAN,
                 ),
         );
@@ -168,7 +174,7 @@ export const createSatelliteFocus = ({
         pick,
         clear: () => selectOnly(null),
         focus,
-        facts: (k) => swarm.facts(k, world.clock.t),
+        facts: (k) => swarm.facts(k, source.clock.t),
         on: (fn) => {
             listeners.add(fn);
 
@@ -179,7 +185,7 @@ export const createSatelliteFocus = ({
         check: () => {
             // A satellite leaves when its group is turned off or the clock leaves the snapshot.
             if (host && focused !== null && !swarm.available(focused)) {
-                world.focus(host.id);
+                onFocus(host.id);
             }
             if (selected !== null && !swarm.available(selected)) {
                 selectOnly(null);

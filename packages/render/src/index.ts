@@ -42,13 +42,15 @@ export type { EditScene, Field, GripTarget } from "./grips/types.ts";
 export { scaleBar } from "./scale.ts";
 export {
     type ChaseState,
-    createView,
+    createRenderer,
+    type RendererOptions,
     type SatelliteEvent,
     type View,
 } from "./scene.ts";
 export type { SceneEvent, SceneSource } from "./source.ts";
 export { colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 export {
+    advanceClock,
     dateText,
     isLive,
     offsetText,

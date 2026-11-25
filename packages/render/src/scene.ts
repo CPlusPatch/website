@@ -1,4 +1,3 @@
-import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import type { Body, SatelliteFacts, SatelliteGroup } from "@cpluspatch/sim";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
@@ -25,7 +24,6 @@ import { createSky } from "./sky.ts";
 import type { SceneSource } from "./source.ts";
 import { createSwarm } from "./swarm.ts";
 import { createTheme } from "./theme.ts";
-import { advanceClock } from "./time-text.ts";
 import { neutralNoToe } from "./tone-mapping.ts";
 import type { Units } from "./units.ts";
 
@@ -60,7 +58,7 @@ export type View = EditScene & {
     patch: (change: { added: string[]; removed: string[] }) => void;
     /** Marks the loading state as gone; a sky that arrives later fades in. */
     reveal: () => void;
-    /** The catalogue satellite that is selected or focused, by index. Selecting one clears the world's selection. */
+    /** The catalogue satellite that is selected or focused, by index. Selecting one clears the source's selection. */
     satellite: {
         selected: () => number | null;
         focused: () => number | null;
@@ -76,25 +74,34 @@ export type View = EditScene & {
     destroy: () => void;
 };
 
-/**
- * The 3D view of `world` in `container`, or `null` if WebGL isn't available.
- * `blocked` gives the rects, in px from the container's top left, that labels keep out of.
- * `band` gives the rows the panels leave free, where the focus is centred.
- * `units` sets the unit of the distances in the notes.
- * `onLoading` hears the files done of the files started, for the sky and the maps, and how full the bar is, from 0 to 1.
- * The sky counts as one file, and fills the bar by the bytes it has received.
- * `assets` holds the sky, maps and satellites, which are fetched once for every view built on it.
- * `onTick` is called each time a grip drag moves to a new step.
- */
-export const createView = (
+/** What `createRenderer` takes. */
+export type RendererOptions = {
+    source: SceneSource;
+    /** The rects, in px from the container's top left, that labels keep out of. */
+    blocked: () => Rect[];
+    /** The rows the panels leave free, where the focus is centred. */
+    band: () => Band;
+    /** Sets the unit of the distances in the notes. */
+    units: Units;
+    /** Holds the sky, maps and satellites, which are fetched once for every view built on it. */
+    assets: Assets;
+    /**
+     * Hears the files done of the files started, for the sky and the maps, and how full the bar is, from 0 to 1.
+     * The sky counts as one file, and fills the bar by the bytes it has received.
+     */
+    onLoading?: (done: number, total: number, fill: number) => void;
+    /** Called each time a grip drag moves to a new step. */
+    onTick?: () => void;
+    /** Called when the user picks a body, or clears the pick with `null`. */
+    onSelect: (id: string | null) => void;
+    /** Called when the user or the view focuses a body. */
+    onFocus: (id: string) => void;
+};
+
+/** The 3D view of `options.source` in `container`, or `null` if WebGL isn't available. */
+export const createRenderer = (
     container: HTMLElement,
-    world: SceneSource,
-    blocked: () => Rect[],
-    band: () => Band,
-    units: Units,
-    assets: Assets,
-    onLoading?: (done: number, total: number, fill: number) => void,
-    onTick?: () => void,
+    options: RendererOptions,
 ): View | null => {
     let renderer: WebGLRenderer;
     try {
@@ -109,18 +116,7 @@ export const createView = (
 
     const cleanup: (() => void)[] = [];
     try {
-        return assemble(
-            renderer,
-            cleanup,
-            container,
-            world,
-            blocked,
-            band,
-            units,
-            assets,
-            onLoading,
-            onTick,
-        );
+        return assemble(renderer, cleanup, container, options);
     } catch (error) {
         for (const undo of cleanup.toReversed()) undo();
 
@@ -133,13 +129,17 @@ const assemble = (
     renderer: WebGLRenderer,
     cleanup: (() => void)[],
     container: HTMLElement,
-    world: SceneSource,
-    blocked: () => Rect[],
-    band: () => Band,
-    units: Units,
-    assets: Assets,
-    onLoading?: (done: number, total: number, fill: number) => void,
-    onTick?: () => void,
+    {
+        source,
+        blocked,
+        band,
+        units,
+        assets,
+        onLoading,
+        onTick,
+        onSelect,
+        onFocus,
+    }: RendererOptions,
 ): View => {
     cleanup.push(() => {
         renderer.forceContextLoss();
@@ -170,11 +170,11 @@ const assemble = (
     const colorOf = (body: Body) =>
         theme.color(
             body,
-            world.scenario.bodies.find((other) => other.id === body.parent),
+            source.scenario.bodies.find((other) => other.id === body.parent),
         );
     const orbits = createOrbits(
         scene,
-        world.order,
+        source.order,
         colorOf,
         theme.background(),
         theme.pick(),
@@ -189,7 +189,7 @@ const assemble = (
     const bodies = createBodies(
         scene,
         labels.domElement,
-        world.order,
+        source.order,
         colorOf,
         {
             maps: !plain,
@@ -201,8 +201,8 @@ const assemble = (
     cleanup.push(bodies.dispose);
 
     // The scene is rebuilt when a body with model "earth" comes or goes, so the host is fixed here.
-    const host = world.scenario.hasSatellites
-        ? world.scenario.bodies.find((body) => body.model === "earth")
+    const host = source.scenario.hasSatellites
+        ? source.scenario.bodies.find((body) => body.model === "earth")
         : undefined;
     const swarm = createSwarm(scene, theme, () => assets.swarm(host?.mu ?? 0));
     cleanup.push(swarm.dispose);
@@ -210,7 +210,12 @@ const assemble = (
 
     const grips = createGrips(labels.domElement, units, onTick);
     cleanup.push(grips.dispose);
-    const readouts = createReadouts(container, labels.domElement, world, units);
+    const readouts = createReadouts(
+        container,
+        labels.domElement,
+        source,
+        units,
+    );
     cleanup.push(readouts.dispose);
 
     let size = { width: 0, height: 0 };
@@ -274,14 +279,14 @@ const assemble = (
             const k = id === null ? null : satelliteIndex(id);
             if (k === null) {
                 satellites.clear();
-                world.select(id);
+                onSelect(id);
             } else {
                 satellites.pick(k);
             }
         },
         focus: (id) => {
             const k = satelliteIndex(id);
-            if (k === null) world.focus(id);
+            if (k === null) onFocus(id);
             else satellites.focus(k);
         },
         hover: (id) => {
@@ -291,14 +296,14 @@ const assemble = (
         },
     });
     cleanup.push(unbindPointer);
-    orbits.highlight(world.selected);
+    orbits.highlight(source.selected);
 
     const rig = createRig(
         camera,
         canvas,
-        () => world.scenario,
-        { system: world.system, snapshot: world.snapshot() },
-        world.focused,
+        () => source.scenario,
+        { system: source.system, snapshot: source.snapshot() },
+        source.focused,
     );
     cleanup.push(rig.dispose);
     resize();
@@ -325,19 +330,21 @@ const assemble = (
     const describe = () => {
         const focused = satellites.focused();
         const satellite =
-            focused === null ? null : swarm.facts(focused, world.clock.t);
+            focused === null ? null : swarm.facts(focused, source.clock.t);
 
         canvas.setAttribute(
             "aria-label",
-            `${world.scenario.name}, centred on ${
+            `${source.scenario.name}, centred on ${
                 satellite?.name ??
-                world.scenario.bodies.find((body) => body.id === rig.focusId())
+                source.scenario.bodies.find((body) => body.id === rig.focusId())
                     ?.name
             }. Arrow keys rotate, plus and minus zoom, 0 fits the focus, C chases it.`,
         );
     };
     const satellites = createSatelliteFocus({
-        world,
+        source,
+        onSelect,
+        onFocus,
         swarm,
         host,
         rig,
@@ -368,7 +375,6 @@ const assemble = (
 
     let frame = 0;
     let last = performance.now();
-    let lastNowT = unixMsToJ2000s(Date.now());
     const draw = (now: number) => {
         frame = requestAnimationFrame(draw);
 
@@ -379,10 +385,7 @@ const assemble = (
         const dt = Math.min((now - last) / 1000, 0.1);
         last = now;
 
-        const nowT = unixMsToJ2000s(Date.now());
-        advanceClock(world.clock, dt, lastNowT, nowT);
-        lastNowT = nowT;
-        const current = { system: world.system, snapshot: world.snapshot() };
+        const current = { system: source.system, snapshot: source.snapshot() };
 
         satellites.check();
 
@@ -393,8 +396,8 @@ const assemble = (
             rig.origin(),
             current,
             camera,
-            world.clock.rate,
-            world.clock.t,
+            source.clock.rate,
+            source.clock.t,
         );
         const rooms = grips.update({
             camera,
@@ -402,13 +405,13 @@ const assemble = (
             frame: current,
             viewport: size,
             parentOf: (id) =>
-                world.scenario.bodies.find((body) => body.id === id)?.parent,
+                source.scenario.bodies.find((body) => body.id === id)?.parent,
         });
         points = bodies.update(
             camera,
             rig.origin(),
             rig.focusId(),
-            world.selected,
+            source.selected,
             current,
             [...keepOut, ...rooms],
         );
@@ -421,7 +424,7 @@ const assemble = (
         }
         swarm.update(
             camera,
-            world.clock.t,
+            source.clock.t,
             earth ? earthOffset : null,
             size.height,
         );
@@ -435,8 +438,8 @@ const assemble = (
             hidden: ghostShown || grips.shown(),
             labels: bodies.placed(),
             blocked: keepOut,
-            footprint: world.selected
-                ? bodies.footprint(world.selected)
+            footprint: source.selected
+                ? bodies.footprint(source.selected)
                 : undefined,
         });
 
@@ -462,7 +465,7 @@ const assemble = (
     cleanup.push(() => observer.disconnect());
     observer.observe(container);
 
-    const unsubscribe = world.on((event) => {
+    const unsubscribe = source.on((event) => {
         if (event.type === "selection") {
             orbits.highlight(event.id);
             satellites.onWorld(event);
@@ -472,7 +475,7 @@ const assemble = (
             satellites.onWorld(event);
             describe();
         } else if (event.type === "body") {
-            const body = world.scenario.bodies.find((b) => b.id === event.id);
+            const body = source.scenario.bodies.find((b) => b.id === event.id);
             if (body) {
                 orbits.rebuild(body);
                 bodies.recolor(body);
@@ -484,7 +487,7 @@ const assemble = (
 
     return {
         ghost: (id, elements) => {
-            const body = world.order.find((candidate) => candidate.id === id);
+            const body = source.order.find((candidate) => candidate.id === id);
             if (body) orbits.ghost(body, elements);
             ghostShown = body !== undefined && elements !== null;
         },
@@ -495,7 +498,7 @@ const assemble = (
                 bodies.remove(id);
             }
             for (const id of added) {
-                const body = world.scenario.bodies.find(
+                const body = source.scenario.bodies.find(
                     (candidate) => candidate.id === id,
                 );
                 if (!body) continue;

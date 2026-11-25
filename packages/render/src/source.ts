@@ -23,9 +23,6 @@ export type SceneSource = {
     snapshot(): Snapshot;
     /** The state of every body at the clock's time. */
     states(): Map<string, State>;
-    // Temporary: the view picks and focuses through the source until the Svelte shell (step 17).
-    select(id: string | null): void;
-    focus(id: string): void;
     /** Calls `fn` on every change. Returns a function that stops it. */
     on(fn: (event: SceneEvent) => void): () => void;
 };

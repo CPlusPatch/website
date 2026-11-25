@@ -1,6 +1,8 @@
 <script lang="ts">
 import { solarSystem } from "@cpluspatch/catalog";
+import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import {
+    advanceClock,
     Clock,
     createAssets,
     createUnits,
@@ -232,6 +234,22 @@ $effect(() => {
 });
 
 onMount(() => {
+    // Registered before the build, so the clock ticks before the view's draw every frame.
+    let clockFrame = 0;
+    let lastFrame = performance.now();
+    let lastNowT = unixMsToJ2000s(Date.now());
+    const tickClock = (now: number) => {
+        clockFrame = requestAnimationFrame(tickClock);
+
+        const dt = Math.min((now - lastFrame) / 1000, 0.1);
+        lastFrame = now;
+
+        const nowT = unixMsToJ2000s(Date.now());
+        advanceClock(scene.clock, dt, lastNowT, nowT);
+        lastNowT = nowT;
+    };
+    clockFrame = requestAnimationFrame(tickClock);
+
     if (hashPayload(location.hash) !== null) stripHash();
 
     let fellBack = false;
@@ -258,12 +276,15 @@ onMount(() => {
             }
         }
     } catch (error) {
+        cancelAnimationFrame(clockFrame);
         showLoadFailed(root);
 
         throw error;
     }
 
     if (!first) {
+        // With no view the clock stood still before, and nothing shows it moving.
+        cancelAnimationFrame(clockFrame);
         loading.reveal();
         unavailable = true;
         if (opened.notice) showNotice("warning", opened.notice);
@@ -396,6 +417,7 @@ onMount(() => {
 
     return () => {
         destroyed = true;
+        cancelAnimationFrame(clockFrame);
         clearTimeout(revealTimer);
         loading.destroy();
         session.destroy();

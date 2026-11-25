@@ -2,7 +2,7 @@
 import {
     type Band,
     type createAssets,
-    createView,
+    createRenderer,
     type Rect,
     type Units,
     type View,
@@ -11,6 +11,7 @@ import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { onDestroy } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import { cue } from "../audio/cues.ts";
+import { getView } from "../state/context.ts";
 import type { Scene } from "../state/scene.ts";
 
 type Props = {
@@ -39,6 +40,8 @@ const {
     inert,
     beside,
 }: Props = $props();
+
+const viewState = getView();
 
 let container: HTMLElement | undefined;
 let current: View | null = null;
@@ -118,16 +121,17 @@ export const build = (
     if (!container) throw new Error("The Orrery needs a canvas container.");
 
     destroy();
-    current = createView(
-        container,
-        scene,
+    current = createRenderer(container, {
+        source: scene,
         blocked,
         band,
         units,
         assets,
         onLoading,
-        () => cue("tick"),
-    );
+        onTick: () => cue("tick"),
+        onSelect: (id) => viewState.select(id),
+        onFocus: (id) => viewState.setFocus(id),
+    });
 
     return current;
 };

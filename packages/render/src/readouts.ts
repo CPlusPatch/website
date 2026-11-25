@@ -92,7 +92,7 @@ const move = (element: HTMLElement, x: number, y: number) => {
 export const createReadouts = (
     container: HTMLElement,
     host: HTMLElement,
-    world: SceneSource,
+    source: SceneSource,
     units: Units,
 ): SceneReadouts => {
     const apsides: Apsis[] = [
@@ -183,11 +183,11 @@ export const createReadouts = (
             blocked,
             footprint,
         }) => {
-            const { selected } = world;
+            const { selected } = source;
             const body =
                 selected === null
                     ? undefined
-                    : world.scenario.bodies.find(({ id }) => id === selected);
+                    : source.scenario.bodies.find(({ id }) => id === selected);
             const parentR = body?.parent
                 ? positionOf(frame, body.parent)
                 : undefined;
@@ -195,7 +195,7 @@ export const createReadouts = (
                 setShown(false);
                 return;
             }
-            const elements = frame.system.elementsAt(body.id, world.clock.t);
+            const elements = frame.system.elementsAt(body.id, source.clock.t);
 
             viewport.width = size.width;
             viewport.height = size.height;
@@ -211,10 +211,10 @@ export const createReadouts = (
                 size.height,
             );
             const numbers = readouts(
-                world.scenario,
+                source.scenario,
                 body.id,
-                world.states(),
-                world.clock.t,
+                source.states(),
+                source.clock.t,
             );
             if (
                 !numbers ||
