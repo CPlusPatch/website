@@ -24,22 +24,34 @@ const show = (value: unknown): string => {
     return typeof value === "string" ? JSON.stringify(value) : typeof value;
 };
 
-/** Checks the fields of an `appearance` object that sim already knows is one. */
-export const validateAppearance: AppearanceValidator = (
-    path,
-    input,
-    errors,
-) => {
-    const { color } = input as Record<string, unknown>;
+/** Checks one field of an `appearance` object, which is present. Pushes its errors. */
+type FieldValidator = (path: string, value: unknown, errors: string[]) => void;
 
-    if (color === undefined) return input;
-
+const validateColor: FieldValidator = (path, color, errors) => {
     if (typeof color !== "string") {
         errors.push(`${path}.color: must be a string (got ${show(color)})`);
     } else if (!HEX_COLOR.test(color)) {
         errors.push(
             `${path}.color: must be a #rgb or #rrggbb colour (got ${show(color)})`,
         );
+    }
+};
+
+/** The validator of each appearance field the renderer knows. Other fields are ignored. */
+const FIELDS: Readonly<Record<string, FieldValidator>> = {
+    color: validateColor,
+};
+
+/** Checks the fields of an `appearance` object that sim already knows is one. */
+export const validateAppearance: AppearanceValidator = (
+    path,
+    input,
+    errors,
+) => {
+    const fields = input as Record<string, unknown>;
+
+    for (const [name, validate] of Object.entries(FIELDS)) {
+        if (fields[name] !== undefined) validate(path, fields[name], errors);
     }
 
     return input;
