@@ -176,6 +176,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     // Set once the top bar is filled, after the first build.
     let search: ReturnType<typeof Search> | null = null;
+    let scenarios: ReturnType<typeof ScenarioMenu> | null = null;
     // Replaced with the view on each scenario.
     let inspector: ReturnType<typeof Inspector> | null = null;
     let currentView: View | null = null;
@@ -366,7 +367,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         history.replaceState(null, "", location.pathname + location.search);
     };
 
-    const notices = createNotices(root);
+    const notices = createNotices(() => scenarios?.focusToggle());
     if (hashPayload(location.hash) !== null) stripHash();
 
     let fellBack = false;
@@ -458,7 +459,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         : null;
     top?.append(keys.toggle, notices.element);
     // Mounted last, so the toggle can go right before the satellites menu.
-    const scenarios = top
+    scenarios = top
         ? mountComponent(ScenarioMenu, {
               target: top,
               anchor: satellites?.element(),

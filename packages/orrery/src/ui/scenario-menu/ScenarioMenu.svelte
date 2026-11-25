@@ -41,6 +41,7 @@ const { storage, openAdd }: Props = $props();
 const documents = getDocument();
 const view = getView();
 
+let toggle: HTMLButtonElement | undefined;
 let dialog: HTMLDialogElement | undefined;
 let nameInput: HTMLInputElement | undefined;
 let linkInput: HTMLInputElement | undefined;
@@ -286,6 +287,9 @@ const dialogEvents: Attachment<HTMLDialogElement> = (node) => {
     };
 };
 
+/** Moves focus to the menu's button. */
+export const focusToggle = (): void => toggle?.focus();
+
 // A scenario can load from anywhere, like a link in the address bar.
 let seenLoads = documents.loads;
 $effect(() => {
@@ -302,6 +306,7 @@ $effect(() => {
     class="orrery__tool"
     aria-haspopup="dialog"
     onclick={open}
+    bind:this={toggle}
 >
     <span class="orrery__tool-icon">{@html iconSvg("bookmark")}</span
     ><span class="orrery__tool-label">Scenarios</span>

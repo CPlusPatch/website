@@ -32,9 +32,9 @@ export type Notices = {
 /**
  * A place for one dismissible alert at a time. It's a live region from the
  * start, as one added with its content isn't announced. Dismissing a notice
- * with the keyboard moves focus to the Scenario menu's button in `root`.
+ * with the keyboard calls `returnFocus`, as the button it had goes away.
  */
-export const createNotices = (root: ParentNode): Notices => {
+export const createNotices = (returnFocus: () => void): Notices => {
     const element = h("div", {
         class: "orrery__notices",
         role: "status",
@@ -64,11 +64,7 @@ export const createNotices = (root: ParentNode): Notices => {
             const hadFocus = document.activeElement === dismiss;
 
             clear();
-            if (hadFocus) {
-                root.querySelector<HTMLElement>(
-                    "[popovertarget=scenario]",
-                )?.focus();
-            }
+            if (hadFocus) returnFocus();
         });
 
         const prefix = h(

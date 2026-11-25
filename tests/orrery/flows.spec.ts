@@ -374,3 +374,21 @@ test("Go live shows after a date jump and returns to the real time", async ({
     await expect(chip).toBeVisible();
     expect(problems).toEqual([]);
 });
+
+test("dismissing a notice with the keyboard focuses the Scenarios button", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+
+    await page.evaluate(() => {
+        location.hash = "#s=not-a-scenario";
+    });
+    const dismiss = page.getByRole("button", { name: "Dismiss" });
+    await dismiss.focus();
+    await page.keyboard.press("Enter");
+
+    await expect(dismiss).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Scenarios" })).toBeFocused();
+    expect(problems).toEqual([]);
+});
