@@ -197,8 +197,8 @@
         --plate-unit: calc(64cqw / 224);
         --plate-line: 1.125rem;
         --plate-legend: calc(4 * var(--plate-line) + var(--space-sm));
-        /* The top of the orbit's box in the drawing. */
-        --plate-top: calc(20 * var(--plate-unit));
+        /* The orbit's centre in the drawing, which is the middle of the 158 unit viewBox. */
+        --plate-mid: calc(79 * var(--plate-unit));
         --plate-gap: var(--space-sm);
         position: relative;
         display: grid;
@@ -230,11 +230,11 @@
 
     .orrery__plate-legend {
         display: grid;
-        align-self: start;
+        align-self: center;
         gap: var(--space-sm);
-        padding-block-start: var(--plate-top);
         padding-inline-end: var(--orrery-pad);
         white-space: nowrap;
+        font-weight: 400;
         line-height: var(--plate-line);
     }
 
@@ -264,14 +264,14 @@
         display: none;
     }
 
-    /* On the bottom of the orbit, but clear of the legend and the plate's edge. */
+    /* On the bottom of the orbit, but clear of the centred legend and the plate's edge. */
     .orrery__plate-scale {
         position: absolute;
         inset-inline-start: calc(64cqw + var(--plate-gap));
         inset-block-start: min(
             max(
                 calc(var(--plate-bar-y) * var(--plate-unit)),
-                calc(var(--plate-top) + var(--plate-legend) + 0.875rem)
+                calc(var(--plate-mid) + var(--plate-legend) / 2 + 0.875rem)
             ),
             calc(158 * var(--plate-unit) - 0.75rem)
         );

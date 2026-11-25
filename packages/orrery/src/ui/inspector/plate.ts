@@ -17,7 +17,19 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 /** The SVG's size in its own units. The CSS scales it to the card, see `styles/card.css`. */
 const WIDTH = 224;
 const HEIGHT = 158;
-const BOX = { x: 27, y: 20, width: 170, height: 118 };
+/** Half a badge's width, and the gap it keeps to the drawing's left and right edges. */
+const BADGE_HALF = 9;
+const BADGE_GAP = 12;
+/** How far a badge sits out from its apsis. */
+const BADGE_OFFSET = 16;
+// The side pad holds a badge at its offset without clamping, so it never covers its apsis.
+const SIDE_PAD = BADGE_HALF + BADGE_GAP + BADGE_OFFSET;
+const BOX = {
+    x: SIDE_PAD,
+    y: 20,
+    width: WIDTH - 2 * SIDE_PAD,
+    height: 118,
+};
 const SCALE_MAX_PX = 44;
 
 /** What a plate draws. */
@@ -243,7 +255,6 @@ export const createPlate = (
     return plate;
 };
 
-/** Moves a badge 16 units out from its apsis along the line of apsides, inside the SVG. */
 /** Sets a custom property only when it changes, since refreshes run every tick. */
 const setStyle = (node: HTMLElement, name: string, value: string): void => {
     if (node.style.getPropertyValue(name) !== value) {
@@ -251,10 +262,17 @@ const setStyle = (node: HTMLElement, name: string, value: string): void => {
     }
 };
 
+/** Moves a badge out from its apsis along the line of apsides, inside the SVG. */
 const placeApsis = (apsis: Apsis, at: Point, outward: Point): void => {
-    // Half the badge's width, plus a gap to the card's edge and the legend.
-    const x = Math.min(Math.max(at.x + outward.x * 16, 17), WIDTH - 17);
-    const y = Math.min(Math.max(at.y + outward.y * 16, 10), HEIGHT - 10);
+    const edge = BADGE_HALF + BADGE_GAP;
+    const x = Math.min(
+        Math.max(at.x + outward.x * BADGE_OFFSET, edge),
+        WIDTH - edge,
+    );
+    const y = Math.min(
+        Math.max(at.y + outward.y * BADGE_OFFSET, 10),
+        HEIGHT - 10,
+    );
 
     set(apsis.marker, { x: round(at.x - 2.5), y: round(at.y - 2.5) });
     set(apsis.badge, { transform: `translate(${round(x)} ${round(y)})` });
