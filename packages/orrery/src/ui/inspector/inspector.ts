@@ -87,8 +87,10 @@ export const createInspector = (
         h("div", { class: "orrery__inspector-titles" }, title, meta),
         close,
     );
-    // Scrolls under the head, as a scrolling card left a blank band in Chromium's canvas.
+    // On a wider card it scrolls under the head, as a scrolling card left a blank band in Chromium's canvas.
     const content = h("div", { class: "orrery__inspector-body" });
+    // On a phone it scrolls the plate with the body, and on a wider card it adds no box.
+    const scroll = h("div", { class: "orrery__inspector-scroll" }, content);
     const element = h(
         "section",
         {
@@ -96,7 +98,7 @@ export const createInspector = (
             "aria-label": "Selected body",
         },
         head,
-        content,
+        scroll,
     );
     element.hidden = true;
 
@@ -378,7 +380,7 @@ export const createInspector = (
             const active = editor ?? burn;
             if (active && parent) {
                 plate = createPlate(units, body.name, parent.name);
-                head.after(plate.element);
+                content.before(plate.element);
                 foot = active.foot;
                 element.append(foot);
                 refresh();
@@ -394,7 +396,7 @@ export const createInspector = (
         }
         if (parent && hasOrbit) {
             plate = createPlate(units, body.name, parent.name);
-            headline?.element.after(plate.element);
+            content.before(plate.element);
         }
 
         children = parent ? createChildrenSection(world, body) : null;

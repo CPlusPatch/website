@@ -24,6 +24,10 @@
         border-block-end: 1px solid var(--orrery-rule);
     }
 
+    .orrery__inspector-scroll {
+        display: contents;
+    }
+
     .orrery__inspector-body {
         display: flex;
         flex-direction: column;
@@ -474,9 +478,10 @@
         }
 
         .orrery__orbit-grip {
-            display: block;
+            display: grid;
             flex: none;
-            block-size: 20px;
+            align-content: center;
+            block-size: var(--control-height-md);
             padding: 0;
             border: 0;
             background: none;
@@ -509,6 +514,20 @@
             }
         }
 
+        /* The plate scrolls with the body, so the sheet pins only the head and the footer. */
+        .orrery__inspector-scroll {
+            display: flex;
+            flex-direction: column;
+            min-block-size: 0;
+            overflow: auto;
+
+            .orrery__inspector-body {
+                flex: none;
+                max-block-size: none;
+                overflow: visible;
+            }
+        }
+
         /* Peeked: the grip, the head and the headline stay. */
         .orrery__inspector[data-peek] {
             .orrery__orbit-meta,
@@ -519,9 +538,30 @@
             }
         }
 
-        /* Touch targets. */
+        /* Touch targets. The hit areas of small controls reach past their boxes. */
         .orrery__orbit-chip {
-            min-block-size: var(--control-height-sm);
+            min-block-size: var(--control-height-md);
+        }
+
+        .orrery__inspector-head--ruled .button--size-icon-sm {
+            /* Paints above the parent link's hit area. */
+            position: relative;
+            inline-size: var(--control-height-md);
+            block-size: var(--control-height-md);
+        }
+
+        .orrery__orbit-link,
+        .orrery__plate-scale .orrery__unit-switch {
+            position: relative;
+
+            &::before {
+                content: "";
+                position: absolute;
+                inset: 50% auto auto 50%;
+                inline-size: var(--control-height-md);
+                block-size: var(--control-height-md);
+                transform: translate(-50%, -50%);
+            }
         }
     }
 }
