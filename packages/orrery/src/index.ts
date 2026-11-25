@@ -18,7 +18,7 @@ import {
 } from "@cpluspatch/render";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
-import { mount as mountComponent, unmount } from "svelte";
+import { flushSync, mount as mountComponent, unmount } from "svelte";
 import {
     announcement,
     bareAnnouncement,
@@ -34,6 +34,7 @@ import {
     type SavedStorage,
     startTime,
 } from "./persistence.ts";
+import { readSatellites } from "./satellite-settings.ts";
 import { createSession } from "./session.ts";
 import { storeContext } from "./state/context.ts";
 import { DocumentStore } from "./state/document.svelte.ts";
@@ -45,8 +46,8 @@ import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
 import SatelliteCard from "./ui/SatelliteCard.svelte";
+import SatelliteMenu from "./ui/SatelliteMenu.svelte";
 import SoundMenu from "./ui/SoundMenu.svelte";
-import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import ScenarioMenu from "./ui/scenario-menu/ScenarioMenu.svelte";
 import Search from "./ui/search/Search.svelte";
 import { sheetSpace } from "./ui/sheet.ts";
@@ -183,12 +184,25 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
 
     // Points at the current view, as the menu outlives the views.
     let setSatellites: View["satelliteGroups"] | null = null;
-    const satellites = createSatelliteMenu(
-        storage,
-        (groups) => setSatellites?.(groups),
-        // `timeBar` is made below, and the menu only calls this once it's open.
-        { now: () => world.clock.t, goLive: () => timeBar?.goLive() },
-    );
+    // Mounted before the first build, which reads its groups.
+    const satellites = top
+        ? mountComponent(SatelliteMenu, {
+              target: top,
+              props: {
+                  storage,
+                  onChange: (groups) => setSatellites?.(groups),
+                  // `timeBar` is made below, and the menu only calls this once it's open.
+                  clock: {
+                      now: () => world.clock.t,
+                      goLive: () => timeBar?.goLive(),
+                  },
+              },
+          })
+        : null;
+    // Sets the menu's `bind:this`, which `element()` returns, as `mount` doesn't run effects.
+    flushSync();
+    const satelliteGroups = () =>
+        satellites?.groups() ?? readSatellites(storage);
     // The body the satellites orbit, which is the first with model "earth".
     const satelliteHost = () =>
         world.scenario.hasSatellites
@@ -227,7 +241,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         const cleanup: (() => void)[] = [view.destroy];
         try {
             setSatellites = view.satelliteGroups;
-            view.satelliteGroups(satellites.groups());
+            view.satelliteGroups(satelliteGroups());
 
             const current = side
                 ? mountComponent(Inspector, {
@@ -389,7 +403,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             focus: () => {},
             select: () => {},
             destroy: () => {
-                satellites.destroy();
+                if (satellites) void unmount(satellites);
                 alert.remove();
                 live.remove();
                 notices.destroy();
@@ -442,17 +456,17 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
               props: { root, units, openAdd },
           })
         : null;
-    top?.append(satellites.element, keys.toggle, notices.element);
+    top?.append(keys.toggle, notices.element);
     // Mounted last, so the toggle can go right before the satellites menu.
     const scenarios = top
         ? mountComponent(ScenarioMenu, {
               target: top,
-              anchor: satellites.element,
+              anchor: satellites?.element(),
               context: storeContext(documentStore, viewState),
               props: { storage, openAdd: () => openAdd() },
           })
         : null;
-    satellites.setAvailable(satelliteHost() !== undefined);
+    satellites?.setAvailable(satelliteHost() !== undefined);
     root.querySelector(".orrery__panel--right")?.append(keys.card);
     // The side panels sit between the top and bottom ones, which wrap to different heights.
     const measure = new ResizeObserver(() => {
@@ -554,7 +568,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         parts?.destroy();
         parts = null;
         parts = build();
-        satellites.setAvailable(satelliteHost() !== undefined);
+        satellites?.setAvailable(satelliteHost() !== undefined);
         // A view built after the reveal has no loading state, so a sky that comes later fades in.
         if (revealed) parts?.reveal();
         else if (parts) revealWhenReady(parts);
@@ -641,7 +655,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             live.remove();
             unbind();
             if (scenarios) void unmount(scenarios);
-            satellites.destroy();
+            if (satellites) void unmount(satellites);
             if (search) void unmount(search);
             if (timeBar) void unmount(timeBar);
             if (soundMenu) void unmount(soundMenu);
