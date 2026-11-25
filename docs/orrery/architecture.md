@@ -23,20 +23,24 @@ Test files in `sim` and `render` may import `catalog`, since they use the built-
 
 `render` sets `orrery__*` class names on the labels and grips it draws, and their styles are in `orrery/src/styles/scene.css`.
 
-## Svelte bridge
+## State
 
-`World` still holds the state. Svelte components don't read it directly. They go through two stores in `src/state/`:
+The Orrery's state lives in `$state` fields in `src/state/`. Components read and write it through two stores:
 
-| Store           | Holds                                                    | Writes                         |
-| --------------- | -------------------------------------------------------- | ------------------------------ |
-| `DocumentStore` | The scenario document and the system, as reactive fields | None yet                       |
-| `ViewState`     | The focused and selected body ids                        | `setFocus` calls `world.focus` |
+| Store           | Reads                                                    | Writes                              |
+| --------------- | -------------------------------------------------------- | ----------------------------------- |
+| `DocumentStore` | The scenario document, the system and the load count     | `dispatch` and `load`               |
+| `ViewState`     | The focused and selected body ids, and the clock's flags | `setFocus`, `select` and `setClock` |
 
-Each store listens to the world's events and copies the new values into its fields. A write goes to the world, and the field changes when the world's event comes back. Call `destroy()` to stop listening. Components update in Svelte's next microtask, not inside the world's event, so code that reads their DOM right after a world call sees the old DOM.
+`Scene` (`state/scene.ts`) is the logic. It validates ids, applies commands, moves the focus and selection when a body is removed, and emits events. The `render` view, the session and the screen reader announcements listen to those events.
+
+The `Scene` has no state of its own. It reads and writes a `Held` object (document, focus, selection, load count). `createStores()` gives it a `ReactiveHeld` (`state/held.svelte.ts`), whose fields are `$state`. A read in an effect or `$derived` tracks the field, and a write to a field updates every reader. The document uses `$state.raw`, since it's replaced as a whole and never edited.
+
+Deno can't run `.svelte.ts` files. The logic and its tests stay in plain `.ts`, and only the thin holder and stores are rune modules.
+
+The clock isn't held. `render` ticks it every frame, so `ViewState.clock` copies its flags from the scene's `clock` and `scenario` events, and `now()` reads its time. Components update in Svelte's next microtask, so code that reads their DOM right after a scene call sees the old DOM.
 
 `mount()` gets the stores through `storeContext()`, and components read them with `getDocument()` and `getView()`. Today only the focus crumbs (`ui/Crumbs.svelte`) are a component. They're mounted into the vanilla shell in `index.ts`.
-
-When the Svelte shell replaces `World`, the stores hold the state themselves and the bridge is deleted.
 
 ## Temporary exceptions
 
@@ -47,4 +51,4 @@ These break the rules above until a later step of the rewrite removes them.
 | `sim` keeps the closed model list (`models.ts`) and rotation tables keyed by model name         | Rotation and appearance become body data         |
 | Kerbol's tidally locked rotations are literals in `sim/src/rotation-models.ts`; a catalog test checks them against the scenario | Rotation becomes body data |
 | The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |
-| `render`'s `SceneSource` calls `select` and `focus` on the world                                | The Svelte shell replaces the `World` bridge     |
+| `render`'s `SceneSource` calls `select` and `focus` on the `Scene`                              | The clock and `createRenderer` step (17c)        |

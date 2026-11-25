@@ -2,7 +2,7 @@ import type { State } from "@cpluspatch/orbit";
 import type { Body, Scenario, Snapshot, System } from "@cpluspatch/sim";
 import type { Clock } from "./clock.ts";
 
-/** What a `SceneSource` tells its listeners. The view reads the first three; `World` sends all. */
+/** What a `SceneSource` tells its listeners. The view reads the first three; `Scene` sends all. */
 export type SceneEvent =
     | { type: "focus"; id: string }
     | { type: "selection"; id: string | null }
@@ -11,7 +11,7 @@ export type SceneEvent =
     | { type: "bodies"; added: string[]; removed: string[] }
     | { type: "scenario" };
 
-/** The scenario, clock, focus and selection that the view draws. Orrery's `World` fits it. */
+/** The scenario, clock, focus and selection that the view draws. Orrery's `Scene` fits it. */
 export type SceneSource = {
     readonly scenario: Scenario;
     /** The bodies with every parent before its children. */

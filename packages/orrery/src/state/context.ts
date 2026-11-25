@@ -24,9 +24,9 @@ const need = <T>(key: symbol, name: string): T => {
     return value;
 };
 
-/** The document store of the world this component is mounted in. */
+/** The document store of the Orrery this component is mounted in. */
 export const getDocument = (): DocumentStore =>
     need<DocumentStore>(DOCUMENT, "DocumentStore");
 
-/** The view state of the world this component is mounted in. */
+/** The view state of the Orrery this component is mounted in. */
 export const getView = (): ViewState => need<ViewState>(VIEW, "ViewState");

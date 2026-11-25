@@ -1,10 +1,9 @@
-import type { SatelliteEvent } from "@cpluspatch/render";
+import type { SatelliteEvent, SceneEvent } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
-import type { WorldEvent } from "./world.ts";
 
 /** What a screen reader says for a selection or focus change, or `null` for any other event. */
 export const announcement = (
-    event: WorldEvent,
+    event: SceneEvent,
     bodies: readonly Pick<Body, "id" | "name">[],
 ): string | null => {
     const name = (id: string) =>
@@ -35,7 +34,7 @@ export const bareAnnouncement = (bare: boolean): string =>
         : "Interface shown.";
 
 /**
- * What a screen reader says for a satellite change, or `null` when the world's event says it.
+ * What a screen reader says for a satellite change, or `null` when the scene's event says it.
  * `name` is the satellite's, or `null` when it's gone.
  */
 export const satelliteAnnouncement = (

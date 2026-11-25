@@ -25,7 +25,7 @@ import {
     total,
 } from "./satellite-groups.ts";
 
-/** What the menu needs from the world clock. */
+/** What the menu needs from the scene's clock. */
 export type SatelliteClock = {
     /** The clock's time in seconds since J2000. */
     now: () => number;

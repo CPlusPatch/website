@@ -1,11 +1,11 @@
 import { type AUnit, aUnit, stepRate, type Units } from "@cpluspatch/render";
 import { readouts } from "@cpluspatch/sim";
 import { cue } from "../audio/cues.ts";
-import type { World } from "../world.ts";
+import type { Scene } from "../state/scene.ts";
 
 const TEXT = "input, select, textarea, [contenteditable], dialog";
 
-/** What the shortcuts call that isn't the world's. */
+/** What the shortcuts call that isn't the scene's. */
 export type ShortcutActions = {
     /** Closes the keys card. Returns whether it was open. */
     closeKeys: () => boolean;
@@ -23,10 +23,10 @@ export type ShortcutActions = {
 };
 
 /** The unit the card shows for the selected body, or AU when it shows none. */
-const shownUnit = (world: World): AUnit => {
-    const id = world.selected;
+const shownUnit = (scene: Scene): AUnit => {
+    const id = scene.selected;
     const current = id
-        ? readouts(world.scenario, id, world.states(), world.clock.t)
+        ? readouts(scene.scenario, id, scene.states(), scene.clock.t)
         : null;
 
     // From AU, so the first U picks km.
@@ -34,14 +34,14 @@ const shownUnit = (world: World): AUnit => {
 };
 
 /**
- * Binds Space, `[`, `]`, R, L and T to the clock of `world`, and F and Escape to its selection,
+ * Binds Space, `[`, `]`, R, L and T to the clock of `scene`, and F and Escape to its selection,
  * or to the selected satellite when no body is selected.
  * U switches the distance `units`, C chases the focus, F1 hides the interface and `/` opens the
  * search.
  * Escape closes the keys card first. Returns a function that unbinds them.
  */
 export const bindShortcuts = (
-    world: World,
+    scene: Scene,
     units: Units,
     {
         closeKeys,
@@ -80,10 +80,10 @@ export const bindShortcuts = (
         const button = element?.closest("button") ?? null;
         if (event.key === " " && button && keyboardFocus) return;
 
-        const { clock } = world;
+        const { clock } = scene;
         const rate = (next: number) => {
             if (next !== clock.rate) cue("rate");
-            world.setClock({ rate: next });
+            scene.setClock({ rate: next });
         };
 
         if (event.key === "Escape") {
@@ -98,15 +98,15 @@ export const bindShortcuts = (
             }
 
             if (!closeKeys()) {
-                if (world.selected !== null) world.select(null);
+                if (scene.selected !== null) scene.select(null);
                 else if (!clearSatellite()) return;
             }
         } else if (event.key === "f" || event.key === "F") {
-            if (world.selected !== null) world.focus(world.selected);
+            if (scene.selected !== null) scene.focus(scene.selected);
             else if (!focusSatellite()) return;
         } else if (event.key === " ") {
             cue(clock.paused ? "play" : "pause");
-            world.setClock({ paused: !clock.paused });
+            scene.setClock({ paused: !clock.paused });
             spaceOnButton = button !== null;
         } else if (event.key === "[") {
             rate(stepRate(clock.rate, -1));
@@ -119,7 +119,7 @@ export const bindShortcuts = (
         } else if (event.key === "t" || event.key === "T") {
             toggleDate();
         } else if (event.key === "u" || event.key === "U") {
-            units.toggle(shownUnit(world));
+            units.toggle(shownUnit(scene));
         } else if (event.key === "c" || event.key === "C") {
             toggleChase();
         } else if (event.key === "F1") {

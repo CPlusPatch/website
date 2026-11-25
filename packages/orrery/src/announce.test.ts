@@ -60,7 +60,7 @@ Deno.test("focusing a satellite names it", () => {
     );
 });
 
-Deno.test("ending a satellite focus says nothing, as the world's focus event does", () => {
+Deno.test("ending a satellite focus says nothing, as the scene's focus event does", () => {
     assertEquals(satelliteAnnouncement({ type: "focus", k: null }, null), null);
 });
 

@@ -11,8 +11,8 @@ import {
     STORAGE_KEY,
 } from "./persistence.ts";
 import { createSession } from "./session.ts";
+import { Scene } from "./state/scene.ts";
 import type { Notices } from "./ui/notices.ts";
-import { World } from "./world.ts";
 
 const memory = (): SavedStorage & { data: Map<string, string> } => {
     const data = new Map<string, string>();
@@ -44,7 +44,7 @@ const setup = (
         removed: string[];
     }) => void = () => {},
 ) => {
-    const world = new World(solarSystem, new Clock(0, 1, false));
+    const scene = new Scene(solarSystem, new Clock(0, 1, false));
     const storage = memory();
     const shown: string[] = [];
     const notices: Pick<Notices, "show"> = {
@@ -70,7 +70,7 @@ const setup = (
         updated: [] as { added: string[]; removed: string[] }[],
     };
     const session = createSession({
-        world,
+        scene,
         storage,
         notices,
         page,
@@ -84,7 +84,7 @@ const setup = (
         },
     });
 
-    return { world, storage, shown, page, state, session };
+    return { scene, storage, shown, page, state, session };
 };
 
 const saved = (storage: SavedStorage) => {
@@ -94,9 +94,9 @@ const saved = (storage: SavedStorage) => {
 };
 
 Deno.test("a change is saved after the delay, not at once", async () => {
-    const { world, storage, session } = setup();
+    const { scene, storage, session } = setup();
 
-    world.setClock({ t: 42 });
+    scene.setClock({ t: 42 });
     assertEquals(storage.getItem(STORAGE_KEY), null);
 
     await wait(600);
@@ -107,28 +107,28 @@ Deno.test("a change is saved after the delay, not at once", async () => {
 });
 
 Deno.test("a focus or a selection is not saved", () => {
-    const { world, storage, session } = setup();
+    const { scene, storage, session } = setup();
 
-    world.focus("earth");
-    world.select("earth");
+    scene.focus("earth");
+    scene.select("earth");
     session.destroy();
 
     assertEquals(storage.getItem(STORAGE_KEY), null);
 });
 
 Deno.test("a change that is still pending is saved when the session is destroyed", () => {
-    const { world, storage, session } = setup();
+    const { scene, storage, session } = setup();
 
-    world.setClock({ t: 7 });
+    scene.setClock({ t: 7 });
     session.destroy();
 
     assertEquals(saved(storage)?.time, 7);
 });
 
 Deno.test("pagehide saves at once with the clock time", () => {
-    const { world, storage, page, session } = setup();
+    const { scene, storage, page, session } = setup();
 
-    world.clock.set(99);
+    scene.clock.set(99);
     page.window.dispatchEvent(new Event("pagehide"));
 
     assertEquals(saved(storage)?.time, 99);
@@ -137,9 +137,9 @@ Deno.test("pagehide saves at once with the clock time", () => {
 });
 
 Deno.test("visibilitychange saves at once only when the page is hidden", () => {
-    const { world, storage, page, state, session } = setup();
+    const { scene, storage, page, state, session } = setup();
 
-    world.clock.set(5);
+    scene.clock.set(5);
     page.document.dispatchEvent(new Event("visibilitychange"));
     assertEquals(storage.getItem(STORAGE_KEY), null);
 
@@ -151,13 +151,13 @@ Deno.test("visibilitychange saves at once only when the page is hidden", () => {
 });
 
 Deno.test("a scenario event calls rebuild, and other events don't", () => {
-    const { world, state, session } = setup();
+    const { scene, state, session } = setup();
 
-    world.focus("earth");
-    world.setClock({ t: 1 });
+    scene.focus("earth");
+    scene.setClock({ t: 1 });
     assertEquals(state.rebuilt, 0);
 
-    world.load(earthOnly, 0);
+    scene.load(earthOnly, 0);
     assertEquals(state.rebuilt, 1);
 
     session.destroy();
@@ -166,12 +166,12 @@ Deno.test("a scenario event calls rebuild, and other events don't", () => {
 Deno.test("loading a valid link loads it, strips the hash and saves", async () => {
     const hash =
         HASH_PREFIX + (await encodeScenario({ ...earthOnly, time: 321 }));
-    const { world, storage, state, session } = setup(hash);
+    const { scene, storage, state, session } = setup(hash);
 
     await session.loadHash();
 
-    assertEquals(world.scenario.bodies.length, earthOnly.bodies.length);
-    assertEquals(world.clock.t, 321);
+    assertEquals(scene.scenario.bodies.length, earthOnly.bodies.length);
+    assertEquals(scene.clock.t, 321);
     assertEquals(state.stripped, 1);
     assertEquals(state.hash, "");
     assertEquals(saved(storage)?.bodies.length, earthOnly.bodies.length);
@@ -179,14 +179,14 @@ Deno.test("loading a valid link loads it, strips the hash and saves", async () =
     session.destroy();
 });
 
-Deno.test("loading a bad link shows a notice and leaves the world alone", async () => {
-    const { world, storage, shown, state, session } = setup(
+Deno.test("loading a bad link shows a notice and leaves the scene alone", async () => {
+    const { scene, storage, shown, state, session } = setup(
         `${HASH_PREFIX}garbage`,
     );
 
     await session.loadHash();
 
-    assertEquals(world.scenario, solarSystem);
+    assertEquals(scene.scenario, solarSystem);
     assertEquals(shown, [
         "The shared link isn't a valid scenario, so nothing changed.",
     ]);
@@ -197,11 +197,11 @@ Deno.test("loading a bad link shows a notice and leaves the world alone", async 
 });
 
 Deno.test("loading with no link does nothing", async () => {
-    const { world, storage, shown, state, session } = setup("#other");
+    const { scene, storage, shown, state, session } = setup("#other");
 
     await session.loadHash();
 
-    assertEquals(world.scenario, solarSystem);
+    assertEquals(scene.scenario, solarSystem);
     assertEquals(shown, []);
     assertEquals(state.stripped, 0);
     assertEquals(storage.getItem(STORAGE_KEY), null);
@@ -211,31 +211,31 @@ Deno.test("loading with no link does nothing", async () => {
 
 Deno.test("a hashchange loads the link", async () => {
     const hash = HASH_PREFIX + (await encodeScenario(earthOnly));
-    const { world, page, session } = setup(hash);
+    const { scene, page, session } = setup(hash);
 
     const loaded = new Promise<void>((resolve) => {
-        world.on((event) => {
+        scene.on((event) => {
             if (event.type === "scenario") resolve();
         });
     });
     page.window.dispatchEvent(new Event("hashchange"));
     await loaded;
 
-    assertEquals(world.scenario.bodies.length, earthOnly.bodies.length);
+    assertEquals(scene.scenario.bodies.length, earthOnly.bodies.length);
 
     session.destroy();
 });
 
 Deno.test("a load that a newer scenario overtakes is dropped", async () => {
     const hash = HASH_PREFIX + (await encodeScenario(earthOnly));
-    const { world, shown, session } = setup(hash);
+    const { scene, shown, session } = setup(hash);
     const newer = { ...earthOnly, name: "newer" };
 
     const loading = session.loadHash();
-    world.load(newer, 0);
+    scene.load(newer, 0);
     await loading;
 
-    assertEquals(world.scenario, newer);
+    assertEquals(scene.scenario, newer);
     assertEquals(shown, []);
 
     session.destroy();
@@ -243,27 +243,27 @@ Deno.test("a load that a newer scenario overtakes is dropped", async () => {
 
 Deno.test("after destroy the listeners are gone and a pending load is dropped", async () => {
     const hash = HASH_PREFIX + (await encodeScenario(earthOnly));
-    const { world, storage, page, state, session } = setup(hash);
+    const { scene, storage, page, state, session } = setup(hash);
 
     const loading = session.loadHash();
     session.destroy();
     await loading;
 
-    assert(world.scenario.bodies.length > earthOnly.bodies.length);
+    assert(scene.scenario.bodies.length > earthOnly.bodies.length);
 
-    world.clock.set(8);
+    scene.clock.set(8);
     page.window.dispatchEvent(new Event("pagehide"));
     state.hidden = true;
     page.document.dispatchEvent(new Event("visibilitychange"));
     state.hash = hash;
     page.window.dispatchEvent(new Event("hashchange"));
     await wait(50);
-    world.setClock({ t: 9 });
+    scene.setClock({ t: 9 });
     await wait(600);
 
     assertEquals(storage.getItem(STORAGE_KEY), null);
     assertEquals(state.rebuilt, 0);
-    assert(world.scenario.bodies.length > earthOnly.bodies.length);
+    assert(scene.scenario.bodies.length > earthOnly.bodies.length);
 });
 
 const rock = (id: string): Body => {
@@ -276,10 +276,10 @@ const rock = (id: string): Body => {
 };
 
 Deno.test("a rebuild that throws reloads the last scenario, keeps the focus and isn't saved", async () => {
-    const { world, storage, shown, session } = setup(
+    const { scene, storage, shown, session } = setup(
         "",
         () => {
-            if (world.scenario.bodies.some((body) => body.id === "rock")) {
+            if (scene.scenario.bodies.some((body) => body.id === "rock")) {
                 throw new Error("no view");
             }
         },
@@ -291,13 +291,13 @@ Deno.test("a rebuild that throws reloads the last scenario, keeps the focus and 
     storage.setItem = (_key, value) => {
         written.push(value);
     };
-    world.focus("earth");
+    scene.focus("earth");
 
-    world.addBody(rock("rock"));
+    scene.addBody(rock("rock"));
     await wait(600);
 
-    assertEquals(world.scenario, solarSystem);
-    assertEquals(world.focused, "earth");
+    assertEquals(scene.scenario, solarSystem);
+    assertEquals(scene.focused, "earth");
     assertEquals(shown, ["The model can't be drawn."]);
     assertEquals(written.length, 1);
     assertEquals(
@@ -309,10 +309,10 @@ Deno.test("a rebuild that throws reloads the last scenario, keeps the focus and 
 });
 
 Deno.test("a failed rebuild keeps an orbit edited before it", () => {
-    const { world, session } = setup(
+    const { scene, session } = setup(
         "",
         () => {
-            if (world.scenario.bodies.some((body) => body.id === "rock")) {
+            if (scene.scenario.bodies.some((body) => body.id === "rock")) {
                 throw new Error("no view");
             }
         },
@@ -320,23 +320,23 @@ Deno.test("a failed rebuild keeps an orbit edited before it", () => {
             throw new Error("no patch");
         },
     );
-    const moon = world.scenario.bodies.find((body) => body.id === "moon");
+    const moon = scene.scenario.bodies.find((body) => body.id === "moon");
     if (!moon?.elements) throw new Error("The scenario has no Moon.");
 
-    world.setElements("moon", { ...moon.elements, e: 0.2 });
-    world.addBody(rock("rock"));
+    scene.setElements("moon", { ...moon.elements, e: 0.2 });
+    scene.addBody(rock("rock"));
 
-    const after = world.scenario.bodies.find((body) => body.id === "moon");
+    const after = scene.scenario.bodies.find((body) => body.id === "moon");
     assertEquals(after?.elements?.e, 0.2);
 
     session.destroy();
 });
 
 Deno.test("a bodies event calls update and not rebuild", () => {
-    const { world, state, session } = setup();
+    const { scene, state, session } = setup();
 
-    world.addBody(rock("rock"));
-    world.removeBody("rock");
+    scene.addBody(rock("rock"));
+    scene.removeBody("rock");
 
     assertEquals(state.updated, [
         { added: ["rock"], removed: [] },
@@ -348,7 +348,7 @@ Deno.test("a bodies event calls update and not rebuild", () => {
 });
 
 Deno.test("an update that throws falls back to a rebuild", () => {
-    const { world, state, shown, session } = setup(
+    const { scene, state, shown, session } = setup(
         "",
         () => {},
         () => {
@@ -356,20 +356,20 @@ Deno.test("an update that throws falls back to a rebuild", () => {
         },
     );
 
-    world.addBody(rock("rock"));
+    scene.addBody(rock("rock"));
 
     assertEquals(state.rebuilt, 1);
     assertEquals(shown, []);
-    assert(world.scenario.bodies.some((body) => body.id === "rock"));
+    assert(scene.scenario.bodies.some((body) => body.id === "rock"));
 
     session.destroy();
 });
 
 Deno.test("an update and a rebuild that both throw show the notice and restore the last scenario", () => {
-    const { world, state, shown, session } = setup(
+    const { scene, state, shown, session } = setup(
         "",
         () => {
-            if (world.scenario.bodies.some((body) => body.id === "rock")) {
+            if (scene.scenario.bodies.some((body) => body.id === "rock")) {
                 throw new Error("no view");
             }
         },
@@ -378,9 +378,9 @@ Deno.test("an update and a rebuild that both throw show the notice and restore t
         },
     );
 
-    world.addBody(rock("rock"));
+    scene.addBody(rock("rock"));
 
-    assertEquals(world.scenario, solarSystem);
+    assertEquals(scene.scenario, solarSystem);
     assertEquals(shown, ["The model can't be drawn."]);
     // The failed rebuild, then the restore's.
     assertEquals(state.rebuilt, 2);
@@ -390,8 +390,8 @@ Deno.test("an update and a rebuild that both throw show the notice and restore t
 
 Deno.test("a failure after an update restores the scenario with its change", () => {
     const has = (id: string) =>
-        world.scenario.bodies.some((body) => body.id === id);
-    const { world, shown, session } = setup(
+        scene.scenario.bodies.some((body) => body.id === id);
+    const { scene, shown, session } = setup(
         "",
         () => {
             if (has("rock2")) throw new Error("no view");
@@ -401,8 +401,8 @@ Deno.test("a failure after an update restores the scenario with its change", () 
         },
     );
 
-    world.addBody(rock("rock"));
-    world.addBody(rock("rock2"));
+    scene.addBody(rock("rock"));
+    scene.addBody(rock("rock2"));
 
     assertEquals(shown, ["The model can't be drawn."]);
     assert(has("rock"));
@@ -412,11 +412,11 @@ Deno.test("a failure after an update restores the scenario with its change", () 
 });
 
 Deno.test("a rebuild that always throws shows the notice and doesn't loop", () => {
-    const { world, state, shown, session } = setup("", () => {
+    const { scene, state, shown, session } = setup("", () => {
         throw new Error("no view");
     });
 
-    world.load(earthOnly, 0);
+    scene.load(earthOnly, 0);
 
     assertEquals(state.rebuilt, 2);
     assertEquals(shown, ["The model can't be drawn."]);
@@ -426,8 +426,8 @@ Deno.test("a rebuild that always throws shows the notice and doesn't loop", () =
 
 Deno.test("a hashchange whose load rejects shows the invalid notice", async () => {
     const hash = HASH_PREFIX + (await encodeScenario(earthOnly));
-    const { world, page, shown, session } = setup(hash);
-    world.on((event) => {
+    const { scene, page, shown, session } = setup(hash);
+    scene.on((event) => {
         if (event.type === "scenario") throw new Error("listener");
     });
     let unhandled = false;

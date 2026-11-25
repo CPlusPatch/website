@@ -37,8 +37,7 @@ import {
 import { readSatellites } from "./satellite-settings.ts";
 import { createSession } from "./session.ts";
 import { storeContext } from "./state/context.ts";
-import { DocumentStore } from "./state/document.svelte.ts";
-import { ViewState } from "./state/view.svelte.ts";
+import { createStores } from "./state/stores.svelte.ts";
 import Crumbs from "./ui/Crumbs.svelte";
 import Hud from "./ui/Hud.svelte";
 import Inspector from "./ui/inspector/Inspector.svelte";
@@ -53,7 +52,6 @@ import Search from "./ui/search/Search.svelte";
 import { sheetSpace } from "./ui/sheet.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import TimeBar from "./ui/time/TimeBar.svelte";
-import { World } from "./world.ts";
 
 /** A mounted Orrery. */
 export type Orrery = {
@@ -103,11 +101,12 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         DEFAULT_RATE,
         reducedMotion(),
     );
-    const world = new World(opened.scenario, clock);
-    const units = createUnits();
     // Made before the inspector, whose forms read them.
-    const documentStore = new DocumentStore(world);
-    const viewState = new ViewState(world);
+    const { scene, documentStore, viewState } = createStores(
+        opened.scenario,
+        clock,
+    );
+    const units = createUnits();
 
     const panels = root.querySelectorAll<HTMLElement>(".orrery__panel");
     const top = root.querySelector<HTMLElement>(".orrery__panel--top");
@@ -194,7 +193,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                   onChange: (groups) => setSatellites?.(groups),
                   // `timeBar` is made below, and the menu only calls this once it's open.
                   clock: {
-                      now: () => world.clock.t,
+                      now: () => scene.clock.t,
                       goLive: () => timeBar?.goLive(),
                   },
               },
@@ -206,8 +205,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         satellites?.groups() ?? readSatellites(storage);
     // The body the satellites orbit, which is the first with model "earth".
     const satelliteHost = () =>
-        world.scenario.hasSatellites
-            ? world.scenario.bodies.find((body) => body.model === "earth")?.id
+        scene.scenario.hasSatellites
+            ? scene.scenario.bodies.find((body) => body.model === "earth")?.id
             : undefined;
     // The host the current view was built with.
     let builtHost: string | undefined;
@@ -228,7 +227,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         builtHost = satelliteHost();
         const view = createView(
             container,
-            world,
+            scene,
             blocked,
             band,
             units,
@@ -294,11 +293,11 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                     keys.close();
                 }
 
-                // A body pick clears the satellite, and the world's "Selected ..." follows or comes first.
+                // A body pick clears the satellite, and the scene's "Selected ..." follows or comes first.
                 if (
                     event.type === "selection" &&
                     k === null &&
-                    world.selected !== null
+                    scene.selected !== null
                 ) {
                     return;
                 }
@@ -316,10 +315,10 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 const k = view.satellite.focused();
                 const name =
                     (k === null ? null : view.satellite.facts(k)?.name) ??
-                    world.scenario.bodies.find(
-                        (body) => body.id === world.focused,
+                    scene.scenario.bodies.find(
+                        (body) => body.id === scene.focused,
                     )?.name ??
-                    world.focused;
+                    scene.focused;
                 live.textContent = chaseAnnouncement(chasing, name);
             });
 
@@ -388,9 +387,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         parts = build(loading.progress);
     } catch (error) {
         // A saved copy or link that can't be drawn mustn't lock the page out.
-        if (world.scenario === solarSystem) throw error;
+        if (scene.scenario === solarSystem) throw error;
 
-        world.load(solarSystem, startTime(solarSystem));
+        scene.load(solarSystem, startTime(solarSystem));
         parts = build(loading.progress);
         fellBack = true;
         if (parts) {
@@ -535,7 +534,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     // Shortcuts that open a panel's control show the interface first.
     const showInterface = () => setBare(false);
 
-    const unbind = bindShortcuts(world, units, {
+    const unbind = bindShortcuts(scene, units, {
         closeKeys: keys.close,
         clearSatellite: () => {
             const satellite = currentView?.satellite;
@@ -567,9 +566,9 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                 view.chase(!view.chasing());
             } else {
                 const name =
-                    world.scenario.bodies.find(
-                        (body) => body.id === world.focused,
-                    )?.name ?? world.focused;
+                    scene.scenario.bodies.find(
+                        (body) => body.id === scene.focused,
+                    )?.name ?? scene.focused;
                 live.textContent = noChaseAnnouncement(name);
             }
         },
@@ -594,7 +593,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     };
 
     const session = createSession({
-        world,
+        scene,
         storage,
         // `astro check` types a component's exports as `any`, which `Pick` rejects.
         notices: { show: notices.show },
@@ -617,13 +616,13 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         },
     });
 
-    const off = world.on((event) => {
+    const off = scene.on((event) => {
         if (event.type === "selection" && event.id !== null) cue("select");
         // The keys card hides the orbit card, so a new pick would show nothing.
         if (event.type === "selection" && event.id !== null) keys.close();
 
         // A rebuilt scenario isn't announced, as its view is new.
-        const message = announcement(event, world.scenario.bodies);
+        const message = announcement(event, scene.scenario.bodies);
         if (message !== null) live.textContent = message;
     });
 
@@ -654,8 +653,8 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     revealWhenReady(parts);
 
     return {
-        focus: (id) => world.focus(id),
-        select: (id) => world.select(id),
+        focus: (id) => scene.focus(id),
+        select: (id) => scene.select(id),
         destroy: () => {
             destroyed = true;
             clearTimeout(revealTimer);
@@ -679,7 +678,6 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             sound.destroy();
             if (crumbs) void unmount(crumbs);
             viewState.destroy();
-            documentStore.destroy();
             keys.destroy();
             void unmount(notices);
             noticesElement?.remove();

@@ -11,8 +11,8 @@ import {
     startTime,
     writeSaved,
 } from "./persistence.ts";
+import type { Scene } from "./state/scene.ts";
 import type { Notices } from "./ui/notices.ts";
-import type { World } from "./world.ts";
 
 /** How long the autosave waits for more changes, in ms. */
 const SAVE_DELAY_MS = 500;
@@ -39,9 +39,9 @@ export type Session = {
     destroy: () => void;
 };
 
-/** Saves the world as it changes, and loads a share link on `hashchange`. */
+/** Saves the scene as it changes, and loads a share link on `hashchange`. */
 export const createSession = (options: {
-    world: World;
+    scene: Scene;
     storage: SavedStorage;
     notices: Pick<Notices, "show">;
     page: Page;
@@ -49,13 +49,13 @@ export const createSession = (options: {
     /** Applies added and removed bodies to the view in place. Throws if it can't. */
     update: (change: { added: string[]; removed: string[] }) => void;
 }): Session => {
-    const { world, storage, notices, page, rebuild, update } = options;
+    const { scene, storage, notices, page, rebuild, update } = options;
 
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
     const saveNow = () => {
         clearTimeout(saveTimer);
         saveTimer = undefined;
-        writeSaved(storage, { ...world.scenario, time: world.clock.t });
+        writeSaved(storage, { ...scene.scenario, time: scene.clock.t });
     };
     const saveSoon = () => {
         clearTimeout(saveTimer);
@@ -71,14 +71,14 @@ export const createSession = (options: {
     let loadId = 0;
     let destroyed = false;
 
-    let lastGood = world.scenario;
+    let lastGood = scene.scenario;
     let restoring = false;
 
     // Redraws from scratch. A scenario that can't be drawn goes back to the last good one.
     const rebuildOrRestore = (): boolean => {
         try {
             rebuild();
-            lastGood = world.scenario;
+            lastGood = scene.scenario;
 
             return true;
         } catch {
@@ -87,22 +87,22 @@ export const createSession = (options: {
 
             notices.show("destructive", "The model can't be drawn.");
 
-            const focused = world.focused;
+            const focused = scene.focused;
             restoring = true;
             try {
-                world.load(lastGood, world.clock.t);
+                scene.load(lastGood, scene.clock.t);
             } finally {
                 restoring = false;
             }
-            if (world.scenario.bodies.some((body) => body.id === focused)) {
-                world.focus(focused);
+            if (scene.scenario.bodies.some((body) => body.id === focused)) {
+                scene.focus(focused);
             }
 
             return false;
         }
     };
 
-    const off = world.on((event) => {
+    const off = scene.on((event) => {
         if (event.type === "scenario") {
             // Any new scenario, even an Import or Reset, cancels a pending link.
             loadId++;
@@ -113,14 +113,14 @@ export const createSession = (options: {
         if (event.type === "bodies") {
             try {
                 update({ added: event.added, removed: event.removed });
-                lastGood = world.scenario;
+                lastGood = scene.scenario;
             } catch {
                 if (!rebuildOrRestore()) return;
             }
         }
 
         // A burn or an edit is kept if a later rebuild fails.
-        if (event.type === "body") lastGood = world.scenario;
+        if (event.type === "body") lastGood = scene.scenario;
 
         // Neither is saved, so they don't need a write.
         if (event.type !== "selection" && event.type !== "focus") saveSoon();
@@ -145,7 +145,7 @@ export const createSession = (options: {
         }
 
         cue("load");
-        world.load(result.scenario, startTime(result.scenario));
+        scene.load(result.scenario, startTime(result.scenario));
         saveNow();
     };
     const onHashChange = () => {

@@ -1,5 +1,5 @@
 import type { Burn, Elements, ElementsResult, State } from "@cpluspatch/orbit";
-import type { Clock } from "@cpluspatch/render";
+import type { Clock, SceneEvent } from "@cpluspatch/render";
 import {
     apply,
     type Body,
@@ -14,67 +14,85 @@ import {
     statesAt,
     subtreeIds,
 } from "@cpluspatch/sim";
-import { previewBurn } from "./burning.ts";
-import type { ViewState } from "./view-state.ts";
+import { previewBurn } from "../burning.ts";
 
-/** What a listener of a `World` is told about. */
-export type WorldEvent =
-    | { type: "focus"; id: string }
-    | { type: "selection"; id: string | null }
-    | { type: "clock" }
-    | { type: "body"; id: string }
-    /** Bodies were added or removed (ids). A removal lists the whole subtree. */
-    | { type: "bodies"; added: string[]; removed: string[] }
-    | { type: "scenario" };
+/** The state a `Scene` reads and writes. The stores hold it as `$state`. */
+export type Held = {
+    doc: Document;
+    focused: string;
+    selected: string | null;
+    /** How many scenarios have been loaded. A body edit replaces `doc` too, but doesn't count. */
+    loads: number;
+};
 
-/** The scenario, the clock, what's focused and what's selected. */
-export class World {
-    readonly view: ViewState;
+/**
+ * The scenario, the clock, what's focused and what's selected.
+ * Plain TypeScript, so Deno can test it. The stores give it reactive fields through `hold`.
+ */
+export class Scene {
+    readonly clock: Clock;
 
-    #doc: Document;
-    #order: Body[];
-    #listeners = new Set<(e: WorldEvent) => void>();
-    #cache: { t: number; states: Map<string, State> } | null = null;
-    #system: System | null = null;
+    #held: Held;
+    #listeners = new Set<(e: SceneEvent) => void>();
+    // Each cache remembers the doc it was built from, so a doc swap invalidates it.
+    #order: { doc: Document; bodies: Body[] } | null = null;
+    #system: { doc: Document; system: System } | null = null;
+    #states: { doc: Document; t: number; states: Map<string, State> } | null =
+        null;
 
-    constructor(scenario: Scenario, clock: Clock) {
+    constructor(
+        scenario: Scenario,
+        clock: Clock,
+        hold: (initial: Held) => Held = (initial) => initial,
+    ) {
         const root = scenario.bodies.find((body) => body.parent === null);
         if (!root) throw new Error("The scenario has no root body.");
 
-        this.view = { focused: root.id, selected: null, clock };
-        this.#doc = documentOf(scenario);
-        this.#order = sortByDepth(scenario);
-    }
-
-    get clock(): Clock {
-        return this.view.clock;
+        this.clock = clock;
+        this.#held = hold({
+            doc: documentOf(scenario),
+            focused: root.id,
+            selected: null,
+            loads: 0,
+        });
     }
 
     get focused(): string {
-        return this.view.focused;
+        return this.#held.focused;
     }
 
     get selected(): string | null {
-        return this.view.selected;
+        return this.#held.selected;
+    }
+
+    /** How many scenarios have been loaded. */
+    get loads(): number {
+        return this.#held.loads;
     }
 
     /** The scenario with its command history. */
     get doc(): Document {
-        return this.#doc;
+        return this.#held.doc;
     }
 
     /** The bodies and their orbits. */
     get scenario(): Scenario {
-        return this.#doc.scenario;
+        return this.#held.doc.scenario;
     }
 
     /** The bodies with every parent before its children. */
     get order(): Body[] {
-        return this.#order;
+        const doc = this.#held.doc;
+
+        if (this.#order?.doc !== doc) {
+            this.#order = { doc, bodies: sortByDepth(doc.scenario) };
+        }
+
+        return this.#order.bodies;
     }
 
     /** Calls `fn` on every change. Returns a function that stops it. */
-    on(fn: (e: WorldEvent) => void): () => void {
+    on(fn: (e: SceneEvent) => void): () => void {
         this.#listeners.add(fn);
 
         return () => {
@@ -84,9 +102,13 @@ export class World {
 
     /** The scenario compiled for evaluation. Compiled on first use and again after a change. */
     get system(): System {
-        this.#system ??= compile(this.#doc);
+        const doc = this.#held.doc;
 
-        return this.#system;
+        if (this.#system?.doc !== doc) {
+            this.#system = { doc, system: compile(doc) };
+        }
+
+        return this.#system.system;
     }
 
     /** Every body at the clock's time. */
@@ -96,28 +118,27 @@ export class World {
 
     /** The state of every body at the clock's time. */
     states(): Map<string, State> {
+        const doc = this.#held.doc;
         const t = this.clock.t;
 
-        if (this.#cache?.t !== t) {
-            const states = statesAt(this.system, t);
-
-            this.#cache = { t, states };
+        if (this.#states?.doc !== doc || this.#states.t !== t) {
+            this.#states = { doc, t, states: statesAt(this.system, t) };
         }
 
-        return this.#cache.states;
+        return this.#states.states;
     }
 
     focus(id: string): void {
         this.#check(id);
 
-        this.view.focused = id;
+        this.#held.focused = id;
         this.#emit({ type: "focus", id });
     }
 
     select(id: string | null): void {
         if (id !== null) this.#check(id);
 
-        this.view.selected = id;
+        this.#held.selected = id;
         this.#emit({ type: "selection", id });
     }
 
@@ -135,8 +156,9 @@ export class World {
         if (!root) throw new Error("The scenario has no root body.");
 
         this.#dispatch({ type: "load", doc: documentOf(scenario) });
-        this.view.selected = null;
-        this.view.focused = root.id;
+        this.#held.loads += 1;
+        this.#held.selected = null;
+        this.#held.focused = root.id;
         this.clock.set(t);
         this.#emit({ type: "scenario" });
     }
@@ -161,11 +183,11 @@ export class World {
 
         this.#dispatch({ type: "remove-body", id });
 
-        const refocus = gone.has(this.view.focused);
+        const refocus = gone.has(this.#held.focused);
         const deselect =
-            this.view.selected !== null && gone.has(this.view.selected);
-        if (refocus) this.view.focused = body.parent;
-        if (deselect) this.view.selected = null;
+            this.#held.selected !== null && gone.has(this.#held.selected);
+        if (refocus) this.#held.focused = body.parent;
+        if (deselect) this.#held.selected = null;
 
         try {
             this.#emit({ type: "bodies", added: [], removed });
@@ -173,11 +195,11 @@ export class World {
             // A view that fails to draw restores the old scenario and its focus, which this mustn't undo.
             const parent = body.parent;
             try {
-                if (refocus && this.view.focused === parent) {
+                if (refocus && this.#held.focused === parent) {
                     this.#emit({ type: "focus", id: parent });
                 }
             } finally {
-                if (deselect && this.view.selected === null) {
+                if (deselect && this.#held.selected === null) {
                     this.#emit({ type: "selection", id: null });
                 }
             }
@@ -189,7 +211,7 @@ export class World {
         const result = this.dispatch({
             type: "set-orbit",
             bodyId: id,
-            t: this.view.clock.t,
+            t: this.clock.t,
             elements: el,
         });
         if (!result.ok) throw new Error(result.errors.join(" "));
@@ -233,7 +255,7 @@ export class World {
             }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {
-        const result = apply(this.#doc, cmd);
+        const result = apply(this.#held.doc, cmd);
         if (!result.ok) return { ok: false, errors: result.errors };
 
         // Not committed here: `removeBody` also moves the focus and selection.
@@ -259,17 +281,14 @@ export class World {
     }
 
     #dispatch(cmd: Command): void {
-        const result = apply(this.#doc, cmd);
+        const result = apply(this.#held.doc, cmd);
         if (!result.ok) throw new Error(result.errors.join(" "));
 
         this.#commit(result.doc);
     }
 
     #commit(doc: Document): void {
-        this.#doc = doc;
-        this.#order = sortByDepth(doc.scenario);
-        this.#cache = null;
-        this.#system = null;
+        this.#held.doc = doc;
     }
 
     #check(id: string): void {
@@ -278,7 +297,7 @@ export class World {
         }
     }
 
-    #emit(event: WorldEvent): void {
+    #emit(event: SceneEvent): void {
         const errors: unknown[] = [];
 
         // One failing listener mustn't leave the others out of date.
