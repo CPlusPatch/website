@@ -9,7 +9,6 @@ import {
     type Vec3,
     wrapAngle,
 } from "@cpluspatch/orbit";
-import type { OrbitingBody } from "./scenario.ts";
 
 /** How an orbit turns over time, about a fixed pole. */
 export type Precession = {
@@ -85,9 +84,29 @@ export const precess = (el: Elements, p: Precession, t: number): Elements => {
     return { ...el, i, raan: wrapAngle(raan), argp: wrapAngle(argp) };
 };
 
-/** The orbit of `body` at time `t`: its elements, with each perturbation applied in order. */
-export const elementsAt = (body: OrbitingBody, t: number): Elements =>
-    (body.perturbations ?? []).reduce(
-        (acc, p) => (p.type === "secular" ? precess(acc, p, t) : acc),
-        body.orbit.elements,
-    );
+/** The orbit `el` at time `t`, after each of `precessions` has been applied in order. */
+export const elementsAt = (
+    el: Elements,
+    precessions: readonly Precession[],
+    t: number,
+): Elements => precessions.reduce((acc, p) => precess(acc, p, t), el);
+
+/**
+ * The turns that carry the epoch orbit of `el` to its orbit at `t` through `precessions`, in
+ * order. Each precession turns the elements as the ones before it left them.
+ */
+export const precessionTurnsThrough = (
+    el: Elements,
+    precessions: readonly Precession[],
+    t: number,
+): Turn[] => {
+    const turns: Turn[] = [];
+    let current = el;
+
+    for (const p of precessions) {
+        turns.push(...precessionTurns(current, p, t));
+        current = precess(current, p, t);
+    }
+
+    return turns;
+};

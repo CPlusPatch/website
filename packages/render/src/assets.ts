@@ -3,7 +3,12 @@
  * The sky, the maps and the satellites, fetched and decoded once per page.
  */
 
-import { type Catalogue, prepareSwarm, type Swarm } from "@cpluspatch/sim";
+import {
+    type Catalogue,
+    type Gravity,
+    prepareSwarm,
+    type Swarm,
+} from "@cpluspatch/sim";
 import { loadMapImage } from "./maps.ts";
 import { fetchSky, type SkyData } from "./sky.ts";
 import { fetchCatalogue } from "./swarm.ts";
@@ -14,18 +19,21 @@ export type Assets = {
     sky: (onProgress?: (fraction: number) => void) => Promise<SkyData>;
     /** The image of map `id`, or null when there's no such map. */
     map: (id: string) => Promise<HTMLImageElement> | null;
-    /** The prepared satellite swarm for Earth's `earthMu`. The file is fetched and decoded once. */
-    swarm: (earthMu: number) => Promise<Swarm>;
+    /** The prepared satellite swarm for `host`, the body it orbits. The file is fetched and decoded once. */
+    swarm: (host: SwarmHost) => Promise<Swarm>;
     /** Aborts the fetches in flight. */
     dispose: () => void;
 };
+
+/** The body a swarm orbits: its gravitational parameter and, if known, its gravity field. */
+export type SwarmHost = { mu: number; gravity?: Gravity | undefined };
 
 /** The functions that fetch and decode each asset, so a test can replace them. */
 export type Loaders = {
     sky: typeof fetchSky;
     map: typeof loadMapImage;
     catalogue: typeof fetchCatalogue;
-    prepare: (catalogue: Catalogue, earthMu: number) => Swarm;
+    prepare: (catalogue: Catalogue, host: SwarmHost) => Swarm;
 };
 
 const defaultLoaders: Loaders = {
@@ -62,7 +70,7 @@ export const createAssets = (
     const sky = new Map<"sky", Promise<SkyData>>();
     const maps = new Map<string, Promise<HTMLImageElement>>();
     const catalogue = new Map<"catalogue", Promise<Catalogue>>();
-    const swarms = new Map<number, Promise<Swarm>>();
+    const swarms = new Map<string, Promise<Swarm>>();
 
     return {
         sky: (onProgress) =>
@@ -76,13 +84,13 @@ export const createAssets = (
 
             return once(maps, id, () => promise);
         },
-        swarm: (earthMu) =>
-            once(swarms, earthMu, async () =>
+        swarm: (host) =>
+            once(swarms, JSON.stringify([host.mu, host.gravity]), async () =>
                 loaders.prepare(
                     await once(catalogue, "catalogue", () =>
                         loaders.catalogue(satellitesUrl, loading.signal),
                     ),
-                    earthMu,
+                    host,
                 ),
             ),
         dispose: () => loading.abort(),

@@ -1,5 +1,5 @@
 import type { Elements, Vec3 } from "@cpluspatch/orbit";
-import { type Body, isOrbiting, precessionTurns } from "@cpluspatch/sim";
+import { type Body, isOrbiting, precessionTurnsThrough } from "@cpluspatch/sim";
 import {
     Color,
     CustomBlending,
@@ -331,24 +331,21 @@ export const createOrbits = (
 
                 // The near points are already placed in the world, so they take no turn.
                 turn.identity();
-                const secular = body.perturbations?.find(
-                    (p) => p.type === "secular",
-                );
-                if (!near && secular) {
-                    const [about, pole] = precessionTurns(
+                const precessions = frame.system.precessions(body.id);
+                if (!near && precessions.length > 0) {
+                    const turns = precessionTurnsThrough(
                         body.orbit.elements,
-                        secular,
+                        precessions,
                         t,
                     );
-                    normalTurn.setFromAxisAngle(
-                        axis.set(about.axis.x, about.axis.y, about.axis.z),
-                        about.angle,
-                    );
-                    turn.setFromAxisAngle(
-                        axis.set(pole.axis.x, pole.axis.y, pole.axis.z),
-                        pole.angle,
-                    );
-                    turn.multiply(normalTurn);
+                    // Each turn is applied after the ones before it.
+                    for (const { axis: about, angle } of turns) {
+                        normalTurn.setFromAxisAngle(
+                            axis.set(about.x, about.y, about.z),
+                            angle,
+                        );
+                        turn.premultiply(normalTurn);
+                    }
                 }
                 line.quaternion.copy(turn);
                 casing.quaternion.copy(turn);

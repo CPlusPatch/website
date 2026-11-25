@@ -11,9 +11,10 @@ import {
 } from "@std/assert";
 import { documentOf } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
-import { elementsAt } from "./precession.ts";
+import { precessionsOf } from "./perturb/index.ts";
+import { elementsAt, precess } from "./precession.ts";
 import { expandPresets } from "./presets.ts";
-import { isOrbiting, sortByDepth } from "./scenario.ts";
+import { isOrbiting, type Scenario, sortByDepth } from "./scenario.ts";
 import { compile, statesAt } from "./snapshot.ts";
 import { worldStates } from "./system.ts";
 
@@ -119,8 +120,16 @@ Deno.test("elementsAt matches the precession module for an orbiting body", () =>
             continue;
         }
 
+        const parent = scenario.bodies.find(
+            (candidate) => candidate.id === body.orbit.parent,
+        );
+        assert(parent, `no parent for ${body.id}`);
+
         for (const t of TIMES) {
-            assertEquals(system.elementsAt(body.id, t), elementsAt(body, t));
+            assertEquals(
+                system.elementsAt(body.id, t),
+                elementsAt(body.orbit.elements, precessionsOf(body, parent), t),
+            );
         }
     }
 });
@@ -155,4 +164,78 @@ Deno.test("statesAt holds the worldStates of every body", () => {
     for (const t of TIMES) {
         assertEquals(statesAt(system, t), worldStates(scenario, order, t));
     }
+});
+
+const j2Earth = (): Scenario => ({
+    version: 3,
+    name: "j2",
+    bodies: [
+        { id: "sun", name: "Sun", tags: [], mass: { mu: 1.3e20, radius: 7e8 } },
+        {
+            id: "earth",
+            name: "Earth",
+            tags: [],
+            preset: "earth",
+            mass: { mu: 3.986e14, radius: 6.371e6 },
+            orbit: {
+                parent: "sun",
+                elements: {
+                    a: 1.5e11,
+                    e: 0.0167,
+                    i: 0,
+                    raan: 0,
+                    argp: 0,
+                    m0: 0,
+                    epoch: 0,
+                },
+            },
+        },
+        {
+            id: "sat",
+            name: "Sat",
+            tags: [],
+            mass: { mu: 0, radius: 1 },
+            orbit: {
+                parent: "earth",
+                elements: {
+                    a: 7e6,
+                    e: 0.01,
+                    i: 0.9,
+                    raan: 0.3,
+                    argp: 0.2,
+                    m0: 0,
+                    epoch: 0,
+                },
+            },
+            perturbations: [{ type: "j2" }],
+        },
+    ],
+});
+
+Deno.test("a j2 body under a preset parent compiles and precesses by the j2 rates", () => {
+    const system = compile(documentOf(j2Earth()), PRESETS);
+    const earth = system.body("earth");
+    const [precession] = system.precessions("sat");
+
+    assert(precession);
+    assert(earth.gravity);
+    assert(precession.nodeRate !== 0);
+
+    const sat = system.body("sat");
+    assert(isOrbiting(sat));
+
+    const t = 5e6;
+
+    assertEquals(
+        system.elementsAt("sat", t),
+        precess(sat.orbit.elements, precession, t),
+    );
+    assertEquals(system.precessions("sun" as string).length, 0);
+});
+
+Deno.test("system.precessions and system.body throw for an unknown id", () => {
+    const system = compile(documentOf(j2Earth()), PRESETS);
+
+    assertThrows(() => system.precessions("nope"), Error, "Unknown body");
+    assertThrows(() => system.body("nope"), Error, "Unknown body");
 });

@@ -68,9 +68,9 @@ Deno.test("a failed swarm load isn't cached", async () => {
     });
     const assets = createAssets(SATELLITES, all);
 
-    await assertRejects(() => assets.swarm(1), Error, "offline");
+    await assertRejects(() => assets.swarm({ mu: 1 }), Error, "offline");
     fail = false;
-    await assets.swarm(1);
+    await assets.swarm({ mu: 1 });
 
     assertEquals(calls.prepare, 1);
 });
@@ -79,9 +79,9 @@ Deno.test("the swarm decodes the catalogue once and prepares once per mu", async
     const { calls, all } = loaders();
     const assets = createAssets(SATELLITES, all);
 
-    const a = await assets.swarm(1);
-    const b = await assets.swarm(2);
-    const again = await assets.swarm(1);
+    const a = await assets.swarm({ mu: 1 });
+    const b = await assets.swarm({ mu: 2 });
+    const again = await assets.swarm({ mu: 1 });
 
     assertEquals(calls.catalogue, 1);
     assertEquals(calls.prepare, 2);

@@ -5,7 +5,6 @@
 
 import {
     DAY,
-    EARTH_J2,
     EARTH_RADIUS,
     OBLIQUITY_J2000,
     solveKepler,
@@ -19,6 +18,7 @@ import {
 } from "./catalogue.ts";
 import { type OrbitClass, orbitClass } from "./orbit-class.ts";
 import { j2Precession } from "./precession.ts";
+import type { Gravity } from "./scenario.ts";
 
 /** How far from the snapshot's epoch the swarm is drawn, in seconds. Drag and decay make it drift. */
 export const SNAPSHOT_WINDOW = 365 * DAY;
@@ -56,10 +56,15 @@ export type Swarm = {
 };
 
 /**
- * Prepares `catalogue` for an Earth with gravitational parameter `earthMu` (m³/s²).
+ * Prepares `catalogue` for a host with gravitational parameter `host.mu` (m³/s²) and `host.gravity`.
+ * Without gravity the satellites don't precess.
  * The elements are TEME, which is taken as J2000 equatorial. That's about 0.4° off.
  */
-export const prepareSwarm = (catalogue: Catalogue, earthMu: number): Swarm => {
+export const prepareSwarm = (
+    catalogue: Catalogue,
+    host: { mu: number; gravity?: Gravity | undefined },
+): Swarm => {
+    const { mu: earthMu, gravity } = host;
     const count = catalogue.groups.length;
     const epoch = unixMsToJ2000s(catalogue.epoch);
     const field = () => new Float64Array(count);
@@ -101,13 +106,9 @@ export const prepareSwarm = (catalogue: Catalogue, earthMu: number): Swarm => {
             m0,
             epoch: epoch + dt,
         };
-        const { nodeRate, argpRate } = j2Precession(
-            elements,
-            earthMu,
-            EARTH_J2,
-            EARTH_RADIUS,
-            POLE,
-        );
+        const { nodeRate, argpRate } = gravity
+            ? j2Precession(elements, earthMu, gravity.j2, gravity.radius, POLE)
+            : { nodeRate: 0, argpRate: 0 };
 
         swarm.classes.push(orbitClass(elements));
         swarm.a[k] = elements.a;

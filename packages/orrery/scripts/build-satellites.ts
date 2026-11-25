@@ -16,11 +16,16 @@
  *   deno run --allow-read --allow-write packages/orrery/scripts/build-satellites.ts active.csv
  */
 
-import { CURATED_CATALOG_NUMBERS, solarSystem } from "@cpluspatch/catalog";
+import {
+    CURATED_CATALOG_NUMBERS,
+    PRESETS,
+    solarSystem,
+} from "@cpluspatch/catalog";
 import {
     type CatalogueEntry,
     decodeCatalogue,
     encodeCatalogue,
+    expandBody,
     type OrbitClass,
     prepareSwarm,
     SATELLITE_GROUPS,
@@ -61,12 +66,13 @@ if (entries.length === 0) {
 const path = new URL("satellites.bin", assets);
 await Deno.writeFile(path, encodeCatalogue(entries));
 
-// The view takes Earth's mu from the same scenario.
-const earthMu = solarSystem.bodies.find((body) => body.id === "earth")?.mass.mu;
-if (earthMu === undefined) {
+// The view takes Earth's mu and gravity from the same scenario.
+const solarEarth = solarSystem.bodies.find((body) => body.id === "earth");
+if (solarEarth === undefined) {
     console.error("The solar system has no Earth.");
     Deno.exit(1);
 }
+const earth = expandBody(solarEarth, PRESETS);
 
 const CLASSES: OrbitClass[] = ["leo", "meo", "geo", "heo"];
 const counts = Object.fromEntries(
@@ -76,7 +82,10 @@ const counts = Object.fromEntries(
     ]),
 ) as Record<SatelliteGroup, Record<OrbitClass, number>>;
 // Through the file, so float32 rounding can't move a satellite across a class boundary.
-const swarm = prepareSwarm(decodeCatalogue(encodeCatalogue(entries)), earthMu);
+const swarm = prepareSwarm(decodeCatalogue(encodeCatalogue(entries)), {
+    mu: earth.mass.mu,
+    gravity: earth.gravity,
+});
 for (let k = 0; k < swarm.count; k++) {
     const index = swarm.groups[k];
     const group = index === undefined ? undefined : SATELLITE_GROUPS[index];

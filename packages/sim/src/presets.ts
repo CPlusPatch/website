@@ -1,8 +1,8 @@
 import type { Rotation } from "./rotation/index.ts";
-import type { Body, Scenario } from "./scenario.ts";
+import type { Body, Gravity, Scenario } from "./scenario.ts";
 
 /** What a preset fills in on a body that doesn't set it. */
-export type Preset = { rotation?: Rotation };
+export type Preset = { rotation?: Rotation; gravity?: Gravity };
 
 /** The presets by name. */
 export type Presets = Readonly<Record<string, Preset>>;
@@ -11,11 +11,18 @@ export type Presets = Readonly<Record<string, Preset>>;
 export const expandBody = (body: Body, presets: Presets): Body => {
     const preset = body.preset === undefined ? undefined : presets[body.preset];
 
-    if (!preset?.rotation || body.rotation) {
+    const rotation = body.rotation ? undefined : preset?.rotation;
+    const gravity = body.gravity ? undefined : preset?.gravity;
+
+    if (!rotation && !gravity) {
         return body;
     }
 
-    return { ...body, rotation: preset.rotation };
+    return {
+        ...body,
+        ...(rotation ? { rotation } : {}),
+        ...(gravity ? { gravity } : {}),
+    };
 };
 
 /** The scenario with each body's missing components filled from its preset. Fields on the body win. */

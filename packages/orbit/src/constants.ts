@@ -21,7 +21,3 @@ export const km = (x: number): number => x * 1000;
 
 /** Earth's equatorial radius in metres (WGS 72/84), the one TLE altitudes are measured from. */
 export const EARTH_RADIUS = km(6378.137);
-
-// From WGS 84 / EGM2008.
-/** The J2 of Earth's geopotential. */
-export const EARTH_J2 = 1.08262668e-3;

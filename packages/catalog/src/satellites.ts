@@ -1,14 +1,13 @@
 import {
     DAY,
     deg,
-    EARTH_J2,
-    EARTH_RADIUS,
     type Elements,
     equatorialToEcliptic,
     rotateEquatorialToEcliptic,
     unixMsToJ2000s,
 } from "@cpluspatch/orbit";
 import { type Body, j2Precession } from "@cpluspatch/sim";
+import { PRESETS } from "./presets/index.ts";
 
 /** Converts a TLE to ecliptic elements around a parent with gravitational parameter `mu`. */
 const fromTle = (line1: string, line2: string, mu: number): Elements => {
@@ -151,6 +150,12 @@ export const CURATED_NAMES: string[] = SATELLITES.map(({ name }) => name);
 
 /** The ISS and seven more Earth satellites, with J2 precession, around an Earth of `earthMu`. */
 export const satellites = (earthMu: number): Body[] => {
+    const gravity = PRESETS.earth?.gravity;
+
+    if (!gravity) {
+        throw new Error("earth has no gravity");
+    }
+
     const pole = rotateEquatorialToEcliptic({ x: 0, y: 0, z: 1 });
 
     return SATELLITES.map(({ id, name, tle, radius, role }) => {
@@ -168,8 +173,8 @@ export const satellites = (earthMu: number): Body[] => {
                     ...j2Precession(
                         elements,
                         earthMu,
-                        EARTH_J2,
-                        EARTH_RADIUS,
+                        gravity.j2,
+                        gravity.radius,
                         pole,
                     ),
                 },

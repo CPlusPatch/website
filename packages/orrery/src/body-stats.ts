@@ -1,12 +1,9 @@
-import { PRESETS } from "@cpluspatch/catalog";
 import { dot, G } from "@cpluspatch/orbit";
 import { styleOf } from "@cpluspatch/render";
 import {
-    elementsAt,
-    expandBody,
     isOrbiting,
     rotationPeriod,
-    type Scenario,
+    type System,
     spinAxis,
 } from "@cpluspatch/sim";
 
@@ -27,21 +24,16 @@ export type BodyStats = {
 };
 
 /** The stats of body `id` at time `t`. */
-export const bodyStats = (
-    scenario: Scenario,
-    id: string,
-    t: number,
-): BodyStats => {
-    const body = scenario.bodies.find((candidate) => candidate.id === id);
-    if (!body) throw new Error(`There is no body "${id}".`);
+export const bodyStats = (system: System, id: string, t: number): BodyStats => {
+    // The system's body has its preset's rotation filled in.
+    const body = system.body(id);
 
     const massive = body.mass.mu > 0;
     // A spacecraft's radius is nominal.
     const { sized } = styleOf(body);
 
-    const { rotation } = expandBody(body, PRESETS);
-    const axis = spinAxis(rotation, t);
-    const elements = isOrbiting(body) ? elementsAt(body, t) : null;
+    const axis = spinAxis(body.rotation, t);
+    const elements = isOrbiting(body) ? system.elementsAt(id, t) : null;
     // The root has no orbit, so its tilt is from the ecliptic pole.
     const normal = elements
         ? {
@@ -58,7 +50,7 @@ export const bodyStats = (
         escapeSpeed: massive
             ? Math.sqrt((2 * body.mass.mu) / body.mass.radius)
             : null,
-        day: rotationPeriod(rotation, t),
+        day: rotationPeriod(body.rotation, t),
         tilt: axis
             ? Math.acos(Math.min(1, Math.max(-1, dot(axis, normal))))
             : null,

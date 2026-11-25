@@ -9,7 +9,6 @@ export {
     AU,
     DAY,
     deg,
-    EARTH_J2,
     EARTH_RADIUS,
     G,
     J2000_UNIX_MS,

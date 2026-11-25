@@ -204,9 +204,11 @@ const assemble = (
 
     // The scene is rebuilt when the first cloud's host comes or goes, so the host is fixed here.
     const hostId = source.scenario.clouds?.[0]?.host;
-    const host = source.scenario.bodies.find((body) => body.id === hostId);
+    const hostBody = source.scenario.bodies.find((body) => body.id === hostId);
+    // The system's body has its preset gravity filled in.
+    const host = hostBody ? source.system.body(hostBody.id) : undefined;
     const swarm = createSwarm(scene, theme, () =>
-        assets.swarm(host?.mass.mu ?? 0),
+        assets.swarm({ mu: host?.mass.mu ?? 0, gravity: host?.gravity }),
     );
     cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };

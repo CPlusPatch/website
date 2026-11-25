@@ -1126,11 +1126,11 @@ Deno.test("a perturbation that isn't an object is rejected", () => {
 });
 
 Deno.test("a perturbation of an unknown type is rejected", () => {
-    assertEquals(perturbationErrors([{ ...secular, type: "j2" }]), [
-        'earth.perturbations[0].type: must be one of "secular" (got "j2")',
+    assertEquals(perturbationErrors([{ ...secular, type: "drag" }]), [
+        'earth.perturbations[0].type: must be one of "secular", "j2" (got "drag")',
     ]);
     assertEquals(perturbationErrors([rates]), [
-        'earth.perturbations[0].type: must be one of "secular" (got undefined)',
+        'earth.perturbations[0].type: must be one of "secular", "j2" (got undefined)',
     ]);
 });
 
@@ -1478,4 +1478,169 @@ Deno.test("an element epoch outside the year bounds is rejected", () => {
             at(errors, 0),
         );
     }
+});
+
+Deno.test("a j2 perturbation is accepted and carries no data", () => {
+    const result = validateScenario(
+        withPerturbations([{ type: "j2", pole: "ignored" }]),
+    );
+
+    assert(result.ok);
+    assertEquals(at(result.scenario.bodies, 1).perturbations, [{ type: "j2" }]);
+});
+
+Deno.test("a second j2 perturbation is rejected", () => {
+    assertEquals(perturbationErrors([{ type: "j2" }, { type: "j2" }]), [
+        'earth.perturbations[1].type: must be unique (got "j2")',
+    ]);
+});
+
+const GRAVITY = { j2: 1.08e-3, radius: 6.4e6 };
+
+/** The tiny scenario with `gravity` on the planet. */
+const withGravity = (gravity: unknown): Record<string, unknown> => {
+    const scenario = structuredClone(valid) as Record<string, unknown>;
+
+    at(scenario.bodies as Record<string, unknown>[], 1).gravity = gravity;
+
+    return scenario;
+};
+
+const gravityErrors = (gravity: unknown): string[] => {
+    const result = validateScenario(withGravity(gravity));
+
+    assert(!result.ok);
+
+    return result.errors;
+};
+
+Deno.test("a body's gravity is accepted and round-trips, on the root too", () => {
+    const result = validateScenario(withGravity(GRAVITY));
+
+    assert(result.ok);
+    assertEquals(at(result.scenario.bodies, 1).gravity, GRAVITY);
+
+    const root = structuredClone(valid) as Record<string, unknown>;
+    at(root.bodies as Record<string, unknown>[], 0).gravity = {
+        j2: 0,
+        radius: 1,
+    };
+    const rootResult = validateScenario(root);
+
+    assert(rootResult.ok);
+    assertEquals(at(rootResult.scenario.bodies, 0).gravity, {
+        j2: 0,
+        radius: 1,
+    });
+});
+
+Deno.test("gravity that isn't an object is rejected", () => {
+    assertEquals(gravityErrors(3), [
+        "earth.gravity: must be an object (got 3)",
+    ]);
+});
+
+Deno.test("gravity with a bad j2 or radius is rejected", () => {
+    assertEquals(gravityErrors({ ...GRAVITY, j2: -1 }), [
+        "earth.gravity.j2: must be >= 0 (got -1)",
+    ]);
+    assertEquals(gravityErrors({ ...GRAVITY, j2: Number.NaN }), [
+        "earth.gravity.j2: must be a finite number (got NaN)",
+    ]);
+    assertEquals(gravityErrors({ ...GRAVITY, radius: 0 }), [
+        "earth.gravity.radius: must be > 0 (got 0)",
+    ]);
+    assertEquals(gravityErrors({ j2: 1e-3 }), [
+        "earth.gravity.radius: must be a finite number (got undefined)",
+    ]);
+});
+
+/** The tiny scenario with a moon on a j2 perturbation around the planet. */
+const withJ2Moon = (
+    planet: Record<string, unknown>,
+): Record<string, unknown> => {
+    const scenario = structuredClone(valid) as Record<string, unknown>;
+    const bodies = scenario.bodies as Record<string, unknown>[];
+
+    Object.assign(at(bodies, 1), planet);
+    bodies.push({
+        id: "moon",
+        name: "Moon",
+        tags: ["moon"],
+        mass: { mu: 0, radius: 1 },
+        orbit: {
+            parent: "earth",
+            elements: {
+                a: 4e8,
+                e: 0,
+                i: 0.5,
+                raan: 0,
+                argp: 0,
+                m0: 0,
+                epoch: 0,
+            },
+        },
+        perturbations: [{ type: "j2" }],
+    });
+
+    return scenario;
+};
+
+const J2_PRESETS: Presets = {
+    earth: { rotation: uniform, gravity: GRAVITY },
+    mars: { rotation: uniform },
+};
+
+Deno.test("with presets, a j2 perturbation needs gravity on the parent", () => {
+    const result = validateScenario(withJ2Moon({ rotation: uniform }), {
+        presets: {},
+    });
+
+    assert(!result.ok);
+    assertEquals(result.errors, [
+        'moon.perturbations[0]: the parent "earth" has no gravity',
+    ]);
+});
+
+Deno.test("with presets, a j2 perturbation needs rotation on the parent", () => {
+    const result = validateScenario(withJ2Moon({ gravity: GRAVITY }), {
+        presets: {},
+    });
+
+    assert(!result.ok);
+    assertEquals(result.errors, [
+        'moon.perturbations[0]: the parent "earth" has no rotation',
+    ]);
+});
+
+Deno.test("with presets, a j2 perturbation passes on a parent that has both of its own", () => {
+    const result = validateScenario(
+        withJ2Moon({ rotation: uniform, gravity: GRAVITY }),
+        { presets: {} },
+    );
+
+    assert(result.ok);
+});
+
+Deno.test("with presets, a parent's preset can supply the gravity and rotation", () => {
+    const result = validateScenario(withJ2Moon({ preset: "earth" }), {
+        presets: J2_PRESETS,
+    });
+
+    assert(result.ok);
+});
+
+Deno.test("with presets, a preset that lacks gravity doesn't satisfy a j2 perturbation", () => {
+    const result = validateScenario(withJ2Moon({ preset: "mars" }), {
+        presets: J2_PRESETS,
+    });
+
+    assert(!result.ok);
+    assertEquals(result.errors, [
+        'moon.perturbations[0]: the parent "earth" has no gravity',
+    ]);
+});
+
+Deno.test("without presets, a j2 perturbation isn't checked against its parent", () => {
+    assert(validateScenario(withJ2Moon({})).ok);
 });

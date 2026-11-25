@@ -23,6 +23,7 @@ import {
     bodyOrientation,
     elementsAt,
     isOrbiting,
+    precessionsOf,
     sortByDepth,
     validateScenario,
     worldStates,
@@ -303,14 +304,24 @@ Deno.test("Ceres orbits the Sun in 4.60 years", () => {
     assertAlmostEquals(years, 4.6, 0.01);
 });
 
+/** The first perturbation of body `id`, which must be secular. */
+const secularOf = (id: string) => {
+    const first = solarSystem.bodies.find((b) => b.id === id)
+        ?.perturbations?.[0];
+
+    assert(first?.type === "secular", `${id} has no secular perturbation`);
+
+    return first;
+};
+
 Deno.test("only moons with a period for the node or apsides precess", () => {
     const body = (id: string) => solarSystem.bodies.find((b) => b.id === id);
 
     assertEquals(body("charon")?.perturbations, undefined);
-    assertEquals(body("io")?.perturbations?.[0]?.nodeRate, 0);
-    assert((body("io")?.perturbations?.[0]?.argpRate ?? 0) !== 0);
-    assert((body("triton")?.perturbations?.[0]?.nodeRate ?? 0) > 0);
-    assert((body("titan")?.perturbations?.[0]?.nodeRate ?? 0) < 0);
+    assertEquals(secularOf("io").nodeRate, 0);
+    assert(secularOf("io").argpRate !== 0);
+    assert(secularOf("triton").nodeRate > 0);
+    assert(secularOf("titan").nodeRate < 0);
 });
 
 Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
@@ -321,9 +332,8 @@ Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
     assertEquals(spacecraft.length, 8);
 
     for (const body of spacecraft) {
-        const secular = body.perturbations?.[0];
+        const secular = secularOf(body.id);
 
-        assert(secular, `${body.id} has no perturbations`);
         assert(secular.nodeRate !== 0, `${body.id} has no node rate`);
         assertAlmostEquals(secular.pole.z, Math.cos(OBLIQUITY_J2000), 1e-12);
     }
@@ -358,7 +368,11 @@ Deno.test("moons point where Horizons puts them in 2015", () => {
     for (const [id, { toMoon, degrees }] of Object.entries(HORIZONS_2015)) {
         const moon = find(id);
         const parent = find(moon.orbit.parent);
-        const elements = elementsAt(moon, t);
+        const elements = elementsAt(
+            moon.orbit.elements,
+            precessionsOf(moon, parent),
+            t,
+        );
 
         assert(elements, `no elements for ${id}`);
 
@@ -396,7 +410,11 @@ Deno.test("Juno and Parker Solar Probe point where Horizons puts them a day afte
         const t = probe.orbit.elements.epoch + DAY;
 
         assert(parent, `no parent for ${id}`);
-        const elements = elementsAt(probe, t);
+        const elements = elementsAt(
+            probe.orbit.elements,
+            precessionsOf(probe, parent),
+            t,
+        );
 
         assert(elements, `no elements for ${id}`);
 
@@ -412,7 +430,12 @@ Deno.test("Juno and Parker Solar Probe point where Horizons puts them a day afte
 Deno.test("MRO and LRO are in their orbit planes a day after the epoch", () => {
     for (const id of ["mro", "lro"] as const) {
         const probe = find(id);
-        const elements = elementsAt(probe, probe.orbit.elements.epoch + DAY);
+        const parent = find(probe.orbit.parent);
+        const elements = elementsAt(
+            probe.orbit.elements,
+            precessionsOf(probe, parent),
+            probe.orbit.elements.epoch + DAY,
+        );
 
         assert(elements, `no elements for ${id}`);
 
@@ -443,16 +466,14 @@ Deno.test("every Mars, Moon and Jupiter probe precesses about its parent's pole"
         );
 
         assert(pole, `no rotation model for ${body.orbit?.parent}`);
-        const secular = body.perturbations?.[0];
+        const secular = secularOf(body.id);
 
-        assert(secular, `${body.id} has no perturbations`);
         assertVecClose(secular.pole, pole.z, 1e-12);
     }
 });
 
 Deno.test("MRO's node precesses about +0.5 degrees a day, sun-synchronous with Mars", () => {
-    const rate = find("mro").perturbations?.[0]?.nodeRate;
+    const rate = secularOf("mro").nodeRate;
 
-    assert(rate !== undefined, "MRO has no perturbations");
     assertAlmostEquals(toDeg(rate) * DAY, 0.5, 0.1);
 });

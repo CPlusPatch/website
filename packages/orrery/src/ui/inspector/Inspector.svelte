@@ -15,13 +15,7 @@ import {
     styleOf,
     type Units,
 } from "@cpluspatch/render";
-import {
-    elementsAt,
-    isOrbiting,
-    type Readouts,
-    readouts,
-    statesAt,
-} from "@cpluspatch/sim";
+import { isOrbiting, type Readouts, readouts, statesAt } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -141,7 +135,7 @@ const refresh = () => {
             };
         } else if (current) {
             // Precession turns the node and the periapsis.
-            const now = elementsAt(selected, t);
+            const now = documents.system.elementsAt(selected.id, t);
             plate = {
                 a: now.a,
                 e: now.e,

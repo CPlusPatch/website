@@ -1,6 +1,8 @@
 import { applyBurn, type Burn, type Elements } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
+import { precessionsOf } from "./perturb/index.ts";
 import { elementsAt } from "./precession.ts";
+import { expandBody, type Presets } from "./presets.ts";
 import type { Body, Scenario } from "./scenario.ts";
 import { isOrbiting, subtreeIds, validateScenario } from "./scenario.ts";
 
@@ -37,8 +39,9 @@ const fail = (...errors: string[]): DocumentResult => ({ ok: false, errors });
 const finish = (
     scenario: Scenario,
     timeline: Document["timeline"],
+    presets: Presets,
 ): DocumentResult => {
-    const result = validateScenario(scenario);
+    const result = validateScenario(scenario, { presets });
 
     return result.ok
         ? { ok: true, doc: { scenario: result.scenario, timeline } }
@@ -65,21 +68,27 @@ const setOrbit = (
     doc: Document,
     bodyId: string,
     elements: Elements,
+    presets: Presets,
 ): DocumentResult =>
-    finish(withOrbit(doc.scenario, bodyId, elements), doc.timeline);
+    finish(withOrbit(doc.scenario, bodyId, elements), doc.timeline, presets);
 
 /** Applies `cmd` to `doc` without changing `doc`. Bad input returns errors, it never throws. */
-export const apply = (doc: Document, cmd: Command): DocumentResult => {
+export const apply = (
+    doc: Document,
+    cmd: Command,
+    presets: Presets,
+): DocumentResult => {
     const { scenario, timeline } = doc;
 
     if (cmd.type === "load") {
-        return finish(cmd.doc.scenario, cmd.doc.timeline);
+        return finish(cmd.doc.scenario, cmd.doc.timeline, presets);
     }
 
     if (cmd.type === "add-body") {
         return finish(
             { ...scenario, bodies: [...scenario.bodies, cmd.body] },
             timeline,
+            presets,
         );
     }
 
@@ -113,6 +122,7 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
                 ),
             },
             timeline,
+            presets,
         );
     }
 
@@ -132,6 +142,7 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
                 ),
             },
             timeline,
+            presets,
         );
     }
 
@@ -144,7 +155,8 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
     }
 
     // `t` isn't used until the timeline lands: the change applies now.
-    if (cmd.type === "set-orbit") return setOrbit(doc, id, cmd.elements);
+    if (cmd.type === "set-orbit")
+        return setOrbit(doc, id, cmd.elements, presets);
 
     const parent = scenario.bodies.find(
         (candidate) => candidate.id === body.orbit.parent,
@@ -156,7 +168,11 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
         );
 
     const burned = applyBurn(
-        elementsAt(body, cmd.t),
+        elementsAt(
+            body.orbit.elements,
+            precessionsOf(body, expandBody(parent, presets)),
+            cmd.t,
+        ),
         parent.mass.mu + body.mass.mu,
         cmd.t,
         cmd.dv,
@@ -168,5 +184,5 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
         );
     }
 
-    return setOrbit(doc, id, burned.elements);
+    return setOrbit(doc, id, burned.elements, presets);
 };

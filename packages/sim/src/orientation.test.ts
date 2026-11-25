@@ -17,6 +17,7 @@ import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import type { Model } from "./models.ts";
 import { isModel } from "./models.ts";
 import { bodyOrientation, rotationPeriod, spinAxis } from "./orientation.ts";
+import { precessionsOf } from "./perturb/index.ts";
 import { elementsAt } from "./precession.ts";
 import {
     type Orientation,
@@ -248,7 +249,11 @@ Deno.test("a tidally locked moon keeps one face to its parent", () => {
         for (let k = 0; k < 12; k++) {
             const t = k * 2.53 * 365.25 * DAY + 1234.5;
 
-            const elements = elementsAt(moon, t);
+            const elements = elementsAt(
+                moon.orbit.elements,
+                precessionsOf(moon, parent),
+                t,
+            );
 
             const { r } = stateAt(elements, parent.mass.mu + moon.mass.mu, t);
             const { x, y, z } = orientationOf(moon.preset, t);

@@ -1,4 +1,4 @@
-import { DAY, deg, type Elements, km, type Vec3 } from "@cpluspatch/orbit";
+import { DAY, deg, type Elements, type Vec3 } from "@cpluspatch/orbit";
 import {
     type Body,
     bodyOrientation,
@@ -173,19 +173,6 @@ const PROBES: Probe[] = [
     },
 ];
 
-// The oblateness of each parent. The Sun's is ignored, so its probes keep fixed orbits.
-const OBLATENESS: Record<
-    Exclude<Parent, "sun">,
-    { j2: number; radius: number }
-> = {
-    // MRO gravity model (MRO120), unnormalised -C20.
-    mars: { j2: 1.9566e-3, radius: km(3396) },
-    // GRAIL, GL0660B.
-    moon: { j2: 2.033e-4, radius: km(1738) },
-    // Juno, Iess et al. 2018.
-    jupiter: { j2: 1.4696e-2, radius: km(71492) },
-};
-
 /** The pole of `parent` in ecliptic J2000. A missing rotation model throws. */
 const poleOf = (parent: Model): Vec3 => {
     const orientation = bodyOrientation(PRESETS[parent]?.rotation, EPOCH);
@@ -227,7 +214,11 @@ export const probes = (mu: Record<Parent, number>): Body[] =>
             return body;
         }
 
-        const { j2, radius: reference } = OBLATENESS[parent];
+        const gravity = PRESETS[parent]?.gravity;
+
+        if (!gravity) {
+            throw new Error(`${parent} has no gravity`);
+        }
 
         return {
             ...body,
@@ -237,8 +228,8 @@ export const probes = (mu: Record<Parent, number>): Body[] =>
                     ...j2Precession(
                         elements,
                         mu[parent],
-                        j2,
-                        reference,
+                        gravity.j2,
+                        gravity.radius,
                         poleOf(parent),
                     ),
                 },

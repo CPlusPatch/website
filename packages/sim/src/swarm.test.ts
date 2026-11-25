@@ -1,6 +1,5 @@
 import {
     DAY,
-    EARTH_J2,
     EARTH_RADIUS,
     G,
     OBLIQUITY_J2000,
@@ -30,6 +29,10 @@ import {
 } from "./swarm.ts";
 
 const MU = G * 5.97217e24;
+
+// WGS 84 / EGM2008, as in the catalog's Earth preset.
+const EARTH_GRAVITY = { j2: 1.08262668e-3, radius: EARTH_RADIUS };
+const HOST = { mu: MU, gravity: EARTH_GRAVITY };
 const EPOCH_MS = Date.UTC(2026, 10, 23, 12);
 const EPOCH = unixMsToJ2000s(EPOCH_MS);
 
@@ -71,7 +74,7 @@ const catalogue = (sats: Sat[]): Catalogue => {
 };
 
 const positionAt = (sat: Sat, t: number): [number, number, number] => {
-    const swarm = prepareSwarm(catalogue([sat]), MU);
+    const swarm = prepareSwarm(catalogue([sat]), HOST);
     const out = new Float32Array(3);
     writePositions(swarm, Uint32Array.of(0), t, out);
 
@@ -162,7 +165,7 @@ Deno.test("after one period a satellite is back where it started", () => {
 
 Deno.test("the node and periapsis rates are the J2 ones about the pole", () => {
     const sat = { a: 7.2e6, e: 0.02, i: 0.9, raan: 1, argp: 2, m0: 3 };
-    const swarm = prepareSwarm(catalogue([sat]), MU);
+    const swarm = prepareSwarm(catalogue([sat]), HOST);
     const expected = j2Precession(
         {
             a: swarm.a[0] as number,
@@ -174,8 +177,8 @@ Deno.test("the node and periapsis rates are the J2 ones about the pole", () => {
             epoch: EPOCH,
         },
         MU,
-        EARTH_J2,
-        EARTH_RADIUS,
+        EARTH_GRAVITY.j2,
+        EARTH_GRAVITY.radius,
         { x: 0, y: 0, z: 1 },
     );
 
@@ -185,8 +188,16 @@ Deno.test("the node and periapsis rates are the J2 ones about the pole", () => {
     assert((swarm.nodeRate[0] as number) < 0);
 });
 
+Deno.test("a host without gravity gives satellites that don't precess", () => {
+    const sat = { a: 7.2e6, e: 0.02, i: 0.9, raan: 1, argp: 2, m0: 3 };
+    const swarm = prepareSwarm(catalogue([sat]), { mu: MU });
+
+    assertEquals(swarm.nodeRate[0], 0);
+    assertEquals(swarm.argpRate[0], 0);
+});
+
 Deno.test("a semi-major axis comes from the mean motion", () => {
-    const swarm = prepareSwarm(catalogue([{ a: 26_560e3 }]), MU);
+    const swarm = prepareSwarm(catalogue([{ a: 26_560e3 }]), HOST);
 
     assertAlmostEquals((swarm.a[0] as number) / 1000, 26_560, 1e-2);
     assertEquals(swarm.classes, ["meo"]);
@@ -195,7 +206,7 @@ Deno.test("a semi-major axis comes from the mean motion", () => {
 Deno.test("the orbit classes follow the orbit", () => {
     const swarm = prepareSwarm(
         catalogue([{ a: 6.9e6 }, { a: 42_164e3 }, { a: 2.6e7, e: 0.7 }]),
-        MU,
+        HOST,
     );
 
     assertEquals(swarm.classes, ["leo", "geo", "heo"]);
@@ -209,7 +220,7 @@ Deno.test("only the shown groups are written, packed first", () => {
             { group: "oneweb", a: 7.1e6 },
             { group: "starlink", a: 7.2e6 },
         ]),
-        MU,
+        HOST,
     );
 
     assertEquals(Array.from(selectShown(swarm, new Set())), []);
@@ -235,14 +246,14 @@ Deno.test("only the shown groups are written, packed first", () => {
 });
 
 Deno.test("a short buffer takes only what fits", () => {
-    const swarm = prepareSwarm(catalogue([{}, {}, {}]), MU);
+    const swarm = prepareSwarm(catalogue([{}, {}, {}]), HOST);
     const shown = selectShown(swarm, new Set(["other"]));
 
     assertEquals(writePositions(swarm, shown, EPOCH, new Float32Array(6)), 2);
 });
 
 Deno.test("the snapshot window is a year either side of the epoch", () => {
-    const swarm = prepareSwarm(catalogue([{}]), MU);
+    const swarm = prepareSwarm(catalogue([{}]), HOST);
 
     assert(inSnapshotWindow(swarm, EPOCH));
     assert(inSnapshotWindow(swarm, EPOCH + SNAPSHOT_WINDOW));
@@ -265,7 +276,7 @@ Deno.test("the snapshot gap is 0 inside the window and signed outside it", () =>
 
 Deno.test("an orbit stays between its perigee and apogee and closes", () => {
     const sat = { a: 2.6e7, e: 0.6, i: 1, raan: 0.5, argp: 1, m0: 2 };
-    const swarm = prepareSwarm(catalogue([sat]), MU);
+    const swarm = prepareSwarm(catalogue([sat]), HOST);
     const a = (swarm.a[0] as number) / 1000;
     const e = swarm.e[0] as number;
 
@@ -288,7 +299,7 @@ Deno.test("an orbit stays between its perigee and apogee and closes", () => {
 
 Deno.test("a satellite lies on its own orbit", () => {
     const sat = { a: 7e6, e: 0.1, i: 0.9, raan: 1, argp: 2, m0: 3 };
-    const swarm = prepareSwarm(catalogue([sat]), MU);
+    const swarm = prepareSwarm(catalogue([sat]), HOST);
     const t = EPOCH + 3 * DAY;
     const position = new Float32Array(3);
     writePositions(swarm, Uint32Array.of(0), t, position);
@@ -313,7 +324,7 @@ Deno.test("a satellite lies on its own orbit", () => {
 Deno.test("a circular orbit has the same perigee, apogee and altitude", () => {
     const swarm = prepareSwarm(
         catalogue([{ group: "starlink", a: 6.93e6, i: 0.9 }]),
-        MU,
+        HOST,
     );
 
     const facts = satelliteFacts(swarm, 0, EPOCH + 1000);
@@ -334,7 +345,7 @@ Deno.test("a circular orbit has the same perigee, apogee and altitude", () => {
 });
 
 Deno.test("perigee and apogee of an eccentric orbit are a(1 -/+ e) above the surface", () => {
-    const swarm = prepareSwarm(catalogue([{ a: 2.6e7, e: 0.7 }]), MU);
+    const swarm = prepareSwarm(catalogue([{ a: 2.6e7, e: 0.7 }]), HOST);
 
     const facts = satelliteFacts(swarm, 0, EPOCH);
 

@@ -9,13 +9,13 @@ orrery  →  render   →  sim  →  orbit
 orrery  →  catalog  →  sim
 ```
 
-| Package               | Owns                                                                                                                             | Must not import                                         |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `@cpluspatch/orbit`   | Vectors, frames, time, constants, conic math, anomaly solvers, burns                                                             | `sim`, `catalog`, `render`, `orrery`, `three`, `svelte` |
-| `@cpluspatch/sim`     | Scenario schema and validation, commands and the reducer, `compile` and snapshots, readouts, the satellite swarm, grip drag math | `catalog`, `render`, `orrery`, `three`, `svelte`        |
-| `@cpluspatch/catalog` | Built-in scenarios and their data tables                                                                                         | `render`, `orrery`, `three`, `svelte`                   |
-| `@cpluspatch/render`  | The three.js scene, camera, picking, labels, theme colours, and the text and DOM helpers the UI shares                           | `orrery`, `catalog`, `svelte`                           |
-| `@cpluspatch/orrery`  | The page: panels, audio, shortcuts                                                                                               | nothing; it's the root                                  |
+| Package               | Owns                                                                                                                                            | Must not import                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `@cpluspatch/orbit`   | Vectors, frames, time, constants, conic math, anomaly solvers, burns                                                                            | `sim`, `catalog`, `render`, `orrery`, `three`, `svelte` |
+| `@cpluspatch/sim`     | Scenario schema and validation, commands and the reducer, `compile` and snapshots, perturbations, readouts, the satellite swarm, grip drag math | `catalog`, `render`, `orrery`, `three`, `svelte`        |
+| `@cpluspatch/catalog` | Built-in scenarios and their data tables                                                                                                        | `render`, `orrery`, `three`, `svelte`                   |
+| `@cpluspatch/render`  | The three.js scene, camera, picking, labels, theme colours, and the text and DOM helpers the UI shares                                          | `orrery`, `catalog`, `svelte`                           |
+| `@cpluspatch/orrery`  | The page: panels, audio, shortcuts                                                                                                              | nothing; it's the root                                  |
 
 Test files in `sim` and `render` may import `catalog`, since they use the built-in scenarios as fixtures. Runtime code may not. `.svelte` files and `svelte` imports belong in `orrery` only.
 
@@ -64,22 +64,37 @@ When Orrery's startup throws, it replaces the loading text with an error. When i
 
 A body's `rotation` is data. `sim/src/rotation/index.ts` is the registry, keyed by `Rotation["type"]`, and each kind supplies its orientation, spin rate and validation. `sim` knows no body names.
 
-| Type      | Units                                                  | Used for                |
-| --------- | ------------------------------------------------------ | ----------------------- |
+| Type      | Units                                                   | Used for                |
+| --------- | ------------------------------------------------------- | ----------------------- |
 | `uniform` | SI: a fixed ecliptic pole, `w0` in rad, `rate` in rad/s | The Kerbol bodies       |
-| `iau`     | Degrees, Julian centuries and days, as in NAIF         | The solar system bodies |
+| `iau`     | Degrees, Julian centuries and days, as in NAIF          | The solar system bodies |
 
 `iau` records keep NAIF's units, so the tables in `catalog/src/presets/` can be checked against `pck00011.tpc`. Everything else in `sim` is SI.
 
-A preset in `catalog/src/presets/` fills a body's missing `rotation`. `compile(doc, presets)` and `expandPresets` do it, and a field set on the body wins. The document keeps bodies as written.
+A preset in `catalog/src/presets/` fills a body's missing `rotation` and `gravity`. `compile(doc, presets)` and `expandPresets` do it, and a field set on the body wins. The document keeps bodies as written.
+
+## Gravity and perturbations
+
+A body's `gravity` is `{ j2, radius }`, the J2 coefficient and the reference radius in metres. The `GRAVITY` table in `catalog/src/presets/gravity.ts` gives it to Earth, Mars, the Moon and Jupiter.
+
+A perturbation turns an orbit's node and periapsis at a steady rate. `sim/src/perturb/` resolves each one to a `Precession` (a pole and two rates):
+
+| Type      | Rates                                                                                                              |
+| --------- | ------------------------------------------------------------------------------------------------------------------ |
+| `secular` | Stored on the perturbation, with its pole                                                                          |
+| `j2`      | Computed from the parent's `mu`, `gravity` and `rotation`. The pole is the parent's spin axis at the orbit's epoch |
+
+`compile` resolves every body's precessions once. `System.precessions(id)` returns them, and `System.elementsAt(id, t)` applies them. A `j2` perturbation on a parent without gravity or rotation drifts by nothing. `validateScenario` reports it as an error when it's given `presets`, which `apply` and `persistence.ts` pass.
+
+The built-in scenarios still store `secular` rates. The satellite swarm takes its host's `mu` and `gravity` from the caller. Its pole is fixed at +z, Earth's pole in the catalogue's TEME frame, so a cloud around another host precesses about the wrong axis.
 
 ## Temporary exceptions
 
 These break the rules above until a later step of the rewrite removes them.
 
-| Exception                                                                                       | Removed when                                     |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `sim` keeps the closed model list (`models.ts`)                                                 | Appearance becomes body data                     |
-| `TagStyle.corona` makes `render` draw a star's emissive material and corona sprite from a tag | Star appearance becomes body data |
-| `TagStyle.craftMesh` makes `render` pick the spacecraft mesh from a tag | Spacecraft models become body data |
+| Exception                                                                                                                      | Removed when                             |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| `sim` keeps the closed model list (`models.ts`)                                                                                | Appearance becomes body data             |
+| `TagStyle.corona` makes `render` draw a star's emissive material and corona sprite from a tag                                  | Star appearance becomes body data        |
+| `TagStyle.craftMesh` makes `render` pick the spacecraft mesh from a tag                                                        | Spacecraft models become body data       |
 | The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |

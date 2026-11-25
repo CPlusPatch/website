@@ -27,12 +27,18 @@ export {
     rotationPeriod,
     spinAxis,
 } from "./orientation.ts";
+export {
+    precessionsByBody,
+    precessionsOf,
+    resolvePerturbation,
+} from "./perturb/index.ts";
 export type { Precession, Turn } from "./precession.ts";
 export {
     elementsAt,
     j2Precession,
     precess,
     precessionTurns,
+    precessionTurnsThrough,
 } from "./precession.ts";
 export type { Preset, Presets } from "./presets.ts";
 export { expandBody, expandPresets } from "./presets.ts";
@@ -51,6 +57,8 @@ export type {
     AppearanceValidator,
     Body,
     BodyOrbit,
+    Gravity,
+    J2,
     Mass,
     OrbitingBody,
     Perturbation,

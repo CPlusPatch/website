@@ -2,13 +2,7 @@
 import { solarSystem } from "@cpluspatch/catalog";
 import { stateAt } from "@cpluspatch/orbit";
 import { Clock, type SceneEvent } from "@cpluspatch/render";
-import {
-    type Body,
-    documentOf,
-    elementsAt,
-    isOrbiting,
-    subtreeIds,
-} from "@cpluspatch/sim";
+import { type Body, documentOf, isOrbiting, subtreeIds } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,
@@ -660,7 +654,7 @@ Deno.test("a zero burn on a precessing body keeps its position", () => {
     const parent = scene.states().get("earth");
     assert(parent);
 
-    assertEquals(elementsAt(fixed, t), fixed.orbit.elements);
+    assertEquals(scene.system.elementsAt("moon", t), fixed.orbit.elements);
     assertAlmostEquals(parent.r.x + local.r.x, before.r.x, 1e-3);
     assertAlmostEquals(parent.r.y + local.r.y, before.r.y, 1e-3);
     assertAlmostEquals(parent.r.z + local.r.z, before.r.z, 1e-3);

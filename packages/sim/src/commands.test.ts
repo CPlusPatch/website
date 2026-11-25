@@ -1,17 +1,22 @@
 /// <reference types="deno" />
 
-import { builtInScenarios, solarSystem } from "@cpluspatch/catalog";
+import { builtInScenarios, PRESETS, solarSystem } from "@cpluspatch/catalog";
 import { applyBurn, type Elements, length, stateAt } from "@cpluspatch/orbit";
 import { assert, assertEquals } from "@std/assert";
 import type { BodyPatch, Command } from "./commands.ts";
-import { apply } from "./commands.ts";
+import { apply as applyCommand } from "./commands.ts";
 import type { Document } from "./document.ts";
 import { documentOf } from "./document.ts";
-import { elementsAt } from "./precession.ts";
+import { bodyOrientation } from "./orientation.ts";
+import { precessionsOf } from "./perturb/index.ts";
+import { elementsAt, j2Precession } from "./precession.ts";
 import type { Body, OrbitingBody } from "./scenario.ts";
 import { isOrbiting, subtreeIds } from "./scenario.ts";
 
 const doc = documentOf(solarSystem);
+
+const apply = (document: Document, cmd: Command) =>
+    applyCommand(document, cmd, PRESETS);
 
 const orbiting = (id: string): OrbitingBody => {
     const body = solarSystem.bodies.find((candidate) => candidate.id === id);
@@ -59,6 +64,22 @@ Deno.test("add-body appends the body", () => {
     assertEquals(next.scenario.bodies.length, doc.scenario.bodies.length + 1);
     assertEquals(next.scenario.bodies.at(-1), probe);
     assertEquals(next.timeline, []);
+});
+
+Deno.test("add-body with j2 needs a parent whose preset or own fields give gravity", () => {
+    const j2Probe = (parent: string): Body => ({
+        ...probe,
+        id: "j2-probe",
+        orbit: { parent, elements: orbiting("moon").orbit.elements },
+        perturbations: [{ type: "j2" }],
+    });
+
+    ok(apply(doc, { type: "add-body", body: j2Probe("earth") }));
+    const [error] = errors(
+        apply(doc, { type: "add-body", body: j2Probe("sun") }),
+    );
+
+    assertEquals(error?.startsWith("j2-probe.perturbations[0]"), true);
 });
 
 Deno.test("add-body with a taken id returns the validator's error", () => {
@@ -245,7 +266,7 @@ Deno.test("schedule-burn gives the elements applyBurn does", () => {
     const dv = { prograde: 100, normal: 20, radial: -5 };
     const t = 1e7;
     const direct = applyBurn(
-        elementsAt(earth, t),
+        elementsAt(earth.orbit.elements, [], t),
         (sun?.mass.mu ?? 0) + earth.mass.mu,
         t,
         dv,
@@ -296,7 +317,11 @@ Deno.test("schedule-burn that escapes is an error naming the body", () => {
 Deno.test("schedule-burn that stops the body is an error naming the body", () => {
     const moon = orbiting("moon");
     const earth = orbiting("earth");
-    const { v } = stateAt(elementsAt(moon, 0), earth.mass.mu + moon.mass.mu, 0);
+    const { v } = stateAt(
+        elementsAt(moon.orbit.elements, precessionsOf(moon, earth), 0),
+        earth.mass.mu + moon.mass.mu,
+        0,
+    );
 
     const [error, ...rest] = errors(
         apply(doc, {
@@ -392,4 +417,36 @@ Deno.test("a successful result is a new document", () => {
 
     assert(next !== doc);
     assert(next.scenario.bodies !== doc.scenario.bodies);
+});
+
+Deno.test("schedule-burn on a j2 body burns the elements as precessed", () => {
+    const earth = orbiting("earth");
+    const gravity = PRESETS.earth?.gravity;
+    const axes = bodyOrientation(PRESETS.earth?.rotation, elements.epoch);
+    assert(gravity && axes);
+
+    const body: Body = {
+        ...probe,
+        perturbations: [{ type: "j2" }],
+    };
+    const withBody = ok(apply(doc, { type: "add-body", body }));
+    const t = 1e8;
+    const dv = { prograde: 10, normal: 0, radial: 0 };
+    const rates = j2Precession(
+        elements,
+        earth.mass.mu,
+        gravity.j2,
+        gravity.radius,
+        axes.z,
+    );
+    const precessed = elementsAt(elements, [rates], t);
+    const direct = applyBurn(precessed, earth.mass.mu, t, dv);
+    assert(direct.ok);
+    assert(precessed.raan !== elements.raan);
+
+    const next = ok(
+        apply(withBody, { type: "schedule-burn", bodyId: "probe", t, dv }),
+    );
+
+    assertEquals(find(next, "probe")?.orbit?.elements, direct.elements);
 });

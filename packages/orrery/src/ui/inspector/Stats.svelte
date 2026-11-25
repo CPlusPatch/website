@@ -13,9 +13,7 @@ const { id }: Props = $props();
 const documents = getDocument();
 const view = getView();
 
-const rows = $derived(
-    statRows(bodyStats(documents.doc.scenario, id, view.now())),
-);
+const rows = $derived(statRows(bodyStats(documents.system, id, view.now())));
 </script>
 
 {#if rows.length > 0}

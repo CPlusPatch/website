@@ -21,8 +21,8 @@ import {
     j2Precession,
     precess,
     precessionTurns,
+    precessionTurnsThrough,
 } from "./precession.ts";
-import type { OrbitingBody } from "./scenario.ts";
 
 const el: Elements = {
     a: 4e8,
@@ -114,30 +114,49 @@ Deno.test("an orbit that precesses onto the ecliptic keeps a node on +x", () => 
     assertAlmostEquals(after.argp, wrapAngle(1 + 1e-7 * 1e7), 1e-12);
 });
 
-const orbiting: OrbitingBody = {
-    id: "probe",
-    name: "Probe",
-    tags: ["moon"],
-    mass: { mu: 0, radius: 1 },
-    orbit: { parent: "earth", elements: el },
+const SECULAR: Precession = {
+    pole: { x: 0, y: 0, z: 1 },
+    nodeRate: 1e-7,
+    argpRate: 0,
 };
 
-Deno.test("elementsAt returns the elements as they are without perturbations", () => {
-    assertEquals(elementsAt(orbiting, 1e9), el);
+Deno.test("elementsAt returns the elements as they are without precessions", () => {
+    assertEquals(elementsAt(el, [], 1e9), el);
 });
 
-Deno.test("elementsAt precesses the elements when the body has a secular perturbation", () => {
-    const precession: Precession = {
-        pole: { x: 0, y: 0, z: 1 },
-        nodeRate: 1e-7,
-        argpRate: 0,
-    };
-    const body = {
-        ...orbiting,
-        perturbations: [{ type: "secular" as const, ...precession }],
+Deno.test("elementsAt precesses the elements by each precession in order", () => {
+    const tilt: Precession = {
+        pole: { x: 1, y: 0, z: 0 },
+        nodeRate: 2e-8,
+        argpRate: 1e-8,
     };
 
-    assertEquals(elementsAt(body, 1e9), precess(el, precession, 1e9));
+    assertEquals(elementsAt(el, [SECULAR], 1e9), precess(el, SECULAR, 1e9));
+    assertEquals(
+        elementsAt(el, [SECULAR, tilt], 1e9),
+        precess(precess(el, SECULAR, 1e9), tilt, 1e9),
+    );
+});
+
+Deno.test("precessionTurnsThrough with one precession is precessionTurns", () => {
+    assertEquals(
+        precessionTurnsThrough(el, [SECULAR], 1e9),
+        precessionTurns(el, SECULAR, 1e9),
+    );
+});
+
+Deno.test("precessionTurnsThrough turns the second precession on the elements the first left", () => {
+    const tilt: Precession = {
+        pole: { x: 1, y: 0, z: 0 },
+        nodeRate: 2e-8,
+        argpRate: 1e-8,
+    };
+
+    assertEquals(precessionTurnsThrough(el, [SECULAR, tilt], 1e9), [
+        ...precessionTurns(el, SECULAR, 1e9),
+        ...precessionTurns(precess(el, SECULAR, 1e9), tilt, 1e9),
+    ]);
+    assertEquals(precessionTurnsThrough(el, [], 1e9), []);
 });
 
 Deno.test("a quarter turn about +x turns periapsis first, then the node", () => {
@@ -213,7 +232,7 @@ const satelliteRates = (id: string) => {
     const body = solarSystem.bodies.find((b) => b.id === id);
     const precession = body?.perturbations?.[0];
 
-    assert(precession, `${id} has no perturbations`);
+    assert(precession?.type === "secular", `${id} has no secular perturbation`);
 
     const perDay = (rate: number) => (rate * DAY * 180) / Math.PI;
 

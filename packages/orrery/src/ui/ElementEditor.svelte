@@ -49,7 +49,7 @@ import {
     toMetres,
     type Units,
 } from "@cpluspatch/render";
-import { elementsAt, isOrbiting } from "@cpluspatch/sim";
+import { isOrbiting } from "@cpluspatch/sim";
 import { onMount } from "svelte";
 import { cue } from "../audio/cues.ts";
 import {
@@ -99,7 +99,7 @@ const lookup = () => {
 };
 const { body, parent } = lookup();
 
-const original = elementsAt(body, view.now());
+const original = documents.system.elementsAt(body.id, view.now());
 const min = aMin(parent.mass.radius);
 const opened = view.now();
 const unitNow = () => units.get() ?? aUnit(original.a);

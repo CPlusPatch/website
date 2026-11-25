@@ -1,8 +1,10 @@
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
-import { elementsAt } from "./precession.ts";
+import { precessionsByBody } from "./perturb/index.ts";
+import { elementsAt, type Precession } from "./precession.ts";
 import { expandPresets, type Presets } from "./presets.ts";
+import type { Body } from "./scenario.ts";
 import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
 
@@ -26,10 +28,14 @@ export type System = {
     readonly ids: readonly string[];
     /** The position of each body id in `ids`. */
     readonly index: ReadonlyMap<string, number>;
+    /** Body `id` with its preset filled in. Throws for an unknown id. */
+    body(id: string): Body;
     /** The state of every body at `t`. Only the last result is cached. */
     snapshot(t: number): Snapshot;
     /** The orbit of an orbiting body at `t`, with its perturbations applied. Throws for the root or an unknown id. */
     elementsAt(id: string, t: number): Elements;
+    /** The resolved perturbations of body `id`, in order. Empty for the root. Throws for an unknown id. */
+    precessions(id: string): readonly Precession[];
 };
 
 /** Compiles the scenario of `doc` into a `System`, with `presets` filling what its bodies leave out. */
@@ -40,6 +46,18 @@ export const compile = (doc: Document, presets: Presets): System => {
     const index = new Map(ids.map((id, i) => [id, i]));
     const byId = new Map(order.map((body) => [body.id, body]));
 
+    const resolved = precessionsByBody(order);
+
+    const known = (id: string): Body => {
+        const body = byId.get(id);
+
+        if (!body) {
+            throw new Error(`Unknown body ${id}`);
+        }
+
+        return body;
+    };
+
     let cached: Snapshot | null = null;
 
     const snapshot = (t: number): Snapshot => {
@@ -47,7 +65,7 @@ export const compile = (doc: Document, presets: Presets): System => {
             return cached;
         }
 
-        const states = worldStates(scenario, order, t);
+        const states = worldStates(scenario, order, t, resolved);
         const r = new Float64Array(3 * order.length);
         const v = new Float64Array(3 * order.length);
         const orientation = new Float64Array(9 * order.length);
@@ -87,19 +105,21 @@ export const compile = (doc: Document, presets: Presets): System => {
     return {
         ids,
         index,
+        body: known,
         snapshot,
         elementsAt: (id, t) => {
-            const body = byId.get(id);
-
-            if (!body) {
-                throw new Error(`Unknown body ${id}`);
-            }
+            const body = known(id);
 
             if (!isOrbiting(body)) {
                 throw new Error(`${id} is the root and has no orbit`);
             }
 
-            return elementsAt(body, t);
+            return elementsAt(body.orbit.elements, resolved.get(id) ?? [], t);
+        },
+        precessions: (id) => {
+            known(id);
+
+            return resolved.get(id) ?? [];
         },
     };
 };

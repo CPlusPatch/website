@@ -6,7 +6,7 @@ import {
     period,
 } from "@cpluspatch/orbit";
 import { formatDuration } from "@cpluspatch/render";
-import { elementsAt, isOrbiting } from "@cpluspatch/sim";
+import { isOrbiting } from "@cpluspatch/sim";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
 import { onMount } from "svelte";
@@ -61,7 +61,7 @@ const context = () => {
 
     return {
         body,
-        el: elementsAt(body, view.now()),
+        el: documents.system.elementsAt(id, view.now()),
         mu: parent.mass.mu + body.mass.mu,
         parent,
     };

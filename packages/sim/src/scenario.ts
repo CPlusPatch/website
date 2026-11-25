@@ -9,6 +9,7 @@ import {
 import type { Model } from "./models.ts";
 import { isModel } from "./models.ts";
 import type { Precession } from "./precession.ts";
+import { expandBody, type Presets } from "./presets.ts";
 import { type Rotation, validateRotation } from "./rotation/index.ts";
 import { finite, isRecord, show, validatePole } from "./validate.ts";
 
@@ -31,8 +32,19 @@ export type BodyOrbit = {
 /** The orbit turning about a fixed pole. */
 export type Secular = { type: "secular" } & Precession;
 
+/** The orbit turning because the parent is oblate. The rates come from the parent's `gravity` and `rotation`. */
+export type J2 = { type: "j2" };
+
 /** A force acting on an orbit besides its parent's gravity. */
-export type Perturbation = Secular;
+export type Perturbation = Secular | J2;
+
+/** The shape of a body's gravity field, for the perturbations of the bodies that orbit it. */
+export type Gravity = {
+    /** The oblateness coefficient, at least 0. */
+    j2: number;
+    /** The reference radius of the coefficient in metres, above 0. */
+    radius: number;
+};
 
 /** One body in a scenario. */
 export type Body = {
@@ -53,6 +65,8 @@ export type Body = {
     preset?: Model;
     /** How the body turns. Absent means the preset's rotation, if it has one. */
     rotation?: Rotation;
+    /** The gravity field. Absent means the preset's gravity, if it has one. */
+    gravity?: Gravity;
 };
 
 /** A body that orbits another. */
@@ -133,7 +147,11 @@ export type AppearanceValidator = (
 ) => unknown;
 
 /** Options for `validateScenario`. */
-export type ValidateOptions = { appearance?: AppearanceValidator };
+export type ValidateOptions = {
+    appearance?: AppearanceValidator;
+    /** When set, a `j2` perturbation is checked against its parent's preset-filled gravity and rotation. */
+    presets?: Presets;
+};
 
 /** Checks one rule on a finite number and records the error if it fails. */
 const inRange = (
@@ -288,9 +306,9 @@ const validatePerturbations = (
 
         const { type } = item;
 
-        if (type !== "secular") {
+        if (type !== "secular" && type !== "j2") {
             errors.push(
-                `${itemPath}.type: must be one of "secular" (got ${show(type)})`,
+                `${itemPath}.type: must be one of "secular", "j2" (got ${show(type)})`,
             );
 
             return;
@@ -304,12 +322,82 @@ const validatePerturbations = (
 
         seen.add(type);
 
+        if (type === "j2") {
+            parsed.push({ type });
+
+            return;
+        }
+
         const rates = validatePrecession(itemPath, item, errors);
 
         if (rates) parsed.push({ type, ...rates });
     });
 
     return parsed;
+};
+
+const validateGravity = (
+    path: string,
+    input: unknown,
+    errors: string[],
+): Gravity | null => {
+    if (!isRecord(input)) {
+        errors.push(`${path}: must be an object (got ${show(input)})`);
+
+        return null;
+    }
+
+    const { j2, radius } = input;
+    const validJ2 = finite(`${path}.j2`, j2, errors) ? j2 : null;
+
+    if (validJ2 !== null) {
+        inRange(`${path}.j2`, validJ2, validJ2 >= 0, ">= 0", errors);
+    }
+
+    const validRadius = finite(`${path}.radius`, radius, errors)
+        ? radius
+        : null;
+
+    if (validRadius !== null) {
+        inRange(`${path}.radius`, validRadius, validRadius > 0, "> 0", errors);
+    }
+
+    if (validJ2 === null || validRadius === null) return null;
+
+    return { j2: validJ2, radius: validRadius };
+};
+
+/** Checks that each `j2` perturbation has a parent whose preset-filled body has gravity and rotation. */
+const validateJ2Parents = (
+    bodies: Body[],
+    presets: Presets,
+    errors: string[],
+): void => {
+    const byId = new Map(bodies.map((body) => [body.id, body]));
+
+    for (const body of bodies) {
+        const parent = byId.get(body.orbit?.parent ?? "");
+
+        if (!parent) continue;
+
+        const expanded = expandBody(parent, presets);
+
+        body.perturbations?.forEach((perturbation, i) => {
+            if (perturbation.type !== "j2") return;
+
+            const path = `${body.id}.perturbations[${i}]`;
+
+            if (!expanded.gravity) {
+                errors.push(
+                    `${path}: the parent ${show(parent.id)} has no gravity`,
+                );
+            } else if (!expanded.rotation) {
+                errors.push(
+                    `${path}: the parent ${show(parent.id)} has no rotation`,
+                );
+            }
+        });
+    }
 };
 
 const validateClouds = (
@@ -463,6 +551,7 @@ const validateBody = (
         model,
         preset,
         rotation,
+        gravity,
     } = input;
     const validId = typeof id === "string" && SLUG.test(id) ? id : null;
     const label = validId ?? `bodies[${index}]`;
@@ -635,6 +724,12 @@ const validateBody = (
             ? validateRotation(`${label}.rotation`, rotation, errors)
             : null;
 
+    // Versions 1 and 2 have no gravity field.
+    const validGravity =
+        version === 3 && gravity !== undefined
+            ? validateGravity(`${label}.gravity`, gravity, errors)
+            : null;
+
     let parsed: Elements | null = null;
 
     if (version === 3) {
@@ -703,6 +798,7 @@ const validateBody = (
             : { appearance: validAppearance }),
         ...(validPreset === undefined ? {} : { preset: validPreset }),
         ...(validRotation ? { rotation: validRotation } : {}),
+        ...(validGravity ? { gravity: validGravity } : {}),
     };
 
     if (validParent === null) {
@@ -894,6 +990,10 @@ export const validateScenario = (
         }
 
         validateTree(inputs, validVersion ?? 2, errors);
+
+        if (options.presets) {
+            validateJ2Parents(bodies, options.presets, errors);
+        }
     }
 
     // Version 3 only: older files get their cloud from `hasSatellites` or the Earth id.

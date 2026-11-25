@@ -256,7 +256,7 @@ export class Scene {
             }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {
-        const result = apply(this.#held.doc, cmd);
+        const result = apply(this.#held.doc, cmd, PRESETS);
         if (!result.ok) return { ok: false, errors: result.errors };
 
         // Not committed here: `removeBody` also moves the focus and selection.
@@ -282,7 +282,7 @@ export class Scene {
     }
 
     #dispatch(cmd: Command): void {
-        const result = apply(this.#held.doc, cmd);
+        const result = apply(this.#held.doc, cmd, PRESETS);
         if (!result.ok) throw new Error(result.errors.join(" "));
 
         this.#commit(result.doc);
