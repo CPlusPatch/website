@@ -1,5 +1,11 @@
-import type { Body, BodyKind, OrbitingBody, Scenario } from "@cpluspatch/orbit";
-import { G, subtreeIds } from "@cpluspatch/orbit";
+import { G } from "@cpluspatch/orbit";
+import {
+    type Body,
+    type BodyKind,
+    type OrbitingBody,
+    type Scenario,
+    subtreeIds,
+} from "@cpluspatch/sim";
 import { type AUnit, aMin, DEGREES, fieldError } from "./editing.ts";
 
 /** What the Add body form collects, in the units it shows. */

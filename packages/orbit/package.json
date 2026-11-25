@@ -4,7 +4,8 @@
     "private": true,
     "type": "module",
     "exports": {
-        ".": "./src/index.ts"
+        ".": "./src/index.ts",
+        "./fixture": "./src/fixture.ts"
     },
     "devDependencies": {
         "@std/assert": "jsr:^1.0.0"

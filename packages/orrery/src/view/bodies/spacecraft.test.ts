@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
 import { assert, assertAlmostEquals, assertExists } from "@std/assert";
 import { Box3, Sphere } from "three";
 import { createSpacecraftModel, disposeModel } from "./spacecraft.ts";

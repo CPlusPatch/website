@@ -6,7 +6,8 @@
  * The caller restyles the labels between the first two, since the "+N" count changes their size.
  */
 
-import type { BodyKind, Vec3 } from "@cpluspatch/orbit";
+import type { Vec3 } from "@cpluspatch/orbit";
+import type { BodyKind } from "@cpluspatch/sim";
 import type { PickPoint } from "../picking.ts";
 import {
     type Dot,

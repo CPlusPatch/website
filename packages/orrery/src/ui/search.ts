@@ -1,4 +1,4 @@
-import type { Body } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import type { AUnit } from "../editing.ts";
 import { formatRange, listUnit } from "../format.ts";
 import { distanceOf } from "../readouts.ts";

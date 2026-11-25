@@ -1,4 +1,4 @@
-import type { Body, BodyKind } from "@cpluspatch/orbit";
+import type { Body, BodyKind } from "@cpluspatch/sim";
 import { ROLE_ICONS, type RoleKey, roleOf } from "../view/bodies/role-icons.ts";
 import { colorOf } from "../view/theme.ts";
 

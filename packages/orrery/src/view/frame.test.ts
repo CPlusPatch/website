@@ -1,12 +1,12 @@
 /// <reference types="deno" />
+import { solarSystem } from "@cpluspatch/catalog";
 import {
     bodyOrientation,
     compile,
     documentOf,
-    solarSystem,
     sortByDepth,
     worldStates,
-} from "@cpluspatch/orbit";
+} from "@cpluspatch/sim";
 import { assert, assertEquals } from "@std/assert";
 import { type Frame, orientationOf, positionOf, velocityOf } from "./frame.ts";
 

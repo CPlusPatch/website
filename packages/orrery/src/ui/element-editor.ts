@@ -1,4 +1,5 @@
-import { AU, type Elements, elementsAt, wrapAngle } from "@cpluspatch/orbit";
+import { AU, type Elements, wrapAngle } from "@cpluspatch/orbit";
+import { elementsAt } from "@cpluspatch/sim";
 import { cue } from "../audio/cues.ts";
 import {
     type AUnit,

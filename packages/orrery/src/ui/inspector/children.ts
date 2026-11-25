@@ -1,4 +1,4 @@
-import type { Body } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import type { World } from "../../world.ts";
 import { showBodyMarker } from "../body-marker.ts";
 import { h } from "../dom.ts";

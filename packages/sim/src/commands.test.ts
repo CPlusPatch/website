@@ -1,0 +1,373 @@
+/// <reference types="deno" />
+
+import { builtInScenarios, solarSystem } from "@cpluspatch/catalog";
+import { applyBurn, type Elements, length, stateAt } from "@cpluspatch/orbit";
+import { assert, assertEquals } from "@std/assert";
+import type { BodyPatch, Command } from "./commands.ts";
+import { apply } from "./commands.ts";
+import type { Document } from "./document.ts";
+import { documentOf } from "./document.ts";
+import { elementsAt } from "./precession.ts";
+import type { Body, OrbitingBody } from "./scenario.ts";
+import { subtreeIds } from "./scenario.ts";
+
+const doc = documentOf(solarSystem);
+
+const orbiting = (id: string): OrbitingBody => {
+    const body = solarSystem.bodies.find((candidate) => candidate.id === id);
+    assert(body?.parent);
+
+    return body;
+};
+
+const ok = (result: ReturnType<typeof apply>): Document => {
+    assert(result.ok, result.ok ? "" : result.errors.join("; "));
+
+    return result.doc;
+};
+
+const errors = (result: ReturnType<typeof apply>): string[] => {
+    assert(!result.ok);
+
+    return result.errors;
+};
+
+const find = (d: Document, id: string): Body | undefined =>
+    d.scenario.bodies.find((body) => body.id === id);
+
+const elements: Elements = {
+    a: 1e7,
+    e: 0.1,
+    i: 0.5,
+    raan: 1,
+    argp: 2,
+    m0: 3,
+    epoch: 100,
+};
+
+const probe: Body = {
+    id: "probe",
+    name: "Probe",
+    kind: "spacecraft",
+    parent: "earth",
+    mu: 0,
+    radius: 5,
+    elements,
+};
+
+Deno.test("add-body appends the body", () => {
+    const next = ok(apply(doc, { type: "add-body", body: probe }));
+
+    assertEquals(next.scenario.bodies.length, doc.scenario.bodies.length + 1);
+    assertEquals(next.scenario.bodies.at(-1), probe);
+    assertEquals(next.timeline, []);
+});
+
+Deno.test("add-body with a taken id returns the validator's error", () => {
+    const [error] = errors(
+        apply(doc, { type: "add-body", body: { ...probe, id: "moon" } }),
+    );
+
+    assert(error?.includes("must be unique"));
+});
+
+Deno.test("add-body with an unknown parent is an error", () => {
+    errors(
+        apply(doc, { type: "add-body", body: { ...probe, parent: "nowhere" } }),
+    );
+});
+
+Deno.test("remove-body drops the body and its subtree", () => {
+    const gone = new Set(subtreeIds(solarSystem, "earth"));
+    const next = ok(apply(doc, { type: "remove-body", id: "earth" }));
+
+    assert(gone.size > 1);
+    assertEquals(
+        next.scenario.bodies.map((body) => body.id),
+        solarSystem.bodies.map((body) => body.id).filter((id) => !gone.has(id)),
+    );
+});
+
+Deno.test("remove-body of an unknown id is an error", () => {
+    assertEquals(errors(apply(doc, { type: "remove-body", id: "nope" })), [
+        'id: there is no body "nope"',
+    ]);
+});
+
+Deno.test("remove-body of the root is an error", () => {
+    assertEquals(errors(apply(doc, { type: "remove-body", id: "sun" })), [
+        'id: "sun" is the root.',
+    ]);
+});
+
+Deno.test("update-body changes the patched fields", () => {
+    const next = ok(
+        apply(doc, {
+            type: "update-body",
+            id: "earth",
+            patch: { name: "Terra", radius: 1, color: "#00f" },
+        }),
+    );
+    const earth = find(next, "earth");
+
+    assertEquals(earth?.name, "Terra");
+    assertEquals(earth?.radius, 1);
+    assertEquals(earth?.color, "#00f");
+    assertEquals(earth?.mu, orbiting("earth").mu);
+});
+
+Deno.test("update-body can't change id, parent or elements", () => {
+    const patch = {
+        name: "Terra",
+        id: "other",
+        parent: "mars",
+        elements,
+        precession: undefined,
+    } as BodyPatch;
+    const next = ok(apply(doc, { type: "update-body", id: "moon", patch }));
+    const moon = find(next, "moon");
+
+    assertEquals(moon?.name, "Terra");
+    assertEquals(moon, { ...orbiting("moon"), name: "Terra" });
+    assertEquals(find(next, "other"), undefined);
+});
+
+Deno.test("update-body keeps the precession", () => {
+    const precessing = solarSystem.bodies.find(
+        (body) => body.parent !== null && body.precession !== undefined,
+    );
+    assert(precessing?.precession);
+
+    const patch = {
+        name: "Renamed",
+        precession: { ...precessing.precession, nodeRate: 1 },
+    } as BodyPatch;
+    const next = ok(
+        apply(doc, { type: "update-body", id: precessing.id, patch }),
+    );
+
+    assertEquals(find(next, precessing.id), {
+        ...precessing,
+        name: "Renamed",
+    });
+});
+
+Deno.test("update-body of an unknown id is an error", () => {
+    assertEquals(
+        errors(
+            apply(doc, {
+                type: "update-body",
+                id: "nope",
+                patch: { name: "x" },
+            }),
+        ),
+        ['id: there is no body "nope"'],
+    );
+});
+
+Deno.test("update-body returns the validator's errors", () => {
+    const [error] = errors(
+        apply(doc, { type: "update-body", id: "earth", patch: { radius: -1 } }),
+    );
+
+    assert(error?.includes("earth.radius"));
+});
+
+Deno.test("set-orbit replaces the elements and drops precession", () => {
+    const precessing = solarSystem.bodies.find(
+        (body) => body.parent !== null && body.precession !== undefined,
+    );
+    assert(precessing);
+
+    const next = ok(
+        apply(doc, {
+            type: "set-orbit",
+            bodyId: precessing.id,
+            t: 0,
+            elements,
+        }),
+    );
+    const body = find(next, precessing.id);
+
+    assertEquals(body?.elements, elements);
+    assertEquals(body?.precession, undefined);
+    assert(!("precession" in (body ?? {})));
+});
+
+Deno.test("set-orbit of an unknown id or the root is an error", () => {
+    assertEquals(
+        errors(
+            apply(doc, { type: "set-orbit", bodyId: "nope", t: 0, elements }),
+        ),
+        ['bodyId: there is no body "nope"'],
+    );
+    assertEquals(
+        errors(
+            apply(doc, { type: "set-orbit", bodyId: "sun", t: 0, elements }),
+        ),
+        ['bodyId: "sun" has no parent to orbit.'],
+    );
+});
+
+Deno.test("set-orbit returns the validator's errors", () => {
+    errors(
+        apply(doc, {
+            type: "set-orbit",
+            bodyId: "earth",
+            t: 0,
+            elements: { ...elements, a: -1 },
+        }),
+    );
+});
+
+Deno.test("schedule-burn gives the elements applyBurn does", () => {
+    const earth = orbiting("earth");
+    const sun = solarSystem.bodies.find((body) => body.id === "sun");
+    const dv = { prograde: 100, normal: 20, radial: -5 };
+    const t = 1e7;
+    const direct = applyBurn(
+        elementsAt(earth, t),
+        (sun?.mu ?? 0) + earth.mu,
+        t,
+        dv,
+    );
+    assert(direct.ok);
+
+    const next = ok(
+        apply(doc, { type: "schedule-burn", bodyId: "earth", t, dv }),
+    );
+
+    assertEquals(find(next, "earth")?.elements, direct.elements);
+    assertEquals(next.timeline, []);
+});
+
+Deno.test("schedule-burn drops precession like set-orbit", () => {
+    const precessing = solarSystem.bodies.find(
+        (body) => body.parent !== null && body.precession !== undefined,
+    );
+    assert(precessing);
+
+    const next = ok(
+        apply(doc, {
+            type: "schedule-burn",
+            bodyId: precessing.id,
+            t: 0,
+            dv: { prograde: 1, normal: 0, radial: 0 },
+        }),
+    );
+
+    assert(!("precession" in (find(next, precessing.id) ?? {})));
+});
+
+Deno.test("schedule-burn that escapes is an error naming the body", () => {
+    const [error, ...rest] = errors(
+        apply(doc, {
+            type: "schedule-burn",
+            bodyId: "earth",
+            t: 0,
+            dv: { prograde: 1e9, normal: 0, radial: 0 },
+        }),
+    );
+
+    assertEquals(rest, []);
+    assert(error?.includes('"earth"'));
+    assert(error?.includes("leave the parent's gravity"));
+});
+
+Deno.test("schedule-burn that stops the body is an error naming the body", () => {
+    const moon = orbiting("moon");
+    const earth = orbiting("earth");
+    const { v } = stateAt(elementsAt(moon, 0), earth.mu + moon.mu, 0);
+
+    const [error, ...rest] = errors(
+        apply(doc, {
+            type: "schedule-burn",
+            bodyId: "moon",
+            t: 0,
+            dv: { prograde: -length(v), normal: 0, radial: 0 },
+        }),
+    );
+
+    assertEquals(rest, []);
+    assert(error?.includes('"moon"'));
+    assert(error?.includes("no orbit to describe"));
+});
+
+Deno.test("schedule-burn of an unknown id or the root is an error", () => {
+    const dv = { prograde: 1, normal: 0, radial: 0 };
+
+    assertEquals(
+        errors(apply(doc, { type: "schedule-burn", bodyId: "nope", t: 0, dv })),
+        ['bodyId: there is no body "nope"'],
+    );
+    assertEquals(
+        errors(apply(doc, { type: "schedule-burn", bodyId: "sun", t: 0, dv })),
+        ['bodyId: "sun" has no orbit to burn on.'],
+    );
+});
+
+Deno.test("schedule-burn with a missing parent is an error", () => {
+    const orphaned: Document = {
+        ...doc,
+        scenario: {
+            ...solarSystem,
+            bodies: [...solarSystem.bodies, { ...probe, parent: "nowhere" }],
+        },
+    };
+
+    assertEquals(
+        errors(
+            apply(orphaned, {
+                type: "schedule-burn",
+                bodyId: "probe",
+                t: 0,
+                dv: { prograde: 1, normal: 0, radial: 0 },
+            }),
+        ),
+        ['bodyId: there is no body "nowhere"'],
+    );
+});
+
+Deno.test("load replaces the document", () => {
+    const other = builtInScenarios.find((scenario) => scenario !== solarSystem);
+    assert(other);
+
+    const next = ok(apply(doc, { type: "load", doc: documentOf(other) }));
+
+    assertEquals(next.scenario, other);
+    assertEquals(next.timeline, []);
+});
+
+Deno.test("load with an invalid scenario returns errors", () => {
+    const bad = documentOf({ ...solarSystem, name: "", bodies: [] });
+
+    assert(errors(apply(doc, { type: "load", doc: bad })).length > 0);
+});
+
+Deno.test("apply doesn't change its input", () => {
+    const before = structuredClone(doc);
+    const dv = { prograde: 10, normal: 0, radial: 0 };
+    const commands: Command[] = [
+        { type: "add-body", body: probe },
+        { type: "remove-body", id: "earth" },
+        { type: "update-body", id: "earth", patch: { name: "Terra" } },
+        { type: "set-orbit", bodyId: "iss", t: 0, elements },
+        { type: "schedule-burn", bodyId: "earth", t: 0, dv },
+        { type: "load", doc: documentOf(solarSystem) },
+        { type: "remove-body", id: "sun" },
+    ];
+
+    for (const cmd of commands) {
+        apply(doc, cmd);
+        assertEquals(doc, before);
+    }
+});
+
+Deno.test("a successful result is a new document", () => {
+    const next = ok(
+        apply(doc, { type: "update-body", id: "earth", patch: {} }),
+    );
+
+    assert(next !== doc);
+    assert(next.scenario.bodies !== doc.scenario.bodies);
+});

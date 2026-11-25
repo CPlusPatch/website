@@ -3,7 +3,7 @@
  * Low-poly models of the Earth satellites, at true size.
  */
 
-import type { Body, Model } from "@cpluspatch/orbit";
+import type { Body, Model } from "@cpluspatch/sim";
 import {
     Box3,
     BoxGeometry,

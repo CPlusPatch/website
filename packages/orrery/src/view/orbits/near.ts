@@ -1,5 +1,9 @@
-import type { System, Vec3 } from "@cpluspatch/orbit";
-import { eccentricAnomalyOf, orbitPointsAt } from "@cpluspatch/orbit";
+import {
+    eccentricAnomalyOf,
+    orbitPointsAt,
+    type Vec3,
+} from "@cpluspatch/orbit";
+import type { System } from "@cpluspatch/sim";
 import { nearAnomalies, trailBackAt } from "../geometry/along-orbit.ts";
 import { SAMPLES, setVertex } from "./line-geometry.ts";
 import type { Orbit, Paint } from "./types.ts";

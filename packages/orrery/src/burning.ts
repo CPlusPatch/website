@@ -1,5 +1,10 @@
-import type { Burn, Elements } from "@cpluspatch/orbit";
-import { apoapsis, periapsis, period } from "@cpluspatch/orbit";
+import {
+    apoapsis,
+    type Burn,
+    type Elements,
+    periapsis,
+    period,
+} from "@cpluspatch/orbit";
 
 /** The step choices of a burn's controls, in m/s. */
 export const STEPS = [1, 10, 100] as const;

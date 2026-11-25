@@ -3,7 +3,7 @@
  * The colours and heights of each body's atmosphere, and the numbers the shell shader takes from them.
  */
 
-import type { Model } from "@cpluspatch/orbit";
+import type { Model } from "@cpluspatch/sim";
 
 export type Atmosphere = {
     /** The height of the top of the glow, in km. */

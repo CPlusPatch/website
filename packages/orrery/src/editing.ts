@@ -1,6 +1,6 @@
-import type { Elements } from "@cpluspatch/orbit";
 import {
     AU,
+    type Elements,
     meanAnomalyAt,
     periapsis,
     reepoch,

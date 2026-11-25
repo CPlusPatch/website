@@ -1,4 +1,5 @@
-import { type Body, type BodyKind, period } from "@cpluspatch/orbit";
+import { period } from "@cpluspatch/orbit";
+import type { Body, BodyKind } from "@cpluspatch/sim";
 
 /** One line in a group. A nested row is a child of the row above it. */
 export type Row = { body: Body; nested: boolean };

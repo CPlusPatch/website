@@ -1,0 +1,16 @@
+{
+    "name": "@cpluspatch/sim",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "dependencies": {
+        "@cpluspatch/orbit": "workspace:*"
+    },
+    "devDependencies": {
+        "@cpluspatch/catalog": "workspace:*",
+        "@std/assert": "jsr:^1.0.0"
+    }
+}

@@ -1,5 +1,6 @@
 /// <reference types="deno" />
-import { type Body, solarSystem } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import type { Body } from "@cpluspatch/sim";
 import { assert, assertEquals } from "@std/assert";
 import { Clock } from "./clock.ts";
 import {

@@ -16,11 +16,8 @@
  *   deno run --allow-read --allow-write packages/orrery/scripts/build-satellites.ts active.csv
  */
 
-import {
-    CURATED_CATALOG_NUMBERS,
-    type OrbitClass,
-    solarSystem,
-} from "@cpluspatch/orbit";
+import { CURATED_CATALOG_NUMBERS, solarSystem } from "@cpluspatch/catalog";
+import type { OrbitClass } from "@cpluspatch/sim";
 import {
     type CatalogueEntry,
     decodeCatalogue,
@@ -111,7 +108,6 @@ await Deno.writeTextFile(
  * What the satellite snapshot holds. Written by \`scripts/build-satellites.ts\`: don't edit by hand.
  */
 
-import type { OrbitClass } from "@cpluspatch/orbit";
 import type { SatelliteGroup } from "./catalogue.ts";
 
 /** The satellites in each group of \`assets/satellites.bin\`, by orbit class. */

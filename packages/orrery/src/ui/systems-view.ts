@@ -1,4 +1,5 @@
-import { AU, type Body } from "@cpluspatch/orbit";
+import { AU } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import type { AUnit } from "../editing.ts";
 import {
     formatDuration,

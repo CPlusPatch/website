@@ -3,8 +3,7 @@
  * The picked orbit's apsides and numbers, drawn as DOM over the scene.
  */
 
-import type { Elements, Vec3 } from "@cpluspatch/orbit";
-import { orbitPoints } from "@cpluspatch/orbit";
+import { type Elements, orbitPoints, type Vec3 } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
 import {
     formatDistance,

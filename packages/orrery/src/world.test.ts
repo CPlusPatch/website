@@ -1,11 +1,7 @@
 /// <reference types="deno" />
-import {
-    type Body,
-    elementsAt,
-    solarSystem,
-    stateAt,
-    subtreeIds,
-} from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import { stateAt } from "@cpluspatch/orbit";
+import { type Body, elementsAt, subtreeIds } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,

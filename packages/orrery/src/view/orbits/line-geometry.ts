@@ -1,5 +1,4 @@
-import type { Elements } from "@cpluspatch/orbit";
-import { orbitPoints } from "@cpluspatch/orbit";
+import { type Elements, orbitPoints } from "@cpluspatch/orbit";
 import { InterleavedBufferAttribute } from "three";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import type { Orbit } from "./types.ts";

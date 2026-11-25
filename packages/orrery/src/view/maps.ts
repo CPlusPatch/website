@@ -3,7 +3,7 @@
  * The surface maps of the bodies, fetched when a body is first shown as a sphere.
  */
 
-import type { Model } from "@cpluspatch/orbit";
+import type { Model } from "@cpluspatch/sim";
 import { ImageLoader, NoColorSpace, SRGBColorSpace, Texture } from "three";
 
 /** The name of a map: a body's model, or one of the extra maps some bodies add. */

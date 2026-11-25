@@ -1,9 +1,10 @@
-import type { Scenario, ScenarioResult } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import {
-    solarSystem,
-    unixMsToJ2000s,
+    type Scenario,
+    type ScenarioResult,
     validateScenario,
-} from "@cpluspatch/orbit";
+} from "@cpluspatch/sim";
 
 /** The `localStorage` key of the saved scenario. */
 export const STORAGE_KEY = "orrery:v1";

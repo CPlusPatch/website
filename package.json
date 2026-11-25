@@ -30,10 +30,12 @@
         "gallery:diff": "node tests/gallery/diff.ts"
     },
     "dependencies": {
+        "@cpluspatch/catalog": "workspace:*",
         "@cpluspatch/destructor": "workspace:*",
         "@cpluspatch/orbit": "workspace:*",
         "@cpluspatch/orrery": "workspace:*",
         "@cpluspatch/palette": "workspace:*",
+        "@cpluspatch/sim": "workspace:*",
         "@cpluspatch/ui": "workspace:*",
         "@gouvfr/dsfr": "~1.14.4",
         "@iconify-json/lucide": "^1.2.138",

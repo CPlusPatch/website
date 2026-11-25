@@ -3,7 +3,7 @@
  * How a body's sphere turns to match its IAU pole and prime meridian.
  */
 
-import type { Orientation } from "@cpluspatch/orbit";
+import type { Orientation } from "@cpluspatch/sim";
 
 /**
  * The rotation of a `SphereGeometry` onto `orientation`, as a column-major matrix for `Matrix4.fromArray`.

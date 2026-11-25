@@ -1,4 +1,4 @@
-import type { OrbitClass } from "@cpluspatch/orbit";
+import type { OrbitClass } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";

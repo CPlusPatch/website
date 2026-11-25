@@ -1,6 +1,5 @@
 /// <reference types="deno" />
-import type { Elements } from "@cpluspatch/orbit";
-import { AU, meanAnomalyAt, stateAt } from "@cpluspatch/orbit";
+import { AU, type Elements, meanAnomalyAt, stateAt } from "@cpluspatch/orbit";
 import { assertAlmostEquals, assertEquals } from "@std/assert";
 import {
     A_MAX,

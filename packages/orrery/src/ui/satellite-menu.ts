@@ -1,9 +1,6 @@
-import {
-    CURATED_CATALOG_NUMBERS,
-    CURATED_NAMES,
-    type OrbitClass,
-    unixMsToJ2000s,
-} from "@cpluspatch/orbit";
+import { CURATED_CATALOG_NUMBERS, CURATED_NAMES } from "@cpluspatch/catalog";
+import { unixMsToJ2000s } from "@cpluspatch/orbit";
+import type { OrbitClass } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { SATELLITE_GROUPS, type SatelliteGroup } from "../catalogue.ts";
 import {

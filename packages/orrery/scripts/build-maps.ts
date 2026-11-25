@@ -226,7 +226,7 @@ const MAPS: { out: string; source: string; alpha?: true; steps?: string[] }[] =
 
 // Kerbol, Ike and Dres have grey sources, so they're coloured here. Kerbol's is dark noise that
 // the game lights with a shader, so it is stretched. Ike and Dres are tinted by their body
-// colours in `kerbol` in `orbit/src/data/fiction.ts`.
+// colours in `kerbol` in `catalog/src/fiction.ts`.
 const KERBOL_COLOURS: Record<
     string,
     Pick<Filled, "levels" | "tint" | "duotone">

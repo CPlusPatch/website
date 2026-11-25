@@ -1,10 +1,5 @@
-import {
-    type Body,
-    length,
-    type Scenario,
-    sub,
-    type Vec3,
-} from "@cpluspatch/orbit";
+import { length, sub, type Vec3 } from "@cpluspatch/orbit";
+import type { Body, Scenario } from "@cpluspatch/sim";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";

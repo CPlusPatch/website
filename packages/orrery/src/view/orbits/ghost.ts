@@ -1,5 +1,5 @@
-import type { Elements, OrbitingBody, Vec3 } from "@cpluspatch/orbit";
-import { orbitPointsAt } from "@cpluspatch/orbit";
+import { type Elements, orbitPointsAt, type Vec3 } from "@cpluspatch/orbit";
+import type { OrbitingBody } from "@cpluspatch/sim";
 import {
     type Color,
     InterleavedBufferAttribute,

@@ -1,24 +1,24 @@
-import type {
-    Body,
-    Burn,
-    Command,
-    Document,
-    Elements,
-    ElementsResult,
-    Scenario,
-    Snapshot,
-    State,
-    System,
-    Vec3,
+import {
+    applyBurn,
+    type Burn,
+    type Elements,
+    type ElementsResult,
+    type State,
+    type Vec3,
 } from "@cpluspatch/orbit";
 import {
     apply,
-    applyBurn,
+    type Body,
+    type Command,
     compile,
+    type Document,
     documentOf,
+    type Scenario,
+    type Snapshot,
+    type System,
     sortByDepth,
     subtreeIds,
-} from "@cpluspatch/orbit";
+} from "@cpluspatch/sim";
 import type { Clock } from "./clock.ts";
 import type { ViewState } from "./view-state.ts";
 

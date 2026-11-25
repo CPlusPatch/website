@@ -1,5 +1,7 @@
 /// <reference types="deno" />
-import { G, solarSystem, subtreeIds } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import { G } from "@cpluspatch/orbit";
+import { subtreeIds } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,

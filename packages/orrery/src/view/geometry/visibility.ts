@@ -3,7 +3,8 @@
  * Which orbits, labels and markers show, by their size and place on screen.
  */
 
-import type { BodyKind, Vec3 } from "@cpluspatch/orbit";
+import type { Vec3 } from "@cpluspatch/orbit";
+import type { BodyKind } from "@cpluspatch/sim";
 
 /** The gap in px under which a marker hides behind a larger body's. */
 export const MARKER_GAP_PX = 6;

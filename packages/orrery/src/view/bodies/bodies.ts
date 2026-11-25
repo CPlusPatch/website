@@ -1,4 +1,5 @@
-import { type Body, sub, type Vec3 } from "@cpluspatch/orbit";
+import { sub, type Vec3 } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import {
     AmbientLight,
     Box3,

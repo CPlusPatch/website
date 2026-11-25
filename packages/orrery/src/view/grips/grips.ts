@@ -4,8 +4,7 @@
  * descending node), drawn as DOM over the scene.
  */
 
-import type { Elements, Vec3 } from "@cpluspatch/orbit";
-import { wrapAngle } from "@cpluspatch/orbit";
+import { type Elements, type Vec3, wrapAngle } from "@cpluspatch/orbit";
 import { type PerspectiveCamera, Vector3 } from "three";
 import { cue } from "../../audio/cues.ts";
 import { dragApsis, type GripTarget, tiltInclination } from "../../editing.ts";

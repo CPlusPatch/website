@@ -3,7 +3,7 @@
  * The Orrery, an interactive model of the solar system drawn with three.js.
  */
 
-import { solarSystem } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import {

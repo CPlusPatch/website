@@ -1,5 +1,6 @@
 /// <reference types="deno" />
-import { type Body, type Model, solarSystem } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import type { Body, Model } from "@cpluspatch/sim";
 import { assert, assertEquals } from "@std/assert";
 import { BODY_COLORS, colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 

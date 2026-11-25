@@ -8,7 +8,9 @@
         "./styles.css": "./src/styles.css"
     },
     "dependencies": {
+        "@cpluspatch/catalog": "workspace:*",
         "@cpluspatch/orbit": "workspace:*",
+        "@cpluspatch/sim": "workspace:*",
         "@cpluspatch/ui": "workspace:*",
         "three": "^0.187.0"
     },

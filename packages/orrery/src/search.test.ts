@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
 import { assertEquals } from "@std/assert";
 import { found, marked, treeOrder } from "./search.ts";
 

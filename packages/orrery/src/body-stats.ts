@@ -1,11 +1,10 @@
-import type { Scenario } from "@cpluspatch/orbit";
+import { dot, G } from "@cpluspatch/orbit";
 import {
-    dot,
     elementsAt,
-    G,
     rotationPeriod,
+    type Scenario,
     spinAxis,
-} from "@cpluspatch/orbit";
+} from "@cpluspatch/sim";
 
 /** What a body is made of and how it spins, in SI units. A value is null when it has none. */
 export type BodyStats = {

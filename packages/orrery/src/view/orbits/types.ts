@@ -1,4 +1,5 @@
-import type { Elements, OrbitingBody } from "@cpluspatch/orbit";
+import type { Elements } from "@cpluspatch/orbit";
+import type { OrbitingBody } from "@cpluspatch/sim";
 import type { InterleavedBufferAttribute } from "three";
 import type { Line2 } from "three/addons/lines/Line2.js";
 import type { LineFade } from "./fade-material.ts";

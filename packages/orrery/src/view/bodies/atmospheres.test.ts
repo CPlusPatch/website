@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { builtInScenarios } from "@cpluspatch/orbit";
+import { builtInScenarios } from "@cpluspatch/catalog";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
 import {
     ATMOSPHERES,

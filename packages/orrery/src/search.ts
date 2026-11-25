@@ -1,4 +1,4 @@
-import type { Body } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 
 /** The bodies with each one's children right after it, siblings in the order given. */
 export const treeOrder = (bodies: readonly Body[]): Body[] => {

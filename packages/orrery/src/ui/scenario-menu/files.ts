@@ -1,4 +1,4 @@
-import type { Scenario } from "@cpluspatch/orbit";
+import type { Scenario } from "@cpluspatch/sim";
 import type { World } from "../../world.ts";
 import { h } from "../dom.ts";
 

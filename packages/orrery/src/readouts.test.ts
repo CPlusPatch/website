@@ -1,5 +1,7 @@
 /// <reference types="deno" />
-import { AU, solarSystem, sortByDepth, worldStates } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import { AU } from "@cpluspatch/orbit";
+import { sortByDepth, worldStates } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,

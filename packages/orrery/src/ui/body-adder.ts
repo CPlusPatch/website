@@ -1,4 +1,6 @@
-import { AU, type Body, type BodyKind, solarSystem } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import { AU } from "@cpluspatch/orbit";
+import type { Body, BodyKind } from "@cpluspatch/sim";
 import { alertClasses, alertPrefix } from "@cpluspatch/ui/components/alert.ts";
 import { type AddField, addErrors, newBody, slugId } from "../adding.ts";
 import { cue } from "../audio/cues.ts";

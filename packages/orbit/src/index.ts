@@ -5,32 +5,23 @@
 
 export type { Burn } from "./burn.ts";
 export { applyBurn } from "./burn.ts";
-export type { BodyPatch, Command, DocumentResult } from "./commands.ts";
-export { apply } from "./commands.ts";
 export {
     AU,
     DAY,
+    deg,
     EARTH_RADIUS,
     G,
     J2000_UNIX_MS,
+    km,
     OBLIQUITY_J2000,
 } from "./constants.ts";
-export { builtInScenarios } from "./data/built-in.ts";
-export { eridani, gargantua, kerbol, tauCeti } from "./data/fiction.ts";
-export {
-    CURATED_CATALOG_NUMBERS,
-    CURATED_NAMES,
-    EARTH_J2,
-} from "./data/satellites.ts";
-export { solarSystem } from "./data/solar-system.ts";
-export type { Document, TimelineEvent } from "./document.ts";
-export { documentOf } from "./document.ts";
 export type { ElementsResult } from "./elements.ts";
 export { elementsFromState, nextApsisTime, reepoch } from "./elements.ts";
 export { equatorialToEcliptic, rotateEquatorialToEcliptic } from "./frames.ts";
 export type { Elements, State } from "./kepler.ts";
 export {
     apoapsis,
+    axes,
     eccentricAnomalyOf,
     meanAnomalyAt,
     meanMotion,
@@ -43,44 +34,6 @@ export {
     trueAnomalyAt,
     wrapAngle,
 } from "./kepler.ts";
-export type { Model } from "./models.ts";
-export { isModel, MODELS } from "./models.ts";
-export type { OrbitClass } from "./orbit-class.ts";
-export { orbitClass } from "./orbit-class.ts";
-export type { Orientation, RotationModel } from "./orientation.ts";
-export {
-    bodyOrientation,
-    orientationFromPole,
-    rotationPeriod,
-    spinAxis,
-} from "./orientation.ts";
-export type { Precession, Turn } from "./precession.ts";
-export {
-    elementsAt,
-    j2Precession,
-    precess,
-    precessionTurns,
-} from "./precession.ts";
-export type {
-    Body,
-    BodyKind,
-    OrbitingBody,
-    RootBody,
-    Scenario,
-    ScenarioResult,
-    SpacecraftRole,
-} from "./scenario.ts";
-export {
-    fillModels,
-    MAX_BODIES,
-    MAX_NAME,
-    sortByDepth,
-    subtreeIds,
-    validateScenario,
-} from "./scenario.ts";
-export type { Snapshot, System } from "./snapshot.ts";
-export { compile } from "./snapshot.ts";
-export { worldStates } from "./system.ts";
 export {
     j2000sToUnixMs,
     MAX_TIME,
@@ -90,4 +43,13 @@ export {
     unixMsToJ2000s,
 } from "./time.ts";
 export type { Vec3 } from "./vec.ts";
-export { add, cross, dot, length, normalize, scale, sub } from "./vec.ts";
+export {
+    add,
+    cross,
+    dot,
+    length,
+    normalize,
+    rotate,
+    scale,
+    sub,
+} from "./vec.ts";

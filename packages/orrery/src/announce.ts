@@ -1,4 +1,4 @@
-import type { Body } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import type { SatelliteEvent } from "./view/scene.ts";
 import type { WorldEvent } from "./world.ts";
 

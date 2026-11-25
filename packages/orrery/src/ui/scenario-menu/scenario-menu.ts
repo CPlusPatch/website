@@ -1,4 +1,4 @@
-import { builtInScenarios } from "@cpluspatch/orbit";
+import { builtInScenarios } from "@cpluspatch/catalog";
 import { cue } from "../../audio/cues.ts";
 import {
     encodeScenario,

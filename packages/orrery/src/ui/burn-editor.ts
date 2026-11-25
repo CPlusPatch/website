@@ -1,5 +1,10 @@
-import type { Burn, Elements } from "@cpluspatch/orbit";
-import { elementsAt, nextApsisTime, period } from "@cpluspatch/orbit";
+import {
+    type Burn,
+    type Elements,
+    nextApsisTime,
+    period,
+} from "@cpluspatch/orbit";
+import { elementsAt } from "@cpluspatch/sim";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
 import { cue } from "../audio/cues.ts";

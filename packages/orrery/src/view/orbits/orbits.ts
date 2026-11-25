@@ -1,5 +1,5 @@
-import type { Body, BodyKind, Elements, Vec3 } from "@cpluspatch/orbit";
-import { precessionTurns } from "@cpluspatch/orbit";
+import type { Elements, Vec3 } from "@cpluspatch/orbit";
+import { type Body, type BodyKind, precessionTurns } from "@cpluspatch/sim";
 import {
     Color,
     CustomBlending,

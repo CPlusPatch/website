@@ -3,18 +3,16 @@
  * The satellite snapshot as a swarm of points: propagation in bulk, with no DOM.
  */
 
+import { EARTH_J2 } from "@cpluspatch/catalog";
 import {
     DAY,
-    EARTH_J2,
     EARTH_RADIUS,
-    j2Precession,
     OBLIQUITY_J2000,
-    type OrbitClass,
-    orbitClass,
     solveKepler,
     unixMsToJ2000s,
     wrapAngle,
 } from "@cpluspatch/orbit";
+import { j2Precession, type OrbitClass, orbitClass } from "@cpluspatch/sim";
 import {
     type Catalogue,
     SATELLITE_GROUPS,

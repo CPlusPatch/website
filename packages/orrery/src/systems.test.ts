@@ -1,5 +1,7 @@
 /// <reference types="deno" />
-import { AU, type Body, eridani, kerbol, solarSystem } from "@cpluspatch/orbit";
+import { eridani, kerbol, solarSystem } from "@cpluspatch/catalog";
+import { AU } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,

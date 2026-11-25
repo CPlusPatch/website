@@ -1,4 +1,4 @@
-import type { Body } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import {
     type Group,
     type Mesh,

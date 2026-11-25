@@ -1,4 +1,4 @@
-import type { BodyKind } from "@cpluspatch/orbit";
+import type { BodyKind } from "@cpluspatch/sim";
 import type { RoleKey } from "../view/bodies/role-icons.ts";
 
 export const KIND_LABELS: Record<BodyKind, string> = {

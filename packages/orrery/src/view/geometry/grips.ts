@@ -3,8 +3,7 @@
  * The grips of an edited orbit: the node, a point on the orbit, the axes and the drag notes.
  */
 
-import type { Elements, Vec3 } from "@cpluspatch/orbit";
-import { wrapAngle } from "@cpluspatch/orbit";
+import { type Elements, type Vec3, wrapAngle } from "@cpluspatch/orbit";
 import type { Rect } from "./labels.ts";
 import { NOTE_PAD_PX, noteBox } from "./notes.ts";
 

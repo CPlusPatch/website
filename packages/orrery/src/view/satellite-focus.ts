@@ -3,8 +3,8 @@
  * The catalogue satellite that is selected or focused in the view.
  */
 
-import type { Body } from "@cpluspatch/orbit";
 import { EARTH_RADIUS, type Vec3 } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import type { PerspectiveCamera } from "three";
 import type { SatelliteFacts } from "../swarm.ts";
 import type { World, WorldEvent } from "../world.ts";

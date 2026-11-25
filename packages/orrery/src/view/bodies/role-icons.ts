@@ -6,7 +6,7 @@
  * satellite, so a role reads as the one part it adds.
  */
 
-import type { Body, SpacecraftRole } from "@cpluspatch/orbit";
+import type { Body, SpacecraftRole } from "@cpluspatch/sim";
 
 /** A spacecraft's role, or "other" when it has none. */
 export type RoleKey = SpacecraftRole | "other";

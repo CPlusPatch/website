@@ -1,5 +1,6 @@
 /// <reference types="deno" />
-import { solarSystem, validateScenario } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import { validateScenario } from "@cpluspatch/sim";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import {
     decodeScenario,

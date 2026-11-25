@@ -1,4 +1,4 @@
-import type { Scenario } from "@cpluspatch/orbit";
+import type { Scenario } from "@cpluspatch/sim";
 import { type SavedScenario, startTime } from "../../persistence.ts";
 import { dateText } from "../../time-text.ts";
 import { h } from "../dom.ts";

@@ -1,5 +1,7 @@
 /// <reference types="deno" />
-import { compile, documentOf, solarSystem, type Vec3 } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
+import type { Vec3 } from "@cpluspatch/orbit";
+import { compile, documentOf } from "@cpluspatch/sim";
 import { assert, assertAlmostEquals, assertExists } from "@std/assert";
 import { orientationOf } from "./frame.ts";
 import { spinMatrix } from "./spin.ts";

@@ -1,4 +1,5 @@
-import { type Body, unixMsToJ2000s } from "@cpluspatch/orbit";
+import { unixMsToJ2000s } from "@cpluspatch/orbit";
+import type { Body } from "@cpluspatch/sim";
 import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import type { SatelliteGroup } from "../catalogue.ts";

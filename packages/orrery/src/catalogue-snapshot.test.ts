@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/orbit";
+import { solarSystem } from "@cpluspatch/catalog";
 import { assertEquals } from "@std/assert";
 import { decodeCatalogue, SATELLITE_GROUPS } from "./catalogue.ts";
 import { GROUP_CLASSES, SNAPSHOT_EPOCH } from "./catalogue-snapshot.ts";

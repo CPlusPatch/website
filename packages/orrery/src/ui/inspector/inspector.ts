@@ -1,9 +1,5 @@
-import {
-    apoapsis,
-    elementsAt,
-    periapsis,
-    trueAnomalyAt,
-} from "@cpluspatch/orbit";
+import { apoapsis, periapsis, trueAnomalyAt } from "@cpluspatch/orbit";
+import { elementsAt } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";

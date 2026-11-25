@@ -1,12 +1,12 @@
+import { EARTH_J2 } from "@cpluspatch/catalog";
 import {
     DAY,
-    EARTH_J2,
     EARTH_RADIUS,
     G,
-    j2Precession,
     OBLIQUITY_J2000,
     unixMsToJ2000s,
 } from "@cpluspatch/orbit";
+import { j2Precession } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,

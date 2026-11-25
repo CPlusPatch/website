@@ -9,7 +9,7 @@ import {
     type Model,
     type OrbitClass,
     orbitClass,
-} from "@cpluspatch/orbit";
+} from "@cpluspatch/sim";
 import { Color, SRGBColorSpace } from "three";
 
 /** The colours of a scene, which come from the `--orrery-*` tokens. */

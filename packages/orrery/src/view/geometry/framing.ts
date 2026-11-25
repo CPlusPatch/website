@@ -3,7 +3,8 @@
  * The camera's distances, fit and focus moves, and the shift of the view's centre.
  */
 
-import type { Body, OrbitingBody, Scenario, Vec3 } from "@cpluspatch/orbit";
+import type { Vec3 } from "@cpluspatch/orbit";
+import type { Body, OrbitingBody, Scenario } from "@cpluspatch/sim";
 
 /** A camera distance in km and the floating origin it orbits, in metres. */
 export type Pose = { distance: number; position: Vec3 };

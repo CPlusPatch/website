@@ -2446,6 +2446,13 @@
       ]
     },
     "members": {
+      "packages/catalog": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@jsr/std__assert@1"
+          ]
+        }
+      },
       "packages/destructor": {
         "packageJson": {
           "dependencies": [
@@ -2472,6 +2479,13 @@
         }
       },
       "packages/palette": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@jsr/std__assert@1"
+          ]
+        }
+      },
+      "packages/sim": {
         "packageJson": {
           "dependencies": [
             "npm:@jsr/std__assert@1"

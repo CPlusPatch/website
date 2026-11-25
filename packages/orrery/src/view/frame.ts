@@ -1,4 +1,5 @@
-import type { Orientation, Snapshot, System, Vec3 } from "@cpluspatch/orbit";
+import type { Vec3 } from "@cpluspatch/orbit";
+import type { Orientation, Snapshot, System } from "@cpluspatch/sim";
 
 /** One evaluation of the scenario: the compiled system and its snapshot at one time. */
 export type Frame = { system: System; snapshot: Snapshot };

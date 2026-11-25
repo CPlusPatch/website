@@ -1,13 +1,14 @@
-import type { Body, Scenario, State } from "@cpluspatch/orbit";
 import {
     apoapsis,
     length,
     nextApsisTime,
     periapsis,
     period,
+    type State,
     sub,
     trueAnomalyAt,
 } from "@cpluspatch/orbit";
+import type { Body, Scenario } from "@cpluspatch/sim";
 
 /** A body's orbit around its parent, in SI units and radians. */
 export type Readouts = {
