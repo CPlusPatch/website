@@ -334,16 +334,6 @@ export const createBodies = (
                 if (big) {
                     if (options.maps && !entry.mapped && !model) {
                         entry.mapped = true;
-                        if (body.preset !== undefined) {
-                            maps.load(body.preset, (map) => {
-                                sphere.material.map = map;
-                                sphere.material.color.set(0xffffff);
-                                // The Sun is its own light, so it keeps its colours.
-                                sphere.material.toneMapped =
-                                    !styleOf(body).corona;
-                                sphere.material.needsUpdate = true;
-                            });
-                        }
                         entry.extras.load(maps);
                     }
 
@@ -525,15 +515,12 @@ export const createBodies = (
             if (hoverId === id) hoverId = null;
             if (drawn?.id === id) drawn = null;
 
-            // Two bodies can share a preset, so its map stays while another body has it.
-            const preset = removed?.body.preset;
-            if (
-                preset &&
-                !entries.some((entry) => entry.body.preset === preset)
-            ) {
-                maps.release(preset);
-                // Saturn's rings are a map of their own, which a later Saturn needs again.
-                if (preset === "saturn") maps.release("saturn-ring");
+            // Two bodies can share a map, so it stays while another body uses it.
+            if (removed) {
+                const kept = new Set(entries.flatMap((entry) => entry.mapKeys));
+                for (const key of removed.mapKeys) {
+                    if (!kept.has(key)) maps.release(key);
+                }
             }
         },
         dispose: () => {

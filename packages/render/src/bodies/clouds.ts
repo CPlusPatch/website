@@ -4,8 +4,8 @@ import { applyPatches, type Extra } from "./patches.ts";
 /** The shell's size against the surface, enough to clear it without floating. */
 const SHELL = 1.002;
 
-/** A cloud shell on `sphere`, fixed to the surface, shown once its map loads. */
-export const cloudsExtra = (sphere: Mesh): Extra => {
+/** A cloud shell on `sphere`, fixed to the surface, shown once `map` loads. */
+export const cloudsExtra = (map: string, sphere: Mesh): Extra => {
     const material = new MeshStandardMaterial({
         color: 0xffffff,
         roughness: 1,
@@ -31,7 +31,7 @@ export const cloudsExtra = (sphere: Mesh): Extra => {
     return {
         patches: [],
         load: (maps) =>
-            maps.load("earth-clouds", (texture) => {
+            maps.load(map, (texture) => {
                 material.alphaMap = texture;
                 material.needsUpdate = true;
                 shell.visible = true;

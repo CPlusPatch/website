@@ -4,6 +4,7 @@
  */
 
 import type { Body } from "@cpluspatch/sim";
+import type { Appearance } from "./appearance.ts";
 
 /** A marker drawn as a plain shape. */
 export type MarkerShape = "disc" | "ring" | "diamond" | "triangle" | "teardrop";
@@ -52,8 +53,8 @@ export type TagStyle = {
     adder: boolean;
     /** Whether a list says "moons" for a run of these. */
     isMoon: boolean;
-    /** Whether it glows: the star material, its corona and no tone mapping. */
-    corona: boolean;
+    /** The appearance fields the body has unless its preset or its own sets them. */
+    appearance: Appearance;
     /** Whether it has a 3D craft mesh. */
     craftMesh: boolean;
 };
@@ -81,7 +82,7 @@ const base: TagStyle = {
     canParent: true,
     adder: false,
     isMoon: false,
-    corona: false,
+    appearance: {},
     craftMesh: false,
 };
 
@@ -116,7 +117,7 @@ export const TAG_STYLES: Readonly<Record<string, TagStyle>> = {
         labelTier: 2,
         major: true,
         reach: true,
-        corona: true,
+        appearance: { glow: true },
     },
     planet: {
         ...base,

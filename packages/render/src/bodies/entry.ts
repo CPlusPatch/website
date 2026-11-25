@@ -11,10 +11,11 @@ import {
     SpriteMaterial,
 } from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+import { appearanceOf } from "../appearance.ts";
 import type { Placement } from "../geometry/labels.ts";
+import { createExtras, mapKeys } from "../layers/index.ts";
 import { styleOf } from "../tags.ts";
 import { createCorona } from "./corona.ts";
-import { createExtras } from "./extras.ts";
 import { CENTERS } from "./labels.ts";
 import { type Shape, shapeOf } from "./markers.ts";
 import type { Extra } from "./patches.ts";
@@ -43,8 +44,10 @@ export type Entry = {
     offset: number;
     /** Where the label sits, as a class modifier. */
     side: Placement;
-    /** What the sphere has beyond its map: an atmosphere, and Earth's lights and clouds or Saturn's rings. */
+    /** What the sphere has beyond its colour: its map and whatever its appearance's layers add. */
     extras: Extra;
+    /** The keys of the maps `extras` loads. Kept from creation, since an edit replaces `body`. */
+    mapKeys: string[];
     /** Whether the body's map has been asked for. */
     mapped: boolean;
 };
@@ -59,10 +62,11 @@ export const createEntry = (
 ): Entry => {
     const group = new Group();
     const style = styleOf(body);
+    const appearance = appearanceOf(body);
 
     const sphere = new Mesh(
         geometry,
-        style.corona
+        appearance.glow
             ? createStarMaterial(color(body))
             : new MeshStandardMaterial({
                   color: color(body),
@@ -83,7 +87,7 @@ export const createEntry = (
             toneMapped: false,
         }),
     );
-    const corona = style.corona
+    const corona = appearance.glow
         ? createCorona(coronaTexture, color(body))
         : null;
 
@@ -108,7 +112,7 @@ export const createEntry = (
 
     group.add(sphere, marker, label);
     if (corona) group.add(corona);
-    const extras = createExtras(body, group, sphere);
+    const extras = createExtras(body, appearance, group, sphere);
 
     return {
         body,
@@ -126,6 +130,7 @@ export const createEntry = (
         offset: -1,
         side: "right",
         extras,
+        mapKeys: mapKeys(appearance),
         mapped: false,
     };
 };

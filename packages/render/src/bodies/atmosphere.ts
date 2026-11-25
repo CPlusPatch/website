@@ -1,4 +1,3 @@
-import type { Body } from "@cpluspatch/sim";
 import {
     AddEquation,
     BackSide,
@@ -13,7 +12,7 @@ import {
     Vector3,
     ZeroFactor,
 } from "three";
-import { shellFor } from "./atmospheres.ts";
+import { type Atmosphere, shellFor } from "./atmospheres.ts";
 import type { Extra } from "./patches.ts";
 
 /** A tuning knob: scales the whole glow. */
@@ -31,7 +30,7 @@ const FORWARD = 3;
 /** A tuning knob: the most the backlight adds, as a share of the way from the glow to 1. */
 const BACKLIT_MAX = 0.4;
 
-/** After Earth's clouds, which draw at 0, and before Saturn's rings, at 1. */
+/** After cloud shells, which draw at 0, and before rings, at 1. */
 const RENDER_ORDER = 0.5;
 
 const VERTEX = /* glsl */ `
@@ -133,8 +132,12 @@ void main() {
  * An atmosphere for `sphere`, drawn as a shell around it. Null for a body that has none. The
  * shell is shown once the maps are asked for, so a body without maps has no atmosphere.
  */
-export const atmosphereExtra = (body: Body, sphere: Mesh): Extra | null => {
-    const atmosphere = shellFor(body.preset, body.mass.radius / 1000);
+export const atmosphereExtra = (
+    model: Atmosphere | undefined,
+    radiusKm: number,
+    sphere: Mesh,
+): Extra | null => {
+    const atmosphere = shellFor(model, radiusKm);
     if (!atmosphere) return null;
 
     // `Color` converts sRGB hex to the linear working space.

@@ -6,7 +6,7 @@
 import { ImageLoader, NoColorSpace, SRGBColorSpace, Texture } from "three";
 
 /**
- * Keyed by a body's preset, or by one of the extra maps some bodies add.
+ * Keyed by the map names that built-in presets give their bodies' appearance.
  * Vite only bundles an asset whose `new URL` is a literal, so each map is spelt out.
  */
 const MAPS: Readonly<Record<string, string>> = {
@@ -61,12 +61,15 @@ const MAPS: Readonly<Record<string, string>> = {
         .href,
 };
 
+/** Whether there's a map `id`. */
+export const hasMap = (id: string): boolean => Object.hasOwn(MAPS, id);
+
 /** The image of map `id`, or `null` when there's no such map. */
 export const loadMapImage = (
     id: string,
     signal: AbortSignal,
 ): Promise<HTMLImageElement> | null => {
-    const url = Object.hasOwn(MAPS, id) ? MAPS[id] : undefined;
+    const url = hasMap(id) ? MAPS[id] : undefined;
     if (url === undefined) return null;
 
     // `ImageLoader` can't be aborted, so a late image is dropped here.

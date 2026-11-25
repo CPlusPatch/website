@@ -1,4 +1,3 @@
-import type { Body } from "@cpluspatch/sim";
 import {
     BufferAttribute,
     DoubleSide,
@@ -10,6 +9,7 @@ import {
     Vector2,
     Vector3,
 } from "three";
+import type { Rings } from "../appearance.ts";
 import { ringSpan, ringUvs } from "../geometry/rings.ts";
 import { applyPatches, type Extra } from "./patches.ts";
 
@@ -28,14 +28,19 @@ const FILL = 0.12;
 /** How much of the sky shows through the rings where Saturn's shadow falls on them. */
 const SHADOW_SEE_THROUGH = 0.6;
 
-/** Saturn's rings, lit on both faces, with their shadow on Saturn and Saturn's on them. */
-export const ringsExtra = (body: Body, group: Group, sphere: Mesh): Extra => {
-    const { inner, outer } = ringSpan(body.mass.radius);
+/** A body's rings, lit on both faces, with their shadow on the body and its own on them. */
+export const ringsExtra = (
+    rings: Rings,
+    radius: number,
+    group: Group,
+    sphere: Mesh,
+): Extra => {
+    const { inner, outer } = ringSpan(rings.inner, rings.outer, radius);
     // Uniforms shared by both materials, in view space and with the sphere's own units.
     const shared = {
         saturnCenter: { value: new Vector3() },
         saturnPole: { value: new Vector3() },
-        saturnRadius: { value: body.mass.radius / 1000 },
+        saturnRadius: { value: radius / 1000 },
         ringSpan: { value: new Vector2(inner, outer) },
     };
     const ringShadowMap: { value: Texture | null } = { value: null };
@@ -119,7 +124,7 @@ export const ringsExtra = (body: Body, group: Group, sphere: Mesh): Extra => {
             },
         ],
         load: (maps) =>
-            maps.load("saturn-ring", (texture) => {
+            maps.load(rings.map, (texture) => {
                 // Anisotropic filtering beaded the fine radial detail of the B ring.
                 texture.anisotropy = 1;
                 material.map = texture;

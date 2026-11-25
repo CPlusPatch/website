@@ -4,8 +4,8 @@ import type { Extra } from "./patches.ts";
 /** How bright the city lights are in the dark. */
 const STRENGTH = 0.6;
 
-/** City lights on Earth's night side, which fade in across the terminator once the map loads. */
-export const nightExtra = (): Extra => {
+/** City lights on a body's night side, which fade in across the terminator once `map` loads. */
+export const nightExtra = (map: string): Extra => {
     const nightMap: { value: Texture | null } = { value: null };
     // A uniform instead of a define, so the program isn't rebuilt when the map arrives.
     const nightOn = { value: 0 };
@@ -28,7 +28,7 @@ export const nightExtra = (): Extra => {
             },
         ],
         load: (maps) =>
-            maps.load("earth-night", (texture) => {
+            maps.load(map, (texture) => {
                 nightMap.value = texture;
                 nightOn.value = 1;
             }),

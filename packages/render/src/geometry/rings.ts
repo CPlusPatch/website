@@ -1,16 +1,16 @@
 /**
  * @module
- * The maths of Saturn's ring strip, without any three.js in it.
+ * The maths of a ring strip, without any three.js in it.
  */
 
-/** Where the strip in `saturn-ring.webp` starts and ends, in km from Saturn's centre. */
-export const RING_INNER_KM = 74_500;
-export const RING_OUTER_KM = 140_220;
-
-/** The strip's inner and outer edge in Saturn radii, for a radius in m. */
-export const ringSpan = (radius: number): { inner: number; outer: number } => ({
-    inner: (RING_INNER_KM * 1000) / radius,
-    outer: (RING_OUTER_KM * 1000) / radius,
+/** The strip's inner and outer edge in body radii, for edges and a radius in m. */
+export const ringSpan = (
+    inner: number,
+    outer: number,
+    radius: number,
+): { inner: number; outer: number } => ({
+    inner: inner / radius,
+    outer: outer / radius,
 });
 
 /** Where a radius falls along the strip: 0 at the inner edge, 1 at the outer. */

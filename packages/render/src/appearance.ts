@@ -4,28 +4,26 @@
  */
 
 import type { AppearanceValidator, Body } from "@cpluspatch/sim";
+import type { Atmosphere } from "./bodies/atmospheres.ts";
+import { type FieldValidator, HEX_COLOR, show } from "./layers/fields.ts";
+import { LAYERS } from "./layers/index.ts";
+import { styleOf } from "./tags.ts";
 
-/** The renderer's view of `Body.appearance`. */
-export type Appearance = { color?: string };
+/** A ring strip: its map, and its edges in m from the body's centre. */
+export type Rings = { map: string; inner: number; outer: number };
 
-// Same pattern as sim's, which keeps its copy for the version 1 and 2 migration.
-const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
-
-// Same wording as sim's scenario errors.
-const show = (value: unknown): string => {
-    if (typeof value === "number") {
-        return String(value);
-    }
-
-    if (value === null) {
-        return "null";
-    }
-
-    return typeof value === "string" ? JSON.stringify(value) : typeof value;
+/** The renderer's view of `Body.appearance`. Each field after `color` belongs to a layer. */
+export type Appearance = {
+    color?: string;
+    /** The surface map's key. */
+    map?: string;
+    /** Whether it's drawn as a star: its own light, a corona and no tone mapping. */
+    glow?: boolean;
+    atmosphere?: Atmosphere;
+    clouds?: { map: string };
+    nightSide?: { map: string };
+    rings?: Rings;
 };
-
-/** Checks one field of an `appearance` object, which is present. Pushes its errors. */
-type FieldValidator = (path: string, value: unknown, errors: string[]) => void;
 
 const validateColor: FieldValidator = (path, color, errors) => {
     if (typeof color !== "string") {
@@ -40,6 +38,9 @@ const validateColor: FieldValidator = (path, color, errors) => {
 /** The validator of each appearance field the renderer knows. Other fields are ignored. */
 const FIELDS: Readonly<Record<string, FieldValidator>> = {
     color: validateColor,
+    ...Object.fromEntries(
+        LAYERS.map(({ field, validate }) => [field, validate]),
+    ),
 };
 
 /** Checks the fields of an `appearance` object that sim already knows is one. */
@@ -57,6 +58,8 @@ export const validateAppearance: AppearanceValidator = (
     return input;
 };
 
-/** The appearance of `body`, which the loader has validated. */
-export const appearanceOf = (body: Body): Appearance =>
-    (body.appearance as Appearance | undefined) ?? {};
+/** The appearance of `body`, which the loader has validated. Its tag's defaults sit under the body's own. */
+export const appearanceOf = (body: Body): Appearance => ({
+    ...styleOf(body).appearance,
+    ...(body.appearance as Appearance | undefined),
+});
