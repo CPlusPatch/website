@@ -1,5 +1,5 @@
 import type { Burn, ElementsResult } from "@cpluspatch/orbit";
-import type { Command, Document, System } from "@cpluspatch/sim";
+import type { Command, Document, Scenario, System } from "@cpluspatch/sim";
 import { previewBurn } from "../burning.ts";
 import type { World } from "../world.ts";
 
@@ -52,6 +52,11 @@ export class DocumentStore {
     /** The orbit body `id` would have after burning `dv` at `t`. Changes nothing. */
     previewBurn(id: string, t: number, dv: Burn): ElementsResult {
         return previewBurn(this.doc.scenario, this.system, id, t, dv);
+    }
+
+    /** Replaces the whole scenario and sets the clock to `t`. */
+    load(scenario: Scenario, t: number): void {
+        this.#world.load(scenario, t);
     }
 
     /** Stops following the world. */
