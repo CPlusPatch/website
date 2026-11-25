@@ -232,10 +232,11 @@ Deno.test("loading a scenario resets the selection and focus, and sets the clock
     world.focus("earth");
     const events: WorldEvent[] = [];
     world.on((e) => events.push(e));
+    const gone = new Set(subtreeIds(solarSystem, "mars"));
     const next = {
         ...solarSystem,
         name: "Next",
-        bodies: solarSystem.bodies.filter((body) => body.id !== "mars"),
+        bodies: solarSystem.bodies.filter((body) => !gone.has(body.id)),
     };
 
     world.load(next, 500);

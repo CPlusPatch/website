@@ -1,6 +1,8 @@
 import type {
     Body,
     Burn,
+    Command,
+    Document,
     Elements,
     ElementsResult,
     Scenario,
@@ -10,15 +12,15 @@ import type {
     Vec3,
 } from "@cpluspatch/orbit";
 import {
+    apply,
     applyBurn,
     compile,
     documentOf,
-    elementsAt,
     sortByDepth,
     subtreeIds,
-    validateScenario,
 } from "@cpluspatch/orbit";
 import type { Clock } from "./clock.ts";
+import type { ViewState } from "./view-state.ts";
 
 /** What a listener of a `World` is told about. */
 export type WorldEvent =
@@ -32,11 +34,9 @@ export type WorldEvent =
 
 /** The scenario, the clock, what's focused and what's selected. */
 export class World {
-    readonly clock: Clock;
-    focused: string;
-    selected: string | null = null;
+    readonly view: ViewState;
 
-    #scenario: Scenario;
+    #doc: Document;
     #order: Body[];
     #listeners = new Set<(e: WorldEvent) => void>();
     #cache: { t: number; states: Map<string, State> } | null = null;
@@ -46,15 +46,26 @@ export class World {
         const root = scenario.bodies.find((body) => body.parent === null);
         if (!root) throw new Error("The scenario has no root body.");
 
-        this.clock = clock;
-        this.#scenario = scenario;
+        this.view = { focused: root.id, selected: null, clock };
+        this.#doc = documentOf(scenario);
         this.#order = sortByDepth(scenario);
-        this.focused = root.id;
+    }
+
+    get clock(): Clock {
+        return this.view.clock;
+    }
+
+    get focused(): string {
+        return this.view.focused;
+    }
+
+    get selected(): string | null {
+        return this.view.selected;
     }
 
     /** The bodies and their orbits. */
     get scenario(): Scenario {
-        return this.#scenario;
+        return this.#doc.scenario;
     }
 
     /** The bodies with every parent before its children. */
@@ -73,7 +84,7 @@ export class World {
 
     /** The scenario compiled for evaluation. Compiled on first use and again after a change. */
     get system(): System {
-        this.#system ??= compile(documentOf(this.scenario));
+        this.#system ??= compile(this.#doc);
 
         return this.#system;
     }
@@ -110,14 +121,14 @@ export class World {
     focus(id: string): void {
         this.#check(id);
 
-        this.focused = id;
+        this.view.focused = id;
         this.#emit({ type: "focus", id });
     }
 
     select(id: string | null): void {
         if (id !== null) this.#check(id);
 
-        this.selected = id;
+        this.view.selected = id;
         this.#emit({ type: "selection", id });
     }
 
@@ -134,25 +145,16 @@ export class World {
         const root = scenario.bodies.find((body) => body.parent === null);
         if (!root) throw new Error("The scenario has no root body.");
 
-        this.#scenario = scenario;
-        this.#order = sortByDepth(scenario);
-        this.#cache = null;
-        this.#system = null;
-        this.selected = null;
-        this.focused = root.id;
+        this.#dispatch({ type: "load", doc: documentOf(scenario) });
+        this.view.selected = null;
+        this.view.focused = root.id;
         this.clock.set(t);
         this.#emit({ type: "scenario" });
     }
 
     /** Adds `body` to the scenario, or throws why it can't. Keeps the focus and selection. */
     addBody(body: Body): void {
-        const result = validateScenario({
-            ...this.#scenario,
-            bodies: [...this.#scenario.bodies, body],
-        });
-        if (!result.ok) throw new Error(result.errors.join(" "));
-
-        this.#replace(result.scenario);
+        this.#dispatch({ type: "add-body", body });
         this.#emit({ type: "bodies", added: [body.id], removed: [] });
     }
 
@@ -160,25 +162,21 @@ export class World {
     removeBody(id: string): void {
         this.#check(id);
 
-        const body = this.#scenario.bodies.find(
+        const body = this.scenario.bodies.find(
             (candidate) => candidate.id === id,
         );
         if (!body?.parent) throw new Error(`"${id}" is the root.`);
 
-        const removed = subtreeIds(this.#scenario, id);
+        const removed = subtreeIds(this.scenario, id);
         const gone = new Set(removed);
 
-        this.#replace({
-            ...this.#scenario,
-            bodies: this.#scenario.bodies.filter(
-                (candidate) => !gone.has(candidate.id),
-            ),
-        });
+        this.#dispatch({ type: "remove-body", id });
 
-        const refocus = gone.has(this.focused);
-        const deselect = this.selected !== null && gone.has(this.selected);
-        if (refocus) this.focused = body.parent;
-        if (deselect) this.selected = null;
+        const refocus = gone.has(this.view.focused);
+        const deselect =
+            this.view.selected !== null && gone.has(this.view.selected);
+        if (refocus) this.view.focused = body.parent;
+        if (deselect) this.view.selected = null;
 
         try {
             this.#emit({ type: "bodies", added: [], removed });
@@ -186,11 +184,11 @@ export class World {
             // A view that fails to draw restores the old scenario and its focus, which this mustn't undo.
             const parent = body.parent;
             try {
-                if (refocus && this.focused === parent) {
+                if (refocus && this.view.focused === parent) {
                     this.#emit({ type: "focus", id: parent });
                 }
             } finally {
-                if (deselect && this.selected === null) {
+                if (deselect && this.view.selected === null) {
                     this.#emit({ type: "selection", id: null });
                 }
             }
@@ -199,41 +197,30 @@ export class World {
 
     /** Replaces the orbit of body `id` with a fixed Kepler orbit, dropping any precession. */
     setElements(id: string, el: Elements): void {
-        const body = this.#scenario.bodies.find(
-            (candidate) => candidate.id === id,
-        );
-        if (!body) throw new Error(`There is no body "${id}".`);
-        if (body.parent === null)
-            throw new Error(`"${id}" has no parent to orbit.`);
-
-        this.#replace({
-            ...this.#scenario,
-            bodies: this.#scenario.bodies.map((candidate) => {
-                if (candidate !== body) return candidate;
-
-                const { precession: _dropped, ...fixed } = body;
-
-                return { ...fixed, elements: el };
-            }),
+        this.#dispatch({
+            type: "set-orbit",
+            bodyId: id,
+            t: this.view.clock.t,
+            elements: el,
         });
         this.#emit({ type: "body", id });
     }
 
     /** The orbit body `id` would have after burning `dv` now. Changes nothing. */
     previewBurn(id: string, dv: Burn): ElementsResult {
-        const body = this.#scenario.bodies.find(
+        const body = this.scenario.bodies.find(
             (candidate) => candidate.id === id,
         );
         if (!body) throw new Error(`There is no body "${id}".`);
         if (body.parent === null)
             throw new Error(`"${id}" has no orbit to burn on.`);
-        const parent = this.#scenario.bodies.find(
+        const parent = this.scenario.bodies.find(
             (candidate) => candidate.id === body.parent,
         );
         if (!parent) throw new Error(`There is no body "${body.parent}".`);
 
         return applyBurn(
-            elementsAt(body, this.clock.t),
+            this.system.elementsAt(id, this.clock.t),
             parent.mu + body.mu,
             this.clock.t,
             dv,
@@ -248,14 +235,23 @@ export class World {
         const result = this.previewBurn(id, dv);
         if (!result.ok) return result;
 
-        this.setElements(id, result.elements);
+        this.#dispatch({
+            type: "schedule-burn",
+            bodyId: id,
+            t: this.clock.t,
+            dv,
+        });
+        this.#emit({ type: "body", id });
 
         return { ok: true };
     }
 
-    #replace(scenario: Scenario): void {
-        this.#scenario = scenario;
-        this.#order = sortByDepth(scenario);
+    #dispatch(cmd: Command): void {
+        const result = apply(this.#doc, cmd);
+        if (!result.ok) throw new Error(result.errors.join(" "));
+
+        this.#doc = result.doc;
+        this.#order = sortByDepth(result.doc.scenario);
         this.#cache = null;
         this.#system = null;
     }
