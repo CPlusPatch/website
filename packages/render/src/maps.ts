@@ -3,14 +3,13 @@
  * The surface maps of the bodies, fetched when a body is first shown as a sphere.
  */
 
-import type { Model } from "@cpluspatch/sim";
 import { ImageLoader, NoColorSpace, SRGBColorSpace, Texture } from "three";
 
-/** The name of a map: a body's preset, or one of the extra maps some bodies add. */
-type MapName = Model | "earth-night" | "earth-clouds" | "saturn-ring";
-
-/** Vite only bundles an asset whose `new URL` is a literal, so each map is spelt out. */
-const MAPS: Partial<Record<MapName, string>> = {
+/**
+ * Keyed by a body's preset, or by one of the extra maps some bodies add.
+ * Vite only bundles an asset whose `new URL` is a literal, so each map is spelt out.
+ */
+const MAPS: Readonly<Record<string, string>> = {
     sun: new URL("./assets/maps/sun.webp", import.meta.url).href,
     mercury: new URL("./assets/maps/mercury.webp", import.meta.url).href,
     venus: new URL("./assets/maps/venus.webp", import.meta.url).href,
@@ -62,14 +61,12 @@ const MAPS: Partial<Record<MapName, string>> = {
         .href,
 };
 
-const isMap = (id: string): id is MapName => Object.hasOwn(MAPS, id);
-
 /** The image of map `id`, or `null` when there's no such map. */
 export const loadMapImage = (
     id: string,
     signal: AbortSignal,
 ): Promise<HTMLImageElement> | null => {
-    const url = isMap(id) ? MAPS[id] : undefined;
+    const url = Object.hasOwn(MAPS, id) ? MAPS[id] : undefined;
     if (url === undefined) return null;
 
     // `ImageLoader` can't be aborted, so a late image is dropped here.

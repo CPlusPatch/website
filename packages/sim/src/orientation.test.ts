@@ -14,8 +14,6 @@ import {
 } from "@cpluspatch/orbit";
 import { assertVecClose } from "@cpluspatch/orbit/fixture";
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
-import type { Model } from "./models.ts";
-import { isModel } from "./models.ts";
 import { bodyOrientation, rotationPeriod, spinAxis } from "./orientation.ts";
 import { precessionsOf } from "./perturb/index.ts";
 import { elementsAt } from "./precession.ts";
@@ -36,10 +34,10 @@ const find = (id: string) => {
     return body;
 };
 
-const rotationOf = (model: Model | undefined) =>
+const rotationOf = (model: string | undefined) =>
     model === undefined ? undefined : PRESETS[model]?.rotation;
 
-const orientationOf = (model: Model | undefined, t: number): Orientation => {
+const orientationOf = (model: string | undefined, t: number): Orientation => {
     const orientation = bodyOrientation(rotationOf(model), t);
 
     assert(orientation, `no orientation for ${model}`);
@@ -58,7 +56,7 @@ const inverse = (v: Vec3): Vec3 => {
 };
 
 Deno.test("the axes are unit length, orthogonal and right-handed for every model", () => {
-    for (const model of Object.keys(PRESETS).filter(isModel)) {
+    for (const model of Object.keys(PRESETS)) {
         for (const days of [-9000, 0, 1234.5, 8000]) {
             const { x, y, z } = orientationOf(model, days * DAY);
 
@@ -124,7 +122,7 @@ Deno.test("a body's pole is tilted from its orbit normal by its obliquity", () =
 });
 
 Deno.test("a body's sidereal rotation period comes from its rotation model", () => {
-    const hours = (model: Model) =>
+    const hours = (model: string) =>
         (rotationPeriod(rotationOf(model), 0) ?? 0) / 3600;
 
     assertAlmostEquals(rotationPeriod(rotationOf("earth"), 0) ?? 0, 86164.1, 1);

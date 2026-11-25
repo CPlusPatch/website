@@ -1,5 +1,6 @@
 import { AU, deg, type Elements, km } from "@cpluspatch/orbit";
-import { type Body, fillModels, type Scenario } from "@cpluspatch/sim";
+import type { Body, Scenario } from "@cpluspatch/sim";
+import { fillPresets } from "./presets/names.ts";
 
 // JPL astrodynamic parameters: https://ssd.jpl.nasa.gov/astro_par.html
 const GM_SUN = 1.32712440041e20;
@@ -246,7 +247,7 @@ const ksp = (
 export const kerbol: Scenario = {
     version: 3,
     name: "Kerbol (Kerbal Space Program)",
-    bodies: fillModels([
+    bodies: fillPresets([
         {
             id: "kerbol",
             name: "Kerbol",

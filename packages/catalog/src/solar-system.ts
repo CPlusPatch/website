@@ -7,8 +7,9 @@ import {
     km,
     wrapAngle,
 } from "@cpluspatch/orbit";
-import { type Body, fillModels, type Scenario } from "@cpluspatch/sim";
+import type { Body, Scenario } from "@cpluspatch/sim";
 import { moonBodies } from "./moons.ts";
+import { fillPresets } from "./presets/names.ts";
 import { probes } from "./probes.ts";
 import { satellites } from "./satellites.ts";
 import { smallBodies } from "./small-bodies.ts";
@@ -191,7 +192,7 @@ export const solarSystem: Scenario = {
     version: 3,
     name: "Solar System",
     clouds: [{ id: "satellites", host: "earth", source: "celestrak-snapshot" }],
-    bodies: fillModels([
+    bodies: fillPresets([
         {
             id: "sun",
             name: "Sun",

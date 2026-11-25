@@ -3,12 +3,7 @@
  * Colours for the scene: the `--orrery-*` tokens and the bodies' own colours.
  */
 
-import {
-    type Body,
-    type Model,
-    type OrbitClass,
-    orbitClass,
-} from "@cpluspatch/sim";
+import { type Body, type OrbitClass, orbitClass } from "@cpluspatch/sim";
 import { Color, SRGBColorSpace } from "three";
 import { appearanceOf } from "./appearance.ts";
 import { styleOf } from "./tags.ts";
@@ -28,7 +23,7 @@ export type Theme = {
 };
 
 /** CSS colours by preset, for the bodies of the solar system scenario. */
-export const BODY_COLORS: Partial<Record<Model, string>> = {
+export const BODY_COLORS: Readonly<Record<string, string>> = {
     sun: "#ffd27a",
     mercury: "#b9b2a6",
     venus: "#e9cf98",

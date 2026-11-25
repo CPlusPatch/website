@@ -1,13 +1,13 @@
 /// <reference types="deno" />
 import { solarSystem } from "@cpluspatch/catalog";
-import type { Body, Model } from "@cpluspatch/sim";
+import type { Body } from "@cpluspatch/sim";
 import { assert, assertEquals } from "@std/assert";
 import { BODY_COLORS, colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 
 const body = (
     id: string,
     tag: string,
-    options: { color?: string; preset?: Model } = {},
+    options: { color?: string; preset?: string } = {},
 ): Body => ({
     id,
     name: id,

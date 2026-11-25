@@ -3,8 +3,6 @@
  * The colours and heights of each body's atmosphere, and the numbers the shell shader takes from them.
  */
 
-import type { Model } from "@cpluspatch/sim";
-
 export type Atmosphere = {
     /** The height of the top of the glow, in km. */
     top: number;
@@ -19,7 +17,7 @@ export type Atmosphere = {
 };
 
 /** Real heights, so the numbers can be checked against the sources. The colours are artistic. */
-export const ATMOSPHERES: Partial<Record<Model, Atmosphere>> = {
+export const ATMOSPHERES: Readonly<Record<string, Atmosphere>> = {
     earth: {
         top: 100,
         day: "#4f9bff",
@@ -144,7 +142,7 @@ export type Shell = Omit<Atmosphere, "top"> & {
 
 /** The shell for a body's atmosphere, or null if it has none. */
 export const shellFor = (
-    model: Model | undefined,
+    model: string | undefined,
     radiusKm: number,
 ): Shell | null => {
     const atmosphere = model === undefined ? undefined : ATMOSPHERES[model];

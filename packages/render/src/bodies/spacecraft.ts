@@ -3,7 +3,7 @@
  * Low-poly models of the Earth satellites, at true size.
  */
 
-import type { Body, Model } from "@cpluspatch/sim";
+import type { Body } from "@cpluspatch/sim";
 import {
     Box3,
     BoxGeometry,
@@ -311,7 +311,7 @@ const bus = (group: Group, m: Palette, config: Bus): void => {
 };
 
 // Each spacecraft's bus, by preset.
-const BUSES: Partial<Record<Model, Bus>> = {
+const BUSES: Readonly<Record<string, Bus>> = {
     "landsat-9": {
         size: [3, 2.4, 4.3],
         wings: 1,
@@ -420,7 +420,7 @@ const GENERIC: Bus = {
     wingWidth: 1.5,
 };
 
-const busOf = (model: Model | undefined): Bus =>
+const busOf = (model: string | undefined): Bus =>
     (model === undefined ? undefined : BUSES[model]) ?? GENERIC;
 
 /**

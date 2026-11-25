@@ -1,8 +1,8 @@
 /// <reference types="deno" />
 
-import { isModel } from "@cpluspatch/sim";
 import { assert, assertEquals } from "@std/assert";
 import { PRESETS } from "./index.ts";
+import { PRESET_NAMES } from "./names.ts";
 
 // The bodies that had a rotation model before rotation became data.
 const WITH_ROTATION = [
@@ -51,9 +51,9 @@ const WITH_ROTATION = [
     "pol",
 ];
 
-Deno.test("every preset is a known model", () => {
+Deno.test("every preset is a known name", () => {
     for (const id of Object.keys(PRESETS)) {
-        assert(isModel(id), `${id} isn't a model`);
+        assert(PRESET_NAMES.includes(id), `${id} isn't in PRESET_NAMES`);
     }
 });
 

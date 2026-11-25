@@ -6,8 +6,6 @@ import {
     MIN_YEAR,
     wrapAngle,
 } from "@cpluspatch/orbit";
-import type { Model } from "./models.ts";
-import { isModel } from "./models.ts";
 import type { Precession } from "./precession.ts";
 import { expandBody, type Presets } from "./presets.ts";
 import { type Rotation, validateRotation } from "./rotation/index.ts";
@@ -61,8 +59,8 @@ export type Body = {
     perturbations?: Perturbation[];
     /** Opaque to sim. The renderer validates it. */
     appearance?: unknown;
-    /** The built-in preset: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
-    preset?: Model;
+    /** A preset slug. An unknown one, or none, means a plain body. */
+    preset?: string;
     /** How the body turns. Absent means the preset's rotation, if it has one. */
     rotation?: Rotation;
     /** The gravity field. Absent means the preset's gravity, if it has one. */
@@ -92,14 +90,6 @@ export type Scenario = {
     /** The bodies, in any order. Exactly one has no orbit. */
     bodies: Body[];
 };
-
-/** The bodies with `preset` set to the id wherever the id is a known model and no preset is given. */
-export const fillModels = (bodies: Body[]): Body[] =>
-    bodies.map((body) =>
-        isModel(body.id) && body.preset === undefined
-            ? { ...body, preset: body.id }
-            : body,
-    );
 
 /** The scenario, or every reason the input isn't one. */
 export type ScenarioResult =
@@ -706,7 +696,11 @@ const validateBody = (
     const [presetKey, presetInput] =
         version === 3 ? ["preset", preset] : ["model", model];
     const validPreset =
-        version >= 2 && isModel(presetInput) ? presetInput : undefined;
+        version >= 2 &&
+        typeof presetInput === "string" &&
+        SLUG.test(presetInput)
+            ? presetInput
+            : undefined;
 
     if (
         version >= 2 &&
@@ -714,7 +708,7 @@ const validateBody = (
         validPreset === undefined
     ) {
         errors.push(
-            `${label}.${presetKey}: must be one of the known ${presetKey}s (got ${show(presetInput)})`,
+            `${label}.${presetKey}: must match ${SLUG} (got ${show(presetInput)})`,
         );
     }
 
@@ -1010,8 +1004,14 @@ export const validateScenario = (
         return { ok: false, errors };
     }
 
-    // A version 1 file had no models, so Earth's id stood for them and for the satellites.
-    const filled = validVersion === 1 ? fillModels(bodies) : bodies;
+    // A version 1 file had no presets, so a body's id stood for its preset and Earth's for the satellites.
+    const filled =
+        validVersion === 1
+            ? bodies.map((body) => ({
+                  ...body,
+                  preset: body.preset ?? body.id,
+              }))
+            : bodies;
     const earth = filled.find((body) => body.preset === "earth");
     let clouds = parsedClouds;
 

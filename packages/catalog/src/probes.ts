@@ -1,10 +1,5 @@
 import { DAY, deg, type Elements, type Vec3 } from "@cpluspatch/orbit";
-import {
-    type Body,
-    bodyOrientation,
-    j2Precession,
-    type Model,
-} from "@cpluspatch/sim";
+import { type Body, bodyOrientation, j2Precession } from "@cpluspatch/sim";
 import { PRESETS } from "./presets/index.ts";
 
 // 2026-11-23 00:00 TDB is JD 2461367.5. The ~69 s from UTC is ignored, as in `orientation.ts`.
@@ -174,7 +169,7 @@ const PROBES: Probe[] = [
 ];
 
 /** The pole of `parent` in ecliptic J2000. A missing rotation model throws. */
-const poleOf = (parent: Model): Vec3 => {
+const poleOf = (parent: string): Vec3 => {
     const orientation = bodyOrientation(PRESETS[parent]?.rotation, EPOCH);
 
     if (!orientation) {

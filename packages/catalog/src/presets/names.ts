@@ -1,6 +1,7 @@
-// The orrery's rotation, map, colour, atmosphere and spacecraft tables are keyed by these.
-/** The built-in looks a body can pick with its `preset`. */
-export const MODELS = [
+import type { Body } from "@cpluspatch/sim";
+
+/** The bodies the render tables and presets know by name. */
+export const PRESET_NAMES: readonly string[] = [
     // Solar system.
     "sun",
     "mercury",
@@ -71,11 +72,12 @@ export const MODELS = [
     "danuri",
     "parker-solar-probe",
     "solar-orbiter",
-] as const;
+];
 
-/** A key of the orrery's built-in tables. */
-export type Model = (typeof MODELS)[number];
-
-/** Whether `value` is a known model. */
-export const isModel = (value: unknown): value is Model =>
-    MODELS.some((model) => model === value);
+/** The bodies with `preset` set to the id wherever the id is a preset name and no preset is given. */
+export const fillPresets = (bodies: Body[]): Body[] =>
+    bodies.map((body) =>
+        PRESET_NAMES.includes(body.id) && body.preset === undefined
+            ? { ...body, preset: body.id }
+            : body,
+    );

@@ -169,7 +169,7 @@ Deno.test("a version 1 scenario without Earth has no satellites", () => {
     assert(!("clouds" in result.scenario));
 });
 
-Deno.test("a version 1 body with an unknown id gets no preset", () => {
+Deno.test("a version 1 body gets its id as the preset", () => {
     const old = legacy(1);
 
     legacyBody(old, 1).id = "my-planet";
@@ -177,7 +177,7 @@ Deno.test("a version 1 body with an unknown id gets no preset", () => {
     const result = validateScenario(old);
 
     assert(result.ok);
-    assert(!("preset" in planet(result.scenario)));
+    assertEquals(planet(result.scenario).preset, "my-planet");
     assert(!("clouds" in result.scenario));
 });
 
@@ -197,7 +197,7 @@ Deno.test("a version 1 scenario ignores model and hasSatellites", () => {
 
     assert(result.ok);
     assertEquals(at(result.scenario.bodies, 0).preset, "sun");
-    assert(!("preset" in planet(result.scenario)));
+    assertEquals(planet(result.scenario).preset, "my-planet");
     assert(!("clouds" in result.scenario));
 });
 
@@ -313,29 +313,40 @@ Deno.test("a cloud with a bad field is rejected with its path", () => {
     }
 });
 
-Deno.test("an unknown preset is rejected", () => {
+Deno.test("a preset that isn't a slug is rejected", () => {
     const errors = errorsAfter((s) => {
-        Object.assign(planet(s), { preset: "krypton" });
+        Object.assign(planet(s), { preset: "Krypton!" });
     });
 
     assert(
         errors.includes(
-            'earth.preset: must be one of the known presets (got "krypton")',
+            'earth.preset: must match /^[a-z0-9-]+$/ (got "Krypton!")',
         ),
     );
 });
 
-Deno.test("a version 2 body with an unknown model is rejected", () => {
+Deno.test("an unknown preset slug is kept", () => {
+    const scenario = structuredClone(valid);
+
+    planet(scenario).preset = "krypton";
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assertEquals(planet(result.scenario).preset, "krypton");
+});
+
+Deno.test("a version 2 body whose model isn't a slug is rejected", () => {
     const old = legacy(2);
 
-    legacyBody(old, 1).model = "krypton";
+    legacyBody(old, 1).model = "Krypton!";
 
     const result = validateScenario(old);
 
     assert(!result.ok);
     assert(
         result.errors.includes(
-            'earth.model: must be one of the known models (got "krypton")',
+            'earth.model: must match /^[a-z0-9-]+$/ (got "Krypton!")',
         ),
     );
 });

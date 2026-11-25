@@ -60,6 +60,24 @@ The clock isn't held. It ticks in one `requestAnimationFrame` loop in `Shell.sve
 
 When Orrery's startup throws, it replaces the loading text with an error. When its chunk won't download, Astro fires `astro:hydration-error` on the island, and the page script shows the same text.
 
+## Schema
+
+A version 3 body has `id`, `name`, `tags`, `mass` (`mu` and `radius`) and an optional `orbit` (`parent` and `elements`). It can also have `appearance`, `preset`, `rotation`, `gravity` and `perturbations`. A scenario can list `clouds`, each a `{ id, host, source }` set of small bodies drawn around the body `host`.
+
+`validateScenario` reads versions 1, 2 and 3 and always returns version 3. A legacy field becomes this:
+
+| Legacy field        | Version 3                                             |
+| ------------------- | ----------------------------------------------------- |
+| `kind`, `role`      | `tags`                                                |
+| `mu`, `radius`      | `mass.mu`, `mass.radius`                              |
+| `precession`        | A `secular` entry in `perturbations`                  |
+| `color`             | `appearance.color`                                    |
+| `hasSatellites`     | One cloud, `satellites`, on the Earth body            |
+| `model` (version 2) | `preset`                                              |
+| Nothing (version 1) | `preset` is the body's `id`, and Earth gets the cloud |
+
+A `preset` is any slug. A slug that matches no preset makes a plain body, so a file from a newer catalog still loads. The only names `sim` knows are `"earth"` and `"moon"`, in the version 1 and 2 migration. `names.test.ts` checks that no other body or preset name appears in its source. [Rotation](#rotation) covers what a preset fills in.
+
 ## Rotation
 
 A body's `rotation` is data. `sim/src/rotation/index.ts` is the registry, keyed by `Rotation["type"]`, and each kind supplies its orientation, spin rate and validation. `sim` knows no body names.
@@ -94,7 +112,6 @@ These break the rules above until a later step of the rewrite removes them.
 
 | Exception                                                                                                                      | Removed when                             |
 | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| `sim` keeps the closed model list (`models.ts`)                                                                                | Appearance becomes body data             |
 | `TagStyle.corona` makes `render` draw a star's emissive material and corona sprite from a tag                                  | Star appearance becomes body data        |
 | `TagStyle.craftMesh` makes `render` pick the spacecraft mesh from a tag                                                        | Spacecraft models become body data       |
 | The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |
