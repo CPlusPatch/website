@@ -33,7 +33,7 @@ Deno.test("orientation matches bodyOrientation", () => {
         );
         assert(body);
 
-        assertEquals(orientationOf(frame, id), bodyOrientation(body.model, T));
+        assertEquals(orientationOf(frame, id), bodyOrientation(body.preset, T));
     }
 });
 

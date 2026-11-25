@@ -37,7 +37,7 @@ Deno.test("colours are 6-digit hex, and rim and haze are between 0 and 1", () =>
 Deno.test("every atmosphere belongs to a built-in body", () => {
     const models = new Set<string | undefined>(
         builtInScenarios.flatMap(({ bodies }) =>
-            bodies.map(({ model }) => model),
+            bodies.map(({ preset }) => preset),
         ),
     );
 

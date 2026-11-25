@@ -49,7 +49,7 @@ const snapshot = (scenario: Scenario): Snapshot => {
             }
 
             const entry: GoldenBody = { r: flat(state.r), v: flat(state.v) };
-            const orientation = bodyOrientation(body.model, t);
+            const orientation = bodyOrientation(body.preset, t);
 
             if (orientation) {
                 entry.orientation = flat(

@@ -61,7 +61,7 @@ export const compile = (doc: Document): System => {
             r.set([state.r.x, state.r.y, state.r.z], 3 * i);
             v.set([state.v.x, state.v.y, state.v.z], 3 * i);
 
-            const axes = bodyOrientation(body.model, t);
+            const axes = bodyOrientation(body.preset, t);
 
             if (axes) {
                 orientation.set(

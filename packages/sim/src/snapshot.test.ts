@@ -52,7 +52,7 @@ for (const scenario of builtInScenarios) {
                 const actual = [
                     ...snapshot.orientation.subarray(9 * i, 9 * i + 9),
                 ];
-                const orientation = bodyOrientation(body.model, t);
+                const orientation = bodyOrientation(body.preset, t);
                 const expected = orientation
                     ? [orientation.x, orientation.y, orientation.z].flatMap(
                           (axis) => [axis.x, axis.y, axis.z],

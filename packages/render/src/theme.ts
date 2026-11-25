@@ -27,7 +27,7 @@ export type Theme = {
     stop: () => void;
 };
 
-/** CSS colours by model, for the bodies of the solar system scenario. */
+/** CSS colours by preset, for the bodies of the solar system scenario. */
 export const BODY_COLORS: Partial<Record<Model, string>> = {
     sun: "#ffd27a",
     mercury: "#b9b2a6",
@@ -64,7 +64,7 @@ export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     heo: "var(--orrery-orbit-heo)",
 };
 
-/** The CSS colour of a body: its own, its orbit class's, its model's, then its tag's. */
+/** The CSS colour of a body: its own, its orbit class's, its preset's, then its tag's. */
 export const colorOf = (body: Body, parent: Body | undefined): string => {
     const { color } = appearanceOf(body);
 
@@ -72,12 +72,12 @@ export const colorOf = (body: Body, parent: Body | undefined): string => {
 
     const style = styleOf(body);
 
-    if (style.colorByOrbitClass && parent?.model === "earth" && body.orbit) {
+    if (style.colorByOrbitClass && parent?.preset === "earth" && body.orbit) {
         return ORBIT_CLASS_COLORS[orbitClass(body.orbit.elements)];
     }
 
     return (
-        (body.model === undefined ? undefined : BODY_COLORS[body.model]) ??
+        (body.preset === undefined ? undefined : BODY_COLORS[body.preset]) ??
         style.color
     );
 };

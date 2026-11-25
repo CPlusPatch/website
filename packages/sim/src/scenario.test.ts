@@ -124,7 +124,7 @@ Deno.test("a wrong version is rejected", () => {
     assert(errors.includes("version: must be 1, 2 or 3 (got 4)"));
 });
 
-Deno.test("the built-in scenarios validate, and Earth has its model", () => {
+Deno.test("the built-in scenarios validate, and Earth has its preset", () => {
     for (const scenario of builtInScenarios) {
         const result = validateScenario(scenario);
 
@@ -134,22 +134,25 @@ Deno.test("the built-in scenarios validate, and Earth has its model", () => {
 
     const earth = solarSystem.bodies.find((b) => b.id === "earth");
 
-    assertEquals(earth?.model, "earth");
+    assertEquals(earth?.preset, "earth");
     assertEquals(solarSystem.clouds, [
         { id: "satellites", host: "earth", source: "celestrak-snapshot" },
     ]);
-    assertEquals(kerbol.bodies.find((b) => b.id === "kerbin")?.model, "kerbin");
+    assertEquals(
+        kerbol.bodies.find((b) => b.id === "kerbin")?.preset,
+        "kerbin",
+    );
     assert(!("clouds" in kerbol));
 });
 
-Deno.test("a version 1 scenario gets models from its ids and satellites for Earth", () => {
+Deno.test("a version 1 scenario gets presets from its ids and satellites for Earth", () => {
     const result = validateScenario(legacy(1));
 
     assert(result.ok);
     assertEquals(result.scenario.version, 3);
     assertEquals(result.scenario.clouds, [satellites]);
-    assertEquals(at(result.scenario.bodies, 0).model, "sun");
-    assertEquals(at(result.scenario.bodies, 1).model, "earth");
+    assertEquals(at(result.scenario.bodies, 0).preset, "sun");
+    assertEquals(at(result.scenario.bodies, 1).preset, "earth");
 });
 
 Deno.test("a version 1 scenario without Earth has no satellites", () => {
@@ -164,7 +167,7 @@ Deno.test("a version 1 scenario without Earth has no satellites", () => {
     assert(!("clouds" in result.scenario));
 });
 
-Deno.test("a version 1 body with an unknown id gets no model", () => {
+Deno.test("a version 1 body with an unknown id gets no preset", () => {
     const old = legacy(1);
 
     legacyBody(old, 1).id = "my-planet";
@@ -172,7 +175,7 @@ Deno.test("a version 1 body with an unknown id gets no model", () => {
     const result = validateScenario(old);
 
     assert(result.ok);
-    assert(!("model" in planet(result.scenario)));
+    assert(!("preset" in planet(result.scenario)));
     assert(!("clouds" in result.scenario));
 });
 
@@ -191,28 +194,28 @@ Deno.test("a version 1 scenario ignores model and hasSatellites", () => {
     });
 
     assert(result.ok);
-    assertEquals(at(result.scenario.bodies, 0).model, "sun");
-    assert(!("model" in planet(result.scenario)));
+    assertEquals(at(result.scenario.bodies, 0).preset, "sun");
+    assert(!("preset" in planet(result.scenario)));
     assert(!("clouds" in result.scenario));
 });
 
-Deno.test("a version 3 body named Earth keeps no model and adds no satellites", () => {
+Deno.test("a version 3 body named Earth keeps no preset and adds no satellites", () => {
     const result = validateScenario(valid);
 
     assert(result.ok);
-    assert(!("model" in planet(result.scenario)));
+    assert(!("preset" in planet(result.scenario)));
     assert(!("clouds" in result.scenario));
 });
 
-Deno.test("a model is kept in version 3", () => {
+Deno.test("a preset is kept in version 3", () => {
     const scenario = structuredClone(valid);
 
-    planet(scenario).model = "earth";
+    planet(scenario).preset = "earth";
 
     const result = validateScenario(scenario);
 
     assert(result.ok);
-    assertEquals(planet(result.scenario).model, "earth");
+    assertEquals(planet(result.scenario).preset, "earth");
     assert(!("clouds" in result.scenario));
 });
 
@@ -225,6 +228,7 @@ Deno.test("a version 2 scenario with hasSatellites gets a cloud on its first Ear
 
     assert(result.ok);
     assertEquals(result.scenario.clouds, [satellites]);
+    assertEquals(at(result.scenario.bodies, 1).preset, "earth");
 });
 
 Deno.test("a version 2 scenario with hasSatellites but no Earth model gets no cloud", () => {
@@ -237,7 +241,7 @@ Deno.test("a version 2 scenario with hasSatellites but no Earth model gets no cl
 Deno.test("a version 3 scenario ignores hasSatellites", () => {
     const scenario = structuredClone(valid);
 
-    planet(scenario).model = "earth";
+    planet(scenario).preset = "earth";
     Object.assign(scenario, { hasSatellites: true });
 
     const result = validateScenario(scenario);
@@ -307,16 +311,42 @@ Deno.test("a cloud with a bad field is rejected with its path", () => {
     }
 });
 
-Deno.test("an unknown model is rejected", () => {
+Deno.test("an unknown preset is rejected", () => {
     const errors = errorsAfter((s) => {
-        Object.assign(planet(s), { model: "krypton" });
+        Object.assign(planet(s), { preset: "krypton" });
     });
 
     assert(
         errors.includes(
+            'earth.preset: must be one of the known presets (got "krypton")',
+        ),
+    );
+});
+
+Deno.test("a version 2 body with an unknown model is rejected", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).model = "krypton";
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
+    assert(
+        result.errors.includes(
             'earth.model: must be one of the known models (got "krypton")',
         ),
     );
+});
+
+Deno.test("a version 3 body ignores a stale model key", () => {
+    const scenario = structuredClone(valid);
+
+    Object.assign(planet(scenario), { model: "earth" });
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assert(!("preset" in planet(result.scenario)));
 });
 
 Deno.test("a version 2 hasSatellites other than true is rejected", () => {

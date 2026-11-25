@@ -70,7 +70,7 @@ const compare = (
             assert(distance(expected.r, state.r) <= R_TOLERANCE, `${label}: r`);
             assert(distance(expected.v, state.v) <= V_TOLERANCE, `${label}: v`);
 
-            const orientation = bodyOrientation(body.model, t);
+            const orientation = bodyOrientation(body.preset, t);
 
             assertEquals(
                 expected.orientation !== undefined,

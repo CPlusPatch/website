@@ -48,8 +48,8 @@ export type Body = {
     perturbations?: Perturbation[];
     /** Opaque to sim. The renderer validates it. */
     appearance?: unknown;
-    /** The built-in look: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
-    model?: Model;
+    /** The built-in preset: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
+    preset?: Model;
 };
 
 /** A body that orbits another. */
@@ -76,11 +76,11 @@ export type Scenario = {
     bodies: Body[];
 };
 
-/** The bodies with `model` set to the id wherever the id is a known model and no model is given. */
+/** The bodies with `preset` set to the id wherever the id is a known model and no preset is given. */
 export const fillModels = (bodies: Body[]): Body[] =>
     bodies.map((body) =>
-        isModel(body.id) && body.model === undefined
-            ? { ...body, model: body.id }
+        isModel(body.id) && body.preset === undefined
+            ? { ...body, preset: body.id }
             : body,
     );
 
@@ -513,6 +513,7 @@ const validateBody = (
         appearance,
         role,
         model,
+        preset,
     } = input;
     const validId = typeof id === "string" && SLUG.test(id) ? id : null;
     const label = validId ?? `bodies[${index}]`;
@@ -662,12 +663,20 @@ const validateBody = (
         }
     }
 
-    // Version 1 has no models. They're filled in from the ids afterwards.
-    const validModel = version >= 2 && isModel(model) ? model : undefined;
+    // Version 1 has no presets. They're filled in from the ids afterwards.
+    // Version 2 called the field `model`.
+    const [presetKey, presetInput] =
+        version === 3 ? ["preset", preset] : ["model", model];
+    const validPreset =
+        version >= 2 && isModel(presetInput) ? presetInput : undefined;
 
-    if (version >= 2 && model !== undefined && validModel === undefined) {
+    if (
+        version >= 2 &&
+        presetInput !== undefined &&
+        validPreset === undefined
+    ) {
         errors.push(
-            `${label}.model: must be one of the known models (got ${show(model)})`,
+            `${label}.${presetKey}: must be one of the known ${presetKey}s (got ${show(presetInput)})`,
         );
     }
 
@@ -737,7 +746,7 @@ const validateBody = (
         ...(validAppearance === undefined
             ? {}
             : { appearance: validAppearance }),
-        ...(validModel === undefined ? {} : { model: validModel }),
+        ...(validPreset === undefined ? {} : { preset: validPreset }),
     };
 
     if (validParent === null) {
@@ -947,7 +956,7 @@ export const validateScenario = (
 
     // A version 1 file had no models, so Earth's id stood for them and for the satellites.
     const filled = validVersion === 1 ? fillModels(bodies) : bodies;
-    const earth = filled.find((body) => body.model === "earth");
+    const earth = filled.find((body) => body.preset === "earth");
     let clouds = parsedClouds;
 
     if (

@@ -1,5 +1,5 @@
 // The orrery's rotation, map, colour, atmosphere and spacecraft tables are keyed by these.
-/** The built-in looks a body can pick with its `model`. */
+/** The built-in looks a body can pick with its `preset`. */
 export const MODELS = [
     // Solar system.
     "sun",

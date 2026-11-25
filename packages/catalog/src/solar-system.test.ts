@@ -437,7 +437,7 @@ Deno.test("every Mars, Moon and Jupiter probe precesses about its parent's pole"
 
     for (const body of probes) {
         const pole = bodyOrientation(
-            find(body.orbit?.parent ?? "").model,
+            find(body.orbit?.parent ?? "").preset,
             body.orbit?.elements.epoch ?? 0,
         );
 

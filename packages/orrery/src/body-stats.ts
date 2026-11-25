@@ -37,7 +37,7 @@ export const bodyStats = (
     // A spacecraft's radius is nominal.
     const { sized } = styleOf(body);
 
-    const axis = spinAxis(body.model, t);
+    const axis = spinAxis(body.preset, t);
     const elements = isOrbiting(body) ? elementsAt(body, t) : null;
     // The root has no orbit, so its tilt is from the ecliptic pole.
     const normal = elements
@@ -55,7 +55,7 @@ export const bodyStats = (
         escapeSpeed: massive
             ? Math.sqrt((2 * body.mass.mu) / body.mass.radius)
             : null,
-        day: rotationPeriod(body.model, t),
+        day: rotationPeriod(body.preset, t),
         tilt: axis
             ? Math.acos(Math.min(1, Math.max(-1, dot(axis, normal))))
             : null,

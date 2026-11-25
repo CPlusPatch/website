@@ -134,7 +134,7 @@ void main() {
  * shell is shown once the maps are asked for, so a body without maps has no atmosphere.
  */
 export const atmosphereExtra = (body: Body, sphere: Mesh): Extra | null => {
-    const atmosphere = shellFor(body.model, body.mass.radius / 1000);
+    const atmosphere = shellFor(body.preset, body.mass.radius / 1000);
     if (!atmosphere) return null;
 
     // `Color` converts sRGB hex to the linear working space.

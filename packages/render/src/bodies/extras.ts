@@ -19,8 +19,8 @@ export const createExtras = (
     sphere: Mesh<SphereGeometry, MeshBasicMaterial | MeshStandardMaterial>,
 ): Extra => {
     const extras: Extra[] = [];
-    if (body.model === "earth") extras.push(nightExtra(), cloudsExtra(sphere));
-    if (body.model === "saturn") extras.push(ringsExtra(body, group, sphere));
+    if (body.preset === "earth") extras.push(nightExtra(), cloudsExtra(sphere));
+    if (body.preset === "saturn") extras.push(ringsExtra(body, group, sphere));
 
     const atmosphere = atmosphereExtra(body, sphere);
     if (atmosphere) extras.push(atmosphere);

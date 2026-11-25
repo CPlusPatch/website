@@ -6,7 +6,7 @@
 import type { Model } from "@cpluspatch/sim";
 import { ImageLoader, NoColorSpace, SRGBColorSpace, Texture } from "three";
 
-/** The name of a map: a body's model, or one of the extra maps some bodies add. */
+/** The name of a map: a body's preset, or one of the extra maps some bodies add. */
 type MapName = Model | "earth-night" | "earth-clouds" | "saturn-ring";
 
 /** Vite only bundles an asset whose `new URL` is a literal, so each map is spelt out. */
@@ -87,7 +87,7 @@ const LINEAR = new Set(["earth-clouds"]);
 export type Maps = {
     /** Fetches the map of a body once and hands it to `onLoad`. Ignores a body with no map. */
     load: (id: string, onLoad: (texture: Texture) => void) => void;
-    /** Frees map `id`, so a body added later with the same model loads it again. */
+    /** Frees map `id`, so a body added later with the same preset loads it again. */
     release: (id: string) => void;
     /** Frees every loaded map, and any that arrives later. */
     dispose: () => void;

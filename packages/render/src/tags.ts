@@ -14,7 +14,7 @@ export type TagStyle = {
     label: string;
     /** The title of the group the body is listed under. */
     group: string;
-    /** The CSS colour when the body has neither its own nor its model's. */
+    /** The CSS colour when the body has neither its own nor its preset's. */
     color: string;
     /** Whether an Earth satellite takes its orbit class's colour. */
     colorByOrbitClass: boolean;

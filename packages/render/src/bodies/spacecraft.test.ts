@@ -35,7 +35,7 @@ Deno.test("a spacecraft without a model of its own is scaled to its radius", () 
 
     assertExists(satellite);
 
-    const { model: _model, ...rest } = satellite;
+    const { preset: _preset, ...rest } = satellite;
     const body = {
         ...rest,
         id: "user-sat",

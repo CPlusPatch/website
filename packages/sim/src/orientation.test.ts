@@ -115,7 +115,7 @@ Deno.test("a body's pole is tilted from its orbit normal by its obliquity", () =
         };
 
         const angle =
-            angleBetween(orientationOf(find(id).model, 0).z, normal) / RAD;
+            angleBetween(orientationOf(find(id).preset, 0).z, normal) / RAD;
 
         assertAlmostEquals(angle, degrees, 0.3, `${id} obliquity ${angle}`);
     }
@@ -145,7 +145,7 @@ Deno.test("the spin axis is tilted from the orbit normal by the usual obliquity"
             y: -Math.sin(i) * Math.cos(raan),
             z: Math.cos(i),
         };
-        const axis = spinAxis(find(id).model, 0);
+        const axis = spinAxis(find(id).preset, 0);
         assert(axis, `no spin axis for ${id}`);
 
         const angle = angleBetween(axis, normal) / RAD;
@@ -249,7 +249,7 @@ Deno.test("a tidally locked moon keeps one face to its parent", () => {
             const elements = elementsAt(moon, t);
 
             const { r } = stateAt(elements, parent.mass.mu + moon.mass.mu, t);
-            const { x, y, z } = orientationOf(moon.model, t);
+            const { x, y, z } = orientationOf(moon.preset, t);
             const toParent = scale(r, -1 / length(r));
             const local = {
                 x: dot(toParent, x),
@@ -282,7 +282,7 @@ Deno.test("Ceres and Vesta have their pck pole at d = 0", () => {
     };
 
     for (const [id, { ra, dec }] of Object.entries(poles)) {
-        const { z } = orientationOf(find(id).model, 0);
+        const { z } = orientationOf(find(id).preset, 0);
         const expected = rotateEquatorialToEcliptic({
             x: Math.cos(dec * RAD) * Math.cos(ra * RAD),
             y: Math.cos(dec * RAD) * Math.sin(ra * RAD),

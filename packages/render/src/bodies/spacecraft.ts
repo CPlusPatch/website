@@ -310,7 +310,7 @@ const bus = (group: Group, m: Palette, config: Bus): void => {
     }
 };
 
-// Each spacecraft's bus, by model.
+// Each spacecraft's bus, by preset.
 const BUSES: Partial<Record<Model, Bus>> = {
     "landsat-9": {
         size: [3, 2.4, 4.3],
@@ -434,14 +434,14 @@ export const createSpacecraftModel = (body: Body): Group => {
     const amber = material(0xc99a2e, 0.35);
     amber.metalness = 0.5;
 
-    const { model } = body;
+    const { preset } = body;
 
-    if (model === "iss") iss(parts, m, amber);
-    else if (model === "hubble") hubble(parts, m);
-    else if (model === "tiangong") tiangong(parts, m);
-    else if (model === "parisat") parisat(parts, m);
-    else if (model === "juno") juno(parts, m);
-    else bus(parts, m, busOf(model));
+    if (preset === "iss") iss(parts, m, amber);
+    else if (preset === "hubble") hubble(parts, m);
+    else if (preset === "tiangong") tiangong(parts, m);
+    else if (preset === "parisat") parisat(parts, m);
+    else if (preset === "juno") juno(parts, m);
+    else bus(parts, m, busOf(preset));
 
     // The group's origin is the body's position, so the bounding box is centred on it.
     const box = new Box3().setFromObject(parts);
@@ -452,9 +452,9 @@ export const createSpacecraftModel = (body: Body): Group => {
 
     // A spacecraft without a model of its own is drawn at the size it declares.
     const known =
-        model !== undefined &&
-        (Object.hasOwn(BUSES, model) ||
-            ["iss", "hubble", "tiangong", "parisat", "juno"].includes(model));
+        preset !== undefined &&
+        (Object.hasOwn(BUSES, preset) ||
+            ["iss", "hubble", "tiangong", "parisat", "juno"].includes(preset));
     const radius = known
         ? 1
         : body.mass.radius / box.getBoundingSphere(new Sphere()).radius;
