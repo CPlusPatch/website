@@ -7,6 +7,8 @@ import type { World } from "../world.ts";
 export class DocumentStore {
     doc: Document;
     system: System;
+    /** How many scenarios have been loaded. A body edit replaces `doc` too, but doesn't count. */
+    loads: number;
 
     #world: World;
     #off: () => void;
@@ -15,8 +17,10 @@ export class DocumentStore {
         this.#world = world;
         this.doc = $state.raw(world.doc);
         this.system = $state.raw(world.system);
+        this.loads = $state(0);
 
         this.#off = world.on((event) => {
+            if (event.type === "scenario") this.loads += 1;
             if (
                 event.type === "scenario" ||
                 event.type === "bodies" ||
