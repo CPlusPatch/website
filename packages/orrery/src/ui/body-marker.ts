@@ -1,4 +1,4 @@
-import { colorOf, ROLE_ICONS, type RoleKey, roleOf } from "@cpluspatch/render";
+import { ROLE_ICONS, type RoleKey, roleOf } from "@cpluspatch/render";
 import type { Body, BodyKind } from "@cpluspatch/sim";
 
 const PATHS: Record<Exclude<BodyKind, "spacecraft">, string> = {
@@ -20,13 +20,3 @@ export const bodyMarker = (body: Body): string =>
     body.kind === "spacecraft"
         ? roleMarker(roleOf(body))
         : `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">${PATHS[body.kind]}</svg>`;
-
-/** Draws a body's marker into `element`, in the body's colour. `parent` is the body it orbits. */
-export const showBodyMarker = (
-    element: HTMLElement,
-    body: Body,
-    parent: Body | undefined,
-): void => {
-    element.innerHTML = bodyMarker(body);
-    element.style.color = colorOf(body, parent);
-};

@@ -47,7 +47,7 @@ import { createNotices } from "./ui/notices.ts";
 import { createSatelliteCard } from "./ui/satellite-card.ts";
 import { createSatelliteMenu } from "./ui/satellite-menu.ts";
 import ScenarioMenu from "./ui/scenario-menu/ScenarioMenu.svelte";
-import { createSearch, type Search } from "./ui/search.ts";
+import Search from "./ui/search/Search.svelte";
 import { sheetSpace } from "./ui/sheet.ts";
 import { bindShortcuts } from "./ui/shortcuts.ts";
 import { createSoundMenu } from "./ui/sound-menu.ts";
@@ -174,7 +174,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     };
 
     // Set once the top bar is filled, after the first build.
-    let search: Search | null = null;
+    let search: ReturnType<typeof Search> | null = null;
     // Replaced with the view on each scenario.
     let inspector: ReturnType<typeof Inspector> | null = null;
     let currentView: View | null = null;
@@ -235,7 +235,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                       context: storeContext(documentStore, viewState),
                       props: {
                           units,
-                          restoreFocus: () => search?.toggle.focus(),
+                          restoreFocus: () => search?.focusToggle(),
                           scene: view,
                       },
                   })
@@ -249,7 +249,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             }
 
             const card = createSatelliteCard(view.satellite, () =>
-                search?.toggle.focus(),
+                search?.focusToggle(),
             );
             cleanup.push(card.destroy);
             root.querySelector(".orrery__panel--right")?.append(card.element);
@@ -411,7 +411,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
           })
         : null;
     // The page has the spacer between them. The notices come last.
-    // Taken before createSearch so the crumbs and the search toggle stay first in the bar.
+    // Taken before the search is mounted so the crumbs and the search toggle stay first in the bar.
     const firstInTop = top?.firstChild ?? null;
     const crumbs = top
         ? mountComponent(Crumbs, {
@@ -427,8 +427,14 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         inspector?.openAdd(name);
     };
     // The search panel isn't in a .orrery__panel, so it covers the scene without moving the labels.
-    search = createSearch(root, world, units, openAdd);
-    top?.insertBefore(search.toggle, firstInTop);
+    search = top
+        ? mountComponent(Search, {
+              target: top,
+              anchor: firstInTop ?? undefined,
+              context: storeContext(documentStore, viewState),
+              props: { root, units, openAdd },
+          })
+        : null;
     top?.append(satellites.element, keys.toggle, notices.element);
     // Mounted last, so the toggle can go right before the satellites menu.
     const scenarios = top
@@ -514,7 +520,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
         goLive: () => timeBar?.goLive(),
         openSearch: () => {
             showInterface();
-            search.open();
+            search?.open();
         },
         toggleChase: () => {
             const view = currentView;
@@ -629,7 +635,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             unbind();
             if (scenarios) void unmount(scenarios);
             satellites.destroy();
-            search?.destroy();
+            if (search) void unmount(search);
             if (timeBar) void unmount(timeBar);
             soundMenu.destroy();
             sound.destroy();
