@@ -1,56 +1,44 @@
-import type { Body, BodyKind } from "@cpluspatch/sim";
+import type { Body } from "@cpluspatch/sim";
 import { CanvasTexture, SRGBColorSpace } from "three";
+import { FALLBACK, type MarkerShape, styleOf, TAG_STYLES } from "../tags.ts";
 import { ROLE_ICONS, type RoleKey, roleOf } from "./role-icons.ts";
 
 type RoleShape = `role-${RoleKey}`;
 
-export type Shape =
-    | "disc"
-    | "ring"
-    | "diamond"
-    | "triangle"
-    | "teardrop"
-    | RoleShape;
+export type Shape = MarkerShape | RoleShape;
 
-const KIND_SHAPES: Record<Exclude<BodyKind, "spacecraft">, Shape> = {
-    star: "disc",
-    planet: "disc",
-    dwarf: "ring",
-    moon: "diamond",
-    asteroid: "triangle",
-    comet: "teardrop",
-};
+const PLAIN_SHAPES: MarkerShape[] = [
+    "disc",
+    "ring",
+    "diamond",
+    "triangle",
+    "teardrop",
+];
 
 /** Every shape, for building one texture of each. */
 export const SHAPES: Shape[] = [
-    ...(Object.values(KIND_SHAPES) as Shape[]),
+    ...PLAIN_SHAPES,
     ...(Object.keys(ROLE_ICONS) as RoleKey[]).map(
         (role): RoleShape => `role-${role}`,
     ),
 ];
 
-/** Each kind has its own shape and spacecraft one per role, so colour isn't the only signal. */
-export const shapeOf = (body: Body): Shape =>
-    body.kind === "spacecraft"
-        ? `role-${roleOf(body)}`
-        : KIND_SHAPES[body.kind];
+/** Each tag has its own shape and spacecraft one per role, so colour isn't the only signal. */
+export const shapeOf = (body: Body): Shape => {
+    const { shape } = styleOf(body);
 
-/** The on-screen size of each kind's marker, in px. */
-const MARKER_PX: Record<BodyKind, number> = {
-    star: 12,
-    planet: 8,
-    dwarf: 7,
-    moon: 9,
-    asteroid: 8,
-    comet: 11,
-    spacecraft: 12,
+    return shape === "role" ? `role-${roleOf(body)}` : shape;
 };
 
-export const markerPx = (body: Body): number => MARKER_PX[body.kind];
+/** The on-screen size of a body's marker, in px. */
+export const markerPx = (body: Body): number => styleOf(body).markerPx;
 
 const TEXTURE_PX = 64;
-// Only dwarfs are rings, and the stroke shows as 1.75px at their size.
-const RING_STROKE = (1.75 * TEXTURE_PX) / MARKER_PX.dwarf;
+// The stroke shows as 1.75px at the ring marker's size.
+const RING_PX =
+    Object.values(TAG_STYLES).find(({ shape }) => shape === "ring")?.markerPx ??
+    FALLBACK.markerPx;
+const RING_STROKE = (1.75 * TEXTURE_PX) / RING_PX;
 // Keeps the edge antialiasing inside the texture.
 const EDGE_PX = 1;
 

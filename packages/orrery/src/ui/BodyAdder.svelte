@@ -1,20 +1,17 @@
 <script module lang="ts">
 import { AU } from "@cpluspatch/orbit";
-import type { Body, BodyKind } from "@cpluspatch/sim";
+import { styleOf, TAG_STYLES } from "@cpluspatch/render";
+import type { Body } from "@cpluspatch/sim";
 
 /** The longest name the Name field takes. */
 const NAME_MAX = 40;
 
-const KINDS: [BodyKind, string][] = [
-    ["planet", "Planet"],
-    ["dwarf", "Dwarf planet"],
-    ["moon", "Moon"],
-    ["asteroid", "Asteroid"],
-    ["comet", "Comet"],
-    ["spacecraft", "Spacecraft"],
-];
+/** The select's options: the tags the table offers, as a value and a label. */
+const KINDS: [string, string][] = Object.entries(TAG_STYLES)
+    .filter(([, style]) => style.adder)
+    .map(([tag, style]) => [tag, style.label]);
 
-const kindOf = (value: string): BodyKind => {
+const kindOf = (value: string): string => {
     const found = KINDS.find(([kind]) => kind === value);
     if (!found)
         throw new Error(`The Kind select holds an unknown kind, ${value}.`);
@@ -23,11 +20,10 @@ const kindOf = (value: string): BodyKind => {
 };
 
 // Asteroids can have moons, like Didymos.
-const canParent = (body: Body): boolean =>
-    body.kind !== "moon" && body.kind !== "comet" && body.kind !== "spacecraft";
+const canParent = (body: Body): boolean => styleOf(body).canParent;
 
 /** A new body's kind around `parent`: a planet around the root, else a moon. */
-const defaultKind = (parent: Body): BodyKind =>
+const defaultKind = (parent: Body): string =>
     parent.parent === null ? "planet" : "moon";
 
 /** A new body's semi-major axis around `parent`, in metres. */
@@ -90,7 +86,7 @@ const startUnit = unitFor(start);
 const startA = text(fromMetres(defaultA(start), startUnit));
 
 let unit = $state(startUnit);
-let kind = $state<BodyKind>(defaultKind(start));
+let kind = $state(defaultKind(start));
 let parentId = $state(start.id);
 let attempted = false;
 // A default follows the parent until the person sets it.
@@ -228,7 +224,7 @@ const submit = () => {
                 ),
             ),
             name: trimmed,
-            kind,
+            tag: kind,
             parent: owner,
             radiusKm: inputs.radius?.valueAsNumber ?? Number.NaN,
             massKg: inputs.mass?.valueAsNumber ?? Number.NaN,

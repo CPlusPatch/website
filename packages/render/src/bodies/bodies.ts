@@ -33,6 +33,7 @@ import {
 import { createMaps } from "../maps.ts";
 import { type LabelRect, type PickPoint, pickLabel } from "../picking.ts";
 import { spinMatrix } from "../spin.ts";
+import { styleOf } from "../tags.ts";
 import { coronaTexture } from "./corona.ts";
 import { createEntry, type Entry } from "./entry.ts";
 import { CENTERS, createLabels } from "./labels.ts";
@@ -206,7 +207,7 @@ export const createBodies = (
                 ({ body, model }): ScreenBody => ({
                     id: body.id,
                     parent: body.parent,
-                    kind: body.kind,
+                    style: styleOf(body),
                     mu: body.mu,
                     radius: body.radius,
                     a: body.elements?.a ?? null,
@@ -237,7 +238,7 @@ export const createBodies = (
                 const hovered = body.id === hoverId;
                 styling.restyle(entry, {
                     selected: body.id === selected,
-                    big: isMajor(body, focus),
+                    big: isMajor({ id: body.id, style: styleOf(body) }, focus),
                     hover: hovered,
                     count: countText(hidden, names, hovered),
                 });
@@ -337,7 +338,7 @@ export const createBodies = (
                                 sphere.material.color.set(0xffffff);
                                 // The Sun is its own light, so it keeps its colours.
                                 sphere.material.toneMapped =
-                                    body.kind !== "star";
+                                    !styleOf(body).corona;
                                 sphere.material.needsUpdate = true;
                             });
                         }
@@ -494,7 +495,7 @@ export const createBodies = (
             entry.body = body;
 
             // Only a satellite's colour follows its orbit, and a mapped sphere must stay white.
-            if (body.kind !== "spacecraft") return;
+            if (!styleOf(body).colorByOrbitClass) return;
 
             const next = color(body);
             entry.sphere.material.color.copy(next);

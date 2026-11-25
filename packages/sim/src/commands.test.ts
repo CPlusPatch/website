@@ -48,7 +48,7 @@ const elements: Elements = {
 const probe: Body = {
     id: "probe",
     name: "Probe",
-    kind: "spacecraft",
+    tags: ["spacecraft"],
     parent: "earth",
     mu: 0,
     radius: 5,

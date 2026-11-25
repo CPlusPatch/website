@@ -1,9 +1,13 @@
 <script lang="ts">
-import { colorOf, formatDuration, formatRadius } from "@cpluspatch/render";
+import {
+    colorOf,
+    formatDuration,
+    formatRadius,
+    styleOf,
+} from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import { facts } from "../../systems.ts";
 import { bodyMarker } from "../body-marker.ts";
-import { KIND_LABELS } from "../labels.ts";
 
 type Props = {
     body: Body;
@@ -42,7 +46,7 @@ const entries = $derived.by((): [string, string][] => {
             aria-label="Picked"
         ></span>
     {/if}
-    <span class="orrery__search-kind">{KIND_LABELS[body.kind]}</span>
+    <span class="orrery__search-kind">{styleOf(body).label}</span>
     <span class="orrery__search-range">{range}</span>
 </div>
 {#if entries.length > 0}

@@ -419,7 +419,7 @@ Deno.test("adding a body made by newBody works", () => {
             {
                 id: "probe",
                 name: "Probe",
-                kind: "spacecraft",
+                tag: "spacecraft",
                 parent: earth,
                 radiusKm: 1,
                 massKg: 0,

@@ -1,6 +1,12 @@
 <script lang="ts">
 import { AU } from "@cpluspatch/orbit";
-import { type AUnit, colorOf, formatRange, listUnit } from "@cpluspatch/render";
+import {
+    type AUnit,
+    colorOf,
+    formatRange,
+    listUnit,
+    styleOf,
+} from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import { rail } from "../../systems.ts";
 import { named } from "./nav.ts";
@@ -65,8 +71,7 @@ const labelled = $derived(
         <i
             class={[
                 "orrery__search-rail-mark",
-                child.kind === "spacecraft" &&
-                    "orrery__search-rail-mark--craft",
+                styleOf(child).craft && "orrery__search-rail-mark--craft",
             ]}
             style:--at={String(at)}
             style:--orrery-rail-colour={colorOf(child, body)}

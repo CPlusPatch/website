@@ -48,6 +48,13 @@ export {
     type View,
 } from "./scene.ts";
 export type { SceneEvent, SceneSource } from "./source.ts";
+export {
+    FALLBACK,
+    type MarkerShape,
+    styleOf,
+    TAG_STYLES,
+    type TagStyle,
+} from "./tags.ts";
 export { colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 export {
     advanceClock,

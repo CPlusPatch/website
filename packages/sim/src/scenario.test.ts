@@ -12,13 +12,13 @@ import {
 } from "./scenario.ts";
 
 const valid: Scenario = {
-    version: 2,
+    version: 3,
     name: "Tiny",
     bodies: [
         {
             id: "sun",
             name: "Sun",
-            kind: "star",
+            tags: ["star"],
             parent: null,
             mu: 1.3e20,
             radius: 7e8,
@@ -27,7 +27,7 @@ const valid: Scenario = {
         {
             id: "earth",
             name: "Earth",
-            kind: "planet",
+            tags: ["planet"],
             parent: "sun",
             mu: 4e14,
             radius: 6.4e6,
@@ -43,6 +43,23 @@ const valid: Scenario = {
         },
     ],
 };
+
+/** The tiny scenario as a version 1 or 2 file wrote it, with a kind and no tags. */
+const legacy = (version: 1 | 2): Record<string, unknown> => {
+    const { bodies, ...rest } = structuredClone(valid);
+
+    return {
+        ...rest,
+        version,
+        bodies: bodies.map(({ tags, ...body }) => ({ ...body, kind: tags[0] })),
+    };
+};
+
+const legacyBody = (scenario: Record<string, unknown>, index: number) =>
+    (scenario.bodies as Record<string, unknown>[])[index] as Record<
+        string,
+        unknown
+    >;
 
 /** Applies `change` to a clone of the tiny scenario and returns the validation errors. */
 const at = <T>(items: readonly T[], index: number): T => {
@@ -83,10 +100,10 @@ Deno.test("the solar system is a valid scenario and comes back unchanged", () =>
 
 Deno.test("a wrong version is rejected", () => {
     const errors = errorsAfter((s) => {
-        (s as { version: number }).version = 3;
+        (s as { version: number }).version = 4;
     });
 
-    assert(errors.includes("version: must be 1 or 2 (got 3)"));
+    assert(errors.includes("version: must be 1, 2 or 3 (got 4)"));
 });
 
 Deno.test("the built-in scenarios validate, and Earth has its model", () => {
@@ -106,34 +123,33 @@ Deno.test("the built-in scenarios validate, and Earth has its model", () => {
 });
 
 Deno.test("a version 1 scenario gets models from its ids and satellites for Earth", () => {
-    const old = { ...structuredClone(valid), version: 1 };
-    const result = validateScenario(old);
+    const result = validateScenario(legacy(1));
 
     assert(result.ok);
-    assertEquals(result.scenario.version, 2);
+    assertEquals(result.scenario.version, 3);
     assertEquals(result.scenario.hasSatellites, true);
     assertEquals(at(result.scenario.bodies, 0).model, "sun");
     assertEquals(at(result.scenario.bodies, 1).model, "earth");
 });
 
 Deno.test("a version 1 scenario without Earth has no satellites", () => {
-    const old = { ...structuredClone(valid), version: 1 };
+    const old = legacy(1);
 
-    old.bodies = old.bodies.slice(0, 1);
+    old.bodies = (old.bodies as unknown[]).slice(0, 1);
 
     const result = validateScenario(old);
 
     assert(result.ok);
-    assertEquals(result.scenario.version, 2);
+    assertEquals(result.scenario.version, 3);
     assert(!("hasSatellites" in result.scenario));
 });
 
 Deno.test("a version 1 body with an unknown id gets no model", () => {
-    const old = structuredClone(valid);
+    const old = legacy(1);
 
-    planet(old).id = "my-planet";
+    legacyBody(old, 1).id = "my-planet";
 
-    const result = validateScenario({ ...old, version: 1 });
+    const result = validateScenario(old);
 
     assert(result.ok);
     assert(!("model" in planet(result.scenario)));
@@ -141,15 +157,17 @@ Deno.test("a version 1 body with an unknown id gets no model", () => {
 });
 
 Deno.test("a version 1 scenario ignores model and hasSatellites", () => {
-    const old = structuredClone(valid);
+    const old = legacy(1);
 
-    planet(old).id = "my-planet";
+    legacyBody(old, 1).id = "my-planet";
 
     const result = validateScenario({
         ...old,
-        version: 1,
         hasSatellites: true,
-        bodies: old.bodies.map((body) => ({ ...body, model: "nope" })),
+        bodies: (old.bodies as object[]).map((body) => ({
+            ...body,
+            model: "nope",
+        })),
     });
 
     assert(result.ok);
@@ -158,7 +176,7 @@ Deno.test("a version 1 scenario ignores model and hasSatellites", () => {
     assert(!("hasSatellites" in result.scenario));
 });
 
-Deno.test("a version 2 body named Earth keeps no model and adds no satellites", () => {
+Deno.test("a version 3 body named Earth keeps no model and adds no satellites", () => {
     const result = validateScenario(valid);
 
     assert(result.ok);
@@ -166,7 +184,7 @@ Deno.test("a version 2 body named Earth keeps no model and adds no satellites", 
     assert(!("hasSatellites" in result.scenario));
 });
 
-Deno.test("a model and hasSatellites are kept in version 2", () => {
+Deno.test("a model and hasSatellites are kept in version 3", () => {
     const scenario = structuredClone(valid);
 
     scenario.hasSatellites = true;
@@ -230,13 +248,16 @@ Deno.test("a duplicate id is rejected", () => {
     assert(errors.includes('sun.id: must be unique (got "sun")'));
 });
 
-Deno.test("an unknown kind is rejected", () => {
-    const errors = errorsAfter((s) => {
-        (planet(s) as { kind: string }).kind = "rock";
-    });
+Deno.test("an unknown kind is rejected in version 2", () => {
+    const old = legacy(2);
 
+    legacyBody(old, 1).kind = "rock";
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
     assert(
-        errors.includes(
+        result.errors.includes(
             'earth.kind: must be one of star, planet, dwarf, moon, asteroid, comet, spacecraft (got "rock")',
         ),
     );
@@ -455,40 +476,162 @@ Deno.test("time and color are kept only when present", () => {
     assert(!("color" in at(plain.scenario.bodies, 0)));
 });
 
-Deno.test("a spacecraft role is kept", () => {
-    const scenario = structuredClone(valid);
-
-    at(scenario.bodies, 1).kind = "spacecraft";
-    at(scenario.bodies, 1).role = "telescope";
-
-    const result = validateScenario(scenario);
+Deno.test("a version 2 kind becomes the only tag", () => {
+    const result = validateScenario(legacy(2));
 
     assert(result.ok);
-    assertEquals(planet(result.scenario).role, "telescope");
-    assert(!("role" in at(result.scenario.bodies, 0)));
+    assertEquals(result.scenario.version, 3);
+    assertEquals(at(result.scenario.bodies, 0).tags, ["star"]);
+    assertEquals(planet(result.scenario).tags, ["planet"]);
+    assert(!("kind" in planet(result.scenario)));
 });
 
-Deno.test("an unknown role is rejected", () => {
-    const errors = errorsAfter((s) => {
-        planet(s).kind = "spacecraft";
-        (planet(s) as { role: string }).role = "tug";
+Deno.test("a version 2 spacecraft role becomes the tag after its kind", () => {
+    const old = legacy(2);
+
+    Object.assign(legacyBody(old, 1), {
+        kind: "spacecraft",
+        role: "telescope",
     });
 
+    const result = validateScenario(old);
+
+    assert(result.ok);
+    assertEquals(planet(result.scenario).tags, ["spacecraft", "telescope"]);
+    assert(!("role" in planet(result.scenario)));
+    assertEquals(at(result.scenario.bodies, 0).tags, ["star"]);
+});
+
+Deno.test("a version 1 kind becomes the only tag", () => {
+    const result = validateScenario(legacy(1));
+
+    assert(result.ok);
+    assertEquals(planet(result.scenario).tags, ["planet"]);
+});
+
+Deno.test("an unknown role is rejected in version 2", () => {
+    const old = legacy(2);
+
+    Object.assign(legacyBody(old, 1), { kind: "spacecraft", role: "tug" });
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
     assert(
-        errors.includes(
+        result.errors.includes(
             'earth.role: must be one of station, telescope, navigation, earth-observation, science (got "tug")',
         ),
     );
 });
 
-Deno.test("a role on another kind is rejected", () => {
+Deno.test("a role on another kind is rejected in version 2", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).role = "station";
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
+    assert(
+        result.errors.includes(
+            "earth.role: must be absent unless kind is spacecraft",
+        ),
+    );
+});
+
+Deno.test("tags are kept in order in version 3, known or not", () => {
+    const scenario = structuredClone(valid);
+
+    planet(scenario).tags = ["custom", "moon", "planet-9"];
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assertEquals(result.scenario.version, 3);
+    assertEquals(planet(result.scenario).tags, ["custom", "moon", "planet-9"]);
+});
+
+Deno.test("a version 3 body ignores a kind and a role", () => {
+    const scenario = structuredClone(valid);
+
+    Object.assign(planet(scenario), { kind: "moon", role: "station" });
+
+    const result = validateScenario(scenario);
+
+    assert(result.ok);
+    assertEquals(planet(result.scenario).tags, ["planet"]);
+    assert(!("kind" in planet(result.scenario)));
+    assert(!("role" in planet(result.scenario)));
+});
+
+Deno.test("tags that aren't an array of 1 to 8 are rejected", () => {
+    const bad: unknown[] = [
+        "moon",
+        [],
+        ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+    ];
+    const shown = ['"moon"', "object", "object"];
+
+    for (const [index, tags] of bad.entries()) {
+        const errors = errorsAfter((s) => {
+            Object.assign(planet(s), { tags });
+        });
+
+        assert(
+            errors.includes(
+                `earth.tags: must be an array of 1 to 8 tags (got ${shown[index]})`,
+            ),
+            errors.join("\n"),
+        );
+    }
+});
+
+Deno.test("a body without tags is rejected in version 3", () => {
     const errors = errorsAfter((s) => {
-        planet(s).role = "station";
+        Reflect.deleteProperty(planet(s), "tags");
     });
 
     assert(
-        errors.includes("earth.role: must be absent unless kind is spacecraft"),
+        errors.includes(
+            "earth.tags: must be an array of 1 to 8 tags (got undefined)",
+        ),
     );
+});
+
+Deno.test("eight tags are accepted", () => {
+    const scenario = structuredClone(valid);
+
+    planet(scenario).tags = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+    assert(validateScenario(scenario).ok);
+});
+
+Deno.test("a tag that isn't a slug is rejected and named by its index", () => {
+    const errors = errorsAfter((s) => {
+        planet(s).tags = ["moon", "ok", "Bad Tag", "x"];
+    });
+
+    assert(
+        errors.includes(
+            'earth.tags[2]: must match /^[a-z0-9-]+$/ (got "Bad Tag")',
+        ),
+    );
+});
+
+Deno.test("a tag that isn't a string is rejected", () => {
+    const errors = errorsAfter((s) => {
+        Object.assign(planet(s), { tags: ["moon", 3] });
+    });
+
+    assert(errors.includes("earth.tags[1]: must match /^[a-z0-9-]+$/ (got 3)"));
+});
+
+Deno.test("a duplicate tag is rejected", () => {
+    const errors = errorsAfter((s) => {
+        planet(s).tags = ["moon", "x", "moon"];
+    });
+
+    assert(errors.includes('earth.tags: must be unique (got "moon" twice)'));
 });
 
 Deno.test("sorting puts every body after its parent", () => {

@@ -149,7 +149,7 @@ const planet = (
     return {
         id,
         name,
-        kind,
+        tags: [kind],
         parent: "sun",
         mu: G * mass * 1e24,
         radius: km(radius),
@@ -190,14 +190,14 @@ const SUN_MU = 1.32712440041e20;
  * the Moon, Jupiter and the Sun.
  */
 export const solarSystem: Scenario = {
-    version: 2,
+    version: 3,
     name: "Solar System",
     hasSatellites: true,
     bodies: fillModels([
         {
             id: "sun",
             name: "Sun",
-            kind: "star",
+            tags: ["star"],
             parent: null,
             // JPL astrodynamic parameters: https://ssd.jpl.nasa.gov/astro_par.html
             mu: SUN_MU,
@@ -217,7 +217,7 @@ export const solarSystem: Scenario = {
         {
             id: "moon",
             name: "Moon",
-            kind: "moon",
+            tags: ["moon"],
             parent: "earth",
             mu: MOON_MU,
             radius: km(1737.4),

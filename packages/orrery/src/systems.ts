@@ -1,5 +1,6 @@
 import { period } from "@cpluspatch/orbit";
-import type { Body, BodyKind } from "@cpluspatch/sim";
+import { styleOf } from "@cpluspatch/render";
+import type { Body } from "@cpluspatch/sim";
 
 /** One line in a group. A nested row is a child of the row above it. */
 export type Row = { body: Body; nested: boolean };
@@ -7,14 +8,14 @@ export type Row = { body: Body; nested: boolean };
 /** A titled run of rows. */
 export type Group = { label: string; rows: Row[] };
 
-/** The groups in display order, with the kinds each one holds. */
-const GROUPS: readonly { label: string; kinds: readonly BodyKind[] }[] = [
-    { label: "Stars", kinds: ["star"] },
-    { label: "Planets", kinds: ["planet"] },
-    { label: "Dwarf planets", kinds: ["dwarf"] },
-    { label: "Small bodies", kinds: ["asteroid", "comet"] },
-    { label: "Moons", kinds: ["moon"] },
-    { label: "Spacecraft", kinds: ["spacecraft"] },
+/** The group titles in display order. The tag table says which one a body is in. */
+const GROUPS: readonly string[] = [
+    "Stars",
+    "Planets",
+    "Dwarf planets",
+    "Small bodies",
+    "Moons",
+    "Spacecraft",
 ];
 
 const unknown = (id: string): Error => new Error(`There is no body "${id}".`);
@@ -34,10 +35,10 @@ const grouped = (
     children: readonly Body[],
     nest: (child: Body) => Body[],
 ): Group[] =>
-    GROUPS.map(({ label, kinds }) => ({
+    GROUPS.map((label) => ({
         label,
         rows: children
-            .filter((child) => kinds.includes(child.kind))
+            .filter((child) => styleOf(child).group === label)
             .flatMap((child) => [
                 { body: child, nested: false },
                 ...nest(child).map((body) => ({ body, nested: true })),
@@ -59,7 +60,7 @@ export const system = (bodies: readonly Body[], id: string): Group[] => {
     find(bodies, id);
 
     return grouped(childrenOf(bodies, id), (child) =>
-        child.kind === "spacecraft" ? [] : childrenOf(bodies, child.id),
+        styleOf(child).nests ? childrenOf(bodies, child.id) : [],
     );
 };
 
@@ -147,6 +148,6 @@ export const facts = (
                 ? period(elements, parent.mu + body.mu)
                 : null,
         // A spacecraft's radius is only its model's size.
-        radius: body.kind === "spacecraft" ? null : body.radius,
+        radius: styleOf(body).sized ? body.radius : null,
     };
 };

@@ -4,8 +4,8 @@ import { assert, assertAlmostEquals, assertExists } from "@std/assert";
 import { Box3, Sphere } from "three";
 import { createSpacecraftModel, disposeModel } from "./spacecraft.ts";
 
-const satellites = solarSystem.bodies.filter(
-    ({ kind }) => kind === "spacecraft",
+const satellites = solarSystem.bodies.filter(({ tags }) =>
+    tags.includes("spacecraft"),
 );
 
 Deno.test("every satellite has a model", () => {

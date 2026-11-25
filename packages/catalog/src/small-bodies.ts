@@ -1,5 +1,5 @@
 import { AU, DAY, deg, G, km, wrapAngle } from "@cpluspatch/orbit";
-import type { Body, BodyKind } from "@cpluspatch/sim";
+import type { Body } from "@cpluspatch/sim";
 
 // The SBDB epochs are TDB. The app's seconds are UTC-based, so they're ~69 s off, which is ignored.
 const J2000_JD = 2451545.0;
@@ -7,7 +7,7 @@ const J2000_JD = 2451545.0;
 type SbdbRow = {
     id: string;
     name: string;
-    kind: BodyKind;
+    kind: "dwarf" | "asteroid" | "comet";
     /** Epoch as a TDB Julian date. */
     jd: number;
     /** Semi-major axis in au. */
@@ -132,7 +132,7 @@ const ROWS: SbdbRow[] = [
 export const smallBodies: Body[] = ROWS.map((row) => ({
     id: row.id,
     name: row.name,
-    kind: row.kind,
+    tags: [row.kind],
     parent: "sun",
     mu: row.mu,
     radius: km(row.radius),

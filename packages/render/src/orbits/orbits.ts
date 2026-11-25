@@ -1,5 +1,5 @@
 import type { Elements, Vec3 } from "@cpluspatch/orbit";
-import { type Body, type BodyKind, precessionTurns } from "@cpluspatch/sim";
+import { type Body, precessionTurns } from "@cpluspatch/sim";
 import {
     Color,
     CustomBlending,
@@ -22,6 +22,7 @@ import {
     trailBack,
 } from "../geometry/along-orbit.ts";
 import { orbitFade, projectedRadiusPx } from "../geometry/visibility.ts";
+import { styleOf } from "../tags.ts";
 import { fadeLineMaterial } from "./fade-material.ts";
 import { createGhost, updateGhost } from "./ghost.ts";
 import {
@@ -74,12 +75,6 @@ const GHOST_DIM = 0.4;
 
 // Minor-body and craft lines cross the planets' and moons' frame, and shouldn't outshine them.
 const MINOR_DIM = 0.6;
-const MINOR_KINDS: readonly BodyKind[] = [
-    "dwarf",
-    "asteroid",
-    "comet",
-    "spacecraft",
-];
 
 /** One line per body that has an orbit, in km. */
 export const createOrbits = (
@@ -109,8 +104,7 @@ export const createOrbits = (
             { r: 0, g: 0, b: 0 },
             SRGBColorSpace,
         );
-        const minor =
-            !picked && MINOR_KINDS.includes(orbit.body.kind) ? MINOR_DIM : 1;
+        const minor = !picked && styleOf(orbit.body).dimOrbit ? MINOR_DIM : 1;
         for (let back = 0; back < SAMPLES; back++) {
             const alpha = trailAlpha(back, SAMPLES, picked) * dim * minor;
             mixed.setRGB(

@@ -300,7 +300,7 @@ Deno.test("only moons with a period for the node or apsides precess", () => {
 
 Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
     const spacecraft = solarSystem.bodies.filter(
-        (b) => b.kind === "spacecraft" && b.parent === "earth",
+        (b) => b.tags.includes("spacecraft") && b.parent === "earth",
     );
 
     assertEquals(spacecraft.length, 8);
@@ -413,7 +413,7 @@ Deno.test("MRO and LRO are in their orbit planes a day after the epoch", () => {
 Deno.test("every Mars, Moon and Jupiter probe precesses about its parent's pole", () => {
     const probes = solarSystem.bodies.filter(
         (b) =>
-            b.kind === "spacecraft" &&
+            b.tags.includes("spacecraft") &&
             (b.parent === "mars" ||
                 b.parent === "moon" ||
                 b.parent === "jupiter"),

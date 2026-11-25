@@ -6,7 +6,7 @@ import { subtreeIds, validateScenario } from "./scenario.ts";
 
 /** The fields of a body that `update-body` can change. */
 export type BodyPatch = Partial<
-    Pick<Body, "name" | "kind" | "mu" | "radius" | "color" | "role" | "model">
+    Pick<Body, "name" | "tags" | "mu" | "radius" | "color" | "model">
 >;
 
 /** One edit to a document. */
@@ -24,15 +24,7 @@ export type DocumentResult =
     | { ok: true; doc: Document }
     | { ok: false; errors: string[] };
 
-const PATCH_KEYS = [
-    "name",
-    "kind",
-    "mu",
-    "radius",
-    "color",
-    "role",
-    "model",
-] as const;
+const PATCH_KEYS = ["name", "tags", "mu", "radius", "color", "model"] as const;
 
 const BURN_FAILURES = {
     escape: "the burn would leave the parent's gravity",

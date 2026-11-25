@@ -8,7 +8,7 @@ import {
     rotateEquatorialToEcliptic,
     unixMsToJ2000s,
 } from "@cpluspatch/orbit";
-import { type Body, j2Precession, type SpacecraftRole } from "@cpluspatch/sim";
+import { type Body, j2Precession } from "@cpluspatch/sim";
 
 /** Converts a TLE to ecliptic elements around a parent with gravitational parameter `mu`. */
 const fromTle = (line1: string, line2: string, mu: number): Elements => {
@@ -46,7 +46,7 @@ type Satellite = {
     /** The bounding radius of its model in the orrery, in m. */
     radius: number;
     /** What it does. Absent means other. */
-    role?: SpacecraftRole;
+    role?: "station" | "telescope" | "navigation" | "earth-observation";
 };
 
 // Fetched from CelesTrak at 2026-11-23T12:48:34Z,
@@ -159,7 +159,7 @@ export const satellites = (earthMu: number): Body[] => {
         return {
             id,
             name,
-            kind: "spacecraft",
+            tags: role === undefined ? ["spacecraft"] : ["spacecraft", role],
             parent: "earth",
             mu: 0,
             radius,
@@ -171,7 +171,6 @@ export const satellites = (earthMu: number): Body[] => {
                 EARTH_RADIUS,
                 pole,
             ),
-            ...(role === undefined ? {} : { role }),
         };
     });
 };

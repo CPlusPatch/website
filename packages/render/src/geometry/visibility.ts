@@ -4,7 +4,6 @@
  */
 
 import type { Vec3 } from "@cpluspatch/orbit";
-import type { BodyKind } from "@cpluspatch/sim";
 
 /** The gap in px under which a marker hides behind a larger body's. */
 export const MARKER_GAP_PX = 6;
@@ -141,10 +140,8 @@ export const culledByParent = (
     return byParent;
 };
 
-/** Where labels sort: the star, then planets, then the rest, each by `mu`. */
-export const labelRank = (kind: BodyKind, mu: number): number => {
-    const tier = kind === "star" ? 2 : kind === "planet" ? 1 : 0;
-
+/** Where labels sort: higher `tier` first, then by `mu`. */
+export const labelRank = (tier: number, mu: number): number => {
     // The log of any real mu is under 100, so tiers never mix.
     return tier + Math.log10(1 + mu) / 100;
 };

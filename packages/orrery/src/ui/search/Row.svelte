@@ -1,10 +1,10 @@
 <script lang="ts">
-import { colorOf } from "@cpluspatch/render";
+import { colorOf, roleOf, styleOf } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import { marked } from "../../search.ts";
 import { system } from "../../systems.ts";
 import { bodyMarker } from "../body-marker.ts";
-import { KIND_LABELS, ROLE_LABELS } from "../labels.ts";
+import { ROLE_LABELS } from "../labels.ts";
 import { optionId, type Pane } from "./nav.ts";
 
 type Props = {
@@ -47,12 +47,16 @@ const parent = $derived(
 );
 const [before, match, after] = $derived(marked(body.name, query ?? ""));
 // The left column is too narrow for both, and its Spacecraft heading says what they are.
+const style = $derived(styleOf(body));
+const bodyRole = $derived(style.craft ? roleOf(body) : "other");
 const role = $derived(
-    pane !== "left" && body.role ? ROLE_LABELS[body.role].toLowerCase() : "",
+    pane !== "left" && bodyRole !== "other"
+        ? ROLE_LABELS[bodyRole].toLowerCase()
+        : "",
 );
 const sub = $derived.by(() => {
-    const craft = body.kind === "spacecraft" && body.role;
-    const kind = craft ? `${ROLE_LABELS[craft]} craft` : KIND_LABELS[body.kind];
+    const kind =
+        bodyRole !== "other" ? `${ROLE_LABELS[bodyRole]} craft` : style.label;
 
     return parent ? `${kind} around ${parent.name}` : kind;
 });

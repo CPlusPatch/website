@@ -23,6 +23,8 @@ Test files in `sim` and `render` may import `catalog`, since they use the built-
 
 `render` sets `orrery__*` class names on the labels and grips it draws, and their styles are in `orrery/src/styles/scene.css`.
 
+Bodies carry free-form `tags`, and nothing branches on one outside `render/src/tags.ts`. Its `TAG_STYLES` table maps a tag to its look and behaviour, and `styleOf(body)` returns the style of the body's first tag that has an entry.
+
 ## State
 
 The Orrery's state lives in `$state` fields in `src/state/`. Components read and write it through two stores:
@@ -64,4 +66,6 @@ These break the rules above until a later step of the rewrite removes them.
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | `sim` keeps the closed model list (`models.ts`) and rotation tables keyed by model name         | Rotation and appearance become body data         |
 | Kerbol's tidally locked rotations are literals in `sim/src/rotation-models.ts`; a catalog test checks them against the scenario | Rotation becomes body data |
+| `TagStyle.corona` makes `render` draw a star's emissive material and corona sprite from a tag | Star appearance becomes body data |
+| `TagStyle.craftMesh` makes `render` pick the spacecraft mesh from a tag | Spacecraft models become body data |
 | The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |

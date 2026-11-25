@@ -1,9 +1,8 @@
 <script lang="ts">
-import type { AUnit } from "@cpluspatch/render";
+import { type AUnit, styleOf } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import type { Attachment } from "svelte/attachments";
 import { leftPane, rail, system } from "../../systems.ts";
-import { KIND_LABELS } from "../labels.ts";
 import { idsOf, named, rangesFor, rootNote, systemIds } from "./nav.ts";
 import Rail from "./Rail.svelte";
 import Row from "./Row.svelte";
@@ -115,7 +114,7 @@ const onDouble = (event: MouseEvent) => {
     {@attach more}
 >
     {#if tree}
-        {@render heading(KIND_LABELS[root.kind])}
+        {@render heading(styleOf(root).label)}
         <Row
             body={root}
             {bodies}

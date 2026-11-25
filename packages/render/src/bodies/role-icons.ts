@@ -6,10 +6,16 @@
  * satellite, so a role reads as the one part it adds.
  */
 
-import type { Body, SpacecraftRole } from "@cpluspatch/sim";
+import type { Body } from "@cpluspatch/sim";
 
 /** A spacecraft's role, or "other" when it has none. */
-export type RoleKey = SpacecraftRole | "other";
+export type RoleKey =
+    | "station"
+    | "telescope"
+    | "navigation"
+    | "earth-observation"
+    | "science"
+    | "other";
 
 export const ROLE_ICONS: Record<RoleKey, string> = {
     station:
@@ -25,5 +31,8 @@ export const ROLE_ICONS: Record<RoleKey, string> = {
     other: "M10 8h4a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-5a1.5 1.5 0 0 1 1.5 -1.5zM1.5 9h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM17.5 9h5a0.5 0.5 0 0 1 0.5 0.5v5a0.5 0.5 0 0 1 -0.5 0.5h-5a0.5 0.5 0 0 1 -0.5 -0.5v-5a0.5 0.5 0 0 1 0.5 -0.5zM7 11.25h1.5v1.5h-1.5zM15.5 11.25h1.5v1.5h-1.5z",
 };
 
-/** The role a spacecraft is drawn with. */
-export const roleOf = (body: Body): RoleKey => body.role ?? "other";
+/** The role a spacecraft is drawn with: its first tag that names one, else "other". */
+export const roleOf = (body: Pick<Body, "tags">): RoleKey =>
+    (body.tags.find((tag) => Object.hasOwn(ROLE_ICONS, tag)) as
+        | RoleKey
+        | undefined) ?? "other";

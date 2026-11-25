@@ -6,12 +6,12 @@ import { BODY_COLORS, colorOf, ORBIT_CLASS_COLORS } from "./theme.ts";
 
 const body = (
     id: string,
-    kind: Body["kind"],
+    tag: string,
     options: { color?: string; model?: Model } = {},
 ): Body => ({
     id,
     name: id,
-    kind,
+    tags: [tag],
     parent: null,
     mu: 1,
     radius: 1,
@@ -56,7 +56,7 @@ Deno.test("a body without a model takes its kind's colour, whatever its id", () 
 
 Deno.test("the Sun and every planet have a colour of their own", () => {
     const named = solarSystem.bodies.filter(
-        ({ kind }) => kind === "star" || kind === "planet",
+        ({ tags }) => tags.includes("star") || tags.includes("planet"),
     );
 
     for (const { id, model } of named) {

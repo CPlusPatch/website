@@ -213,12 +213,12 @@ Deno.test("the opening view frames Mars's apoapsis, the 4th planet out", () => {
 });
 
 Deno.test("the opening view falls back to the farthest planet, then to the reach", () => {
-    const planets = solarSystem.bodies.filter((b) => b.kind === "planet");
+    const planets = solarSystem.bodies.filter((b) => b.tags.includes("planet"));
     const keep = new Set(["sun", "mercury", "venus"]);
     const few = {
         ...solarSystem,
         bodies: solarSystem.bodies.filter(
-            (b) => b.kind !== "planet" || keep.has(b.id),
+            (b) => !b.tags.includes("planet") || keep.has(b.id),
         ),
     };
     const venus = body("venus");
@@ -229,7 +229,7 @@ Deno.test("the opening view falls back to the farthest planet, then to the reach
 
     const none = {
         ...solarSystem,
-        bodies: solarSystem.bodies.filter((b) => b.kind !== "planet"),
+        bodies: solarSystem.bodies.filter((b) => !b.tags.includes("planet")),
     };
 
     assertAlmostEquals(openingReachKm(none), reachKm(none), 1);

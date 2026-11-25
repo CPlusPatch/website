@@ -5,6 +5,7 @@
 
 import type { Vec3 } from "@cpluspatch/orbit";
 import type { Body, OrbitingBody, Scenario } from "@cpluspatch/sim";
+import { styleOf } from "../tags.ts";
 
 /** A camera distance in km and the floating origin it orbits, in metres. */
 export type Pose = { distance: number; position: Vec3 };
@@ -25,8 +26,7 @@ export const reachKm = (scenario: Scenario): number => {
                 // companion star like 40 Eridani B stays in reach.
                 .filter(
                     (body): body is OrbitingBody =>
-                        body.parent === root.id &&
-                        (body.kind === "planet" || body.kind === "star"),
+                        body.parent === root.id && styleOf(body).reach,
                 )
                 .map((body) => body.elements.a * (1 + body.elements.e)),
             root.radius,
@@ -49,7 +49,7 @@ export const openingReachKm = (scenario: Scenario): number => {
     const planets = scenario.bodies
         .filter(
             (body): body is OrbitingBody =>
-                body.parent === root.id && body.kind === "planet",
+                body.parent === root.id && styleOf(body).opening,
         )
         .sort((a, b) => a.elements.a - b.elements.a);
     const chosen = planets[3] ?? planets.at(-1);
@@ -104,7 +104,7 @@ export const frameDistanceKm = (
     }
 
     // Juno's orbit reaches 3 times past Callisto's, so craft only count when there are no moons.
-    const moons = children.filter((child) => child.kind !== "spacecraft");
+    const moons = children.filter((child) => styleOf(child).framed);
     const framed = moons.length > 0 ? moons : children;
 
     const tanVertical = Math.tan(fovRad / 2);

@@ -1,8 +1,7 @@
 import { G } from "@cpluspatch/orbit";
-import { type AUnit, DEGREES } from "@cpluspatch/render";
+import { type AUnit, DEGREES, styleOf } from "@cpluspatch/render";
 import {
     type Body,
-    type BodyKind,
     type OrbitingBody,
     type Scenario,
     subtreeIds,
@@ -13,7 +12,8 @@ import { aMin, fieldError } from "./editing.ts";
 export type NewBodyInput = {
     id: string;
     name: string;
-    kind: BodyKind;
+    /** The tag the body gets, which sets how it looks. */
+    tag: string;
     parent: Body;
     radiusKm: number;
     massKg: number;
@@ -43,7 +43,7 @@ export const slugId = (name: string, taken: ReadonlySet<string>): string => {
 export const newBody = (input: NewBodyInput, t: number): OrbitingBody => ({
     id: input.id,
     name: input.name,
-    kind: input.kind,
+    tags: [input.tag],
     parent: input.parent.id,
     mu: G * input.massKg,
     radius: input.radiusKm * 1000,
@@ -65,7 +65,7 @@ export const removalNote = (scenario: Scenario, id: string): string => {
         .flatMap((other) =>
             scenario.bodies.filter((body) => body.id === other),
         );
-    const moons = below.every((body) => body.kind === "moon");
+    const moons = below.every((body) => styleOf(body).isMoon);
 
     if (below.length === 0) return "";
     if (below.length === 1) {

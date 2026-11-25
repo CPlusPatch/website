@@ -5,12 +5,12 @@
 
 import {
     type Body,
-    type BodyKind,
     type Model,
     type OrbitClass,
     orbitClass,
 } from "@cpluspatch/sim";
 import { Color, SRGBColorSpace } from "three";
+import { styleOf } from "./tags.ts";
 
 /** The colours of a scene, which come from the `--orrery-*` tokens. */
 export type Theme = {
@@ -55,16 +55,6 @@ export const BODY_COLORS: Partial<Record<Model, string>> = {
     halley: "#b5c9d6",
 };
 
-const KIND_COLORS: Record<BodyKind, string> = {
-    star: "var(--orrery-signal)",
-    planet: "var(--orrery-text)",
-    dwarf: "var(--orrery-muted)",
-    moon: "var(--orrery-muted)",
-    asteroid: "var(--orrery-dim)",
-    comet: "var(--orrery-dim)",
-    spacecraft: "var(--orrery-text)",
-};
-
 /** The token that colours Earth satellites of each orbit class. */
 export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     leo: "var(--orrery-orbit-leo)",
@@ -73,21 +63,19 @@ export const ORBIT_CLASS_COLORS: Record<OrbitClass, string> = {
     heo: "var(--orrery-orbit-heo)",
 };
 
-/** The CSS colour of a body: its own, its orbit class's, its model's, then its kind's. */
+/** The CSS colour of a body: its own, its orbit class's, its model's, then its tag's. */
 export const colorOf = (body: Body, parent: Body | undefined): string => {
     if (body.color !== undefined) return body.color;
 
-    if (
-        body.kind === "spacecraft" &&
-        parent?.model === "earth" &&
-        body.elements
-    ) {
+    const style = styleOf(body);
+
+    if (style.colorByOrbitClass && parent?.model === "earth" && body.elements) {
         return ORBIT_CLASS_COLORS[orbitClass(body.elements)];
     }
 
     return (
         (body.model === undefined ? undefined : BODY_COLORS[body.model]) ??
-        KIND_COLORS[body.kind]
+        style.color
     );
 };
 
@@ -140,7 +128,7 @@ export const createTheme = (container: HTMLElement): Theme => {
         background: () => resolve("var(--orrery-ground)"),
         pick: () => resolve("var(--orrery-pick)"),
         color: (body, parent) =>
-            resolve(colorOf(body, parent), KIND_COLORS[body.kind]),
+            resolve(colorOf(body, parent), styleOf(body).color),
         classColor: (orbitClass) => resolve(ORBIT_CLASS_COLORS[orbitClass]),
         stop: () => probe.remove(),
     };

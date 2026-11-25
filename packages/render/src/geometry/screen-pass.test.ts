@@ -1,6 +1,7 @@
 /// <reference types="deno" />
 import type { Vec3 } from "@cpluspatch/orbit";
 import { assert, assertEquals, assertFalse } from "@std/assert";
+import { styleOf } from "../tags.ts";
 import type { Placement } from "./labels.ts";
 import {
     countText,
@@ -15,6 +16,8 @@ import {
     settleLabels,
 } from "./screen-pass.ts";
 
+const tagStyle = (tag: string) => styleOf({ tags: [tag] });
+
 const viewport = { width: 800, height: 600 };
 const fov = Math.PI / 2;
 const camera = { x: 0, y: 0, z: 0 };
@@ -28,7 +31,7 @@ const project = (position: Vec3) =>
 const body = (id: string, over: Partial<ScreenBody> = {}): ScreenBody => ({
     id,
     parent: "sun",
-    kind: "moon",
+    style: tagStyle("moon"),
     mu: 1,
     radius: 1000,
     a: 1e9,
@@ -37,7 +40,12 @@ const body = (id: string, over: Partial<ScreenBody> = {}): ScreenBody => ({
     ...over,
 });
 
-const sun = body("sun", { parent: null, kind: "star", a: null, radius: 1e3 });
+const sun = body("sun", {
+    parent: null,
+    style: tagStyle("star"),
+    a: null,
+    radius: 1e3,
+});
 
 const at = (x: number, y: number, z = -1000): Vec3 => ({ x, y, z });
 
@@ -237,7 +245,7 @@ Deno.test("only the selected body gets room for readouts", () => {
 Deno.test("a label hides behind a sphere in front of it, and its marker and pick go with it", () => {
     const bodies = [
         sun,
-        body("earth", { kind: "planet", radius: 6.4e6 }),
+        body("earth", { style: tagStyle("planet"), radius: 6.4e6 }),
         body("moon"),
     ];
     const positions = {
@@ -286,9 +294,9 @@ Deno.test("a kept or hovered body is never covered or unnamed", () => {
 Deno.test("an unnamed moon is counted under its parent, and a planet is never unnamed", () => {
     const bodies = [
         sun,
-        body("earth", { kind: "planet", radius: 6.4e6 }),
+        body("earth", { style: tagStyle("planet"), radius: 6.4e6 }),
         body("moon", { parent: "earth" }),
-        body("hidden-planet", { kind: "planet", radius: 6.4e6 }),
+        body("hidden-planet", { style: tagStyle("planet"), radius: 6.4e6 }),
     ];
     const positions = {
         sun: at(300, 0),
@@ -327,11 +335,11 @@ Deno.test("the count text is empty, the number, or the names when hovered", () =
 Deno.test("bare mode hides the markers of icon kinds only", () => {
     const bodies = [
         sun,
-        body("craft", { kind: "spacecraft" }),
-        body("rock", { kind: "asteroid" }),
-        body("comet", { kind: "comet" }),
+        body("craft", { style: tagStyle("spacecraft") }),
+        body("rock", { style: tagStyle("asteroid") }),
+        body("comet", { style: tagStyle("comet") }),
         body("moon"),
-        body("dwarf", { kind: "dwarf" }),
+        body("dwarf", { style: tagStyle("dwarf") }),
     ];
     const positions = {
         sun: at(300, 0),
@@ -356,7 +364,10 @@ Deno.test("bare mode hides the markers of icon kinds only", () => {
 });
 
 Deno.test("bare mode leaves a drawn spacecraft alone", () => {
-    const bodies = [sun, body("craft", { kind: "spacecraft", radius: 2e4 })];
+    const bodies = [
+        sun,
+        body("craft", { style: tagStyle("spacecraft"), radius: 2e4 }),
+    ];
 
     const settled = run(bodies, { sun: at(300, 0), craft: at(0, 0) }).settle({
         bare: true,
@@ -369,8 +380,8 @@ Deno.test("bare mode leaves a drawn spacecraft alone", () => {
 Deno.test("a hidden marker keeps its corona when its sphere is drawn, and loses it otherwise", () => {
     const bodies = [
         sun,
-        body("big", { kind: "star", radius: 2e4 }),
-        body("dot", { kind: "asteroid" }),
+        body("big", { style: tagStyle("star"), radius: 2e4 }),
+        body("dot", { style: tagStyle("asteroid") }),
     ];
     const positions = { sun: at(300, 0), big: at(0, 100), dot: at(0, 0) };
 
@@ -383,7 +394,7 @@ Deno.test("a hidden marker keeps its corona when its sphere is drawn, and loses 
 Deno.test("a placed label's box is reported, and a hidden one has none", () => {
     const bodies = [
         sun,
-        body("earth", { kind: "planet", radius: 6.4e6 }),
+        body("earth", { style: tagStyle("planet"), radius: 6.4e6 }),
         body("moon"),
     ];
     const positions = {
@@ -430,7 +441,7 @@ Deno.test("a label that changed placement is reported against the previous ones"
 Deno.test("a held placement is kept even where another label would push it off", () => {
     const bodies = [
         sun,
-        body("planet", { kind: "planet", radius: 2e4 }),
+        body("planet", { style: tagStyle("planet"), radius: 2e4 }),
         body("moon"),
     ];
     const positions = {
@@ -480,8 +491,8 @@ Deno.test("a placement is held for 500 ms after it changed", () => {
 });
 
 Deno.test("stars, planets and the focus are major", () => {
-    assert(isMajor({ id: "a", kind: "star" }, "x"));
-    assert(isMajor({ id: "a", kind: "planet" }, "x"));
-    assert(isMajor({ id: "a", kind: "moon" }, "a"));
-    assertFalse(isMajor({ id: "a", kind: "moon" }, "x"));
+    assert(isMajor({ id: "a", style: tagStyle("star") }, "x"));
+    assert(isMajor({ id: "a", style: tagStyle("planet") }, "x"));
+    assert(isMajor({ id: "a", style: tagStyle("moon") }, "a"));
+    assertFalse(isMajor({ id: "a", style: tagStyle("moon") }, "x"));
 });

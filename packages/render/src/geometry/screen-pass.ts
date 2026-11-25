@@ -7,8 +7,8 @@
  */
 
 import type { Vec3 } from "@cpluspatch/orbit";
-import type { BodyKind } from "@cpluspatch/sim";
 import type { PickPoint } from "../picking.ts";
+import type { TagStyle } from "../tags.ts";
 import {
     type Dot,
     LABEL_ANCHOR_GAP_PX,
@@ -43,18 +43,11 @@ export const MODEL_MIN_PX = 12;
 /** The ms a label keeps a new placement, so a fast moon doesn't blink as it passes other labels. */
 export const LABEL_HOLD_MS = 500;
 
-/** The kinds whose markers are icons rather than plain dots, which bare mode hides. */
-const ICON_KINDS: ReadonlySet<BodyKind> = new Set([
-    "spacecraft",
-    "asteroid",
-    "comet",
-]);
-
 /** What a pass needs to know of a body. */
 export type ScreenBody = {
     id: string;
     parent: string | null;
-    kind: BodyKind;
+    style: TagStyle;
     mu: number;
     /** The radius in m. */
     radius: number;
@@ -80,12 +73,11 @@ const distance = (a: Vec3, b: Vec3): number => {
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
 };
 
-/** Whether a body is labelled big: stars, planets and the focus. */
+/** Whether a body is labelled big: its style says so, or it's the focus. */
 export const isMajor = (
-    body: Pick<ScreenBody, "id" | "kind">,
+    body: Pick<ScreenBody, "id" | "style">,
     focus: string,
-): boolean =>
-    body.kind === "star" || body.kind === "planet" || body.id === focus;
+): boolean => body.style.major || body.id === focus;
 
 /** The "+N" text of a label: empty with nothing hidden, the names when hovered, else the count. */
 export const countText = (
@@ -304,7 +296,7 @@ export const layoutBodies = (input: LayoutInput): Layout => {
                 height: size.height,
                 offset,
                 disc: big,
-                rank: labelRank(body.kind, body.mu),
+                rank: labelRank(body.style.labelTier, body.mu),
                 big: isMajor(body, focus),
                 readout:
                     readoutRoom && body.id === selected
@@ -403,10 +395,10 @@ export const settleLabels = (input: SettleInput): Settled => {
 
     // A moon or craft with no label would show as an unnamed marker.
     const unnamed = new Set<string>();
-    for (const { id, kind } of bodies) {
+    for (const { id, style } of bodies) {
         if (
             (placements.get(id) ?? "hidden") === "hidden" &&
-            (kind === "moon" || kind === "spacecraft") &&
+            style.needsLabel &&
             !keep.has(id) &&
             id !== hovered
         ) {
@@ -421,7 +413,7 @@ export const settleLabels = (input: SettleInput): Settled => {
     const placed = new Map<string, Rect>();
     const bareHidden = new Set<string>();
     const shown = new Map<string, Shown>();
-    for (const { id, kind } of bodies) {
+    for (const { id, style } of bodies) {
         const placement = placements.get(id) ?? "hidden";
         const box = boxes.get(id);
         if (box && placement !== "hidden") {
@@ -431,7 +423,7 @@ export const settleLabels = (input: SettleInput): Settled => {
         const entry = layout.bodies.get(id);
         if (!entry) continue;
 
-        if (input.bare && !entry.big && ICON_KINDS.has(kind)) {
+        if (input.bare && !entry.big && style.iconMarker) {
             bareHidden.add(id);
         }
         const hidden = covered.has(id) || unnamed.has(id) || bareHidden.has(id);

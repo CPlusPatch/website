@@ -1,7 +1,10 @@
 /// <reference types="deno" />
 import { assertEquals } from "@std/assert";
+import { styleOf } from "../tags.ts";
 import { labelRect, placeLabels, type Rect } from "./labels.ts";
 import { labelRank } from "./visibility.ts";
+
+const tier = (tag: string) => styleOf({ tags: [tag] }).labelTier;
 
 const view = { width: 800, height: 600 };
 
@@ -370,8 +373,8 @@ Deno.test("a label that isn't big ignores an above spot it had", () => {
 
 Deno.test("a lower-ranked label loses a spot to a higher-ranked one, whatever its radius", () => {
     const labels = [
-        box("moon", 100, 100, labelRank("moon", 4.9e12)),
-        box("mars", 108, 101, labelRank("planet", 4.3e13)),
+        box("moon", 100, 100, labelRank(tier("moon"), 4.9e12)),
+        box("mars", 108, 101, labelRank(tier("planet"), 4.3e13)),
     ];
 
     assertEquals(placeLabels(labels, view, "x").get("mars"), "right");

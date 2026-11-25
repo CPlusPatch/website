@@ -12,6 +12,7 @@ import {
     type AUnit,
     colorOf,
     type EditScene,
+    styleOf,
     type Units,
 } from "@cpluspatch/render";
 import { elementsAt, type Readouts, readouts, statesAt } from "@cpluspatch/sim";
@@ -26,7 +27,6 @@ import BodyAdder from "../BodyAdder.svelte";
 import BurnEditor from "../BurnEditor.svelte";
 import { bodyMarker } from "../body-marker.ts";
 import ElementEditor from "../ElementEditor.svelte";
-import { KIND_LABELS } from "../labels.ts";
 import { sheetAfterDrag } from "../sheet.ts";
 import Actions from "./Actions.svelte";
 import Children from "./Children.svelte";
@@ -331,7 +331,7 @@ $effect(() => {
             <!-- Under the title, so the form heads keep the kind and parent in view too. -->
             <p class="orrery__orbit-meta" hidden={mode !== "card"}>
                 {#if body && !adding}
-                    {`${KIND_LABELS[body.kind]} `}
+                    {`${styleOf(body).label} `}
                     {#if parent}
                         around
                         <!-- Keyed, so following it re-renders the link and the focus moves on. -->

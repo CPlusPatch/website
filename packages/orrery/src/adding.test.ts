@@ -73,7 +73,7 @@ Deno.test("the subtree of a moon of a moon is reached through the moon", () => {
             {
                 id,
                 name: id,
-                kind: "moon",
+                tag: "moon",
                 parent: sun,
                 radiusKm: 1,
                 massKg: 0,
@@ -123,7 +123,7 @@ Deno.test("a new body converts km, degrees and kg to SI", () => {
         {
             id: "rock",
             name: "Rock",
-            kind: "dwarf",
+            tag: "dwarf",
             parent: earth,
             radiusKm: 100,
             massKg: 1e20,
@@ -136,7 +136,7 @@ Deno.test("a new body converts km, degrees and kg to SI", () => {
 
     assertEquals(body.id, "rock");
     assertEquals(body.name, "Rock");
-    assertEquals(body.kind, "dwarf");
+    assertEquals(body.tags, ["dwarf"]);
     assertEquals(body.parent, "earth");
     assertEquals(body.radius, 100_000);
     assertAlmostEquals(body.mu, G * 1e20, 1e-12);

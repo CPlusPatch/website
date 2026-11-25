@@ -42,7 +42,7 @@ const planet = (
 ): Body => ({
     id,
     name,
-    kind: "planet",
+    tags: ["planet"],
     parent,
     mu: earthMasses * GM_EARTH,
     radius,
@@ -59,13 +59,13 @@ const MILLER_PERIOD = 1.7 * 3600;
 
 /** Interstellar's Gargantua. Mann's and Edmunds' orbits aren't given in the film or book, so they're made up. */
 export const gargantua: Scenario = {
-    version: 2,
+    version: 3,
     name: "Gargantua (Interstellar)",
     bodies: [
         {
             id: "gargantua",
             name: "Gargantua",
-            kind: "star",
+            tags: ["star"],
             parent: null,
             mu: GARGANTUA_MU,
             radius: GARGANTUA_MU / C ** 2,
@@ -115,13 +115,13 @@ export const gargantua: Scenario = {
  * Feng et al. 2017 (AJ 154, 135); the masses are minimum masses.
  */
 export const tauCeti: Scenario = {
-    version: 2,
+    version: 3,
     name: "Tau Ceti (Project Hail Mary)",
     bodies: [
         {
             id: "tau-ceti",
             name: "Tau Ceti",
-            kind: "star",
+            tags: ["star"],
             parent: null,
             // Korolik et al. 2023 and Ibañez Bustos et al. 2026, via Wikipedia.
             mu: 0.8 * GM_SUN,
@@ -169,13 +169,13 @@ export const tauCeti: Scenario = {
  * (Ma et al. 2018, MNRAS 480, 2411). Star data is from Wikipedia's 40 Eridani page.
  */
 export const eridani: Scenario = {
-    version: 2,
+    version: 3,
     name: "40 Eridani (Project Hail Mary)",
     bodies: [
         {
             id: "40-eridani-a",
             name: "40 Eridani A",
-            kind: "star",
+            tags: ["star"],
             parent: null,
             mu: 0.78 * GM_SUN,
             radius: 0.804 * R_SUN,
@@ -195,7 +195,7 @@ export const eridani: Scenario = {
         {
             id: "40-eridani-b",
             name: "40 Eridani B",
-            kind: "star",
+            tags: ["star"],
             parent: "40-eridani-a",
             mu: 0.558 * GM_SUN,
             radius: 0.01308 * R_SUN,
@@ -206,7 +206,7 @@ export const eridani: Scenario = {
         {
             id: "40-eridani-c",
             name: "40 Eridani C",
-            kind: "star",
+            tags: ["star"],
             parent: "40-eridani-b",
             mu: 0.198 * GM_SUN,
             radius: 0.274 * R_SUN,
@@ -242,7 +242,7 @@ const ksp = (
 ): Body => ({
     id,
     name,
-    kind,
+    tags: [kind],
     parent,
     mu,
     radius: km(radiusKm),
@@ -255,13 +255,13 @@ const ksp = (
  * calls Dres and Eeloo planets, so they're planets here too.
  */
 export const kerbol: Scenario = {
-    version: 2,
+    version: 3,
     name: "Kerbol (Kerbal Space Program)",
     bodies: fillModels([
         {
             id: "kerbol",
             name: "Kerbol",
-            kind: "star",
+            tags: ["star"],
             parent: null,
             mu: 1.1723328e18,
             radius: km(261_600),

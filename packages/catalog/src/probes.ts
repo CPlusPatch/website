@@ -217,8 +217,7 @@ export const probes = (mu: Record<Parent, number>): Body[] =>
         const body: Body = {
             id,
             name,
-            kind: "spacecraft",
-            role: "science",
+            tags: ["spacecraft", "science"],
             parent,
             mu: 0,
             radius,

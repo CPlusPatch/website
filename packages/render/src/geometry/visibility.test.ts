@@ -1,5 +1,6 @@
 /// <reference types="deno" />
 import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
+import { styleOf } from "../tags.ts";
 import {
     CORONA_MIN_PX,
     CORONA_RADII,
@@ -19,6 +20,8 @@ import {
     orbitShown,
     projectedRadiusPx,
 } from "./visibility.ts";
+
+const tier = (tag: string) => styleOf({ tags: [tag] }).labelTier;
 
 Deno.test("a sphere that fills the field of view is half the viewport tall", () => {
     const fov = Math.PI / 2;
@@ -110,10 +113,10 @@ Deno.test("a picked orbit doesn't fade out at any size over the minimum", () => 
 });
 
 Deno.test("a label ranks the star over planets over the rest, then by mu", () => {
-    assert(labelRank("star", 1) > labelRank("planet", 1e30));
-    assert(labelRank("planet", 1) > labelRank("dwarf", 1e30));
-    assert(labelRank("planet", 1e17) > labelRank("planet", 1e14));
-    assertEquals(labelRank("moon", 5), labelRank("spacecraft", 5));
+    assert(labelRank(tier("star"), 1) > labelRank(tier("planet"), 1e30));
+    assert(labelRank(tier("planet"), 1) > labelRank(tier("dwarf"), 1e30));
+    assert(labelRank(tier("planet"), 1e17) > labelRank(tier("planet"), 1e14));
+    assertEquals(labelRank(tier("moon"), 5), labelRank(tier("spacecraft"), 5));
 });
 
 Deno.test("an orbit under the minimum folds into its parent, in input order", () => {

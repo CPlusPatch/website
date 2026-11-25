@@ -12,6 +12,7 @@ import {
 } from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import type { Placement } from "../geometry/labels.ts";
+import { styleOf } from "../tags.ts";
 import { createCorona } from "./corona.ts";
 import { createExtras } from "./extras.ts";
 import { CENTERS } from "./labels.ts";
@@ -57,10 +58,11 @@ export const createEntry = (
     coronaTexture: CanvasTexture,
 ): Entry => {
     const group = new Group();
+    const style = styleOf(body);
 
     const sphere = new Mesh(
         geometry,
-        body.kind === "star"
+        style.corona
             ? createStarMaterial(color(body))
             : new MeshStandardMaterial({
                   color: color(body),
@@ -81,8 +83,9 @@ export const createEntry = (
             toneMapped: false,
         }),
     );
-    const corona =
-        body.kind === "star" ? createCorona(coronaTexture, color(body)) : null;
+    const corona = style.corona
+        ? createCorona(coronaTexture, color(body))
+        : null;
 
     const text = document.createElement("div");
     text.className = "orrery__label";
@@ -97,8 +100,7 @@ export const createEntry = (
     label.center.set(...CENTERS.right);
 
     // The sphere stays for occlusion, picking and framing.
-    const model =
-        body.kind === "spacecraft" ? createSpacecraftModel(body) : null;
+    const model = style.craftMesh ? createSpacecraftModel(body) : null;
     if (model) {
         sphere.material.visible = false;
         group.add(model);

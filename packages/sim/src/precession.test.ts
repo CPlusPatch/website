@@ -117,7 +117,7 @@ Deno.test("an orbit that precesses onto the ecliptic keeps a node on +x", () => 
 const orbiting: OrbitingBody = {
     id: "probe",
     name: "Probe",
-    kind: "moon",
+    tags: ["moon"],
     parent: "earth",
     mu: 0,
     radius: 1,

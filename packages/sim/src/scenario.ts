@@ -11,40 +11,20 @@ import type { Model } from "./models.ts";
 import { isModel } from "./models.ts";
 import type { Precession } from "./precession.ts";
 
-/** What a body is. The view colours bodies by kind. */
-export type BodyKind =
-    | "star"
-    | "planet"
-    | "dwarf"
-    | "moon"
-    | "asteroid"
-    | "comet"
-    | "spacecraft";
-
-/** What a spacecraft does. */
-export type SpacecraftRole =
-    | "station"
-    | "telescope"
-    | "navigation"
-    | "earth-observation"
-    | "science";
-
 /** The fields every body has. */
 type BodyBase = {
     /** A unique slug of lowercase letters, digits and hyphens. */
     id: string;
     /** The display name. */
     name: string;
-    /** What the body is. */
-    kind: BodyKind;
+    /** Labels only. The renderer styles bodies by them, first match first. */
+    tags: string[];
     /** The gravitational parameter GM in m³/s², at least 0. */
     mu: number;
     /** The mean radius in metres, above 0. */
     radius: number;
     /** An optional CSS colour. */
     color?: string;
-    /** What a spacecraft does. Absent means other. Only spacecraft have one. */
-    role?: SpacecraftRole;
     /** The built-in look: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
     model?: Model;
 };
@@ -72,7 +52,7 @@ export type Body = RootBody | OrbitingBody;
 /** A set of bodies in one tree, with an optional start time. */
 export type Scenario = {
     /** Format version. */
-    version: 2;
+    version: 3;
     /** The display name. */
     name: string;
     /** The initial time in seconds since J2000. Absent means now. */
@@ -96,7 +76,8 @@ export type ScenarioResult =
     | { ok: true; scenario: Scenario }
     | { ok: false; errors: string[] };
 
-const ROLES: readonly SpacecraftRole[] = [
+// Version 1 and 2 had a kind and a role. They become tags on load.
+const ROLES: readonly string[] = [
     "station",
     "telescope",
     "navigation",
@@ -104,7 +85,7 @@ const ROLES: readonly SpacecraftRole[] = [
     "science",
 ];
 
-const KINDS: readonly BodyKind[] = [
+const KINDS: readonly string[] = [
     "star",
     "planet",
     "dwarf",
@@ -115,6 +96,8 @@ const KINDS: readonly BodyKind[] = [
 ];
 
 const SLUG = /^[a-z0-9-]+$/;
+
+const MAX_TAGS = 8;
 
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
@@ -298,11 +281,42 @@ const validatePrecession = (
     return { pole: unit, nodeRate: node, argpRate: apsis };
 };
 
+const validateTags = (
+    path: string,
+    input: unknown,
+    errors: string[],
+): string[] | undefined => {
+    if (!Array.isArray(input) || input.length < 1 || input.length > MAX_TAGS) {
+        errors.push(
+            `${path}: must be an array of 1 to ${MAX_TAGS} tags (got ${show(input)})`,
+        );
+
+        return undefined;
+    }
+
+    const before = errors.length;
+    const seen = new Set<string>();
+
+    for (const [index, tag] of input.entries()) {
+        if (typeof tag !== "string" || !SLUG.test(tag)) {
+            errors.push(
+                `${path}[${index}]: must match ${SLUG} (got ${show(tag)})`,
+            );
+        } else if (seen.has(tag)) {
+            errors.push(`${path}: must be unique (got ${show(tag)} twice)`);
+        } else {
+            seen.add(tag);
+        }
+    }
+
+    return errors.length > before ? undefined : [...seen];
+};
+
 /** Checks a body's own fields. Links between bodies are checked later. */
 const validateBody = (
     index: number,
     input: unknown,
-    version: 1 | 2,
+    version: 1 | 2 | 3,
     ids: Set<string>,
     errors: string[],
 ): Body | null => {
@@ -317,6 +331,7 @@ const validateBody = (
         id,
         name,
         kind,
+        tags,
         parent,
         mu,
         radius,
@@ -349,12 +364,37 @@ const validateBody = (
         validName = name;
     }
 
-    const validKind = KINDS.find((k) => k === kind);
+    let validTags: string[] | undefined;
 
-    if (validKind === undefined) {
-        errors.push(
-            `${label}.kind: must be one of ${KINDS.join(", ")} (got ${show(kind)})`,
-        );
+    if (version === 3) {
+        validTags = validateTags(`${label}.tags`, tags, errors);
+    } else {
+        const validKind = KINDS.find((k) => k === kind);
+
+        if (validKind === undefined) {
+            errors.push(
+                `${label}.kind: must be one of ${KINDS.join(", ")} (got ${show(kind)})`,
+            );
+        }
+
+        const validRole = ROLES.find((r) => r === role);
+
+        if (role !== undefined) {
+            if (validRole === undefined) {
+                errors.push(
+                    `${label}.role: must be one of ${ROLES.join(", ")} (got ${show(role)})`,
+                );
+            } else if (kind !== "spacecraft") {
+                errors.push(
+                    `${label}.role: must be absent unless kind is spacecraft`,
+                );
+            }
+        }
+
+        if (validKind !== undefined) {
+            validTags =
+                validRole === undefined ? [validKind] : [validKind, validRole];
+        }
     }
 
     const validParent =
@@ -396,24 +436,10 @@ const validateBody = (
         }
     }
 
-    const validRole = ROLES.find((r) => r === role);
-
-    if (role !== undefined) {
-        if (validRole === undefined) {
-            errors.push(
-                `${label}.role: must be one of ${ROLES.join(", ")} (got ${show(role)})`,
-            );
-        } else if (kind !== "spacecraft") {
-            errors.push(
-                `${label}.role: must be absent unless kind is spacecraft`,
-            );
-        }
-    }
-
     // Version 1 has no models. They're filled in from the ids afterwards.
-    const validModel = version === 2 && isModel(model) ? model : undefined;
+    const validModel = version >= 2 && isModel(model) ? model : undefined;
 
-    if (version === 2 && model !== undefined && validModel === undefined) {
+    if (version >= 2 && model !== undefined && validModel === undefined) {
         errors.push(
             `${label}.model: must be one of the known models (got ${show(model)})`,
         );
@@ -451,7 +477,7 @@ const validateBody = (
         errors.length > before ||
         validId === null ||
         validName === null ||
-        validKind === undefined ||
+        validTags === undefined ||
         validParent === undefined ||
         validMu === null ||
         validRadius === null
@@ -462,11 +488,10 @@ const validateBody = (
     const base = {
         id: validId,
         name: validName,
-        kind: validKind,
+        tags: validTags,
         mu: validMu,
         radius: validRadius,
         ...(validColor === undefined ? {} : { color: validColor }),
-        ...(validRole === undefined ? {} : { role: validRole }),
         ...(validModel === undefined ? {} : { model: validModel }),
     };
 
@@ -556,14 +581,15 @@ export const validateScenario = (input: unknown): ScenarioResult => {
 
     const errors: string[] = [];
     const { version, name, time, hasSatellites, bodies: inputs } = input;
-    const validVersion = version === 1 || version === 2 ? version : null;
+    const validVersion =
+        version === 1 || version === 2 || version === 3 ? version : null;
 
     if (validVersion === null) {
-        errors.push(`version: must be 1 or 2 (got ${show(version)})`);
+        errors.push(`version: must be 1, 2 or 3 (got ${show(version)})`);
     }
 
     if (
-        validVersion === 2 &&
+        (validVersion === 2 || validVersion === 3) &&
         hasSatellites !== undefined &&
         hasSatellites !== true
     ) {
@@ -638,7 +664,7 @@ export const validateScenario = (input: unknown): ScenarioResult => {
     return {
         ok: true,
         scenario: {
-            version: 2,
+            version: 3,
             name: validName,
             ...(validTime === undefined ? {} : { time: validTime }),
             ...(satellites ? { hasSatellites: true } : {}),

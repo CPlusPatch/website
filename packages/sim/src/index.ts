@@ -41,12 +41,10 @@ export { distanceOf, readouts } from "./readouts.ts";
 export { KERBOL_LOCKED, ROTATION_MODELS } from "./rotation-models.ts";
 export type {
     Body,
-    BodyKind,
     OrbitingBody,
     RootBody,
     Scenario,
     ScenarioResult,
-    SpacecraftRole,
 } from "./scenario.ts";
 export {
     fillModels,

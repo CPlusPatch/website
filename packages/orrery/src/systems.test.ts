@@ -25,7 +25,7 @@ const made = (id: string, parent: string | null, a: number, e = 0): Body =>
         ? {
               id,
               name: id,
-              kind: "star",
+              tags: ["star"],
               parent,
               mu: 1e10,
               radius: 1,
@@ -34,7 +34,7 @@ const made = (id: string, parent: string | null, a: number, e = 0): Body =>
         : {
               id,
               name: id,
-              kind: "planet",
+              tags: ["planet"],
               parent,
               mu: 1e10,
               radius: 1,

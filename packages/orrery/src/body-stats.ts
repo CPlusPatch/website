@@ -1,4 +1,5 @@
 import { dot, G } from "@cpluspatch/orbit";
+import { styleOf } from "@cpluspatch/render";
 import {
     elementsAt,
     rotationPeriod,
@@ -33,7 +34,7 @@ export const bodyStats = (
 
     const massive = body.mu > 0;
     // A spacecraft's radius is nominal.
-    const sized = body.kind !== "spacecraft";
+    const { sized } = styleOf(body);
 
     const axis = spinAxis(body.model, t);
     const elements = body.parent === null ? null : elementsAt(body, t);

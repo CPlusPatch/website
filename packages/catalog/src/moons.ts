@@ -507,7 +507,7 @@ export const moonBodies = (
         const body: Body = {
             id: row.id,
             name: row.name,
-            kind: "moon",
+            tags: ["moon"],
             parent: row.parent,
             mu: row.gm * 1e9,
             radius: km(row.radius),
