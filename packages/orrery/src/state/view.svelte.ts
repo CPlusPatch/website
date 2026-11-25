@@ -4,8 +4,8 @@ import type { World } from "../world.ts";
 export class ViewState {
     focus: string;
     selected: string | null;
-    /** The clock's flags. Its time ticks every frame, so `now()` reads it instead. */
-    clock: { paused: boolean; rate: number };
+    /** The clock's flags, and a count of its changes. Its time ticks every frame, so `now()` reads it. */
+    clock: { paused: boolean; rate: number; sets: number };
 
     #world: World;
     #off: () => void;
@@ -17,6 +17,7 @@ export class ViewState {
         this.clock = $state({
             paused: world.clock.paused,
             rate: world.clock.rate,
+            sets: 0,
         });
 
         // A removal or a load can move both without a `focus` or `selection` event for each.
@@ -33,6 +34,7 @@ export class ViewState {
             if (event.type === "clock" || event.type === "scenario") {
                 this.clock.paused = world.clock.paused;
                 this.clock.rate = world.clock.rate;
+                this.clock.sets += 1;
             }
         });
     }

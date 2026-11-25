@@ -39,8 +39,9 @@
         overflow: auto;
         padding: var(--space-sm) var(--orrery-pad) var(--orrery-pad);
 
-        /* A spacecraft with no moons or stats leaves it empty, and the padding a gap. */
-        &:empty {
+        /* A spacecraft with no moons or stats leaves it empty, and the padding a gap.
+           Not :empty, as Svelte leaves anchor nodes in it. */
+        &:not(:has(> *)) {
             display: none;
         }
     }

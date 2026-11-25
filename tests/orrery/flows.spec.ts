@@ -32,6 +32,8 @@ test("the inspector shows the selected body and follows a child chip", async ({
         card(page).getByRole("heading", { name: "Mars Odyssey", level: 2 }),
     ).toBeVisible();
     await expect(card(page)).toContainText("around Mars");
+    // It has no moons or stats, and the empty body would leave a gap above the actions.
+    await expect(card(page).locator(".orrery__inspector-body")).toBeHidden();
     expect(problems).toEqual([]);
 });
 
@@ -151,6 +153,29 @@ test("a body can be added and is then selected", async ({ page, problems }) => {
     await expect(
         card(page).getByRole("heading", { name: "Vulcan", level: 2 }),
     ).toBeVisible();
+    expect(problems).toEqual([]);
+});
+
+test("removing a moon keeps its planet and selects it", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+
+    await selectBody(page, "Mars Odyssey");
+    await card(page).getByRole("button", { name: "Remove" }).click();
+    await card(page)
+        .getByRole("group", { name: "Remove Mars Odyssey?" })
+        .getByRole("button", { name: "Remove" })
+        .click();
+
+    await expect(
+        card(page).getByRole("heading", { name: "Mars", level: 2 }),
+    ).toBeVisible();
+    await expect(
+        card(page).getByRole("button", { name: "Mars Odyssey" }),
+    ).toHaveCount(0);
+    await expect(card(page).locator(".orrery__orbit-focus")).toBeFocused();
     expect(problems).toEqual([]);
 });
 

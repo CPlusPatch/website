@@ -4,20 +4,15 @@ import {
     formatPlateDistance,
     formatScaleLength,
     formatSoon,
-    h,
     listUnit,
     otherUnit,
-    setText,
-    type Units,
 } from "@cpluspatch/render";
 import type { Readouts } from "@cpluspatch/sim";
 import { type Point, plateGeometry } from "../../plate.ts";
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-
 /** The SVG's size in its own units. The CSS scales it to the card, see `styles/card.css`. */
-const WIDTH = 224;
-const HEIGHT = 158;
+export const WIDTH = 224;
+export const HEIGHT = 158;
 /** Half a badge's width, and the gap it keeps to the drawing's left and right edges. */
 const BADGE_HALF = 9;
 const BADGE_GAP = 12;
@@ -48,52 +43,42 @@ export type PlateData = Pick<Elements, "a" | "e" | "raan" | "argp"> &
         unit: AUnit | null;
     };
 
-/** The plate of a card, and the nodes that `refreshPlate` updates. */
-export type Plate = {
-    element: HTMLElement;
-    orbit: SVGElement;
-    apsides: SVGElement;
-    radius: SVGElement;
-    parent: SVGElement;
-    periapsis: Apsis;
-    apoapsis: Apsis;
-    ring: SVGElement;
-    dot: SVGElement;
-    arrow: SVGElement;
-    legend: { periapsis: LegendRow; apoapsis: LegendRow };
-    scale: HTMLElement;
-    bar: HTMLElement;
-    number: HTMLElement;
-    unitSwitch: HTMLButtonElement;
-    /** The unit the switch shows, `null` before the first refresh. */
-    shown: AUnit | null;
+type Line = { x1: number; y1: number; x2: number; y2: number };
+type Dot = { cx: number; cy: number };
+
+/** Where an apsis and its badge are drawn. */
+type ApsisView = {
+    /** The marker's top left corner. */
+    marker: { x: number; y: number };
+    /** The badge's centre. */
+    badge: { x: number; y: number };
 };
 
-type Apsis = { marker: SVGElement; badge: SVGElement };
-type LegendRow = { altitude: HTMLElement; time: HTMLElement };
+/** The legend row of an apsis. The time is `null` when the plate has none. */
+type LegendView = { altitude: string; time: string | null };
 
-const svg = (
-    tag: string,
-    attributes: Record<string, string> = {},
-    ...children: SVGElement[]
-): SVGElement => {
-    const node = document.createElementNS(SVG_NS, tag);
-    for (const [name, value] of Object.entries(attributes)) {
-        node.setAttribute(name, value);
-    }
-    node.append(...children);
-
-    return node;
+/** The numbers and strings of a plate's SVG and legend, rounded to a tenth. */
+export type PlateView = {
+    orbit: Dot & { rx: number; ry: number; transform: string };
+    apsides: Line;
+    radius: Line;
+    parent: Dot & { r: number; fill: string };
+    periapsis: ApsisView;
+    apoapsis: ApsisView;
+    body: Dot & { fill: string };
+    /** The `points` of the arrow beside the body. */
+    arrow: string;
+    legend: { periapsis: LegendView; apoapsis: LegendView };
+    /** True when the plate has no times, which makes the legend two lines shorter. */
+    still: boolean;
+    scale: { barY: number; barPx: number; text: string };
+    /** The unit the plate shows. */
+    unit: AUnit;
+    /** The label of the unit switch. */
+    unitLabel: string;
 };
 
-/** Sets attributes that differ, so an unchanged plate leaves the DOM alone. */
-const set = (node: Element, attributes: Record<string, string>): void => {
-    for (const [name, value] of Object.entries(attributes)) {
-        if (node.getAttribute(name) !== value) node.setAttribute(name, value);
-    }
-};
-
-const round = (n: number): string => String(Math.round(n * 10) / 10);
+const round = (n: number): number => Math.round(n * 10) / 10;
 
 const direction = (from: Point, to: Point): Point => {
     const length = Math.hypot(to.x - from.x, to.y - from.y) || 1;
@@ -101,170 +86,8 @@ const direction = (from: Point, to: Point): Point => {
     return { x: (to.x - from.x) / length, y: (to.y - from.y) / length };
 };
 
-const createApsis = (name: string): Apsis => {
-    // The baseline sits 4 units below the badge centre.
-    const label = svg("text", {
-        class: "orrery__plate-badge",
-        "text-anchor": "middle",
-        y: "4",
-    });
-    label.textContent = name;
-    const badge = svg(
-        "g",
-        {},
-        svg("rect", {
-            width: "18",
-            height: "15",
-            x: "-9",
-            y: "-7.5",
-            fill: "var(--orrery-signal)",
-        }),
-        label,
-    );
-
-    return {
-        marker: svg("rect", {
-            width: "5",
-            height: "5",
-            fill: "var(--orrery-signal)",
-        }),
-        badge,
-    };
-};
-
-const createLegendRow = (name: string): [HTMLElement, LegendRow] => {
-    const altitude = h("span", { class: "orrery__plate-altitude" });
-    const time = h("span", { class: "orrery__plate-time" });
-
-    return [
-        h(
-            "div",
-            { class: "orrery__plate-apsis" },
-            h("span", { class: "orrery__plate-name" }, name),
-            altitude,
-            time,
-        ),
-        { altitude, time },
-    ];
-};
-
-/** Builds the empty plate for `bodyName` orbiting `parentName`. */
-export const createPlate = (
-    units: Units,
-    bodyName: string,
-    parentName: string,
-): Plate => {
-    const orbit = svg("ellipse", {
-        fill: "none",
-        stroke: "var(--orrery-pick)",
-        "stroke-width": "1.5",
-    });
-    const apsides = svg("line", {
-        stroke: "var(--orrery-dim)",
-        "stroke-dasharray": "3 3",
-    });
-    const radius = svg("line", {
-        stroke: "var(--orrery-text)",
-        "stroke-width": "1",
-    });
-    const parent = svg("circle");
-    const periapsis = createApsis("Pe");
-    const apoapsis = createApsis("Ap");
-    const ring = svg("circle", {
-        r: "7.5",
-        fill: "none",
-        stroke: "var(--orrery-pick)",
-        "stroke-width": "1.25",
-    });
-    const dot = svg("circle", {
-        r: "4",
-        stroke: "var(--orrery-ground)",
-        "stroke-width": "1.5",
-    });
-    const arrow = svg("polygon", { fill: "var(--orrery-text)" });
-    const drawing = svg(
-        "svg",
-        {
-            viewBox: `0 0 ${WIDTH} ${HEIGHT}`,
-            role: "img",
-            "aria-label": `Orbit of ${bodyName} around ${parentName}, to scale.`,
-        },
-        orbit,
-        apsides,
-        radius,
-        parent,
-        periapsis.marker,
-        periapsis.badge,
-        apoapsis.marker,
-        apoapsis.badge,
-        ring,
-        dot,
-        arrow,
-    );
-
-    const [periapsisRow, periapsisLegend] = createLegendRow("Pe");
-    const [apoapsisRow, apoapsisLegend] = createLegendRow("Ap");
-    const legend = h(
-        "div",
-        { class: "orrery__plate-legend", "aria-hidden": "true" },
-        periapsisRow,
-        apoapsisRow,
-    );
-
-    const bar = h("span", { class: "orrery__plate-bar" });
-    const number = h("span", { "aria-hidden": "true" });
-    const unitSwitch = h("button", {
-        type: "button",
-        class: "orrery__unit-switch",
-    });
-    const scale = h(
-        "div",
-        { class: "orrery__plate-scale" },
-        bar,
-        number,
-        unitSwitch,
-    );
-
-    const plate: Plate = {
-        element: h(
-            "figure",
-            { class: "orrery__plate" },
-            drawing,
-            legend,
-            scale,
-        ),
-        orbit,
-        apsides,
-        radius,
-        parent,
-        periapsis,
-        apoapsis,
-        ring,
-        dot,
-        arrow,
-        legend: { periapsis: periapsisLegend, apoapsis: apoapsisLegend },
-        scale,
-        bar,
-        number,
-        unitSwitch,
-        shown: null,
-    };
-    unitSwitch.addEventListener("click", () => {
-        if (plate.shown) units.toggle(plate.shown);
-    });
-
-    return plate;
-};
-
-/** Sets a custom property only when it changes, since refreshes run every tick. */
-const setStyle = (node: HTMLElement, name: string, value: string): void => {
-    if (node.style.getPropertyValue(name) !== value) {
-        node.style.setProperty(name, value);
-    }
-};
-
 /** Moves a badge out from its apsis along the line of apsides, inside the SVG. */
-const placeApsis = (apsis: Apsis, at: Point, outward: Point): void => {
+const placeApsis = (at: Point, outward: Point): ApsisView => {
     const edge = BADGE_HALF + BADGE_GAP;
     const x = Math.min(
         Math.max(at.x + outward.x * BADGE_OFFSET, edge),
@@ -275,13 +98,15 @@ const placeApsis = (apsis: Apsis, at: Point, outward: Point): void => {
         HEIGHT - 10,
     );
 
-    set(apsis.marker, { x: round(at.x - 2.5), y: round(at.y - 2.5) });
-    set(apsis.badge, { transform: `translate(${round(x)} ${round(y)})` });
+    return {
+        marker: { x: round(at.x - 2.5), y: round(at.y - 2.5) },
+        badge: { x: round(x), y: round(y) },
+    };
 };
 
-/** Draws `input` into the plate. */
-export const refreshPlate = (plate: Plate, input: PlateData): void => {
-    const shown = listUnit(
+/** Works out what the plate draws for `input`. */
+export const plateView = (input: PlateData): PlateView => {
+    const unit = listUnit(
         [input.periapsisAltitude, input.apoapsisAltitude],
         input.unit,
     );
@@ -294,84 +119,66 @@ export const refreshPlate = (plate: Plate, input: PlateData): void => {
         parentRadius: input.parentRadius,
         box: BOX,
         scaleMaxPx: SCALE_MAX_PX,
-        unitMetres: shown === "km" ? 1000 : AU,
+        unitMetres: unit === "km" ? 1000 : AU,
     });
     const { centre, focus, body, heading, periapsis, apoapsis } = geometry;
-
-    set(plate.orbit, {
-        cx: round(centre.x),
-        cy: round(centre.y),
-        rx: round(geometry.rx),
-        ry: round(geometry.ry),
-        transform: `rotate(${round(geometry.rotation)} ${round(centre.x)} ${round(centre.y)})`,
-    });
-
     const along = direction(apoapsis, periapsis);
-    set(plate.apsides, {
-        x1: round(apoapsis.x - along.x * 4),
-        y1: round(apoapsis.y - along.y * 4),
-        x2: round(periapsis.x + along.x * 4),
-        y2: round(periapsis.y + along.y * 4),
-    });
-    set(plate.radius, {
-        x1: round(focus.x),
-        y1: round(focus.y),
-        x2: round(body.x),
-        y2: round(body.y),
-    });
-    set(plate.parent, {
-        cx: round(focus.x),
-        cy: round(focus.y),
-        r: round(geometry.parentPx),
-        fill: input.parentColor,
-    });
-
-    placeApsis(plate.periapsis, periapsis, along);
-    placeApsis(plate.apoapsis, apoapsis, { x: -along.x, y: -along.y });
-
-    set(plate.ring, { cx: round(body.x), cy: round(body.y) });
-    set(plate.dot, {
-        cx: round(body.x),
-        cy: round(body.y),
-        fill: input.bodyColor,
-    });
 
     // A triangle just outside the ring, pointing along the heading.
     const normal = { x: -heading.y, y: heading.x };
     const point = (ahead: number, aside: number): string =>
         `${round(body.x + heading.x * ahead + normal.x * aside)},${round(body.y + heading.y * ahead + normal.y * aside)}`;
-    set(plate.arrow, {
-        points: `${point(14.5, 0)} ${point(9.5, 3)} ${point(9.5, -3)}`,
-    });
 
-    const rows = [
-        [
-            plate.legend.periapsis,
-            input.periapsisAltitude,
-            input.timeToPeriapsis,
-        ],
-        [plate.legend.apoapsis, input.apoapsisAltitude, input.timeToApoapsis],
-    ] as const;
-    for (const [row, altitude, time] of rows) {
-        setText(row.altitude, formatPlateDistance(altitude, shown));
-        if (time !== undefined) setText(row.time, `in ${formatSoon(time)}`);
-    }
-    plate.element.classList.toggle(
-        "orrery__plate--still",
-        input.timeToPeriapsis === undefined,
-    );
+    const time = (seconds: number | undefined): string | null =>
+        seconds === undefined ? null : `in ${formatSoon(seconds)}`;
 
-    setStyle(plate.scale, "--plate-bar-y", round(geometry.scaleBar.y));
-    setStyle(plate.scale, "--plate-bar-px", round(geometry.scaleBar.px));
-    setText(plate.number, formatScaleLength(geometry.scaleBar.metres, shown));
-
-    // Rewriting the button's text would drop its focus, so only a change does.
-    if (plate.shown !== shown) {
-        plate.shown = shown;
-        plate.unitSwitch.textContent = shown;
-        plate.unitSwitch.setAttribute(
-            "aria-label",
-            `Distance unit: ${shown}. Switch to ${otherUnit(shown)}`,
-        );
-    }
+    return {
+        orbit: {
+            cx: round(centre.x),
+            cy: round(centre.y),
+            rx: round(geometry.rx),
+            ry: round(geometry.ry),
+            transform: `rotate(${round(geometry.rotation)} ${round(centre.x)} ${round(centre.y)})`,
+        },
+        apsides: {
+            x1: round(apoapsis.x - along.x * 4),
+            y1: round(apoapsis.y - along.y * 4),
+            x2: round(periapsis.x + along.x * 4),
+            y2: round(periapsis.y + along.y * 4),
+        },
+        radius: {
+            x1: round(focus.x),
+            y1: round(focus.y),
+            x2: round(body.x),
+            y2: round(body.y),
+        },
+        parent: {
+            cx: round(focus.x),
+            cy: round(focus.y),
+            r: round(geometry.parentPx),
+            fill: input.parentColor,
+        },
+        periapsis: placeApsis(periapsis, along),
+        apoapsis: placeApsis(apoapsis, { x: -along.x, y: -along.y }),
+        body: { cx: round(body.x), cy: round(body.y), fill: input.bodyColor },
+        arrow: `${point(14.5, 0)} ${point(9.5, 3)} ${point(9.5, -3)}`,
+        legend: {
+            periapsis: {
+                altitude: formatPlateDistance(input.periapsisAltitude, unit),
+                time: time(input.timeToPeriapsis),
+            },
+            apoapsis: {
+                altitude: formatPlateDistance(input.apoapsisAltitude, unit),
+                time: time(input.timeToApoapsis),
+            },
+        },
+        still: input.timeToPeriapsis === undefined,
+        scale: {
+            barY: round(geometry.scaleBar.y),
+            barPx: round(geometry.scaleBar.px),
+            text: formatScaleLength(geometry.scaleBar.metres, unit),
+        },
+        unit,
+        unitLabel: `Distance unit: ${unit}. Switch to ${otherUnit(unit)}`,
+    };
 };

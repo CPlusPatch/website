@@ -40,7 +40,7 @@ import { DocumentStore } from "./state/document.svelte.ts";
 import { ViewState } from "./state/view.svelte.ts";
 import Crumbs from "./ui/Crumbs.svelte";
 import { createHud } from "./ui/hud.ts";
-import { createInspector, type Inspector } from "./ui/inspector/inspector.ts";
+import Inspector from "./ui/inspector/Inspector.svelte";
 import { createKeys } from "./ui/keys.ts";
 import { createLoading } from "./ui/loading.ts";
 import { createNotices } from "./ui/notices.ts";
@@ -176,7 +176,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
     // Set once the top bar is filled, after the first build.
     let search: Search | null = null;
     // Replaced with the view on each scenario.
-    let inspector: Inspector | null = null;
+    let inspector: ReturnType<typeof Inspector> | null = null;
     let currentView: View | null = null;
 
     const loading = createLoading(root);
@@ -229,21 +229,24 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
             setSatellites = view.satelliteGroups;
             view.satelliteGroups(satellites.groups());
 
-            const current = createInspector(
-                world,
-                units,
-                () => search?.toggle.focus(),
-                view,
-                storeContext(documentStore, viewState),
-            );
-            inspector = current;
-            cleanup.push(() => {
-                if (inspector === current) inspector = null;
-                current.destroy();
-            });
-            root.querySelector(".orrery__panel--right")?.append(
-                current.element,
-            );
+            const current = side
+                ? mountComponent(Inspector, {
+                      target: side,
+                      context: storeContext(documentStore, viewState),
+                      props: {
+                          units,
+                          restoreFocus: () => search?.toggle.focus(),
+                          scene: view,
+                      },
+                  })
+                : null;
+            if (current) {
+                inspector = current;
+                cleanup.push(() => {
+                    if (inspector === current) inspector = null;
+                    void unmount(current);
+                });
+            }
 
             const card = createSatelliteCard(view.satellite, () =>
                 search?.toggle.focus(),
@@ -323,7 +326,7 @@ export const mount = async (root: HTMLElement): Promise<Orrery> => {
                         setSatellites = null;
                     }
                     removeHud();
-                    current.destroy();
+                    if (current) void unmount(current);
                     view.destroy();
                 },
             };

@@ -11,7 +11,7 @@ import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { SNAPSHOT_DATE } from "../catalogue-snapshot.ts";
-import { FOCUS_ICON, iconButton } from "./inspector/actions.ts";
+import { FOCUS_ICON, iconButton } from "./buttons.ts";
 import { LABELS } from "./satellite-menu.ts";
 
 /** The satellite card's element and how to remove it. */
