@@ -1,28 +1,216 @@
+/** A preset's `appearance`: a colour, and the fields of the layers in `packages/render/src/layers/index.ts`. */
+type PresetAppearance = {
+    color?: string;
+    map?: string;
+    // Real heights, so the numbers can be checked against the sources. The colours are artistic.
+    atmosphere?: {
+        top: number;
+        day: string;
+        twilight: string;
+        rim: number;
+        haze: number;
+    };
+    clouds?: { map: string };
+    nightSide?: { map: string };
+    rings?: { map: string; inner: number; outer: number };
+};
+
 /** The look of each model by preset, for the bodies that have one of their own. */
-export const APPEARANCE: Readonly<Record<string, { color: string }>> = {
-    sun: { color: "#ffd27a" },
-    mercury: { color: "#b9b2a6" },
-    venus: { color: "#e9cf98" },
-    earth: { color: "#62a7ff" },
-    moon: { color: "#cfd0d2" },
-    mars: { color: "#ec6f4a" },
-    jupiter: { color: "#dcae7c" },
-    saturn: { color: "#e8d59a" },
-    uranus: { color: "#93e0dc" },
-    neptune: { color: "#7c8cff" },
-    pluto: { color: "#c8a593" },
-    // Only bodies with a look of their own; grey moons keep their kind's colour.
-    io: { color: "#e6cf63" },
-    europa: { color: "#dccdb2" },
-    ganymede: { color: "#aa9f90" },
-    callisto: { color: "#6f6a66" },
-    titan: { color: "#e0a452" },
-    enceladus: { color: "#eef4f7" },
-    triton: { color: "#dbc1b6" },
-    ceres: { color: "#a7a199" },
+export const APPEARANCE: Readonly<Record<string, PresetAppearance>> = {
+    sun: { color: "#ffd27a", map: "sun" },
+    mercury: { color: "#b9b2a6", map: "mercury" },
+    venus: {
+        color: "#e9cf98",
+        map: "venus",
+        atmosphere: {
+            top: 90,
+            day: "#ffd27a",
+            twilight: "#e88a45",
+            rim: 1,
+            haze: 0.08,
+        },
+    },
+    earth: {
+        color: "#62a7ff",
+        map: "earth",
+        atmosphere: {
+            top: 100,
+            day: "#4f9bff",
+            twilight: "#ff7a3d",
+            rim: 1,
+            haze: 0.06,
+        },
+        clouds: { map: "earth-clouds" },
+        nightSide: { map: "earth-night" },
+    },
+    moon: { color: "#cfd0d2", map: "moon" },
+    mars: {
+        color: "#ec6f4a",
+        map: "mars",
+        atmosphere: {
+            top: 80,
+            day: "#d99a6c",
+            twilight: "#6f9ad6",
+            rim: 0.6,
+            haze: 0.05,
+        },
+    },
+    jupiter: {
+        color: "#dcae7c",
+        map: "jupiter",
+        atmosphere: {
+            top: 300,
+            day: "#d8b890",
+            twilight: "#a06840",
+            rim: 0.5,
+            haze: 0.03,
+        },
+    },
+    saturn: {
+        color: "#e8d59a",
+        map: "saturn",
+        atmosphere: {
+            top: 600,
+            day: "#f6d98a",
+            twilight: "#c89060",
+            rim: 0.7,
+            haze: 0.03,
+        },
+        rings: { map: "saturn-ring", inner: 74_500_000, outer: 140_220_000 },
+    },
+    uranus: {
+        color: "#93e0dc",
+        map: "uranus",
+        atmosphere: {
+            top: 300,
+            day: "#3fc4e8",
+            twilight: "#68bcd0",
+            rim: 1,
+            haze: 0.05,
+        },
+    },
+    neptune: {
+        color: "#7c8cff",
+        map: "neptune",
+        atmosphere: {
+            top: 250,
+            day: "#6a9cff",
+            twilight: "#4060d0",
+            rim: 0.8,
+            haze: 0.05,
+        },
+    },
+    pluto: {
+        color: "#c8a593",
+        map: "pluto",
+        atmosphere: {
+            top: 200,
+            day: "#b8b4e0",
+            twilight: "#6080d0",
+            rim: 0.4,
+            haze: 0,
+        },
+    },
+    // Only bodies with a look of their own get a colour; grey moons keep their kind's.
+    io: { color: "#e6cf63", map: "io" },
+    europa: { color: "#dccdb2", map: "europa" },
+    ganymede: { color: "#aa9f90", map: "ganymede" },
+    callisto: { color: "#6f6a66", map: "callisto" },
+    titan: {
+        color: "#e0a452",
+        atmosphere: {
+            top: 600,
+            day: "#c08a40",
+            twilight: "#b05a30",
+            rim: 0.6,
+            haze: 0.15,
+        },
+    },
+    enceladus: { color: "#eef4f7", map: "enceladus" },
+    triton: {
+        color: "#dbc1b6",
+        map: "triton",
+        atmosphere: {
+            top: 50,
+            day: "#d8c4e8",
+            twilight: "#7090d0",
+            rim: 0.3,
+            haze: 0,
+        },
+    },
+    ceres: { color: "#a7a199", map: "ceres" },
     eris: { color: "#e8e6e2" },
     haumea: { color: "#c9cfd4" },
     makemake: { color: "#c99877" },
-    vesta: { color: "#bcae9a" },
+    vesta: { color: "#bcae9a", map: "vesta" },
     halley: { color: "#b5c9d6" },
+    mimas: { map: "mimas" },
+    tethys: { map: "tethys" },
+    dione: { map: "dione" },
+    rhea: { map: "rhea" },
+    iapetus: { map: "iapetus" },
+    phobos: { map: "phobos" },
+    charon: { map: "charon" },
+    kerbol: { map: "kerbol" },
+    moho: { map: "moho" },
+    eve: {
+        map: "eve",
+        atmosphere: {
+            top: 90,
+            day: "#c070e0",
+            twilight: "#ff6090",
+            rim: 0.9,
+            haze: 0.09,
+        },
+    },
+    gilly: { map: "gilly" },
+    kerbin: {
+        map: "kerbin",
+        atmosphere: {
+            top: 70,
+            day: "#4f9bff",
+            twilight: "#ff7a3d",
+            rim: 1,
+            haze: 0.06,
+        },
+    },
+    mun: { map: "mun" },
+    minmus: { map: "minmus" },
+    duna: {
+        map: "duna",
+        atmosphere: {
+            top: 50,
+            day: "#e08060",
+            twilight: "#80a0e0",
+            rim: 0.5,
+            haze: 0.05,
+        },
+    },
+    ike: { map: "ike" },
+    dres: { map: "dres" },
+    jool: {
+        map: "jool",
+        atmosphere: {
+            top: 200,
+            day: "#a0e070",
+            twilight: "#509040",
+            rim: 0.6,
+            haze: 0.05,
+        },
+    },
+    laythe: {
+        map: "laythe",
+        atmosphere: {
+            top: 50,
+            day: "#4f9bff",
+            twilight: "#ff7a3d",
+            rim: 1,
+            haze: 0.06,
+        },
+    },
+    vall: { map: "vall" },
+    tylo: { map: "tylo" },
+    bop: { map: "bop" },
+    pol: { map: "pol" },
+    eeloo: { map: "eeloo" },
 };
