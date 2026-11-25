@@ -12,7 +12,7 @@ import {
 import { documentOf } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
-import { sortByDepth } from "./scenario.ts";
+import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { compile, statesAt } from "./snapshot.ts";
 import { worldStates } from "./system.ts";
 
@@ -77,12 +77,12 @@ for (const scenario of builtInScenarios) {
         }
 
         for (const body of scenario.bodies) {
-            if (body.parent === null) {
+            if (!isOrbiting(body)) {
                 continue;
             }
 
             const child = system.index.get(body.id);
-            const parent = system.index.get(body.parent);
+            const parent = system.index.get(body.orbit.parent);
 
             assert(child !== undefined && parent !== undefined, body.id);
             assert(parent < child, `${body.id} comes before its parent`);
@@ -110,7 +110,7 @@ Deno.test("elementsAt matches the precession module for an orbiting body", () =>
     const system = compile(documentOf(scenario));
 
     for (const body of scenario.bodies) {
-        if (body.parent === null) {
+        if (!isOrbiting(body)) {
             continue;
         }
 
@@ -121,7 +121,7 @@ Deno.test("elementsAt matches the precession module for an orbiting body", () =>
 });
 
 Deno.test("elementsAt throws for the root body", () => {
-    const root = scenario.bodies.find((body) => body.parent === null);
+    const root = scenario.bodies.find((body) => body.orbit === undefined);
 
     assert(root, "no root body");
     assertThrows(

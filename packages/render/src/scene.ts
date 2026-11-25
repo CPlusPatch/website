@@ -170,7 +170,9 @@ const assemble = (
     const colorOf = (body: Body) =>
         theme.color(
             body,
-            source.scenario.bodies.find((other) => other.id === body.parent),
+            source.scenario.bodies.find(
+                (other) => other.id === body.orbit?.parent,
+            ),
         );
     const orbits = createOrbits(
         scene,
@@ -204,7 +206,9 @@ const assemble = (
     const host = source.scenario.hasSatellites
         ? source.scenario.bodies.find((body) => body.model === "earth")
         : undefined;
-    const swarm = createSwarm(scene, theme, () => assets.swarm(host?.mu ?? 0));
+    const swarm = createSwarm(scene, theme, () =>
+        assets.swarm(host?.mass.mu ?? 0),
+    );
     cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };
 
@@ -405,7 +409,8 @@ const assemble = (
             frame: current,
             viewport: size,
             parentOf: (id) =>
-                source.scenario.bodies.find((body) => body.id === id)?.parent,
+                source.scenario.bodies.find((body) => body.id === id)?.orbit
+                    ?.parent,
         });
         points = bodies.update(
             camera,

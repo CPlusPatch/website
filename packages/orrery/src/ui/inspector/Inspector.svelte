@@ -15,7 +15,13 @@ import {
     styleOf,
     type Units,
 } from "@cpluspatch/render";
-import { elementsAt, type Readouts, readouts, statesAt } from "@cpluspatch/sim";
+import {
+    elementsAt,
+    isOrbiting,
+    type Readouts,
+    readouts,
+    statesAt,
+} from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
@@ -78,10 +84,10 @@ const body = $derived(
 );
 const parent = $derived(
     documents.doc.scenario.bodies.find(
-        (candidate) => candidate.id === body?.parent,
+        (candidate) => candidate.id === body?.orbit?.parent,
     ),
 );
-const hasOrbit = $derived(parent !== undefined && body?.elements !== undefined);
+const hasOrbit = $derived(parent !== undefined && body?.orbit !== undefined);
 const adding = $derived(mode === "add");
 const title = $derived(
     adding
@@ -103,14 +109,18 @@ const refresh = () => {
     const scenario = documents.doc.scenario;
     const current = readouts(scenario, id, statesAt(documents.system, t), t);
     const selected = scenario.bodies.find((b) => b.id === id);
-    const around = scenario.bodies.find((b) => b.id === selected?.parent);
+    const around = scenario.bodies.find(
+        (b) => b.id === selected?.orbit?.parent,
+    );
     const unit = units.get();
     let plate: PlateData | null = null;
 
-    if (selected?.elements && around) {
-        const grandparent = scenario.bodies.find((b) => b.id === around.parent);
+    if (selected && isOrbiting(selected) && around) {
+        const grandparent = scenario.bodies.find(
+            (b) => b.id === around.orbit?.parent,
+        );
         const drawn = {
-            parentRadius: around.radius,
+            parentRadius: around.mass.radius,
             bodyColor: colorOf(selected, around),
             parentColor: colorOf(around, grandparent),
             unit,
@@ -125,16 +135,13 @@ const refresh = () => {
                 raan: draft.raan,
                 argp: draft.argp,
                 trueAnomaly: trueAnomalyAt(draft, form.mu, t),
-                periapsisAltitude: periapsis(draft) - around.radius,
-                apoapsisAltitude: apoapsis(draft) - around.radius,
+                periapsisAltitude: periapsis(draft) - around.mass.radius,
+                apoapsisAltitude: apoapsis(draft) - around.mass.radius,
                 ...drawn,
             };
         } else if (current) {
             // Precession turns the node and the periapsis.
-            const now = elementsAt(
-                { ...selected, elements: selected.elements },
-                t,
-            );
+            const now = elementsAt(selected, t);
             plate = {
                 a: now.a,
                 e: now.e,

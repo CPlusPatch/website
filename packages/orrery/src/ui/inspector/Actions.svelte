@@ -53,7 +53,7 @@ const remove = async () => {
     const root = foot?.closest<HTMLElement>(".orrery");
     const parent = documents.doc.scenario.bodies.find(
         (candidate) => candidate.id === target,
-    )?.parent;
+    )?.orbit?.parent;
 
     cue("remove");
     // The parent stays selected, so its card is the one that replaces this.

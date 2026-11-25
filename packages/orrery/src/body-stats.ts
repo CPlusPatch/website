@@ -2,6 +2,7 @@ import { dot, G } from "@cpluspatch/orbit";
 import { styleOf } from "@cpluspatch/render";
 import {
     elementsAt,
+    isOrbiting,
     rotationPeriod,
     type Scenario,
     spinAxis,
@@ -32,12 +33,12 @@ export const bodyStats = (
     const body = scenario.bodies.find((candidate) => candidate.id === id);
     if (!body) throw new Error(`There is no body "${id}".`);
 
-    const massive = body.mu > 0;
+    const massive = body.mass.mu > 0;
     // A spacecraft's radius is nominal.
     const { sized } = styleOf(body);
 
     const axis = spinAxis(body.model, t);
-    const elements = body.parent === null ? null : elementsAt(body, t);
+    const elements = isOrbiting(body) ? elementsAt(body, t) : null;
     // The root has no orbit, so its tilt is from the ecliptic pole.
     const normal = elements
         ? {
@@ -48,10 +49,12 @@ export const bodyStats = (
         : { x: 0, y: 0, z: 1 };
 
     return {
-        mass: massive ? body.mu / G : null,
-        radius: sized ? body.radius : null,
-        gravity: massive ? body.mu / body.radius ** 2 : null,
-        escapeSpeed: massive ? Math.sqrt((2 * body.mu) / body.radius) : null,
+        mass: massive ? body.mass.mu / G : null,
+        radius: sized ? body.mass.radius : null,
+        gravity: massive ? body.mass.mu / body.mass.radius ** 2 : null,
+        escapeSpeed: massive
+            ? Math.sqrt((2 * body.mass.mu) / body.mass.radius)
+            : null,
         day: rotationPeriod(body.model, t),
         tilt: axis
             ? Math.acos(Math.min(1, Math.max(-1, dot(axis, normal))))

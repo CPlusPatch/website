@@ -2,7 +2,7 @@ import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
-import { sortByDepth } from "./scenario.ts";
+import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
 
 /** Every body at one time, packed into flat arrays indexed by `System.index`. */
@@ -94,7 +94,7 @@ export const compile = (doc: Document): System => {
                 throw new Error(`Unknown body ${id}`);
             }
 
-            if (body.parent === null) {
+            if (!isOrbiting(body)) {
                 throw new Error(`${id} is the root and has no orbit`);
             }
 

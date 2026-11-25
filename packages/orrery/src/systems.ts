@@ -28,7 +28,7 @@ const find = (bodies: readonly Body[], id: string): Body => {
 };
 
 const childrenOf = (bodies: readonly Body[], id: string): Body[] =>
-    bodies.filter((body) => body.parent === id);
+    bodies.filter((body) => body.orbit?.parent === id);
 
 /** The groups that hold `children`, with `nest` giving the rows that follow each child. */
 const grouped = (
@@ -49,7 +49,7 @@ const grouped = (
 export const leftPane = (
     bodies: readonly Body[],
 ): { root: Body; groups: Group[] } => {
-    const root = bodies.find((body) => body.parent === null);
+    const root = bodies.find((body) => body.orbit === undefined);
     if (!root) throw new Error("There is no root body.");
 
     return { root, groups: grouped(childrenOf(bodies, root.id), () => []) };
@@ -67,11 +67,11 @@ export const system = (bodies: readonly Body[], id: string): Group[] => {
 /** The names between the root and the body, joined with " › ". Empty for the root and its children. */
 export const path = (bodies: readonly Body[], id: string): string => {
     const names: string[] = [];
-    let parent = find(bodies, id).parent;
+    let parent = find(bodies, id).orbit?.parent ?? null;
 
     while (parent !== null) {
         const ancestor = find(bodies, parent);
-        parent = ancestor.parent;
+        parent = ancestor.orbit?.parent ?? null;
 
         // The root is left out.
         if (parent !== null) names.unshift(ancestor.name);
@@ -95,7 +95,7 @@ export const rail = (
     hi: number;
 } | null => {
     const distances = childrenOf(bodies, id).flatMap((body) =>
-        body.elements ? [{ body, distance: Math.abs(body.elements.a) }] : [],
+        body.orbit ? [{ body, distance: Math.abs(body.orbit.elements.a) }] : [],
     );
     if (distances.length === 0) return null;
 
@@ -139,15 +139,15 @@ export const facts = (
     id: string,
 ): { period: number | null; radius: number | null } => {
     const body = find(bodies, id);
-    const { elements } = body;
-    const parent = body.parent === null ? null : find(bodies, body.parent);
+    const { orbit } = body;
+    const parent = orbit ? find(bodies, orbit.parent) : null;
 
     return {
         period:
-            parent && elements && elements.e < 1
-                ? period(elements, parent.mu + body.mu)
+            parent && orbit && orbit.elements.e < 1
+                ? period(orbit.elements, parent.mass.mu + body.mass.mu)
                 : null,
         // A spacecraft's radius is only its model's size.
-        radius: styleOf(body).sized ? body.radius : null,
+        radius: styleOf(body).sized ? body.mass.radius : null,
     };
 };

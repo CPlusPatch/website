@@ -33,7 +33,7 @@ const current = $derived(
     scale.marks.find(({ body: child }) => child.id === active)?.body,
 );
 const parent = $derived(
-    bodies.find((candidate) => candidate.id === body.parent),
+    bodies.find((candidate) => candidate.id === body.orbit?.parent),
 );
 // Without decades, the ends label the range, or the one distance when they match.
 const labelled = $derived(
@@ -49,11 +49,11 @@ const labelled = $derived(
 </script>
 
 <div class="orrery__search-rail-cap">
-    {#if current?.elements}
+    {#if current?.orbit}
         <b>{current.name}</b>
         · orbit
         <span class="orrery__search-rail-data"
-            >{formatRange(Math.abs(current.elements.a), unit)}</span
+            >{formatRange(Math.abs(current.orbit.elements.a), unit)}</span
         >
     {:else}
         Orbit size around {named(body)}, log scale

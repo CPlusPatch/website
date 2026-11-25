@@ -45,7 +45,7 @@ export class Scene {
         clock: Clock,
         hold: (initial: Held) => Held = (initial) => initial,
     ) {
-        const root = scenario.bodies.find((body) => body.parent === null);
+        const root = scenario.bodies.find((body) => body.orbit === undefined);
         if (!root) throw new Error("The scenario has no root body.");
 
         this.clock = clock;
@@ -152,7 +152,7 @@ export class Scene {
 
     /** Replaces the whole scenario and sets the clock to `t`. */
     load(scenario: Scenario, t: number): void {
-        const root = scenario.bodies.find((body) => body.parent === null);
+        const root = scenario.bodies.find((body) => body.orbit === undefined);
         if (!root) throw new Error("The scenario has no root body.");
 
         this.#dispatch({ type: "load", doc: documentOf(scenario) });
@@ -176,7 +176,7 @@ export class Scene {
         const body = this.scenario.bodies.find(
             (candidate) => candidate.id === id,
         );
-        if (!body?.parent) throw new Error(`"${id}" is the root.`);
+        if (!body?.orbit) throw new Error(`"${id}" is the root.`);
 
         const removed = subtreeIds(this.scenario, id);
         const gone = new Set(removed);
@@ -186,14 +186,14 @@ export class Scene {
         const refocus = gone.has(this.#held.focused);
         const deselect =
             this.#held.selected !== null && gone.has(this.#held.selected);
-        if (refocus) this.#held.focused = body.parent;
+        if (refocus) this.#held.focused = body.orbit.parent;
         if (deselect) this.#held.selected = null;
 
         try {
             this.#emit({ type: "bodies", added: [], removed });
         } finally {
             // A view that fails to draw restores the old scenario and its focus, which this mustn't undo.
-            const parent = body.parent;
+            const parent = body.orbit.parent;
             try {
                 if (refocus && this.#held.focused === parent) {
                     this.#emit({ type: "focus", id: parent });

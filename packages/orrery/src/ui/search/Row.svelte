@@ -43,7 +43,7 @@ const CHEVRON =
     '<svg viewBox="0 0 8 12" aria-hidden="true" focusable="false"><path d="M1.5 1.5 6.5 6l-5 4.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
 const parent = $derived(
-    bodies.find((candidate) => candidate.id === body.parent),
+    bodies.find((candidate) => candidate.id === body.orbit?.parent),
 );
 const [before, match, after] = $derived(marked(body.name, query ?? ""));
 // The left column is too narrow for both, and its Spacecraft heading says what they are.
@@ -62,7 +62,7 @@ const sub = $derived.by(() => {
 });
 // The root's system is every body, which the right pane doesn't list.
 const opens = $derived(
-    body.parent !== null && system(bodies, body.id).length > 0,
+    body.orbit !== undefined && system(bodies, body.id).length > 0,
 );
 </script>
 

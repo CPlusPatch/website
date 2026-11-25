@@ -23,8 +23,8 @@ Deno.test("a satellite's radius is its model's bounding radius, within 10%", () 
         // The model is in km and the body in m.
         assertAlmostEquals(
             radius * 1000,
-            body.radius,
-            body.radius * 0.1,
+            body.mass.radius,
+            body.mass.radius * 0.1,
             body.id,
         );
     }
@@ -36,7 +36,11 @@ Deno.test("a spacecraft without a model of its own is scaled to its radius", () 
     assertExists(satellite);
 
     const { model: _model, ...rest } = satellite;
-    const body = { ...rest, id: "user-sat", radius: 25 };
+    const body = {
+        ...rest,
+        id: "user-sat",
+        mass: { ...rest.mass, radius: 25 },
+    };
     const model = createSpacecraftModel(body);
     const { radius } = new Box3()
         .setFromObject(model)

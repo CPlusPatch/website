@@ -150,10 +150,8 @@ const planet = (
         id,
         name,
         tags: [kind],
-        parent: "sun",
-        mu: G * mass * 1e24,
-        radius: km(radius),
-        elements: table1(ORBITS[id]),
+        mass: { mu: G * mass * 1e24, radius: km(radius) },
+        orbit: { parent: "sun", elements: table1(ORBITS[id]) },
     };
 };
 
@@ -198,11 +196,8 @@ export const solarSystem: Scenario = {
             id: "sun",
             name: "Sun",
             tags: ["star"],
-            parent: null,
             // JPL astrodynamic parameters: https://ssd.jpl.nasa.gov/astro_par.html
-            mu: SUN_MU,
-            radius: km(695_700),
-            elements: null,
+            mass: { mu: SUN_MU, radius: km(695_700) },
         },
         planet("mercury", "Mercury", "planet"),
         planet("venus", "Venus", "planet"),
@@ -218,10 +213,8 @@ export const solarSystem: Scenario = {
             id: "moon",
             name: "Moon",
             tags: ["moon"],
-            parent: "earth",
-            mu: MOON_MU,
-            radius: km(1737.4),
-            elements: MOON,
+            mass: { mu: MOON_MU, radius: km(1737.4) },
+            orbit: { parent: "earth", elements: MOON },
         },
         ...satellites(EARTH_MU),
         ...probes({

@@ -89,7 +89,7 @@ export const updateGhost = (
     frame: Frame,
     camera: PerspectiveCamera,
 ): void => {
-    const parentR = positionOf(frame, ghost.body.parent);
+    const parentR = positionOf(frame, ghost.body.orbit.parent);
     if (!parentR) return;
 
     parentAt.set(

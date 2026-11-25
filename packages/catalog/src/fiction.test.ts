@@ -11,6 +11,7 @@ import {
 } from "@cpluspatch/orbit";
 import {
     bodyOrientation,
+    isOrbiting,
     KERBOL_LOCKED,
     validateScenario,
 } from "@cpluspatch/sim";
@@ -37,10 +38,10 @@ Deno.test("the built-in scenarios have unique names, solar system first", () => 
 Deno.test("Miller's planet orbits outside Gargantua's horizon in 1.7 hours", () => {
     const [root, miller] = gargantua.bodies;
 
-    assert(root && miller?.elements);
-    assert(miller.elements.a > root.radius);
+    assert(root && miller && isOrbiting(miller));
+    assert(miller.orbit.elements.a > root.mass.radius);
     assertAlmostEquals(
-        period(miller.elements, root.mu + miller.mu),
+        period(miller.orbit.elements, root.mass.mu + miller.mass.mu),
         1.7 * 3600,
         1,
     );
@@ -50,9 +51,9 @@ Deno.test("Kerbin goes round Kerbol in the game's 9,203,545 seconds", () => {
     const root = kerbol.bodies[0];
     const kerbin = kerbol.bodies.find(({ id }) => id === "kerbin");
 
-    assert(root && kerbin?.elements);
+    assert(root && kerbin && isOrbiting(kerbin));
     assertAlmostEquals(
-        period(kerbin.elements, root.mu + kerbin.mu),
+        period(kerbin.orbit.elements, root.mass.mu + kerbin.mass.mu),
         9_203_545,
         100,
     );
@@ -69,9 +70,9 @@ Deno.test("the Mun's prime meridian faces Kerbin years after the epoch", () => {
     const kerbin = kerbolBody("kerbin");
     const mun = kerbolBody("mun");
     const t = 30 * 365.25 * 86_400;
-    assert(mun.elements);
+    assert(isOrbiting(mun));
 
-    const { r } = stateAt(mun.elements, kerbin.mu + mun.mu, t);
+    const { r } = stateAt(mun.orbit.elements, kerbin.mass.mu + mun.mass.mu, t);
     const toKerbin = scale(r, -1 / length(r));
     const orientation = bodyOrientation("mun", t);
 
@@ -108,13 +109,18 @@ Deno.test("the locked Kerbol bodies' phase and rate match their orbits exactly",
 
     for (const [id, partner] of Object.entries(partners)) {
         const moon = kerbolBody(
-            kerbolBody(id).parent === partner ? id : partner,
+            kerbolBody(id).orbit?.parent === partner ? id : partner,
         );
-        const parent = kerbol.bodies.find((body) => body.id === moon.parent);
-        assert(moon.elements && parent);
+        const parent = kerbol.bodies.find(
+            (body) => body.id === moon.orbit?.parent,
+        );
+        assert(isOrbiting(moon) && parent);
 
-        const { raan, argp, m0 } = moon.elements;
-        const n = meanMotion(moon.elements, parent.mu + moon.mu);
+        const { raan, argp, m0 } = moon.orbit.elements;
+        const n = meanMotion(
+            moon.orbit.elements,
+            parent.mass.mu + moon.mass.mu,
+        );
         const rate = (n * DAY * 180) / Math.PI;
         const w0 =
             ((raan + argp + m0) * 180) / Math.PI + (moon.id === id ? 180 : 0);

@@ -118,10 +118,8 @@ const orbiting: OrbitingBody = {
     id: "probe",
     name: "Probe",
     tags: ["moon"],
-    parent: "earth",
-    mu: 0,
-    radius: 1,
-    elements: el,
+    mass: { mu: 0, radius: 1 },
+    orbit: { parent: "earth", elements: el },
 };
 
 Deno.test("elementsAt returns the elements as they are without precession", () => {

@@ -44,17 +44,18 @@ export const newBody = (input: NewBodyInput, t: number): OrbitingBody => ({
     id: input.id,
     name: input.name,
     tags: [input.tag],
-    parent: input.parent.id,
-    mu: G * input.massKg,
-    radius: input.radiusKm * 1000,
-    elements: {
-        a: input.aKm * 1000,
-        e: input.e,
-        i: input.iDeg / DEGREES,
-        raan: 0,
-        argp: 0,
-        m0: 0,
-        epoch: t,
+    mass: { mu: G * input.massKg, radius: input.radiusKm * 1000 },
+    orbit: {
+        parent: input.parent.id,
+        elements: {
+            a: input.aKm * 1000,
+            e: input.e,
+            i: input.iDeg / DEGREES,
+            raan: 0,
+            argp: 0,
+            m0: 0,
+            epoch: t,
+        },
     },
 });
 
@@ -116,7 +117,7 @@ export const addErrors = (
     else if (input.massKg <= 0) errors.mass = "Mass must be above 0 kg.";
 
     const a = fieldError("a", input.aMetres, {
-        aMin: aMin(parent.radius),
+        aMin: aMin(parent.mass.radius),
         unit: input.unit,
     });
     const e = fieldError("e", input.e);
@@ -128,7 +129,7 @@ export const addErrors = (
     if (
         !errors.a &&
         !errors.e &&
-        input.aMetres * (1 - input.e) <= parent.radius
+        input.aMetres * (1 - input.e) <= parent.mass.radius
     ) {
         errors.e = `Periapsis would be inside ${parent.name}.`;
     }

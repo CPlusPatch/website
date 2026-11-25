@@ -5,6 +5,7 @@ import { MAX_TIME, MIN_TIME } from "@cpluspatch/orbit";
 import { assert, assertEquals, assertExists } from "@std/assert";
 import type { OrbitingBody, Scenario } from "./scenario.ts";
 import {
+    isOrbiting,
     MAX_BODIES,
     MAX_NAME,
     sortByDepth,
@@ -19,26 +20,24 @@ const valid: Scenario = {
             id: "sun",
             name: "Sun",
             tags: ["star"],
-            parent: null,
-            mu: 1.3e20,
-            radius: 7e8,
-            elements: null,
+            mass: { mu: 1.3e20, radius: 7e8 },
         },
         {
             id: "earth",
             name: "Earth",
             tags: ["planet"],
-            parent: "sun",
-            mu: 4e14,
-            radius: 6.4e6,
-            elements: {
-                a: 1.5e11,
-                e: 0.02,
-                i: 0.1,
-                raan: 1,
-                argp: 2,
-                m0: 3,
-                epoch: 0,
+            mass: { mu: 4e14, radius: 6.4e6 },
+            orbit: {
+                parent: "sun",
+                elements: {
+                    a: 1.5e11,
+                    e: 0.02,
+                    i: 0.1,
+                    raan: 1,
+                    argp: 2,
+                    m0: 3,
+                    epoch: 0,
+                },
             },
         },
     ],
@@ -51,7 +50,13 @@ const legacy = (version: 1 | 2): Record<string, unknown> => {
     return {
         ...rest,
         version,
-        bodies: bodies.map(({ tags, ...body }) => ({ ...body, kind: tags[0] })),
+        bodies: bodies.map(({ tags, mass, orbit, ...body }) => ({
+            ...body,
+            kind: tags[0],
+            ...mass,
+            parent: orbit?.parent ?? null,
+            elements: orbit?.elements ?? null,
+        })),
     };
 };
 
@@ -85,7 +90,7 @@ const errorsAfter = (change: (s: Scenario) => void): string[] => {
 const planet = (s: Scenario): OrbitingBody => {
     const body = s.bodies[1];
 
-    if (!body || body.parent === null)
+    if (!body || !isOrbiting(body))
         throw new Error("The scenario has no planet.");
 
     return body;
@@ -242,7 +247,6 @@ Deno.test("an id that isn't a slug is rejected and named by its index", () => {
 Deno.test("a duplicate id is rejected", () => {
     const errors = errorsAfter((s) => {
         planet(s).id = "sun";
-        planet(s).parent = "sun";
     });
 
     assert(errors.includes('sun.id: must be unique (got "sun")'));
@@ -265,18 +269,18 @@ Deno.test("an unknown kind is rejected in version 2", () => {
 
 Deno.test("a negative mu is rejected", () => {
     const errors = errorsAfter((s) => {
-        planet(s).mu = -1;
+        planet(s).mass.mu = -1;
     });
 
-    assert(errors.includes("earth.mu: must be >= 0 (got -1)"));
+    assert(errors.includes("earth.mass.mu: must be >= 0 (got -1)"));
 });
 
 Deno.test("a radius of zero is rejected", () => {
     const errors = errorsAfter((s) => {
-        planet(s).radius = 0;
+        planet(s).mass.radius = 0;
     });
 
-    assert(errors.includes("earth.radius: must be > 0 (got 0)"));
+    assert(errors.includes("earth.mass.radius: must be > 0 (got 0)"));
 });
 
 Deno.test("a scenario without a root is rejected", () => {
@@ -286,64 +290,188 @@ Deno.test("a scenario without a root is rejected", () => {
 
     assert(
         errors.includes(
-            "bodies: must have exactly one root, with parent null (got 0)",
+            "bodies: must have exactly one root, with no orbit (got 0)",
         ),
     );
 });
 
 Deno.test("a scenario with two roots is rejected", () => {
     const errors = errorsAfter((s) => {
-        Object.assign(planet(s), { parent: null, elements: null });
+        const { orbit: _orbit, ...root } = planet(s);
+
+        s.bodies[1] = root;
     });
 
     assert(
         errors.includes(
-            "bodies: must have exactly one root, with parent null (got 2)",
+            "bodies: must have exactly one root, with no orbit (got 2)",
         ),
     );
 });
 
-Deno.test("a root with elements is rejected", () => {
-    const errors = errorsAfter((s) => {
-        at(s.bodies, 0).elements = structuredClone(planet(s).elements);
-    });
+Deno.test("a version 2 root with elements is rejected", () => {
+    const old = legacy(2);
 
-    assert(errors.includes("sun.elements: must be null when parent is null"));
+    legacyBody(old, 0).elements = legacyBody(old, 1).elements;
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
+    assert(
+        result.errors.includes(
+            "sun.elements: must be null when parent is null",
+        ),
+    );
 });
 
-Deno.test("a body with a parent but no elements is rejected", () => {
+Deno.test("a version 2 body with a parent but no elements is rejected", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).elements = null;
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
+    assert(
+        result.errors.includes(
+            "earth.elements: must be set when parent is set",
+        ),
+    );
+});
+
+Deno.test("an orbit of null is rejected in version 3", () => {
     const errors = errorsAfter((s) => {
-        Object.assign(planet(s), { elements: null });
+        Object.assign(planet(s), { orbit: null });
     });
 
-    assert(errors.includes("earth.elements: must be set when parent is set"));
+    assert(errors.includes("earth.orbit: must be an object (got null)"));
+});
+
+Deno.test("a body without mass is rejected in version 3", () => {
+    const errors = errorsAfter((s) => {
+        Object.assign(planet(s), { mass: undefined });
+    });
+
+    assert(errors.includes("earth.mass: must be an object (got undefined)"));
+});
+
+Deno.test("precession without an orbit is rejected in version 3", () => {
+    const errors = errorsAfter((s) => {
+        Object.assign(at(s.bodies, 0), {
+            precession: {
+                pole: { x: 0, y: 0, z: 1 },
+                nodeRate: 0,
+                argpRate: 0,
+            },
+        });
+    });
+
+    assert(
+        errors.includes("sun.precession: must be absent when orbit is absent"),
+    );
+});
+
+Deno.test("version 3 errors name the nested field", () => {
+    const errors = errorsAfter((s) => {
+        planet(s).orbit.parent = "venus";
+        planet(s).orbit.elements.a = -1;
+    });
+
+    assertEquals(errors, [
+        "earth.orbit.elements.a: must be > 0 (got -1)",
+        'earth.orbit.parent: no body has the id "venus"',
+    ]);
+});
+
+Deno.test("a version 3 orbit needs a string parent and elements", () => {
+    const errors = errorsAfter((s) => {
+        Object.assign(planet(s), { orbit: { elements: null } });
+    });
+
+    assert(
+        errors.includes("earth.orbit.parent: must be a string (got undefined)"),
+    );
+    assert(
+        errors.includes("earth.orbit.elements: must be an object (got null)"),
+    );
+});
+
+Deno.test("a version 2 body migrates to mass and orbit, and the root has no orbit", () => {
+    const result = validateScenario(legacy(2));
+
+    assert(result.ok);
+    assertEquals(result.scenario.bodies, valid.bodies);
+    assert(!("orbit" in at(result.scenario.bodies, 0)));
+});
+
+Deno.test("version 2 errors name the flat field", () => {
+    const old = legacy(2);
+
+    legacyBody(old, 1).mu = -1;
+    legacyBody(old, 1).parent = "venus";
+    (legacyBody(old, 1).elements as Record<string, number>).a = -1;
+
+    const result = validateScenario(old);
+
+    assert(!result.ok);
+    assert(result.errors.includes("earth.mu: must be >= 0 (got -1)"));
+    assert(result.errors.includes("earth.elements.a: must be > 0 (got -1)"));
+    assert(result.errors.includes('earth.parent: no body has the id "venus"'));
 });
 
 Deno.test("a parent that doesn't exist is rejected", () => {
     const errors = errorsAfter((s) => {
-        planet(s).parent = "venus";
+        planet(s).orbit.parent = "venus";
     });
 
-    assert(errors.includes('earth.parent: no body has the id "venus"'));
+    assert(errors.includes('earth.orbit.parent: no body has the id "venus"'));
 });
 
 Deno.test("a parent cycle is rejected", () => {
     const errors = errorsAfter((s) => {
-        const a = { ...planet(s), id: "a", parent: "b" };
-        const b = { ...planet(s), id: "b", parent: "a" };
+        const a = {
+            ...planet(s),
+            id: "a",
+            orbit: { ...planet(s).orbit, parent: "b" },
+        };
+        const b = {
+            ...planet(s),
+            id: "b",
+            orbit: { ...planet(s).orbit, parent: "a" },
+        };
 
         s.bodies = [at(s.bodies, 0), a, b];
     });
 
-    assert(errors.includes("a.parent: the parent chain loops back on itself"));
-    assert(errors.includes("b.parent: the parent chain loops back on itself"));
+    assert(
+        errors.includes(
+            "a.orbit.parent: the parent chain loops back on itself",
+        ),
+    );
+    assert(
+        errors.includes(
+            "b.orbit.parent: the parent chain loops back on itself",
+        ),
+    );
 });
 
 Deno.test("a body whose chain runs into a cycle is rejected, and one beside it isn't", () => {
     const errors = errorsAfter((s) => {
-        const a = { ...planet(s), id: "a", parent: "b" };
-        const b = { ...planet(s), id: "b", parent: "a" };
-        const tail = { ...planet(s), id: "tail", parent: "a" };
+        const a = {
+            ...planet(s),
+            id: "a",
+            orbit: { ...planet(s).orbit, parent: "b" },
+        };
+        const b = {
+            ...planet(s),
+            id: "b",
+            orbit: { ...planet(s).orbit, parent: "a" },
+        };
+        const tail = {
+            ...planet(s),
+            id: "tail",
+            orbit: { ...planet(s).orbit, parent: "a" },
+        };
 
         s.bodies = [at(s.bodies, 0), tail, a, b, planet(s)];
     });
@@ -352,9 +480,9 @@ Deno.test("a body whose chain runs into a cycle is rejected, and one beside it i
     );
 
     assertEquals(looping, [
-        "tail.parent: the parent chain loops back on itself",
-        "a.parent: the parent chain loops back on itself",
-        "b.parent: the parent chain loops back on itself",
+        "tail.orbit.parent: the parent chain loops back on itself",
+        "a.orbit.parent: the parent chain loops back on itself",
+        "b.orbit.parent: the parent chain loops back on itself",
     ]);
 });
 
@@ -363,7 +491,10 @@ Deno.test("a long chain of moons is accepted", () => {
     const chain = Array.from({ length: 400 }, (_, index) => ({
         ...planet(scenario),
         id: `m${index}`,
-        parent: index === 0 ? "earth" : `m${index - 1}`,
+        orbit: {
+            ...planet(scenario).orbit,
+            parent: index === 0 ? "earth" : `m${index - 1}`,
+        },
     }));
 
     scenario.bodies.push(...chain);
@@ -373,46 +504,38 @@ Deno.test("a long chain of moons is accepted", () => {
 
 Deno.test("a number that isn't finite is rejected", () => {
     const errors = errorsAfter((s) => {
-        const elements = planet(s).elements;
-
-        if (elements) {
-            elements.a = Number.NaN;
-        }
+        planet(s).orbit.elements.a = Number.NaN;
     });
 
     assert(
-        errors.includes("earth.elements.a: must be a finite number (got NaN)"),
+        errors.includes(
+            "earth.orbit.elements.a: must be a finite number (got NaN)",
+        ),
     );
 });
 
 Deno.test("an eccentricity of 1 or more is rejected", () => {
     const errors = errorsAfter((s) => {
-        const elements = planet(s).elements;
-
-        if (elements) {
-            elements.e = 1.2;
-        }
+        planet(s).orbit.elements.e = 1.2;
     });
 
-    assert(errors.includes("earth.elements.e: must be < 1 (got 1.2)"));
+    assert(errors.includes("earth.orbit.elements.e: must be < 1 (got 1.2)"));
 });
 
 Deno.test("an inclination above π is rejected", () => {
     const errors = errorsAfter((s) => {
-        const elements = planet(s).elements;
-
-        if (elements) {
-            elements.i = 4;
-        }
+        planet(s).orbit.elements.i = 4;
     });
 
-    assert(errors.includes("earth.elements.i: must be in [0, π] (got 4)"));
+    assert(
+        errors.includes("earth.orbit.elements.i: must be in [0, π] (got 4)"),
+    );
 });
 
 Deno.test("every error is reported, not only the first", () => {
     const errors = errorsAfter((s) => {
-        planet(s).mu = -1;
-        planet(s).radius = 0;
+        planet(s).mass.mu = -1;
+        planet(s).mass.radius = 0;
     });
 
     assertEquals(errors.length, 2);
@@ -420,21 +543,18 @@ Deno.test("every error is reported, not only the first", () => {
 
 Deno.test("angles outside [0, 2π) are wrapped, not rejected", () => {
     const scenario = structuredClone(valid);
-    const elements = planet(scenario).elements;
+    const { elements } = planet(scenario).orbit;
 
-    if (elements) {
-        elements.raan = -1;
-        elements.argp = 7;
-        elements.m0 = 4 * Math.PI + 1;
-    }
+    elements.raan = -1;
+    elements.argp = 7;
+    elements.m0 = 4 * Math.PI + 1;
 
     const result = validateScenario(scenario);
 
     assert(result.ok);
 
-    const wrapped = planet(result.scenario).elements;
+    const wrapped = planet(result.scenario).orbit.elements;
 
-    assert(wrapped);
     assertEquals(wrapped.raan, 2 * Math.PI - 1);
     assertEquals(wrapped.argp, 7 - 2 * Math.PI);
     assert(Math.abs(wrapped.m0 - 1) < 1e-12);
@@ -442,14 +562,9 @@ Deno.test("angles outside [0, 2π) are wrapped, not rejected", () => {
 
 Deno.test("unknown keys are dropped and the input isn't mutated", () => {
     const scenario = structuredClone(valid) as Scenario & { extra?: number };
-    const elements = planet(scenario).elements;
-
     scenario.extra = 1;
     Object.assign(planet(scenario), { extra: 2 });
-
-    if (elements) {
-        elements.raan = -1;
-    }
+    planet(scenario).orbit.elements.raan = -1;
 
     const before = structuredClone(scenario);
     const result = validateScenario(scenario);
@@ -648,8 +763,8 @@ Deno.test("sorting puts every body after its parent", () => {
 
         for (const body of sorted) {
             assert(
-                seen.has(body.parent),
-                `${body.id} comes before ${body.parent}`,
+                seen.has(body.orbit?.parent ?? null),
+                `${body.id} comes before ${body.orbit?.parent}`,
             );
             seen.add(body.id);
         }
@@ -814,17 +929,13 @@ Deno.test("a scenario time outside the year bounds is rejected", () => {
 Deno.test("an element epoch outside the year bounds is rejected", () => {
     for (const epoch of [MIN_TIME - 1, MAX_TIME + 1]) {
         const errors = errorsAfter((s) => {
-            const elements = planet(s).elements;
-
-            if (elements) {
-                elements.epoch = epoch;
-            }
+            planet(s).orbit.elements.epoch = epoch;
         });
 
         assertEquals(errors.length, 1);
         assert(
             at(errors, 0).startsWith(
-                "earth.elements.epoch: must be in years -9999 to 9999",
+                "earth.orbit.elements.epoch: must be in years -9999 to 9999",
             ),
             at(errors, 0),
         );

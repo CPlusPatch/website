@@ -508,10 +508,11 @@ export const moonBodies = (
             id: row.id,
             name: row.name,
             tags: ["moon"],
-            parent: row.parent,
-            mu: row.gm * 1e9,
-            radius: km(row.radius),
-            elements: moonElements(row, parentMu[row.parent]),
+            mass: { mu: row.gm * 1e9, radius: km(row.radius) },
+            orbit: {
+                parent: row.parent,
+                elements: moonElements(row, parentMu[row.parent]),
+            },
         };
 
         if (nodeRate !== 0 || argpRate !== 0) {

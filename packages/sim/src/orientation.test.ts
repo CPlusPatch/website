@@ -25,15 +25,16 @@ import {
 } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
 import { ROTATION_MODELS } from "./rotation-models.ts";
+import { isOrbiting } from "./scenario.ts";
 
 const RAD = Math.PI / 180;
 
 const find = (id: string) => {
     const body = solarSystem.bodies.find((b) => b.id === id);
 
-    assert(body?.elements, `no orbiting body ${id}`);
+    assert(body && isOrbiting(body), `no orbiting body ${id}`);
 
-    return { ...body, elements: body.elements };
+    return body;
 };
 
 const orientationOf = (model: Model | undefined, t: number): Orientation => {
@@ -106,7 +107,7 @@ Deno.test("a body's pole is tilted from its orbit normal by its obliquity", () =
     };
 
     for (const [id, degrees] of Object.entries(expected)) {
-        const { i, raan } = find(id).elements;
+        const { i, raan } = find(id).orbit.elements;
         const normal = {
             x: Math.sin(i) * Math.sin(raan),
             y: -Math.sin(i) * Math.cos(raan),
@@ -138,7 +139,7 @@ Deno.test("the spin axis is tilted from the orbit normal by the usual obliquity"
     };
 
     for (const [id, degrees] of Object.entries(expected)) {
-        const { i, raan } = find(id).elements;
+        const { i, raan } = find(id).orbit.elements;
         const normal = {
             x: Math.sin(i) * Math.sin(raan),
             y: -Math.sin(i) * Math.cos(raan),
@@ -181,7 +182,11 @@ Deno.test("the Moon keeps one face to the Earth", () => {
     for (let k = 0; k < 12; k++) {
         const t = k * 2.53 * 365.25 * DAY + 1234.5;
 
-        const { r } = stateAt(moon.elements, earth.mu + moon.mu, t);
+        const { r } = stateAt(
+            moon.orbit.elements,
+            earth.mass.mu + moon.mass.mu,
+            t,
+        );
         const { x, y, z } = orientationOf("moon", t);
         const toEarth = scale(r, -1 / length(r));
         const local = {
@@ -229,10 +234,12 @@ const LONGITUDE_TOLERANCE: Record<string, number> = { mimas: 20 };
 Deno.test("a tidally locked moon keeps one face to its parent", () => {
     for (const id of LOCKED_MOONS) {
         const moon = solarSystem.bodies.find((b) => b.id === id);
-        const parent = solarSystem.bodies.find((b) => b.id === moon?.parent);
+        const parent = solarSystem.bodies.find(
+            (b) => b.id === moon?.orbit?.parent,
+        );
 
         assert(
-            moon && parent && moon.parent !== null,
+            moon && parent && isOrbiting(moon),
             `no body or parent for ${id}`,
         );
 
@@ -241,7 +248,7 @@ Deno.test("a tidally locked moon keeps one face to its parent", () => {
 
             const elements = elementsAt(moon, t);
 
-            const { r } = stateAt(elements, parent.mu + moon.mu, t);
+            const { r } = stateAt(elements, parent.mass.mu + moon.mass.mu, t);
             const { x, y, z } = orientationOf(moon.model, t);
             const toParent = scale(r, -1 / length(r));
             const local = {

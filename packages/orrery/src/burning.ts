@@ -7,7 +7,7 @@ import {
     periapsis,
     period,
 } from "@cpluspatch/orbit";
-import type { Scenario, System } from "@cpluspatch/sim";
+import { isOrbiting, type Scenario, type System } from "@cpluspatch/sim";
 
 /** The step choices of a burn's controls, in m/s. */
 export const STEPS = [1, 10, 100] as const;
@@ -68,12 +68,16 @@ export const previewBurn = (
 ): ElementsResult => {
     const body = scenario.bodies.find((candidate) => candidate.id === id);
     if (!body) throw new Error(`There is no body "${id}".`);
-    if (body.parent === null)
-        throw new Error(`"${id}" has no orbit to burn on.`);
+    if (!isOrbiting(body)) throw new Error(`"${id}" has no orbit to burn on.`);
     const parent = scenario.bodies.find(
-        (candidate) => candidate.id === body.parent,
+        (candidate) => candidate.id === body.orbit.parent,
     );
-    if (!parent) throw new Error(`There is no body "${body.parent}".`);
+    if (!parent) throw new Error(`There is no body "${body.orbit.parent}".`);
 
-    return applyBurn(system.elementsAt(id, t), parent.mu + body.mu, t, dv);
+    return applyBurn(
+        system.elementsAt(id, t),
+        parent.mass.mu + body.mass.mu,
+        t,
+        dv,
+    );
 };

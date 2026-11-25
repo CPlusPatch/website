@@ -30,12 +30,12 @@ const SHADOW_SEE_THROUGH = 0.6;
 
 /** Saturn's rings, lit on both faces, with their shadow on Saturn and Saturn's on them. */
 export const ringsExtra = (body: Body, group: Group, sphere: Mesh): Extra => {
-    const { inner, outer } = ringSpan(body.radius);
+    const { inner, outer } = ringSpan(body.mass.radius);
     // Uniforms shared by both materials, in view space and with the sphere's own units.
     const shared = {
         saturnCenter: { value: new Vector3() },
         saturnPole: { value: new Vector3() },
-        saturnRadius: { value: body.radius / 1000 },
+        saturnRadius: { value: body.mass.radius / 1000 },
         ringSpan: { value: new Vector2(inner, outer) },
     };
     const ringShadowMap: { value: Texture | null } = { value: null };

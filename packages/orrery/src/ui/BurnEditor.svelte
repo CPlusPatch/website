@@ -6,7 +6,7 @@ import {
     period,
 } from "@cpluspatch/orbit";
 import { formatDuration } from "@cpluspatch/render";
-import { elementsAt } from "@cpluspatch/sim";
+import { elementsAt, isOrbiting } from "@cpluspatch/sim";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
 import { onMount } from "svelte";
@@ -52,15 +52,17 @@ const view = getView();
 const context = () => {
     const bodies = documents.doc.scenario.bodies;
     const body = bodies.find((candidate) => candidate.id === id);
-    if (!body || body.parent === null) return null;
+    if (!body || !isOrbiting(body)) return null;
 
-    const parent = bodies.find((candidate) => candidate.id === body.parent);
+    const parent = bodies.find(
+        (candidate) => candidate.id === body.orbit.parent,
+    );
     if (!parent) return null;
 
     return {
         body,
         el: elementsAt(body, view.now()),
-        mu: parent.mu + body.mu,
+        mu: parent.mass.mu + body.mass.mu,
         parent,
     };
 };

@@ -22,6 +22,7 @@ import { assertVecClose } from "@cpluspatch/orbit/fixture";
 import {
     bodyOrientation,
     elementsAt,
+    isOrbiting,
     sortByDepth,
     validateScenario,
     worldStates,
@@ -33,16 +34,16 @@ import { solarSystem } from "./solar-system.ts";
 const find = (id: string) => {
     const body = solarSystem.bodies.find((b) => b.id === id);
 
-    assert(body?.elements, `no orbiting body ${id}`);
+    assert(body && isOrbiting(body), `no orbiting body ${id}`);
 
-    return { ...body, elements: body.elements };
+    return body;
 };
 
 const sun = solarSystem.bodies.find((b) => b.id === "sun");
 
 assert(sun, "no sun");
 
-const SUN_MU = sun.mu;
+const SUN_MU = sun.mass.mu;
 
 Deno.test("there are 55 bodies with the expected ids", () => {
     assertEquals(
@@ -129,7 +130,7 @@ Deno.test("the Moon's period around the Earth is 27.32 days", () => {
     const moon = find("moon");
 
     assertAlmostEquals(
-        period(moon.elements, earth.mu + moon.mu) / DAY,
+        period(moon.orbit.elements, earth.mass.mu + moon.mass.mu) / DAY,
         27.32,
         0.05,
     );
@@ -138,11 +139,14 @@ Deno.test("the Moon's period around the Earth is 27.32 days", () => {
 Deno.test("the ISS orbits in about 93 minutes from an epoch on 2026-11-23", () => {
     const earth = find("earth");
     const iss = find("iss");
-    const minutes = period(iss.elements, earth.mu + iss.mu) / 60;
+    const minutes =
+        period(iss.orbit.elements, earth.mass.mu + iss.mass.mu) / 60;
 
     assert(minutes > 92 && minutes < 94, `period is ${minutes} minutes`);
     assertEquals(
-        new Date(j2000sToUnixMs(iss.elements.epoch)).toISOString().slice(0, 10),
+        new Date(j2000sToUnixMs(iss.orbit.elements.epoch))
+            .toISOString()
+            .slice(0, 10),
         "2026-11-23",
     );
 });
@@ -150,9 +154,9 @@ Deno.test("the ISS orbits in about 93 minutes from an epoch on 2026-11-23", () =
 Deno.test("the ISS inclination is converted to the ecliptic and recovers 51.632 degrees", () => {
     const earth = find("earth");
     const iss = find("iss");
-    const mu = earth.mu + iss.mu;
+    const mu = earth.mass.mu + iss.mass.mu;
     const toDeg = (x: number) => (x * 180) / Math.PI;
-    const { r, v } = stateAt(iss.elements, mu, iss.elements.epoch);
+    const { r, v } = stateAt(iss.orbit.elements, mu, iss.orbit.elements.epoch);
 
     // Rotating the ecliptic state back to the equator undoes the conversion.
     const c = Math.cos(OBLIQUITY_J2000);
@@ -164,7 +168,7 @@ Deno.test("the ISS inclination is converted to the ecliptic and recovers 51.632 
     });
     const h = cross(back(r), back(v));
 
-    assert(Math.abs(toDeg(iss.elements.i) - 51.632) > 1);
+    assert(Math.abs(toDeg(iss.orbit.elements.i) - 51.632) > 1);
     assertAlmostEquals(toDeg(Math.acos(h.z / length(h))), 51.632, 1e-6);
 });
 
@@ -174,19 +178,19 @@ Deno.test("Earth's negative Table 1 inclination is the same orbit after the flip
 
     // The raw row, with i < 0 left in, which stateAt handles.
     const raw = {
-        ...earth.elements,
+        ...earth.orbit.elements,
         i: deg(-0.00001531),
         raan: 0,
         argp: wrapAngle(deg(102.93768193)),
         m0: wrapAngle(deg(100.46457166 - 102.93768193)),
     };
     const t = unixMsToJ2000s(Date.UTC(2026, 0, 3, 12));
-    const mu = SUN_MU + earth.mu;
+    const mu = SUN_MU + earth.mass.mu;
 
-    const flipped = stateAt(earth.elements, mu, t);
+    const flipped = stateAt(earth.orbit.elements, mu, t);
     const expected = stateAt(raw, mu, t);
 
-    assert(earth.elements.i >= 0);
+    assert(earth.orbit.elements.i >= 0);
     assertVecClose(flipped.r, expected.r);
     assertVecClose(flipped.v, expected.v);
 });
@@ -211,7 +215,8 @@ Deno.test("every moon's period matches its table period and its a is within 0.5%
     for (const row of MOON_ROWS) {
         const parent = find(row.parent);
         const moon = find(row.id);
-        const p = period(moon.elements, parent.mu + moon.mu) / DAY;
+        const p =
+            period(moon.orbit.elements, parent.mass.mu + moon.mass.mu) / DAY;
 
         // A mean-longitude period also holds the apsidal and nodal turns, which are up to 0.5%.
         assertAlmostEquals(
@@ -220,14 +225,22 @@ Deno.test("every moon's period matches its table period and its a is within 0.5%
             row.meanLongitude ? 0.01 : 1e-6,
             row.id,
         );
-        assertAlmostEquals(moon.elements.a / (row.a * 1000), 1, 0.005, row.id);
+        assertAlmostEquals(
+            moon.orbit.elements.a / (row.a * 1000),
+            1,
+            0.005,
+            row.id,
+        );
     }
 });
 
 Deno.test("every moon's orbit is inclined to its reference pole by the table inclination", () => {
     for (const row of MOON_ROWS) {
         const moon = find(row.id);
-        const angle = angleBetween(normalOf(moon.elements), moonPole(row));
+        const angle = angleBetween(
+            normalOf(moon.orbit.elements),
+            moonPole(row),
+        );
 
         assertAlmostEquals(angle, row.i, 0.01, row.id);
     }
@@ -252,7 +265,7 @@ Deno.test("the Uranus moons orbit with the planet's retrograde spin", () => {
     assert(uranus);
 
     for (const id of ["miranda", "ariel", "umbriel", "titania", "oberon"]) {
-        const normal = normalOf(find(id).elements);
+        const normal = normalOf(find(id).orbit.elements);
 
         assert(angleBetween(normal, scale(uranus.z, -1)) < 5, id);
     }
@@ -263,27 +276,28 @@ Deno.test("Triton is retrograde around Neptune", () => {
     const triton = find("triton");
 
     assert(neptune);
-    assert(angleBetween(normalOf(triton.elements), neptune.z) > 90);
-    assert(toDeg(triton.elements.i) > 90);
+    assert(angleBetween(normalOf(triton.orbit.elements), neptune.z) > 90);
+    assert(toDeg(triton.orbit.elements.i) > 90);
 });
 
 Deno.test("Halley's inclination is 162.19 degrees and it reaches perihelion on 1986-02-09", () => {
     const halley = find("halley");
-    const mu = SUN_MU + halley.mu;
+    const mu = SUN_MU + halley.mass.mu;
     const next = nextApsisTime(
-        halley.elements,
+        halley.orbit.elements,
         mu,
-        halley.elements.epoch,
+        halley.orbit.elements.epoch,
         "periapsis",
     );
 
-    assertAlmostEquals(toDeg(halley.elements.i), 162.19, 0.01);
+    assertAlmostEquals(toDeg(halley.orbit.elements.i), 162.19, 0.01);
     assertAlmostEquals(j2000sToUnixMs(next), Date.UTC(1986, 1, 9), DAY * 1000);
 });
 
 Deno.test("Ceres orbits the Sun in 4.60 years", () => {
     const ceres = find("ceres");
-    const years = period(ceres.elements, SUN_MU + ceres.mu) / (365.25 * DAY);
+    const years =
+        period(ceres.orbit.elements, SUN_MU + ceres.mass.mu) / (365.25 * DAY);
 
     assertAlmostEquals(years, 4.6, 0.01);
 });
@@ -300,7 +314,7 @@ Deno.test("only moons with a period for the node or apsides precess", () => {
 
 Deno.test("every Earth spacecraft precesses about Earth's pole", () => {
     const spacecraft = solarSystem.bodies.filter(
-        (b) => b.tags.includes("spacecraft") && b.parent === "earth",
+        (b) => b.tags.includes("spacecraft") && b.orbit?.parent === "earth",
     );
 
     assertEquals(spacecraft.length, 8);
@@ -321,7 +335,7 @@ Deno.test("GPS orbits in 718 minutes and GOES-19 in 1436", () => {
     const minutes = (id: string) => {
         const body = find(id);
 
-        return period(body.elements, earth.mu + body.mu) / 60;
+        return period(body.orbit.elements, earth.mass.mu + body.mass.mu) / 60;
     };
 
     assertAlmostEquals(minutes("gps-biii-1"), 718, 2);
@@ -344,12 +358,12 @@ Deno.test("moons point where Horizons puts them in 2015", () => {
 
     for (const [id, { toMoon, degrees }] of Object.entries(HORIZONS_2015)) {
         const moon = find(id);
-        const parent = find(moon.parent ?? "");
+        const parent = find(moon.orbit.parent);
         const elements = elementsAt(moon, t);
 
         assert(elements, `no elements for ${id}`);
 
-        const { r } = stateAt(elements, parent.mu + moon.mu, t);
+        const { r } = stateAt(elements, parent.mass.mu + moon.mass.mu, t);
 
         assert(
             angleBetween(r, toMoon) < degrees,
@@ -377,15 +391,17 @@ const HORIZONS_PROBES: Record<
 Deno.test("Juno and Parker Solar Probe point where Horizons puts them a day after the epoch", () => {
     for (const id of ["juno", "parker-solar-probe"] as const) {
         const probe = find(id);
-        const parent = solarSystem.bodies.find((b) => b.id === probe.parent);
-        const t = probe.elements.epoch + DAY;
+        const parent = solarSystem.bodies.find(
+            (b) => b.id === probe.orbit.parent,
+        );
+        const t = probe.orbit.elements.epoch + DAY;
 
         assert(parent, `no parent for ${id}`);
         const elements = elementsAt(probe, t);
 
         assert(elements, `no elements for ${id}`);
 
-        const { r } = stateAt(elements, parent.mu + probe.mu, t);
+        const { r } = stateAt(elements, parent.mass.mu + probe.mass.mu, t);
 
         assert(
             angleBetween(r, HORIZONS_PROBES[id]) < 1,
@@ -397,7 +413,7 @@ Deno.test("Juno and Parker Solar Probe point where Horizons puts them a day afte
 Deno.test("MRO and LRO are in their orbit planes a day after the epoch", () => {
     for (const id of ["mro", "lro"] as const) {
         const probe = find(id);
-        const elements = elementsAt(probe, probe.elements.epoch + DAY);
+        const elements = elementsAt(probe, probe.orbit.elements.epoch + DAY);
 
         assert(elements, `no elements for ${id}`);
 
@@ -414,20 +430,20 @@ Deno.test("every Mars, Moon and Jupiter probe precesses about its parent's pole"
     const probes = solarSystem.bodies.filter(
         (b) =>
             b.tags.includes("spacecraft") &&
-            (b.parent === "mars" ||
-                b.parent === "moon" ||
-                b.parent === "jupiter"),
+            (b.orbit?.parent === "mars" ||
+                b.orbit?.parent === "moon" ||
+                b.orbit?.parent === "jupiter"),
     );
 
     assertEquals(probes.length, 9);
 
     for (const body of probes) {
         const pole = bodyOrientation(
-            find(body.parent ?? "").model,
-            body.elements?.epoch ?? 0,
+            find(body.orbit?.parent ?? "").model,
+            body.orbit?.elements.epoch ?? 0,
         );
 
-        assert(pole, `no rotation model for ${body.parent}`);
+        assert(pole, `no rotation model for ${body.orbit?.parent}`);
         assert(body.precession, `${body.id} has no precession`);
         assertVecClose(body.precession.pole, pole.z, 1e-12);
     }

@@ -457,7 +457,7 @@ export const createSpacecraftModel = (body: Body): Group => {
             ["iss", "hubble", "tiangong", "parisat", "juno"].includes(model));
     const radius = known
         ? 1
-        : body.radius / box.getBoundingSphere(new Sphere()).radius;
+        : body.mass.radius / box.getBoundingSphere(new Sphere()).radius;
     group.scale.setScalar(radius / 1000);
 
     return group;

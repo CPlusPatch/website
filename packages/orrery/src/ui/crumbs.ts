@@ -8,7 +8,7 @@ export const focusPath = (bodies: readonly Body[], id: string): Body[] => {
     for (
         let body = byId.get(id);
         body && !path.includes(body);
-        body = body.parent === null ? undefined : byId.get(body.parent)
+        body = body.orbit ? byId.get(body.orbit.parent) : undefined
     ) {
         path.unshift(body);
     }

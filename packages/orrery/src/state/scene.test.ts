@@ -2,7 +2,13 @@
 import { solarSystem } from "@cpluspatch/catalog";
 import { stateAt } from "@cpluspatch/orbit";
 import { Clock, type SceneEvent } from "@cpluspatch/render";
-import { type Body, documentOf, elementsAt, subtreeIds } from "@cpluspatch/sim";
+import {
+    type Body,
+    documentOf,
+    elementsAt,
+    isOrbiting,
+    subtreeIds,
+} from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,
@@ -169,17 +175,21 @@ Deno.test("setElements emits one body event and the states follow the new orbit"
     const events: SceneEvent[] = [];
     scene.on((e) => events.push(e));
 
-    if (!moon?.elements) throw new Error("The scenario has no Moon.");
-    scene.setElements("moon", { ...moon.elements, a: moon.elements.a * 2 });
+    if (!moon?.orbit) throw new Error("The scenario has no Moon.");
+    scene.setElements("moon", {
+        ...moon.orbit.elements,
+        a: moon.orbit.elements.a * 2,
+    });
 
     assertEquals(events, [{ type: "body", id: "moon" }]);
     assertEquals(
-        scene.scenario.bodies.find((body) => body.id === "moon")?.elements?.a,
-        moon.elements.a * 2,
+        scene.scenario.bodies.find((body) => body.id === "moon")?.orbit
+            ?.elements.a,
+        moon.orbit.elements.a * 2,
     );
     assertEquals(
-        scene.order.find((body) => body.id === "moon")?.elements?.a,
-        moon.elements.a * 2,
+        scene.order.find((body) => body.id === "moon")?.orbit?.elements.a,
+        moon.orbit.elements.a * 2,
     );
     assertNotEquals(scene.states().get("moon"), before);
 });
@@ -187,7 +197,7 @@ Deno.test("setElements emits one body event and the states follow the new orbit"
 Deno.test("setElements throws for an unknown body or one with no parent", () => {
     const scene = make();
     const earth = scene.scenario.bodies.find((body) => body.id === "earth");
-    const el = earth?.elements;
+    const el = earth?.orbit?.elements;
     if (!el) throw new Error("The scenario has no Earth.");
     let count = 0;
     scene.on(() => count++);
@@ -211,8 +221,8 @@ Deno.test("a burn emits one body event and changes the orbit", () => {
     const after = scene.scenario.bodies.find((body) => body.id === "moon");
     assertEquals(result, { ok: true });
     assertEquals(events, [{ type: "body", id: "moon" }]);
-    assertNotEquals(after?.elements, before?.elements);
-    assertEquals(after?.elements?.epoch, scene.clock.t);
+    assertNotEquals(after?.orbit?.elements, before?.orbit?.elements);
+    assertEquals(after?.orbit?.elements.epoch, scene.clock.t);
 });
 
 Deno.test("a burn that escapes returns why and emits nothing", () => {
@@ -350,9 +360,9 @@ const rock = (id: string, parent: string): Body => {
     const body = solarSystem.bodies.find(
         (candidate) => candidate.id === "moon",
     );
-    if (!body?.elements) throw new Error("The scenario has no Moon.");
+    if (!body?.orbit) throw new Error("The scenario has no Moon.");
 
-    return { ...body, id, name: id, parent };
+    return { ...body, id, name: id, orbit: { ...body.orbit, parent } };
 };
 
 Deno.test("adding a body emits one bodies event and keeps focus and selection", () => {
@@ -596,7 +606,7 @@ Deno.test("removing the root or an unknown body throws and emits nothing", () =>
 /** A scene whose Moon precesses about the ecliptic pole. */
 const makePrecessing = (): Scene => {
     const bodies = solarSystem.bodies.map((body) =>
-        body.id === "moon" && body.parent !== null
+        body.id === "moon" && body.orbit !== undefined
             ? {
                   ...body,
                   precession: {
@@ -615,10 +625,10 @@ Deno.test("setElements turns a precessing body into a fixed orbit", () => {
     const scene = makePrecessing();
     const moon = scene.scenario.bodies.find((body) => body.id === "moon");
 
-    if (!moon?.elements) throw new Error("The scenario has no Moon.");
+    if (!moon?.orbit) throw new Error("The scenario has no Moon.");
     assert(moon.precession);
 
-    scene.setElements("moon", moon.elements);
+    scene.setElements("moon", moon.orbit.elements);
 
     const after = scene.scenario.bodies.find((body) => body.id === "moon");
     assert(after && !("precession" in after));
@@ -637,13 +647,17 @@ Deno.test("a zero burn on a precessing body keeps its position", () => {
     assert(result.ok);
 
     const fixed = scene.scenario.bodies.find((body) => body.id === "moon");
-    assert(fixed?.elements);
+    assert(fixed && isOrbiting(fixed));
 
-    const local = stateAt(fixed.elements, earth.mu + moon.mu, t);
+    const local = stateAt(
+        fixed.orbit.elements,
+        earth.mass.mu + moon.mass.mu,
+        t,
+    );
     const parent = scene.states().get("earth");
     assert(parent);
 
-    assertEquals(elementsAt(fixed, t), fixed.elements);
+    assertEquals(elementsAt(fixed, t), fixed.orbit.elements);
     assertAlmostEquals(parent.r.x + local.r.x, before.r.x, 1e-3);
     assertAlmostEquals(parent.r.y + local.r.y, before.r.y, 1e-3);
     assertAlmostEquals(parent.r.z + local.r.z, before.r.z, 1e-3);

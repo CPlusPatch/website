@@ -5,7 +5,7 @@ import { add, length, stateAt, sub } from "@cpluspatch/orbit";
 import { assertVecClose } from "@cpluspatch/orbit/fixture";
 import { assert, assertEquals } from "@std/assert";
 import type { Body } from "./scenario.ts";
-import { sortByDepth } from "./scenario.ts";
+import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
 
 const order = sortByDepth(solarSystem);
@@ -14,7 +14,7 @@ const t = 7.5e8;
 const find = (id: string) => {
     const body = solarSystem.bodies.find((b) => b.id === id);
 
-    assert(body, `no body ${id}`);
+    assert(body && isOrbiting(body), `no orbiting body ${id}`);
 
     return body;
 };
@@ -31,10 +31,9 @@ Deno.test("a moon's world state is its parent's plus its own orbit", () => {
     const moon = find("moon");
     const earthState = states.get("earth");
     const moonState = states.get("moon");
-    const local =
-        moon.elements && stateAt(moon.elements, earth.mu + moon.mu, t);
+    const local = stateAt(moon.orbit.elements, earth.mass.mu + moon.mass.mu, t);
 
-    assert(earthState && moonState && local);
+    assert(earthState && moonState);
     assertVecClose(moonState.r, add(earthState.r, local.r));
     assertVecClose(moonState.v, add(earthState.v, local.v));
 });
@@ -48,8 +47,6 @@ Deno.test("every body gets a state", () => {
 
 Deno.test("a precessing body's state follows its precessed orbit", () => {
     const moon = find("moon");
-
-    assert(moon.parent !== null, "the moon has no parent");
 
     const precessing: Body = {
         ...moon,

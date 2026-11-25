@@ -68,8 +68,8 @@ Deno.test("the subtree of a moon of a moon is reached through the moon", () => {
 
     assertExists(sun);
 
-    const body = (id: string, parent: string) => ({
-        ...newBody(
+    const body = (id: string, parent: string) => {
+        const made = newBody(
             {
                 id,
                 name: id,
@@ -82,9 +82,10 @@ Deno.test("the subtree of a moon of a moon is reached through the moon", () => {
                 iDeg: 0,
             },
             0,
-        ),
-        parent,
-    });
+        );
+
+        return { ...made, orbit: { ...made.orbit, parent } };
+    };
     const scenario = {
         ...solarSystem,
         bodies: [...solarSystem.bodies, body("tiny", "moon")],
@@ -137,10 +138,10 @@ Deno.test("a new body converts km, degrees and kg to SI", () => {
     assertEquals(body.id, "rock");
     assertEquals(body.name, "Rock");
     assertEquals(body.tags, ["dwarf"]);
-    assertEquals(body.parent, "earth");
-    assertEquals(body.radius, 100_000);
-    assertAlmostEquals(body.mu, G * 1e20, 1e-12);
-    assertEquals(body.elements, {
+    assertEquals(body.orbit.parent, "earth");
+    assertEquals(body.mass.radius, 100_000);
+    assertAlmostEquals(body.mass.mu, G * 1e20, 1e-12);
+    assertEquals(body.orbit.elements, {
         a: 20_000_000,
         e: 0.25,
         i: Math.PI / 2,
@@ -240,7 +241,7 @@ Deno.test("the orbit's limits read as they do in the edit form", () => {
 
     assertEquals(
         errors.a,
-        fieldError("a", 1000, { aMin: aMin(earth.radius), unit: "km" }),
+        fieldError("a", 1000, { aMin: aMin(earth.mass.radius), unit: "km" }),
     );
     assertEquals(errors.e, "Must be at least 0 and at most 0.99.");
     assertEquals(errors.i, "Must be between 0° and 180°.");
@@ -267,14 +268,14 @@ Deno.test("an orbit that isn't a number asks for one", () => {
 });
 
 Deno.test("a periapsis inside the parent is blamed on the eccentricity", () => {
-    const errors = errorsOf({ aMetres: earth.radius * 2, e: 0.6 });
+    const errors = errorsOf({ aMetres: earth.mass.radius * 2, e: 0.6 });
 
     assertEquals(errors.e, "Periapsis would be inside Earth.");
     assertEquals(errors.a, undefined);
 });
 
 Deno.test("the periapsis is only checked when the axis and eccentricity are valid", () => {
-    const errors = errorsOf({ aMetres: earth.radius * 2, e: 2 });
+    const errors = errorsOf({ aMetres: earth.mass.radius * 2, e: 2 });
 
     assertEquals(errors.e, "Must be at least 0 and at most 0.99.");
 });

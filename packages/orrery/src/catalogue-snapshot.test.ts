@@ -12,7 +12,7 @@ Deno.test("the group classes match the snapshot file", async () => {
     const bytes = await Deno.readFile(
         new URL("./assets/satellites.bin", import.meta.url),
     );
-    const mu = solarSystem.bodies.find((body) => body.id === "earth")?.mu;
+    const mu = solarSystem.bodies.find((body) => body.id === "earth")?.mass.mu;
     if (mu === undefined) throw new Error("The solar system has no Earth.");
 
     const swarm = prepareSwarm(decodeCatalogue(bytes), mu);

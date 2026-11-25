@@ -133,16 +133,17 @@ export const smallBodies: Body[] = ROWS.map((row) => ({
     id: row.id,
     name: row.name,
     tags: [row.kind],
-    parent: "sun",
-    mu: row.mu,
-    radius: km(row.radius),
-    elements: {
-        a: row.a * AU,
-        e: row.e,
-        i: deg(row.i),
-        raan: wrapAngle(deg(row.om)),
-        argp: wrapAngle(deg(row.w)),
-        m0: wrapAngle(deg(row.ma)),
-        epoch: (row.jd - J2000_JD) * DAY,
+    mass: { mu: row.mu, radius: km(row.radius) },
+    orbit: {
+        parent: "sun",
+        elements: {
+            a: row.a * AU,
+            e: row.e,
+            i: deg(row.i),
+            raan: wrapAngle(deg(row.om)),
+            argp: wrapAngle(deg(row.w)),
+            m0: wrapAngle(deg(row.ma)),
+            epoch: (row.jd - J2000_JD) * DAY,
+        },
     },
 }));

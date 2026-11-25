@@ -26,7 +26,10 @@ const body = (id: string): Body => {
 
 Deno.test("the camera stays where a body's sphere spans 80% of the view, and at least 10 m", () => {
     const fov = (50 * Math.PI) / 180;
-    const iss: Body = { ...body("iss"), radius: 1 };
+    const iss: Body = {
+        ...body("iss"),
+        mass: { ...body("iss").mass, radius: 1 },
+    };
 
     assertAlmostEquals(
         minDistanceKm(body("earth"), fov),
@@ -175,7 +178,7 @@ Deno.test("a key zoom closes the gap by ratio, faster for a longer step", () => 
 
 Deno.test("the reach is the farthest planet's aphelion in km, and ignores dwarf planets", () => {
     const neptune = body("neptune");
-    const { a = 0, e = 0 } = neptune.elements ?? {};
+    const { a = 0, e = 0 } = neptune.orbit?.elements ?? {};
 
     assertAlmostEquals(reachKm(solarSystem), (a * (1 + e)) / 1000, 1);
 });
@@ -184,8 +187,14 @@ Deno.test("moving a planet out to 100 AU moves the reach out with it", () => {
     const far = {
         ...solarSystem,
         bodies: solarSystem.bodies.map((b) =>
-            b.id === "earth" && b.elements
-                ? { ...b, elements: { ...b.elements, a: 100 * AU, e: 0 } }
+            b.id === "earth" && b.orbit
+                ? {
+                      ...b,
+                      orbit: {
+                          ...b.orbit,
+                          elements: { ...b.orbit.elements, a: 100 * AU, e: 0 },
+                      },
+                  }
                 : b,
         ),
     };
@@ -196,7 +205,7 @@ Deno.test("moving a planet out to 100 AU moves the reach out with it", () => {
 Deno.test("a companion star around the root counts toward the reach", () => {
     const b = eridani.bodies.find((body) => body.id === "40-eridani-b");
 
-    assertAlmostEquals(reachKm(eridani), (b?.elements?.a ?? 0) / 1000, 1);
+    assertAlmostEquals(reachKm(eridani), (b?.orbit?.elements.a ?? 0) / 1000, 1);
 });
 
 Deno.test("the view shifts by the gap between its centre and the free band's, and not at all when the band is centred", () => {
@@ -207,7 +216,7 @@ Deno.test("the view shifts by the gap between its centre and the free band's, an
 
 Deno.test("the opening view frames Mars's apoapsis, the 4th planet out", () => {
     const mars = body("mars");
-    const { a = 0, e = 0 } = mars.elements ?? {};
+    const { a = 0, e = 0 } = mars.orbit?.elements ?? {};
 
     assertAlmostEquals(openingReachKm(solarSystem), (a * (1 + e)) / 1000, 1);
 });
@@ -222,7 +231,7 @@ Deno.test("the opening view falls back to the farthest planet, then to the reach
         ),
     };
     const venus = body("venus");
-    const { a = 0, e = 0 } = venus.elements ?? {};
+    const { a = 0, e = 0 } = venus.orbit?.elements ?? {};
 
     assertEquals(planets.length > 3, true);
     assertAlmostEquals(openingReachKm(few), (a * (1 + e)) / 1000, 1);
@@ -238,7 +247,7 @@ Deno.test("the opening view falls back to the farthest planet, then to the reach
 Deno.test("a body with moons is framed so its farthest moon's orbit fits the narrower side", () => {
     const fov = (50 * Math.PI) / 180;
     const callisto = body("callisto");
-    const { a = 0, e = 0 } = callisto.elements ?? {};
+    const { a = 0, e = 0 } = callisto.orbit?.elements ?? {};
     const reach = (a * (1 + e)) / 1000;
 
     assertAlmostEquals(
@@ -257,10 +266,12 @@ Deno.test("a body with only spacecraft is framed by their farthest orbit", () =>
     const fov = (50 * Math.PI) / 180;
     const reach = Math.max(
         ...solarSystem.bodies
-            .filter((candidate) => candidate.parent === "moon")
+            .filter((candidate) => candidate.orbit?.parent === "moon")
             .map(
-                ({ elements }) =>
-                    ((elements?.a ?? 0) * (1 + (elements?.e ?? 0))) / 1000,
+                ({ orbit }) =>
+                    ((orbit?.elements.a ?? 0) *
+                        (1 + (orbit?.elements.e ?? 0))) /
+                    1000,
             ),
     );
 
@@ -277,7 +288,7 @@ Deno.test("a body with no moons is framed so its sphere spans 25% of the view's 
 
     assertAlmostEquals(
         frameDistanceKm(solarSystem, "mercury", fov, 1.5),
-        mercury.radius / 1000 / Math.sin(0.125 * fov),
+        mercury.mass.radius / 1000 / Math.sin(0.125 * fov),
         1e-6,
     );
 });

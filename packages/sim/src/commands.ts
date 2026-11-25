@@ -2,11 +2,11 @@ import { applyBurn, type Burn, type Elements } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
 import { elementsAt } from "./precession.ts";
 import type { Body, Scenario } from "./scenario.ts";
-import { subtreeIds, validateScenario } from "./scenario.ts";
+import { isOrbiting, subtreeIds, validateScenario } from "./scenario.ts";
 
 /** The fields of a body that `update-body` can change. */
 export type BodyPatch = Partial<
-    Pick<Body, "name" | "tags" | "mu" | "radius" | "color" | "model">
+    Pick<Body, "name" | "tags" | "mass" | "color" | "model">
 >;
 
 /** One edit to a document. */
@@ -24,7 +24,7 @@ export type DocumentResult =
     | { ok: true; doc: Document }
     | { ok: false; errors: string[] };
 
-const PATCH_KEYS = ["name", "tags", "mu", "radius", "color", "model"] as const;
+const PATCH_KEYS = ["name", "tags", "mass", "color", "model"] as const;
 
 const BURN_FAILURES = {
     escape: "the burn would leave the parent's gravity",
@@ -53,11 +53,11 @@ const withOrbit = (
 ): Scenario => ({
     ...scenario,
     bodies: scenario.bodies.map((body) => {
-        if (body.id !== id || body.parent === null) return body;
+        if (body.id !== id || body.orbit === undefined) return body;
 
         const { precession: _dropped, ...fixed } = body;
 
-        return { ...fixed, elements };
+        return { ...fixed, orbit: { ...body.orbit, elements } };
     }),
 });
 
@@ -96,7 +96,7 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
     if (!body) return fail(`${field}: there is no body ${JSON.stringify(id)}`);
 
     if (cmd.type === "update-body") {
-        // Only the patch keys are copied, so a patch with `parent` or `elements` can't change them.
+        // Only the patch keys are copied, so a patch with `orbit` can't change them.
         const changes: Record<string, unknown> = {};
 
         for (const key of PATCH_KEYS) {
@@ -117,7 +117,7 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
     }
 
     if (cmd.type === "remove-body") {
-        if (body.parent === null) return fail(`id: "${id}" is the root.`);
+        if (body.orbit === undefined) return fail(`id: "${id}" is the root.`);
 
         const gone = new Set(subtreeIds(scenario, id));
 
@@ -132,7 +132,7 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
         );
     }
 
-    if (body.parent === null) {
+    if (!isOrbiting(body)) {
         return fail(
             cmd.type === "set-orbit"
                 ? `bodyId: "${id}" has no parent to orbit.`
@@ -144,15 +144,17 @@ export const apply = (doc: Document, cmd: Command): DocumentResult => {
     if (cmd.type === "set-orbit") return setOrbit(doc, id, cmd.elements);
 
     const parent = scenario.bodies.find(
-        (candidate) => candidate.id === body.parent,
+        (candidate) => candidate.id === body.orbit.parent,
     );
 
     if (!parent)
-        return fail(`bodyId: there is no body ${JSON.stringify(body.parent)}`);
+        return fail(
+            `bodyId: there is no body ${JSON.stringify(body.orbit.parent)}`,
+        );
 
     const burned = applyBurn(
         elementsAt(body, cmd.t),
-        parent.mu + body.mu,
+        parent.mass.mu + body.mass.mu,
         cmd.t,
         cmd.dv,
     );

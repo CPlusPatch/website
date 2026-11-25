@@ -5,10 +5,10 @@ export const treeOrder = (bodies: readonly Body[]): Body[] => {
     const children = new Map<string | null, Body[]>();
 
     for (const body of bodies) {
-        const siblings = children.get(body.parent);
+        const siblings = children.get(body.orbit?.parent ?? null);
 
         if (siblings) siblings.push(body);
-        else children.set(body.parent, [body]);
+        else children.set(body.orbit?.parent ?? null, [body]);
     }
 
     const order: Body[] = [];

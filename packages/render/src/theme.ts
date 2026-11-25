@@ -69,8 +69,8 @@ export const colorOf = (body: Body, parent: Body | undefined): string => {
 
     const style = styleOf(body);
 
-    if (style.colorByOrbitClass && parent?.model === "earth" && body.elements) {
-        return ORBIT_CLASS_COLORS[orbitClass(body.elements)];
+    if (style.colorByOrbitClass && parent?.model === "earth" && body.orbit) {
+        return ORBIT_CLASS_COLORS[orbitClass(body.orbit.elements)];
     }
 
     return (

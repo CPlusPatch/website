@@ -160,10 +160,8 @@ export const satellites = (earthMu: number): Body[] => {
             id,
             name,
             tags: role === undefined ? ["spacecraft"] : ["spacecraft", role],
-            parent: "earth",
-            mu: 0,
-            radius,
-            elements,
+            mass: { mu: 0, radius },
+            orbit: { parent: "earth", elements },
             precession: j2Precession(
                 elements,
                 earthMu,

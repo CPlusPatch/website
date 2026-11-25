@@ -71,7 +71,7 @@ export const createEntry = (
                   toneMapped: false,
               }),
     );
-    sphere.scale.setScalar(body.radius / 1000);
+    sphere.scale.setScalar(body.mass.radius / 1000);
 
     const marker = new Sprite(
         new SpriteMaterial({

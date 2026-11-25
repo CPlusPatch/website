@@ -76,7 +76,7 @@ Deno.test("the right pane lists a system's rows, and none for the root", () => {
 });
 
 Deno.test("the root note counts its children and says where to pick", () => {
-    const count = solar.filter((body) => body.parent === "sun").length;
+    const count = solar.filter((body) => body.orbit?.parent === "sun").length;
 
     assertEquals(
         rootNote(solar, false),

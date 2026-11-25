@@ -188,10 +188,10 @@ export const createReadouts = (
                 selected === null
                     ? undefined
                     : source.scenario.bodies.find(({ id }) => id === selected);
-            const parentR = body?.parent
-                ? positionOf(frame, body.parent)
+            const parentR = body?.orbit
+                ? positionOf(frame, body.orbit.parent)
                 : undefined;
-            if (hidden || !body || body.parent === null || !parentR) {
+            if (hidden || !body || !body.orbit || !parentR) {
                 setShown(false);
                 return;
             }

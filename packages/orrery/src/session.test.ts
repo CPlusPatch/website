@@ -270,9 +270,9 @@ const rock = (id: string): Body => {
     const body = solarSystem.bodies.find(
         (candidate) => candidate.id === "moon",
     );
-    if (!body?.elements) throw new Error("The scenario has no Moon.");
+    if (!body?.orbit) throw new Error("The scenario has no Moon.");
 
-    return { ...body, id, name: id, parent: "earth" };
+    return { ...body, id, name: id, orbit: { ...body.orbit, parent: "earth" } };
 };
 
 Deno.test("a rebuild that throws reloads the last scenario, keeps the focus and isn't saved", async () => {
@@ -321,13 +321,13 @@ Deno.test("a failed rebuild keeps an orbit edited before it", () => {
         },
     );
     const moon = scene.scenario.bodies.find((body) => body.id === "moon");
-    if (!moon?.elements) throw new Error("The scenario has no Moon.");
+    if (!moon?.orbit) throw new Error("The scenario has no Moon.");
 
-    scene.setElements("moon", { ...moon.elements, e: 0.2 });
+    scene.setElements("moon", { ...moon.orbit.elements, e: 0.2 });
     scene.addBody(rock("rock"));
 
     const after = scene.scenario.bodies.find((body) => body.id === "moon");
-    assertEquals(after?.elements?.e, 0.2);
+    assertEquals(after?.orbit?.elements.e, 0.2);
 
     session.destroy();
 });

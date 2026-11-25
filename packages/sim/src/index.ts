@@ -41,13 +41,15 @@ export { distanceOf, readouts } from "./readouts.ts";
 export { KERBOL_LOCKED, ROTATION_MODELS } from "./rotation-models.ts";
 export type {
     Body,
+    BodyOrbit,
+    Mass,
     OrbitingBody,
-    RootBody,
     Scenario,
     ScenarioResult,
 } from "./scenario.ts";
 export {
     fillModels,
+    isOrbiting,
     MAX_BODIES,
     MAX_NAME,
     sortByDepth,

@@ -62,7 +62,7 @@ const path = new URL("satellites.bin", assets);
 await Deno.writeFile(path, encodeCatalogue(entries));
 
 // The view takes Earth's mu from the same scenario.
-const earthMu = solarSystem.bodies.find((body) => body.id === "earth")?.mu;
+const earthMu = solarSystem.bodies.find((body) => body.id === "earth")?.mass.mu;
 if (earthMu === undefined) {
     console.error("The solar system has no Earth.");
     Deno.exit(1);

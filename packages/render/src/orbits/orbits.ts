@@ -1,5 +1,5 @@
 import type { Elements, Vec3 } from "@cpluspatch/orbit";
-import { type Body, precessionTurns } from "@cpluspatch/sim";
+import { type Body, isOrbiting, precessionTurns } from "@cpluspatch/sim";
 import {
     Color,
     CustomBlending,
@@ -165,10 +165,10 @@ export const createOrbits = (
     };
 
     const addOrbit = (body: Body): Orbit | null => {
-        if (body.parent === null) return null;
+        if (!isOrbiting(body)) return null;
 
         const { geometry, positions, colors, segments } = orbitGeometry(
-            body.elements,
+            body.orbit.elements,
         );
         const material = new LineMaterial({
             linewidth: LINE_PX,
@@ -227,7 +227,7 @@ export const createOrbits = (
 
     return {
         ghost: (body, elements) => {
-            if (!elements || body.parent === null) {
+            if (!elements || !isOrbiting(body)) {
                 if (ghost) ghost.line.visible = false;
                 return;
             }
@@ -250,7 +250,10 @@ export const createOrbits = (
             const at = orbits.findIndex((orbit) => orbit.body.id === id);
             if (at !== -1) disposeOrbit(orbits.splice(at, 1)[0] as Orbit);
 
-            if (ghost && (ghost.body.id === id || ghost.body.parent === id)) {
+            if (
+                ghost &&
+                (ghost.body.id === id || ghost.body.orbit.parent === id)
+            ) {
                 ghost.line.visible = false;
             }
         },
@@ -258,10 +261,10 @@ export const createOrbits = (
             const orbit = orbits.find(
                 (candidate) => candidate.body.id === body.id,
             );
-            if (!orbit || body.parent === null) return;
+            if (!orbit || !isOrbiting(body)) return;
 
             const { geometry, positions, colors, segments } = orbitGeometry(
-                body.elements,
+                body.orbit.elements,
             );
             orbit.line.geometry.dispose();
             orbit.line.geometry = geometry;
@@ -281,7 +284,7 @@ export const createOrbits = (
 
             for (const orbit of orbits) {
                 const { body, line, casing } = orbit;
-                const parentR = positionOf(frame, body.parent);
+                const parentR = positionOf(frame, body.orbit.parent);
                 if (!parentR) continue;
 
                 parentAt.set(
@@ -291,7 +294,7 @@ export const createOrbits = (
                 );
 
                 const aPx = projectedRadiusPx(
-                    body.elements.a / 1000,
+                    body.orbit.elements.a / 1000,
                     camera.position.distanceTo(parentAt),
                     fov,
                     size.height,
@@ -302,7 +305,7 @@ export const createOrbits = (
                 line.visible = shown;
                 casing.visible = shown;
                 if (shown) {
-                    const { e, a } = body.elements;
+                    const { e, a } = body.orbit.elements;
                     orbit.fade.parentDepth.value = inView
                         .copy(parentAt)
                         .applyMatrix4(camera.matrixWorldInverse).z;
@@ -323,14 +326,14 @@ export const createOrbits = (
                           ),
                       )
                     : Infinity;
-                const near = orbitNear(distance, body.elements.a / 1000);
+                const near = orbitNear(distance, body.orbit.elements.a / 1000);
                 if (orbit.near && !near) restoreStatic(orbit);
 
                 // The near points are already placed in the world, so they take no turn.
                 turn.identity();
                 if (!near && body.precession) {
                     const [about, pole] = precessionTurns(
-                        body.elements,
+                        body.orbit.elements,
                         body.precession,
                         t,
                     );

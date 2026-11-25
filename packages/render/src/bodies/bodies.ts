@@ -123,7 +123,7 @@ export const createBodies = (
 
     // Bigger bodies draw later, and the root last.
     const drawSize = (body: Body) =>
-        body.parent === null ? Infinity : body.radius;
+        body.orbit === undefined ? Infinity : body.mass.radius;
     const sortMarkers = () => {
         [...entries]
             .sort((a, b) => drawSize(a.body) - drawSize(b.body))
@@ -165,7 +165,9 @@ export const createBodies = (
         if (!disposed) styling.measureAll();
     });
 
-    const rootGroup = entries.find(({ body }) => body.parent === null)?.group;
+    const rootGroup = entries.find(
+        ({ body }) => body.orbit === undefined,
+    )?.group;
     const sun = new PointLight(undefined, 3, 0, 0);
     const ambient = new AmbientLight(undefined, 0.015);
     scene.add(sun, ambient);
@@ -206,11 +208,11 @@ export const createBodies = (
             const screenBodies = entries.map(
                 ({ body, model }): ScreenBody => ({
                     id: body.id,
-                    parent: body.parent,
+                    parent: body.orbit?.parent ?? null,
                     style: styleOf(body),
-                    mu: body.mu,
-                    radius: body.radius,
-                    a: body.elements?.a ?? null,
+                    mu: body.mass.mu,
+                    radius: body.mass.radius,
+                    a: body.orbit?.elements.a ?? null,
                     model: model !== null,
                     markerPx: markerPx(body),
                 }),
@@ -316,11 +318,11 @@ export const createBodies = (
                     model.visible = big;
                     const r = positionOf(frame, body.id);
                     const v = velocityOf(frame, body.id);
-                    const parentR = body.parent
-                        ? positionOf(frame, body.parent)
+                    const parentR = body.orbit
+                        ? positionOf(frame, body.orbit.parent)
                         : undefined;
-                    const parentV = body.parent
-                        ? velocityOf(frame, body.parent)
+                    const parentV = body.orbit
+                        ? velocityOf(frame, body.orbit.parent)
                         : undefined;
                     if (big && r && v && parentR && parentV) {
                         spin.fromArray(

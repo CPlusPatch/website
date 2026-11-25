@@ -49,7 +49,7 @@ import {
     toMetres,
     type Units,
 } from "@cpluspatch/render";
-import { elementsAt } from "@cpluspatch/sim";
+import { elementsAt, isOrbiting } from "@cpluspatch/sim";
 import { onMount } from "svelte";
 import { cue } from "../audio/cues.ts";
 import {
@@ -87,25 +87,27 @@ const view = getView();
 const lookup = () => {
     const bodies = documents.doc.scenario.bodies;
     const found = bodies.find((candidate) => candidate.id === id);
-    if (!found || found.parent === null)
+    if (!found || !isOrbiting(found))
         throw new Error(`"${id}" has no orbit to edit.`);
 
-    const above = bodies.find((candidate) => candidate.id === found.parent);
-    if (!above) throw new Error(`"${found.parent}" doesn't exist.`);
+    const above = bodies.find(
+        (candidate) => candidate.id === found.orbit.parent,
+    );
+    if (!above) throw new Error(`"${found.orbit.parent}" doesn't exist.`);
 
     return { body: found, parent: above };
 };
 const { body, parent } = lookup();
 
 const original = elementsAt(body, view.now());
-const min = aMin(parent.radius);
+const min = aMin(parent.mass.radius);
 const opened = view.now();
 const unitNow = () => units.get() ?? aUnit(original.a);
 const initialUnit = unitNow();
 const initialSpecs = specs(initialUnit, original.a);
 
 /** The parent's and the body's gravitational parameters added, in m³/s². */
-export const mu = parent.mu + body.mu;
+export const mu = parent.mass.mu + body.mass.mu;
 
 // Only the unit switch changes it, and then the field converts in place.
 let unit = $state(initialUnit);
@@ -210,7 +212,8 @@ const preview = () => {
 
     scene.ghost(id, changes().length > 0 ? next : null);
     warning.text = `This orbit passes through ${parent.name}.`;
-    warning.hidden = next === null || !passesThroughParent(next, parent.radius);
+    warning.hidden =
+        next === null || !passesThroughParent(next, parent.mass.radius);
     onDraft();
 };
 

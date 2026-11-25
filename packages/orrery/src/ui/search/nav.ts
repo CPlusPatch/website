@@ -58,7 +58,9 @@ export const firstOf = (bodies: readonly Body[], id: string): string | null =>
 /** The note the right pane shows for the root. `narrow` is true when the right pane covers the left one. */
 export const rootNote = (bodies: readonly Body[], narrow: boolean): string => {
     const { root } = leftPane(bodies);
-    const count = bodies.filter((body) => body.parent === root.id).length;
+    const count = bodies.filter(
+        (body) => body.orbit?.parent === root.id,
+    ).length;
 
     return `${count} ${count === 1 ? "body orbits" : "bodies orbit"} ${named(root)}. ${narrow ? "Go back to pick one" : "Pick one on the left"}, or type to search.`;
 };
@@ -139,7 +141,7 @@ export const placeAtOpen = (
     const { root } = leftPane(bodies);
     const picked = bodies.find((body) => body.id === selected);
 
-    if (!picked || picked.id === root.id || picked.parent === root.id) {
+    if (!picked || picked.id === root.id || picked.orbit?.parent === root.id) {
         const id = picked?.id ?? root.id;
 
         return { shown: id, pane: "left", active: id };
@@ -147,14 +149,14 @@ export const placeAtOpen = (
 
     // Walk up to the child of the root that the picked body orbits.
     let ancestor: Body = picked;
-    while (ancestor.parent !== root.id) {
-        const next = bodies.find((body) => body.id === ancestor.parent);
+    while (ancestor.orbit?.parent !== root.id) {
+        const next = bodies.find((body) => body.id === ancestor.orbit?.parent);
         if (!next) break;
 
         ancestor = next;
     }
 
-    const shown = ancestor.parent === root.id ? ancestor.id : root.id;
+    const shown = ancestor.orbit?.parent === root.id ? ancestor.id : root.id;
     const pane = shown === root.id ? "left" : "right";
 
     return { shown, pane, active: pane === "left" ? shown : picked.id };

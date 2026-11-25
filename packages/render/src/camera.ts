@@ -102,7 +102,7 @@ export const createRig = (
     firstFrame: Frame,
     firstFocus: string,
 ): Rig => {
-    const root = scenario().bodies.find((body) => body.parent === null);
+    const root = scenario().bodies.find((body) => body.orbit === undefined);
     if (!root) throw new Error("The scenario has no root body.");
 
     // Looked up each time, since the element editor replaces bodies.
@@ -126,7 +126,7 @@ export const createRig = (
     };
 
     const bodyRelative = (id: string): Relative | null => {
-        const parent = bodyOf(id).parent;
+        const parent = bodyOf(id).orbit?.parent ?? null;
         const r = positionIn(current, id);
         const v = velocityOf(current, id);
         const parentR =
@@ -235,11 +235,11 @@ export const createRig = (
 
     // The radius of the body the focus moves around. A followed point moves around the focused body.
     const parentRadius = (): number => {
-        if (following) return bodyOf(focused).radius;
+        if (following) return bodyOf(focused).mass.radius;
 
-        const parent = bodyOf(focused).parent;
+        const parent = bodyOf(focused).orbit?.parent;
 
-        return parent === null ? 0 : bodyOf(parent).radius;
+        return parent === undefined ? 0 : bodyOf(parent).mass.radius;
     };
 
     // Glides the look target to `to`, or jumps there under reduced motion.
@@ -525,7 +525,7 @@ export const createRig = (
             following = null;
 
             const distance = proxy.position.length();
-            const oldKm = (old?.radius ?? 0) / 1000;
+            const oldKm = (old?.mass.radius ?? 0) / 1000;
             const px =
                 canvas.clientHeight > 0
                     ? (2 * oldKm) /
@@ -533,7 +533,11 @@ export const createRig = (
                     : 0;
             const target =
                 old && px >= KEEP_SIZE_PX && !fromPoint
-                    ? keepSizeDistanceKm(distance, old.radius, body.radius)
+                    ? keepSizeDistanceKm(
+                          distance,
+                          old.mass.radius,
+                          body.mass.radius,
+                      )
                     : frameDistance(id);
 
             glideTo(bodyTarget(id), clampDistance(id, target));

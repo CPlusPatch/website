@@ -26,19 +26,17 @@ const made = (id: string, parent: string | null, a: number, e = 0): Body =>
               id,
               name: id,
               tags: ["star"],
-              parent,
-              mu: 1e10,
-              radius: 1,
-              elements: null,
+              mass: { mu: 1e10, radius: 1 },
           }
         : {
               id,
               name: id,
               tags: ["planet"],
-              parent,
-              mu: 1e10,
-              radius: 1,
-              elements: { a, e, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
+              mass: { mu: 1e10, radius: 1 },
+              orbit: {
+                  parent,
+                  elements: { a, e, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
+              },
           };
 
 Deno.test("the left pane groups the root's children and drops empty groups", () => {
@@ -204,7 +202,7 @@ Deno.test("the facts of Earth are a year and its radius", () => {
     assertAlmostEquals(earth.period ?? 0, 365.25 * 86400, 365.25 * 86.4);
     assertEquals(
         earth.radius,
-        solar.find((body) => body.id === "earth")?.radius,
+        solar.find((body) => body.id === "earth")?.mass.radius,
     );
 });
 

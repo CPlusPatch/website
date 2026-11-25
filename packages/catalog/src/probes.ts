@@ -218,10 +218,8 @@ export const probes = (mu: Record<Parent, number>): Body[] =>
             id,
             name,
             tags: ["spacecraft", "science"],
-            parent,
-            mu: 0,
-            radius,
-            elements,
+            mass: { mu: 0, radius },
+            orbit: { parent, elements },
         };
 
         if (parent === "sun") {

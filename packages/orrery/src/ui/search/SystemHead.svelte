@@ -20,7 +20,7 @@ type Props = {
 const { body, bodies, picked, range, onact }: Props = $props();
 
 const parent = $derived(
-    bodies.find((candidate) => candidate.id === body.parent),
+    bodies.find((candidate) => candidate.id === body.orbit?.parent),
 );
 const entries = $derived.by((): [string, string][] => {
     const { period, radius } = facts(bodies, body.id);

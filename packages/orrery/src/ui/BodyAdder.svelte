@@ -24,11 +24,11 @@ const canParent = (body: Body): boolean => styleOf(body).canParent;
 
 /** A new body's kind around `parent`: a planet around the root, else a moon. */
 const defaultKind = (parent: Body): string =>
-    parent.parent === null ? "planet" : "moon";
+    parent.orbit === undefined ? "planet" : "moon";
 
 /** A new body's semi-major axis around `parent`, in metres. */
 const defaultA = (parent: Body): number =>
-    parent.parent === null ? AU : parent.radius * 10;
+    parent.orbit === undefined ? AU : parent.mass.radius * 10;
 
 // Rounded to drop float noise, like 1.0000000000000001e+21.
 const moveMass = (value: number, sign: 1 | -1): number =>
@@ -72,7 +72,9 @@ const { units, name, footTarget, done }: Props = $props();
 const documents = getDocument();
 const view = getView();
 
-const root = documents.doc.scenario.bodies.find((body) => body.parent === null);
+const root = documents.doc.scenario.bodies.find(
+    (body) => body.orbit === undefined,
+);
 if (!root) throw new Error("The scenario has no root body.");
 
 const parents = sortByDepth(documents.doc.scenario).filter(canParent);

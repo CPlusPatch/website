@@ -88,5 +88,5 @@ export const precess = (el: Elements, p: Precession, t: number): Elements => {
 /** The orbit of `body` at time `t`: its elements, turned by its precession if it has one. */
 export const elementsAt = (body: OrbitingBody, t: number): Elements =>
     body.precession
-        ? precess(body.elements, body.precession, t)
-        : body.elements;
+        ? precess(body.orbit.elements, body.precession, t)
+        : body.orbit.elements;

@@ -11,43 +11,47 @@ import type { Model } from "./models.ts";
 import { isModel } from "./models.ts";
 import type { Precession } from "./precession.ts";
 
-/** The fields every body has. */
-type BodyBase = {
+/** What a body is made of. */
+export type Mass = {
+    /** The gravitational parameter GM in m³/s², at least 0. */
+    mu: number;
+    /** The mean radius in metres, above 0. */
+    radius: number;
+};
+
+/** The orbit of a body around another. */
+export type BodyOrbit = {
+    /** The id of the body this one orbits. */
+    parent: string;
+    /** The orbit around the parent in the ecliptic J2000 frame. */
+    elements: Elements;
+};
+
+/** One body in a scenario. */
+export type Body = {
     /** A unique slug of lowercase letters, digits and hyphens. */
     id: string;
     /** The display name. */
     name: string;
     /** Labels only. The renderer styles bodies by them, first match first. */
     tags: string[];
-    /** The gravitational parameter GM in m³/s², at least 0. */
-    mu: number;
-    /** The mean radius in metres, above 0. */
-    radius: number;
+    mass: Mass;
+    /** The orbit. Absent for the root, which orbits nothing. */
+    orbit?: BodyOrbit;
+    /** Precession of the orbit, or none for a fixed orbit. Only allowed with an orbit. */
+    precession?: Precession;
     /** An optional CSS colour. */
     color?: string;
     /** The built-in look: rotation, maps, colour, atmosphere and shape. Absent means a plain body. */
     model?: Model;
 };
 
-/** The body at the root of the tree, which orbits nothing. */
-export type RootBody = BodyBase & {
-    parent: null;
-    elements: null;
-    precession?: undefined;
-};
-
 /** A body that orbits another. */
-export type OrbitingBody = BodyBase & {
-    /** The id of the body this one orbits. */
-    parent: string;
-    /** The orbit around the parent in the ecliptic J2000 frame. */
-    elements: Elements;
-    /** Precession of the orbit, or none for a fixed orbit. */
-    precession?: Precession;
-};
+export type OrbitingBody = Body & { orbit: BodyOrbit };
 
-/** One body in a scenario. */
-export type Body = RootBody | OrbitingBody;
+/** Whether `body` orbits another body. */
+export const isOrbiting = (body: Body): body is OrbitingBody =>
+    body.orbit !== undefined;
 
 /** A set of bodies in one tree, with an optional start time. */
 export type Scenario = {
@@ -59,7 +63,7 @@ export type Scenario = {
     time?: number;
     /** Draws the Earth satellite catalogue around the body with model `"earth"`. Absent means no. */
     hasSatellites?: true;
-    /** The bodies, in any order. Exactly one has no parent. */
+    /** The bodies, in any order. Exactly one has no orbit. */
     bodies: Body[];
 };
 
@@ -115,6 +119,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const show = (value: unknown): string => {
     if (typeof value === "number") {
         return String(value);
+    }
+
+    if (value === null) {
+        return "null";
     }
 
     return typeof value === "string" ? JSON.stringify(value) : typeof value;
@@ -312,6 +320,32 @@ const validateTags = (
     return errors.length > before ? undefined : [...seen];
 };
 
+/** Checks `mu` and `radius`, which sit at `path` in a version 3 body and on the body before that. */
+const validateMass = (
+    path: string,
+    mu: unknown,
+    radius: unknown,
+    errors: string[],
+): Mass | null => {
+    const validMu = finite(`${path}.mu`, mu, errors) ? mu : null;
+
+    if (validMu !== null) {
+        inRange(`${path}.mu`, validMu, validMu >= 0, ">= 0", errors);
+    }
+
+    const validRadius = finite(`${path}.radius`, radius, errors)
+        ? radius
+        : null;
+
+    if (validRadius !== null) {
+        inRange(`${path}.radius`, validRadius, validRadius > 0, "> 0", errors);
+    }
+
+    if (validMu === null || validRadius === null) return null;
+
+    return { mu: validMu, radius: validRadius };
+};
+
 /** Checks a body's own fields. Links between bodies are checked later. */
 const validateBody = (
     index: number,
@@ -336,6 +370,8 @@ const validateBody = (
         mu,
         radius,
         elements,
+        mass,
+        orbit,
         precession,
         color,
         role,
@@ -397,27 +433,63 @@ const validateBody = (
         }
     }
 
-    const validParent =
-        parent === null || typeof parent === "string" ? parent : undefined;
+    // Version 3 nests these as `mass` and `orbit`. Older versions have them flat on the body.
+    let validParent: string | null | undefined;
+    let validMass: Mass | null = null;
+    let root: boolean;
+    let rawElements: unknown;
+    let elementsPath: string;
 
-    if (validParent === undefined) {
-        errors.push(
-            `${label}.parent: must be a string or null (got ${show(parent)})`,
-        );
-    }
+    if (version === 3) {
+        root = orbit === undefined;
+        validParent = root ? null : undefined;
+        rawElements = isRecord(orbit) ? orbit.elements : undefined;
+        elementsPath = `${label}.orbit.elements`;
 
-    const validMu = finite(`${label}.mu`, mu, errors) ? mu : null;
+        if (!isRecord(mass)) {
+            errors.push(`${label}.mass: must be an object (got ${show(mass)})`);
+        } else {
+            validMass = validateMass(
+                `${label}.mass`,
+                mass.mu,
+                mass.radius,
+                errors,
+            );
+        }
 
-    if (validMu !== null) {
-        inRange(`${label}.mu`, validMu, validMu >= 0, ">= 0", errors);
-    }
+        if (orbit !== undefined && !isRecord(orbit)) {
+            errors.push(
+                `${label}.orbit: must be an object (got ${show(orbit)})`,
+            );
+        } else if (isRecord(orbit)) {
+            if (typeof orbit.parent === "string") {
+                validParent = orbit.parent;
+            } else {
+                errors.push(
+                    `${label}.orbit.parent: must be a string (got ${show(orbit.parent)})`,
+                );
+            }
 
-    const validRadius = finite(`${label}.radius`, radius, errors)
-        ? radius
-        : null;
+            if (!isRecord(rawElements)) {
+                errors.push(
+                    `${elementsPath}: must be an object (got ${show(rawElements)})`,
+                );
+            }
+        }
+    } else {
+        root = parent === null;
+        validParent =
+            parent === null || typeof parent === "string" ? parent : undefined;
+        rawElements = elements;
+        elementsPath = `${label}.elements`;
 
-    if (validRadius !== null) {
-        inRange(`${label}.radius`, validRadius, validRadius > 0, "> 0", errors);
+        if (validParent === undefined) {
+            errors.push(
+                `${label}.parent: must be a string or null (got ${show(parent)})`,
+            );
+        }
+
+        validMass = validateMass(label, mu, radius, errors);
     }
 
     let validColor: string | undefined;
@@ -447,22 +519,28 @@ const validateBody = (
 
     let parsed: Elements | null = null;
 
-    if (parent === null) {
+    if (version === 3) {
+        if (isRecord(rawElements)) {
+            parsed = validateElements(elementsPath, rawElements, errors);
+        }
+    } else if (root) {
         if (elements !== null) {
             errors.push(`${label}.elements: must be null when parent is null`);
         }
     } else if (elements === null) {
         errors.push(`${label}.elements: must be set when parent is set`);
     } else {
-        parsed = validateElements(`${label}.elements`, elements, errors);
+        parsed = validateElements(elementsPath, elements, errors);
     }
 
     let parsedPrecession: Precession | null = null;
 
     if (precession !== undefined) {
-        if (parent === null) {
+        if (root) {
             errors.push(
-                `${label}.precession: must be absent when parent is null`,
+                version === 3
+                    ? `${label}.precession: must be absent when orbit is absent`
+                    : `${label}.precession: must be absent when parent is null`,
             );
         } else {
             parsedPrecession = validatePrecession(
@@ -479,8 +557,7 @@ const validateBody = (
         validName === null ||
         validTags === undefined ||
         validParent === undefined ||
-        validMu === null ||
-        validRadius === null
+        validMass === null
     ) {
         return null;
     }
@@ -489,14 +566,13 @@ const validateBody = (
         id: validId,
         name: validName,
         tags: validTags,
-        mu: validMu,
-        radius: validRadius,
+        mass: validMass,
         ...(validColor === undefined ? {} : { color: validColor }),
         ...(validModel === undefined ? {} : { model: validModel }),
     };
 
     if (validParent === null) {
-        return { ...base, parent: null, elements: null };
+        return base;
     }
 
     // No errors were added, so a body with a parent has parsed elements.
@@ -506,20 +582,38 @@ const validateBody = (
 
     return {
         ...base,
-        parent: validParent,
-        elements: parsed,
+        orbit: { parent: validParent, elements: parsed },
         ...(parsedPrecession ? { precession: parsedPrecession } : {}),
     };
 };
 
 /** Checks the links between bodies: one root, known parents, no cycles. */
-const validateTree = (inputs: unknown[], errors: string[]): void => {
+const validateTree = (
+    inputs: unknown[],
+    version: 1 | 2 | 3,
+    errors: string[],
+): void => {
     const parents = new Map<string, string | null>();
+    const field = version === 3 ? "orbit.parent" : "parent";
 
     for (const input of inputs) {
         const id = isRecord(input) ? input.id : undefined;
-        const parent = isRecord(input) ? input.parent : undefined;
         const validId = typeof id === "string" && SLUG.test(id);
+        let parent: unknown;
+
+        if (!isRecord(input)) {
+            parent = undefined;
+        } else if (version === 3) {
+            // No orbit means root.
+            parent =
+                input.orbit === undefined
+                    ? null
+                    : isRecord(input.orbit)
+                      ? input.orbit.parent
+                      : undefined;
+        } else {
+            parent = input.parent;
+        }
 
         if (validId && (parent === null || typeof parent === "string")) {
             parents.set(id, parent);
@@ -530,13 +624,15 @@ const validateTree = (inputs: unknown[], errors: string[]): void => {
 
     if (roots !== 1) {
         errors.push(
-            `bodies: must have exactly one root, with parent null (got ${roots})`,
+            version === 3
+                ? `bodies: must have exactly one root, with no orbit (got ${roots})`
+                : `bodies: must have exactly one root, with parent null (got ${roots})`,
         );
     }
 
     for (const [id, parent] of parents) {
         if (parent !== null && !parents.has(parent)) {
-            errors.push(`${id}.parent: no body has the id ${show(parent)}`);
+            errors.push(`${id}.${field}: no body has the id ${show(parent)}`);
         }
     }
 
@@ -565,7 +661,9 @@ const validateTree = (inputs: unknown[], errors: string[]): void => {
 
     for (const id of parents.keys()) {
         if (loops.get(id)) {
-            errors.push(`${id}.parent: the parent chain loops back on itself`);
+            errors.push(
+                `${id}.${field}: the parent chain loops back on itself`,
+            );
         }
     }
 };
@@ -648,7 +746,7 @@ export const validateScenario = (input: unknown): ScenarioResult => {
             }
         }
 
-        validateTree(inputs, errors);
+        validateTree(inputs, validVersion ?? 2, errors);
     }
 
     if (errors.length > 0 || validName === null) {
@@ -678,10 +776,10 @@ export const sortByDepth = (scenario: Scenario): Body[] => {
     const children = new Map<string | null, Body[]>();
 
     for (const body of scenario.bodies) {
-        const siblings = children.get(body.parent) ?? [];
+        const siblings = children.get(body.orbit?.parent ?? null) ?? [];
 
         siblings.push(body);
-        children.set(body.parent, siblings);
+        children.set(body.orbit?.parent ?? null, siblings);
     }
 
     const sorted = [...(children.get(null) ?? [])];
@@ -701,7 +799,7 @@ export const subtreeIds = (scenario: Scenario, id: string): string[] => {
     // The array grows while it's walked, which makes this a queue.
     for (const parent of ids) {
         for (const body of scenario.bodies) {
-            if (body.parent === parent) ids.push(body.id);
+            if (body.orbit?.parent === parent) ids.push(body.id);
         }
     }
 

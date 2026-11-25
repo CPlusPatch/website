@@ -12,10 +12,7 @@ const body = (
     id,
     name: id,
     tags: [tag],
-    parent: null,
-    mu: 1,
-    radius: 1,
-    elements: null,
+    mass: { mu: 1, radius: 1 },
     ...options,
 });
 
@@ -66,9 +63,11 @@ Deno.test("the Sun and every planet have a colour of their own", () => {
 
 const satellite = (color?: string): Body => ({
     ...body("sat", "spacecraft", color === undefined ? {} : { color }),
-    parent: "host",
-    // 7,000 km and circular: low Earth orbit.
-    elements: { a: 7e6, e: 0, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
+    orbit: {
+        parent: "host",
+        // 7,000 km and circular: low Earth orbit.
+        elements: { a: 7e6, e: 0, i: 0, raan: 0, argp: 0, m0: 0, epoch: 0 },
+    },
 });
 
 Deno.test("a spacecraft around a body with model earth takes its orbit class's colour", () => {

@@ -6,7 +6,7 @@ import { assertEquals } from "@std/assert";
 import { type OrbitClass, orbitClass } from "./orbit-class.ts";
 
 const earth = solarSystem.bodies.find((body) => body.id === "earth");
-const bodies = satellites(earth?.mu ?? 0);
+const bodies = satellites(earth?.mass.mu ?? 0);
 
 Deno.test("the catalogue satellites fall in their known bands", () => {
     const expected: Record<string, OrbitClass> = {
@@ -24,7 +24,7 @@ Deno.test("the catalogue satellites fall in their known bands", () => {
 
     for (const body of bodies) {
         assertEquals(
-            body.elements && orbitClass(body.elements),
+            body.orbit && orbitClass(body.orbit.elements),
             expected[body.id],
             body.id,
         );
