@@ -3,7 +3,12 @@
 import { PRESETS, satellites, solarSystem } from "@cpluspatch/catalog";
 import { type Elements, km } from "@cpluspatch/orbit";
 import { assert, assertEquals } from "@std/assert";
-import { type OrbitClass, type OrbitHost, orbitClass } from "./orbit-class.ts";
+import {
+    type OrbitClass,
+    type OrbitHost,
+    orbitClass,
+    synchronousRadius,
+} from "./orbit-class.ts";
 import { expandBody } from "./presets.ts";
 import { spinRateAt } from "./rotation/index.ts";
 
@@ -121,4 +126,33 @@ Deno.test("a made-up host's own mass, radius and spin set its bands", () => {
     };
 
     assertEquals(orbitClass(orbit(sync, 0), backwards), "geo");
+});
+
+Deno.test("Earth's synchronous radius is the geostationary 42,164 km", () => {
+    const radius = synchronousRadius(host, 0);
+
+    assert(radius !== null);
+    assert(Math.abs(radius - km(42_164)) < km(1), `got ${radius} m`);
+});
+
+Deno.test("a host with no rotation or no spin has no synchronous radius", () => {
+    assertEquals(
+        synchronousRadius({ mu: host.mu, radius: host.radius }, 0),
+        null,
+    );
+    assertEquals(
+        synchronousRadius(
+            {
+                ...host,
+                rotation: {
+                    type: "uniform",
+                    pole: { x: 0, y: 0, z: 1 },
+                    w0: 0,
+                    rate: 0,
+                },
+            },
+            0,
+        ),
+        null,
+    );
 });
