@@ -40,6 +40,8 @@ export {
 } from "./precession.ts";
 export type { Preset, Presets } from "./presets.ts";
 export { expandBody, expandPresets } from "./presets.ts";
+export type { Cloud, CloudHost } from "./propagate/cloud.ts";
+export { prepareCloud } from "./propagate/cloud.ts";
 export type { Propagator, Track } from "./propagate/index.ts";
 export { PROPAGATORS, prepareTrack, tracksByBody } from "./propagate/index.ts";
 export type { Readouts } from "./readouts.ts";
@@ -83,9 +85,7 @@ export {
     prepareSwarm,
     SNAPSHOT_WINDOW,
     satelliteFacts,
-    satelliteOrbit,
     selectShown,
     snapshotGap,
-    writePositions,
 } from "./swarm.ts";
 export { worldStates } from "./system.ts";

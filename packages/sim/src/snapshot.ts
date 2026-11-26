@@ -19,8 +19,6 @@ export type Snapshot = {
     v: Float64Array;
     /** Body axes as the x, y and z axis in turn, 9 values per body. NaN if the body has no rotation. */
     orientation: Float64Array;
-    /** Cloud id to 3 values per particle, relative to the host body. */
-    clouds: ReadonlyMap<string, Float64Array>;
 };
 
 /** A scenario compiled for repeated evaluation. */
@@ -98,8 +96,7 @@ export const compile = (doc: Document, presets: Presets): System => {
             }
         }
 
-        // Clouds arrive in a later step.
-        cached = { t, r, v, orientation, clouds: new Map() };
+        cached = { t, r, v, orientation };
 
         return cached;
     };

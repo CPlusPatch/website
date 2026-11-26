@@ -22,7 +22,10 @@ const GEO_MAX_E = 0.1;
 const HEO_MIN_E = 0.25;
 
 /** The band of an orbit around `host`. `elements.a` is in metres. */
-export const orbitClass = (elements: Elements, host: OrbitHost): OrbitClass => {
+export const orbitClass = (
+    elements: Pick<Elements, "a" | "e" | "epoch">,
+    host: OrbitHost,
+): OrbitClass => {
     const { a, e } = elements;
 
     if (e >= HEO_MIN_E) return "heo";

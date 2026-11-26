@@ -105,13 +105,6 @@ Deno.test("snapshot returns the same object for the same time and a new one for 
     assertNotStrictEquals(system.snapshot(200), first);
 });
 
-Deno.test("snapshot has no clouds yet", () => {
-    assertEquals(
-        compile(documentOf(scenario), PRESETS).snapshot(0).clouds.size,
-        0,
-    );
-});
-
 Deno.test("elementsAt matches the precession module for an orbiting body", () => {
     const system = compile(documentOf(scenario), PRESETS);
 

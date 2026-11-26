@@ -13,9 +13,7 @@ import {
     type SatelliteGroup,
     type Swarm,
     satelliteFacts,
-    satelliteOrbit,
     selectShown,
-    writePositions,
 } from "@cpluspatch/sim";
 import {
     BufferAttribute,
@@ -292,7 +290,7 @@ export const createSwarm = (
     // Km from Earth's centre, in `local`.
     const locate = (swarm: Swarm, k: number, t: number) => {
         one[0] = k;
-        writePositions(swarm, one, t, local);
+        swarm.positionsAt(t, one, local);
     };
 
     const paint = ({ ringColor, orbit }: Loaded) => {
@@ -494,12 +492,7 @@ export const createSwarm = (
                 writtenAt = null;
             }
             if (writtenAt !== t) {
-                writePositions(
-                    swarm,
-                    shown,
-                    t,
-                    positions.array as Float32Array,
-                );
+                swarm.positionsAt(t, shown, positions.array as Float32Array);
                 positions.needsUpdate = true;
                 writtenAt = t;
             }
@@ -517,12 +510,7 @@ export const createSwarm = (
                 orbit.position.copy(points.position);
 
                 if (sampled?.t !== t || sampled.k !== selected) {
-                    const loop = satelliteOrbit(
-                        swarm,
-                        selected,
-                        t,
-                        ORBIT_SAMPLES,
-                    );
+                    const loop = swarm.orbitAt(selected, t, ORBIT_SAMPLES);
                     const array = loaded.orbitSegments.data
                         .array as Float32Array;
                     for (let n = 0; n < ORBIT_SAMPLES; n++) {

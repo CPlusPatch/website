@@ -82,7 +82,7 @@ When Orrery's startup throws, it replaces the loading text with an error. When i
 
 ## Schema
 
-A version 3 body has `id`, `name`, `tags`, `mass` (`mu` and `radius`) and an optional `orbit` (`parent` and `elements`). It can also have `appearance`, `preset`, `rotation`, `gravity` and `perturbations`. A scenario can list `clouds`, each a `{ id, host, source }` set of small bodies drawn around the body `host`.
+A version 3 body has `id`, `name`, `tags`, `mass` (`mu` and `radius`) and an optional `orbit` (`parent` and `elements`). It can also have `appearance`, `preset`, `rotation`, `gravity` and `perturbations`. A scenario can list `clouds`, each a `{ id, host, source }` set of small bodies drawn around the body `host`. Their positions aren't in `Snapshot`. `prepareCloud` returns a `Cloud`, and its `positionsAt(t, shown, out)` writes only the shown particles. The catalogue loads after `compile`.
 
 `validateScenario` reads versions 1, 2 and 3 and always returns version 3. A legacy field becomes this:
 
@@ -124,7 +124,7 @@ A perturbation turns an orbit's node and periapsis at a steady rate. `sim/src/pe
 
 `compile` resolves every body's precessions once. `System.precessions(id)` returns them, and `System.elementsAt(id, t)` applies them. A `j2` perturbation on a parent without gravity or rotation drifts by nothing. `validateScenario` reports it as an error when it's given `presets`, which `apply` and `persistence.ts` pass.
 
-The built-in scenarios still store `secular` rates. The satellite swarm takes its host's `mu`, `radius`, `rotation` and `gravity` from the caller. The radius and rotation set the orbit classes: LEO is measured from the radius, and GEO is where the period equals the host's spin. The swarm's pole is fixed at +z, Earth's pole in the catalogue's TEME frame, so a cloud around another host precesses about the wrong axis.
+The built-in scenarios still store `secular` rates. The satellite swarm takes its host's `mu`, `radius`, `rotation` and `gravity` from the caller. The radius and rotation set the orbit classes: LEO is measured from the radius, and GEO is where the period equals the host's spin. The swarm reads its elements relative to the host's equator at the catalogue epoch and precesses about the host's pole. For Earth that's the IAU pole, about 0.15° off the J2000 one.
 
 ## Temporary exceptions
 
