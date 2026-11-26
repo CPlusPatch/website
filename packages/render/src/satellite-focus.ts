@@ -3,7 +3,7 @@
  * The catalogue satellite that is selected or focused in the view.
  */
 
-import { EARTH_RADIUS, type Vec3 } from "@cpluspatch/orbit";
+import type { Vec3 } from "@cpluspatch/orbit";
 import type { Body, SatelliteFacts } from "@cpluspatch/sim";
 import type { PerspectiveCamera } from "three";
 import type { Relative, Rig } from "./camera.ts";
@@ -140,7 +140,7 @@ export const createSatelliteFocus = ({
         focusing = false;
 
         const fov = (camera.fov * Math.PI) / 180;
-        const apogeeKm = facts.apogeeKm + EARTH_RADIUS / 1000;
+        const apogeeKm = facts.apogeeKm + host.mass.radius / 1000;
         rig.focusPoint(
             () => {
                 const frame = {

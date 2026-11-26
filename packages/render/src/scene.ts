@@ -202,13 +202,14 @@ const assemble = (
     const hostBody = source.scenario.bodies.find((body) => body.id === hostId);
     // The system's body has its preset gravity filled in.
     const host = hostBody ? source.system.body(hostBody.id) : undefined;
-    const swarm = createSwarm(scene, theme, () =>
-        assets.swarm({
-            mu: host?.mass.mu ?? 0,
-            radius: host?.mass.radius ?? 0,
-            rotation: host?.rotation,
-            gravity: host?.gravity,
-        }),
+    const swarmHost = {
+        mu: host?.mass.mu ?? 0,
+        radius: host?.mass.radius ?? 0,
+        rotation: host?.rotation,
+        gravity: host?.gravity,
+    };
+    const swarm = createSwarm(scene, theme, swarmHost, () =>
+        assets.swarm(swarmHost),
     );
     cleanup.push(swarm.dispose);
     const earthOffset = { x: 0, y: 0, z: 0 };

@@ -1,19 +1,21 @@
 /**
  * @module
- * The satellite snapshot drawn as one layer of points around Earth.
+ * The satellite snapshot drawn as one layer of points around its host.
  */
 
-import { EARTH_RADIUS, type Vec3 } from "@cpluspatch/orbit";
+import type { Vec3 } from "@cpluspatch/orbit";
 import {
     type Catalogue,
     decodeCatalogue,
     inSnapshotWindow,
+    type OrbitHost,
     SATELLITE_GROUPS,
     type SatelliteFacts,
     type SatelliteGroup,
     type Swarm,
     satelliteFacts,
     selectShown,
+    synchronousRadius,
 } from "@cpluspatch/sim";
 import {
     BufferAttribute,
@@ -51,8 +53,11 @@ export const fetchCatalogue = async (
     return decodeCatalogue(bytes);
 };
 
-/** The radius of the geostationary ring in km. Its size on screen says how far Earth is zoomed. */
-const GEO_RADIUS_KM = 42_164;
+/** The GEO ring of a host that doesn't turn, in host radii (Earth's is 6.6). */
+const GEO_RADII = 6.6;
+
+/** The LEO shell, where most of the snapshot sits, in host radii. */
+const LEO_RADII = 1.1;
 
 /** The swarm fades in as the GEO ring grows from the first diameter to the second, in px. */
 const FADE_FROM_PX = 150;
@@ -72,28 +77,25 @@ const PICK_PX = 6;
 /** The points on the selected satellite's orbit line. */
 const ORBIT_SAMPLES = 256;
 
-/** The radius in km of the low Earth orbit shell, where most of the snapshot sits. */
-const LEO_RADIUS_KM = 7_000;
-
 /**
  * The dots dim once their total area passes this share of the LEO shell's disc on screen, so they
- * don't hide Earth and the markers in it. They never dim below `MIN_DENSITY`.
+ * don't hide the host and the markers in it. They never dim below `MIN_DENSITY`.
  */
 const MAX_COVER = 1;
 const MIN_DENSITY = 0.35;
 
-/** The satellites around Earth. */
+/** The satellites around a host. */
 export type SwarmLayer = {
     /** Sets the groups drawn. The first non-empty list starts loading the snapshot. */
     groups: (groups: readonly SatelliteGroup[]) => void;
     /**
-     * Places and draws the swarm for the frame. `earthOffsetKm` is Earth's centre from the
-     * scene's origin in km, or `null` if there's no Earth.
+     * Places and draws the swarm for the frame. `hostOffsetKm` is the host's centre from the
+     * scene's origin in km, or `null` if there's no host.
      */
     update: (
         camera: PerspectiveCamera,
         t: number,
-        earthOffsetKm: Vec3 | null,
+        hostOffsetKm: Vec3 | null,
         viewportHeight: number,
     ) => void;
     /** The index of the satellite nearest to (`x`, `y`) in px of the canvas, or `null`. */
@@ -108,10 +110,10 @@ export type SwarmLayer = {
     /** Labels satellite `k` with its name, or clears the label for `null`. */
     hover: (k: number | null) => void;
     /**
-     * The world position in metres of satellite `k` at `t`, given Earth's `earth`, or `null` if
+     * The world position in metres of satellite `k` at `t`, given the host's `centre`, or `null` if
      * it isn't placed.
      */
-    positionOf: (k: number, t: number, earth: Vec3) => Vec3 | null;
+    positionOf: (k: number, t: number, centre: Vec3) => Vec3 | null;
     /** What the info panel says about satellite `k` at `t`, or `null` before the snapshot loads. */
     facts: (k: number, t: number) => SatelliteFacts | null;
     /** Whether satellite `k` is in a group that's on and the clock is within the snapshot. */
@@ -120,7 +122,7 @@ export type SwarmLayer = {
     dispose: () => void;
 };
 
-// The log depth chunks make the points hide behind Earth under `logarithmicDepthBuffer`.
+// The log depth chunks make the points hide behind the host under `logarithmicDepthBuffer`.
 const vertex = (px: number) => /* glsl */ `
 #include <common>
 #include <logdepthbuf_pars_vertex>
@@ -242,14 +244,19 @@ type Loaded = {
 };
 
 /**
- * The satellite layer in `scene`. `load` isn't called until a group is turned on.
+ * The satellite layer around `host` in `scene`. `load` isn't called until a group is turned on.
  * It gives the prepared swarm, which is shared with the other views of the page.
  */
 export const createSwarm = (
     scene: Scene,
     theme: Theme,
+    host: OrbitHost,
     load: () => Promise<Swarm>,
 ): SwarmLayer => {
+    // The GEO ring's size on screen says how far the host is zoomed.
+    const geoRadiusKm =
+        (synchronousRadius(host, 0) ?? GEO_RADII * host.radius) / 1000;
+    const leoRadiusKm = (LEO_RADII * host.radius) / 1000;
     let disposed = false;
     const uniforms = { pixelRatio: { value: 1 }, fade: { value: 0 } };
     // The ring shares the pixel ratio and has no fade.
@@ -272,7 +279,7 @@ export const createSwarm = (
     let named: number | null = null;
     // Scratch for one satellite's position and its index.
     const local = new Float32Array(3);
-    const earthPx = new Float32Array(2);
+    const hostPx = new Float32Array(2);
     const one = new Uint32Array(1);
 
     const available = (k: number): boolean => {
@@ -287,7 +294,7 @@ export const createSwarm = (
         );
     };
 
-    // Km from Earth's centre, in `local`.
+    // Km from the host's centre, in `local`.
     const locate = (swarm: Swarm, k: number, t: number) => {
         one[0] = k;
         swarm.positionsAt(t, one, local);
@@ -423,7 +430,7 @@ export const createSwarm = (
                 void show();
             }
         },
-        update: (frameCamera, t, earthOffsetKm, viewportHeight) => {
+        update: (frameCamera, t, hostOffsetKm, viewportHeight) => {
             if (!loaded) return;
 
             camera = frameCamera;
@@ -431,22 +438,18 @@ export const createSwarm = (
             const { swarm, points, positions, colors, geometry } = loaded;
             let fade = 0;
             let density = 1;
-            if (
-                earthOffsetKm &&
-                wanted.size > 0 &&
-                inSnapshotWindow(swarm, t)
-            ) {
+            if (hostOffsetKm && wanted.size > 0 && inSnapshotWindow(swarm, t)) {
                 points.position.set(
-                    earthOffsetKm.x,
-                    earthOffsetKm.y,
-                    earthOffsetKm.z,
+                    hostOffsetKm.x,
+                    hostOffsetKm.y,
+                    hostOffsetKm.z,
                 );
                 const distance = camera.position.distanceTo(points.position);
                 const fov = (camera.fov * Math.PI) / 180;
                 const ringPx =
                     2 *
                     projectedRadiusPx(
-                        GEO_RADIUS_KM,
+                        geoRadiusKm,
                         distance,
                         fov,
                         viewportHeight,
@@ -454,7 +457,7 @@ export const createSwarm = (
                 fade = smoothstep(FADE_FROM_PX, FADE_TO_PX, ringPx);
 
                 const shellPx = projectedRadiusPx(
-                    LEO_RADIUS_KM,
+                    leoRadiusKm,
                     distance,
                     fov,
                     viewportHeight,
@@ -543,15 +546,15 @@ export const createSwarm = (
             const projection = camera.projectionMatrix.elements;
             const centre = points.position;
 
-            // Earth's disc hides what is farther than its centre.
-            const earthDistance = camera.position.distanceTo(centre);
-            const earthRadiusPx = projectedRadiusPx(
-                EARTH_RADIUS / 1000,
-                earthDistance,
+            // The host's disc hides what is farther than its centre.
+            const hostDistance = camera.position.distanceTo(centre);
+            const hostRadiusPx = projectedRadiusPx(
+                host.radius / 1000,
+                hostDistance,
                 (camera.fov * Math.PI) / 180,
                 height,
             );
-            const earthW = toPx(
+            const hostW = toPx(
                 view,
                 projection,
                 centre.x,
@@ -559,10 +562,10 @@ export const createSwarm = (
                 centre.z,
                 width,
                 height,
-                earthPx,
+                hostPx,
                 0,
             );
-            const earthSquared = earthDistance ** 2;
+            const hostSquared = hostDistance ** 2;
             const eye = camera.position;
 
             const array = positions.array;
@@ -584,13 +587,13 @@ export const createSwarm = (
                     o,
                 );
                 const hidden =
-                    earthW > 0 &&
+                    hostW > 0 &&
                     (px - eye.x) ** 2 + (py - eye.y) ** 2 + (pz - eye.z) ** 2 >
-                        earthSquared &&
+                        hostSquared &&
                     Math.hypot(
-                        (screen[o] as number) - (earthPx[0] as number),
-                        (screen[o + 1] as number) - (earthPx[1] as number),
-                    ) < earthRadiusPx;
+                        (screen[o] as number) - (hostPx[0] as number),
+                        (screen[o + 1] as number) - (hostPx[1] as number),
+                    ) < hostRadiusPx;
                 if (w <= 0 || hidden) screen[o] = Number.NaN;
             }
 
@@ -605,16 +608,16 @@ export const createSwarm = (
         hover: (k) => {
             hovered = k;
         },
-        positionOf: (k, t, earth) => {
+        positionOf: (k, t, centre) => {
             if (!loaded || k >= loaded.swarm.count) return null;
             if (!inSnapshotWindow(loaded.swarm, t)) return null;
 
             locate(loaded.swarm, k, t);
 
             return {
-                x: earth.x + (local[0] as number) * 1000,
-                y: earth.y + (local[1] as number) * 1000,
-                z: earth.z + (local[2] as number) * 1000,
+                x: centre.x + (local[0] as number) * 1000,
+                y: centre.y + (local[1] as number) * 1000,
+                z: centre.z + (local[2] as number) * 1000,
             };
         },
         facts: (k, t) =>
