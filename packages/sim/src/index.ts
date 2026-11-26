@@ -40,6 +40,8 @@ export {
 } from "./precession.ts";
 export type { Preset, Presets } from "./presets.ts";
 export { expandBody, expandPresets } from "./presets.ts";
+export type { Propagator, Track } from "./propagate/index.ts";
+export { PROPAGATORS, prepareTrack, tracksByBody } from "./propagate/index.ts";
 export type { Readouts } from "./readouts.ts";
 export { distanceOf, readouts } from "./readouts.ts";
 export type {

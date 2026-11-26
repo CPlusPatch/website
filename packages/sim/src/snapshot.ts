@@ -4,6 +4,7 @@ import { bodyOrientation } from "./orientation.ts";
 import { precessionsByBody } from "./perturb/index.ts";
 import { elementsAt, type Precession } from "./precession.ts";
 import { expandPresets, type Presets } from "./presets.ts";
+import { tracksByBody } from "./propagate/index.ts";
 import type { Body } from "./scenario.ts";
 import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
@@ -47,6 +48,7 @@ export const compile = (doc: Document, presets: Presets): System => {
     const byId = new Map(order.map((body) => [body.id, body]));
 
     const resolved = precessionsByBody(order);
+    const tracks = tracksByBody(order, resolved);
 
     const known = (id: string): Body => {
         const body = byId.get(id);
@@ -65,7 +67,7 @@ export const compile = (doc: Document, presets: Presets): System => {
             return cached;
         }
 
-        const states = worldStates(scenario, order, t, resolved);
+        const states = worldStates(scenario, order, t, tracks);
         const r = new Float64Array(3 * order.length);
         const v = new Float64Array(3 * order.length);
         const orientation = new Float64Array(9 * order.length);
