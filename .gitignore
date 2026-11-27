@@ -45,3 +45,6 @@ src/data/radio/
 
 # Orrery canvas baselines, made locally with --update-snapshots
 /.baselines/
+
+# frames and cuts made by `deno run video`
+/.video/
