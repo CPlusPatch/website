@@ -1,10 +1,14 @@
 // Loaded through Vite's ssrLoadModule (see parity.ts), which compiles the .astro and .svelte imports.
 import AstroBadge from "@cpluspatch/ui/astro/ui/badge.astro";
 import AstroButton from "@cpluspatch/ui/astro/ui/button.astro";
+import AstroControlRow from "@cpluspatch/ui/astro/ui/control-row.astro";
 import AstroInput from "@cpluspatch/ui/astro/ui/input.astro";
 import AstroPreviewFrame from "@cpluspatch/ui/astro/ui/preview-frame.astro";
 import AstroSegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import AstroSelect from "@cpluspatch/ui/astro/ui/select.astro";
+import AstroSwatchPicker from "@cpluspatch/ui/astro/ui/swatch-picker.astro";
+import AstroTile from "@cpluspatch/ui/astro/ui/tile.astro";
+import AstroTilePicker from "@cpluspatch/ui/astro/ui/tile-picker.astro";
 import AstroToggle from "@cpluspatch/ui/astro/ui/toggle.astro";
 import SvelteIcon from "@cpluspatch/ui/svelte/icon.svelte";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
@@ -25,10 +29,14 @@ type Port = Component<Record<string, unknown>>;
 const PAIRS = new Map<Story["component"], Port>([
     [AstroBadge, PORTS.badge],
     [AstroButton, PORTS.button],
+    [AstroControlRow, PORTS["control-row"]],
     [AstroInput, PORTS.input],
     [AstroPreviewFrame, PORTS["preview-frame"]],
     [AstroSegmentedControl, PORTS["segmented-control"]],
     [AstroSelect, PORTS.select],
+    [AstroSwatchPicker, PORTS["swatch-picker"]],
+    [AstroTile, PORTS.tile],
+    [AstroTilePicker, PORTS["tile-picker"]],
     [AstroToggle, PORTS.toggle],
 ]);
 

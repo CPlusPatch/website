@@ -34,10 +34,14 @@ type Component = (args: any) => any;
 export type PortName =
     | "badge"
     | "button"
+    | "control-row"
     | "input"
     | "preview-frame"
     | "segmented-control"
     | "select"
+    | "swatch-picker"
+    | "tile"
+    | "tile-picker"
     | "toggle";
 
 export interface Story {
