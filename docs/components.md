@@ -1,45 +1,67 @@
 # Adding a component
 
-Components that could serve any site live in the library, `packages/ui/src/astro/`, and are imported as `@cpluspatch/ui/astro/<path>`. Small, standalone things go in `ui/`. Bigger components built out of those go in `blocks/`, and page-level stuff like the navbar goes in `sections/`. Anything tied to this site (its content, its data, its media) stays in `src/components/`: the sections of one particular page, filled with that page's content, go in `page/`, and their content lives in `src/data/`. If a component ends up with several files, give it its own folder, like this one:
+## Where it goes
 
-```
+| Folder                         | What goes there                                                  |
+| ------------------------------ | ---------------------------------------------------------------- |
+| `packages/ui/src/astro/ui/`       | Small standalone components                                      |
+| `packages/ui/src/astro/blocks/`   | Bigger components built from those                               |
+| `packages/ui/src/astro/sections/` | Page-level parts, like the navbar                                |
+| `src/components/`              | Anything tied to this site: its content, data or media           |
+| `src/components/page/`         | Sections of one page. Their content lives in `src/data/`         |
+
+Library components are imported as `@cpluspatch/ui/astro/<path>`, and must not import from the site's `src/`. They get what the site supplies through props and slots.
+
+A component with several files gets its own folder:
+
+```text
 astro/blocks/message/
 ├── message.astro               the main component
-├── message-bubble.astro        smaller parts it's built from
+├── message-bubble.astro        parts it's built from
 ├── message-group.astro
 ├── message-typing.astro
 └── interactive-message.astro   a bigger component built on it
 ```
 
-A library component must not import from the site's `src/`. It talks to the site through props and slots, as below.
+## Files
 
-## What the Astro components assume
+Copy a similar component and start from there. Each part has its own file:
 
-The `astro/` folder is the only part of the library that imports `astro` or `astro-icon` (both optional peer dependencies); the rest is plain TypeScript and CSS. Three things that used to be Astro-only are now contracts you can fill from any framework:
+| File                                         | Contents                                                              |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| `packages/ui/src/components/<name>.css`      | Plain CSS in `@layer ui.components`, every selector under the component's BEM class |
+| `packages/ui/src/components/<name>.ts`       | Pure functions the markup calls: class lists (`buttonClasses`), variant types, small decisions like `isAnchor` |
+| `packages/ui/src/behaviours/<name>.ts`       | The script, written with `behaviour(selector, setup)`                 |
+| `packages/ui/src/astro/.../<name>.astro`     | Thin markup over the above                                            |
 
-- **Icons.** `astro/icon.astro` draws a built-in set of Lucide icons from `src/icons.ts` as inline `<svg>`. Any other name (`logos:github-icon`) falls through to `astro-icon`. A component that needs an icon takes it as a prop or a slot, and uses `<Icon>`; never import `astro-icon` directly. Adding a built-in icon means adding its markup to `ICONS`; a test fails if a component uses a `lucide:` name that isn't there.
-- **Images.** Props accept `ImageMetadata` (an imported file, optimized by `astro:assets`) or a plain `ImageSource` (a URL, or `{ src, width, height, srcset? }`, used as given; the component's own `alt` prop still names it). `astro/image.astro` picks between them, and `imageAttributes`, `imageUrl` and `imageRatio` in `lib/image.ts` do the same for other frameworks.
-- **Highlighted code.** `blocks/code.astro` renders whatever HTML it is given in its default slot, so any highlighter will do. With an empty slot it falls back to Astro's `<Code>` (Shiki), themed by the `--code-*` variables from `lib/code-theme.ts`. Without JS it still shows the code; the copy button appears with it.
+Add the CSS to `packages/ui/src/components.css`, after any component it styles the parts of. The site imports that stylesheet once (`src/styles/index.css`), so components don't import it.
 
-The stylesheet is not imported by the components: the site imports `@cpluspatch/ui/components.css` once, globally (see `src/styles/index.css`).
+A behaviour binds one root element, is safe to call twice, registers its listeners on the `signal` it's given and returns a cleanup. Its JSDoc names the root selector and the `data-*` hooks the markup renders. Add it to `initAll()` in `behaviours/index.ts`. Anything the site supplies, like the terminal's commands, is an option and never an import.
+
+Rules every component follows:
+
+- Use the variables from `packages/ui/src/styles/` for sizes, fonts and colors, so it works in every theme.
+- For an accent color, take a `tone` prop, add the `tone-*` class and use `var(--tone)`.
+- It works without JavaScript. A control that needs JS stays hidden until the script runs.
+- Animations stop under `prefers-reduced-motion: reduce`.
+
+## Icons, images and code
+
+Only `astro/` imports `astro` or `astro-icon`. These three have plain contracts so other frameworks can fill them:
+
+| Need            | How                                                                                    |
+| --------------- | -------------------------------------------------------------------------------------- |
+| Icon            | `<Icon>` from `astro/icon.astro`. `lucide:` names come from `ICONS` in `packages/ui/src/icons.ts`, other names fall through to `astro-icon`. A test fails on a `lucide:` name that isn't in `ICONS`. |
+| Image           | Props take `ImageMetadata` or an `ImageSource` (a URL or `{ src, width, height, srcset? }`). `astro/image.astro` picks between them; `lib/image.ts` has the same logic for other frameworks. |
+| Highlighted code | `blocks/code.astro` renders the HTML in its slot. With an empty slot it uses Astro's `<Code>` (Shiki), themed from `lib/code-theme.ts`. |
 
 ## Slots
 
-A component's slots are part of its contract. Check one that may be empty with `Astro.slots.render("name")` and `.trim()`, not `Astro.slots.has`, which is true even when the slot holds nothing. List each named slot in the component's doc comment. The footer, for example, takes `copyright`, `tagline` and `socials` as props and two slots, `branding` and `friends`; the site fills them with its own badges and links (`src/components/page/footer.astro`) so the library carries none of its content.
-
-The easiest way to get the style right is to copy a similar component and go from there. A few things to keep in mind:
-
-- A component's CSS lives in `packages/ui/src/components/<name>.css`, not in the `.astro` file: plain CSS inside `@layer ui.components`, with every selector starting from the component's own BEM class (`.button--outline`, `.dropdown__panel`). Add it to `packages/ui/src/components.css`, after any component it styles the parts of.
-- Script belongs to the library, not the `.astro` file: a behaviour in `packages/ui/src/behaviours/<name>.ts`, written with `behaviour(selector, setup)` (see `behaviour.ts`). It binds one root element, is safe to call twice, registers every listener on the `signal` it is given, and returns a cleanup. Its JSDoc names the root selector and the `data-*` hooks the markup must render. The component's `<script>` just imports it and calls `initFoos()`, and `initAll()` in `behaviours/index.ts` covers it. Anything the site must supply (the terminal's commands, the dialogue actions) is an option, never an import: the library's Terminal ships no script, and the site's wrapper (`src/components/blocks/terminal/terminal.astro`) binds it with its own `run`.
-- Anything about the markup that isn't plain HTML goes in `packages/ui/src/components/<name>.ts` as a pure function the `.astro` file calls: the class list (`buttonClasses({ variant, tone })`), the variant types, and small decisions like `isAnchor(as, href)` or `initials(name)`. These return the same classes any framework wrapper must render, and are unit-tested without a DOM.
-- Use the CSS variables from `packages/ui/src/styles/` instead of hardcoding sizes, fonts or colors. That way it works with every theme.
-- If it needs an accent color, add a `tone` prop and the matching `tone-*` class, then use `var(--tone)` in the CSS.
-- It should still work with JavaScript disabled. If a control only works with JS, keep it hidden until the script runs.
-- Turn off animations under `prefers-reduced-motion: reduce`.
+List each named slot in the component's doc comment. Check whether one is empty with `Astro.slots.render("name")` and `.trim()`: `Astro.slots.has` is true even for an empty slot.
 
 ## Gallery stories
 
-To show up in the gallery, a component needs a story file in `src/gallery/stories/`. For example:
+Every component needs a story file in `src/gallery/stories/`, listed in `src/gallery/stories/index.ts`:
 
 ```ts
 import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
@@ -58,16 +80,13 @@ export const badges: StoryGroup[] = [
 ];
 ```
 
-Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story for every combination of props, just the states that are worth looking at. When two props really are independent axes, like a button's variant and tone, set `controls` on the story, like `{ variant: VARIANTS, tone: TONES }`. The story's props are the default combination. Each other combination gets its own page, named `<story>/<combo>` like `default/ghost-destructive`, and the tests check every one. A story can make up to 64 combinations.
+Add a story for each state worth looking at, not each combination of props. The build fails on a story name that isn't lowercase words joined by hyphens, or isn't unique in its group.
 
-Story names go in URLs, so they're lowercase words joined by hyphens, and unique within their group. The build fails otherwise.
+- Put the group's own component in its first story: the gallery reads the group's source file from it.
+- For two independent props, like a button's variant and tone, set `controls: { variant: VARIANTS, tone: TONES }`. Every combination gets a page named `<story>/<combo>`, like `default/ghost-destructive`, and is tested. A story can make up to 64.
+- Tag a story that keeps moving on its own (autoplay, a count-up) as `animated`, and one that fetches data as `live`. The tests let only `animated` stories keep moving, and never compare `live` ones as pictures.
+- Each group gets a page at `/gallery/<group-id>/`. To put several groups on one page, list them together in `src/gallery/components.ts`.
 
-The gallery works out a group's source file from the component its first story renders, so put the group's own component first.
+Each story also has a bare page at `/gallery/story/<group-id>/<story>/`, and each group at `/gallery/story/<group-id>/`. Tests load these. They take `?theme=`, `?style=`, `?scheme=light|dark` and `?width=` (`tablet`, `phone`, `tiny` or rem) without changing the saved Display settings. `/gallery/manifest.json` lists every story.
 
-Tag a story that keeps moving by itself, past a short CSS entrance (a pulse, autoplay, a count-up), as `animated`, and one that shows data fetched when it loads as `live`, with `tags` in its options. Tags on a group apply to all of its stories. Tests use them: an animated story is the only kind allowed to keep moving with motion on, and a live one is never compared as a picture. The gallery shows them as badges.
-
-Each group becomes a component with its own page at `/gallery/<group-id>/`. To put several groups on one page (Buttons has its variant × tone table, its sizes and its button groups), list them together in `src/gallery/components.ts`. The build fails if a group ends up on no page or on two.
-
-Before committing, run `deno run check` and see how it looks in the gallery. For a visual change, `deno run gallery:diff` also lists every story it changed, with pictures (see [workflow.md](workflow.md)). The Display menu there switches themes, styles, light/dark mode and effects. A component page fills the window. Its one bar has the component's name, the chosen story, the position in its category with links to the previous and next component, and the Components and Display menus. Below it are the story list on the left, the chosen story on a stage in the middle and an inspector on the right. Drag the stage's right edge, or the ruler above it, to set its width. It snaps to the tablet, phone and tiny widths, and is kept for the tab's session. The inspector shows the component's file and, for a story, its source and an Open alone link to its page. The page's address names the story on the stage (`#<group-id>/<story>`, or `#<group-id>` for all of a group's stories), for pointing someone at it. On the gallery's front page, the filter (press `/`) finds a component by its name, a story's name, its file or a tag.
-
-Every story also has a page to itself, at `/gallery/story/<group-id>/<story>/`, and every group at `/gallery/story/<group-id>/`. The arrow on a story in a group's page opens the story's own page, as Open alone does in the inspector. These pages carry nothing but the stories, which makes them handy to load in tests. You can add `?theme=<theme>`, `?style=<style>`, `?scheme=light` or `?scheme=dark`, and `?width=` (`tablet`, `phone`, `tiny` or a width in rem) to them without changing your saved Display choices. `/gallery/manifest.json` lists every story once, with its page, source file, category, minimum width and tags.
+To check a change, see [Development workflow](workflow.md).
