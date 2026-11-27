@@ -39,6 +39,7 @@ import {
     setVertex,
 } from "./line-geometry.ts";
 import { rebuildNear, restoreStatic } from "./near.ts";
+import { plannedElements } from "./planned.ts";
 import type { Ghost, Orbit, Paint } from "./types.ts";
 
 /** The orbit lines of a scene. */
@@ -93,6 +94,9 @@ export const createOrbits = (
     scene.add(group);
     const orbits: Orbit[] = [];
     let ghost: Ghost | null = null;
+    // The orbit after the picked body's next event, dashed like the ghost.
+    let planned: Ghost | null = null;
+    let plannedFrom = Number.NaN;
     // The ghost may be made after the last resize.
     let size = { width: 0, height: 0 };
     let pickedId: string | null = null;
@@ -255,6 +259,49 @@ export const createOrbits = (
         line.geometry.dispose();
         line.material.dispose();
         casing.material.dispose();
+    };
+
+    const disposeGhost = ({ line }: Ghost) => {
+        line.removeFromParent();
+        line.geometry.dispose();
+        line.material.dispose();
+    };
+
+    // The line is rebuilt only when what it shows changes.
+    const updatePlanned = (
+        origin: Vec3,
+        frame: Frame,
+        camera: PerspectiveCamera,
+        t: number,
+    ) => {
+        const body = orbits.find((orbit) => orbit.body.id === pickedId)?.body;
+        const next =
+            body && pickedId && !ghost?.line.visible
+                ? plannedElements(frame.system, pickedId, t)
+                : null;
+        if (!body || !next) {
+            if (planned) planned.line.visible = false;
+            return;
+        }
+
+        if (
+            !planned ||
+            planned.body !== body ||
+            plannedFrom !== next.from ||
+            !sameElements(planned.elements, next.elements)
+        ) {
+            planned = createGhost(
+                group,
+                planned,
+                body,
+                next.elements,
+                pick,
+                size,
+            );
+            plannedFrom = next.from;
+        }
+        planned.line.visible = true;
+        updateGhost(planned, origin, frame, camera);
     };
 
     for (const body of bodies) addOrbit(body);
@@ -437,6 +484,7 @@ export const createOrbits = (
             }
 
             if (ghost) updateGhost(ghost, origin, frame, camera);
+            updatePlanned(origin, frame, camera, t);
         },
         highlight: (id) => {
             pickedId = id;
@@ -460,17 +508,15 @@ export const createOrbits = (
         resize: (width, height) => {
             size = { width, height };
             ghost?.line.material.resolution.set(width, height);
+            planned?.line.material.resolution.set(width, height);
             for (const { line, casing } of orbits) {
                 line.material.resolution.set(width, height);
                 casing.material.resolution.set(width, height);
             }
         },
         dispose: () => {
-            if (ghost) {
-                ghost.line.removeFromParent();
-                ghost.line.geometry.dispose();
-                ghost.line.material.dispose();
-            }
+            if (ghost) disposeGhost(ghost);
+            if (planned) disposeGhost(planned);
             for (const orbit of orbits) disposeOrbit(orbit);
             group.removeFromParent();
         },
