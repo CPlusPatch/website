@@ -2,7 +2,7 @@
 import PreviewFrame from "@cpluspatch/ui/svelte/ui/preview-frame.svelte";
 import { onMount } from "svelte";
 import type { Backdrop } from "./bench.ts";
-import { fit } from "./fit-frame.ts";
+import { applyStage, fit } from "./fit-frame.ts";
 import { PREVIEW_SNAPS } from "./widths.ts";
 
 /**
@@ -17,9 +17,11 @@ type Props = {
     title: string;
     /** A story link in the page, as its hash. True if handled. */
     onhashlink?: (hash: string) => boolean;
+    /** The frame's width in px, when it changes. */
+    onwidth?: (px: number) => void;
 };
 
-const { url, title, onhashlink }: Props = $props();
+const { url, title, onhashlink, onwidth }: Props = $props();
 
 let frame: HTMLIFrameElement | undefined = $state();
 // The src stays the first url: later ones go through location.replace().
@@ -30,19 +32,21 @@ let shown = initial;
 /** Loads the page in the frame again, for a changed Display choice. */
 export const reload = () => frame?.contentWindow?.location.reload();
 
-export const setStage = (backdrop: Backdrop, outline: boolean) => {
-    const root = frame?.contentDocument?.documentElement;
-    if (!root) return;
-
-    if (backdrop === "plain") delete root.dataset.galleryStage;
-    else root.dataset.galleryStage = backdrop;
-    if (outline) root.dataset.galleryOutline = "";
-    else delete root.dataset.galleryOutline;
-};
+export const setStage = (backdrop: Backdrop, outline: boolean) =>
+    applyStage(frame, backdrop, outline);
 
 onMount(() => {
-    if (frame)
-        fit(frame, { onHashLink: (hash) => onhashlink?.(hash) ?? false });
+    if (!frame) return;
+
+    fit(frame, { onHashLink: (hash) => onhashlink?.(hash) ?? false });
+
+    // The compare strip's copies follow the frame's width.
+    const observer = new ResizeObserver(() =>
+        onwidth?.(Math.round(frame?.getBoundingClientRect().width ?? 0)),
+    );
+    observer.observe(frame);
+
+    return () => observer.disconnect();
 });
 
 $effect(() => {
@@ -69,14 +73,15 @@ $effect(() => {
 
 <style>
 /*
- * At least the column's height; fit() grows the frame past it for a tall story.
+ * At least the column's height (less with the compare strip, which follows);
+ * fit() grows the frame past it for a tall story.
  * A dot grid shows beside a narrowed frame, as a flat surface is too close
  * to most stories' backgrounds to mark where the frame ends.
  */
 .bench-stage {
     display: flex;
     flex-direction: column;
-    min-height: 100%;
+    min-height: var(--bench-stage-height, 100%);
     min-width: 0;
     background-color: var(--color-surface);
 

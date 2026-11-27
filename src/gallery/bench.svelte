@@ -12,9 +12,11 @@ import {
     pickPath,
 } from "./bench.ts";
 import BenchBar from "./bench-bar.svelte";
+import BenchCompare from "./bench-compare.svelte";
 import BenchInspector from "./bench-inspector.svelte";
 import BenchList from "./bench-list.svelte";
 import BenchStage from "./bench-stage.svelte";
+import { COMPARE_MODES, type CompareMode } from "./compare.ts";
 import type { Tag } from "./story.ts";
 
 /**
@@ -62,10 +64,14 @@ const first = firstPick(groups);
 
 let current = $state<Pick>(first);
 let stage: BenchStage | undefined = $state();
+let compareStrip: BenchCompare | undefined = $state();
 // The inspector's controls and settings need JS, so they wait for this.
 let mounted = $state(false);
 let backdrop = $state<Backdrop>("plain");
 let outline = $state(false);
+let compare = $state<CompareMode>("schemes");
+// The stage frame's width, which the compare strip's copies follow.
+let stageWidth = $state<number | null>(null);
 
 const group = $derived(
     groups.find((g) => g.id === current.group) ?? (groups[0] as BenchGroup),
@@ -94,16 +100,33 @@ const saveSetting = (key: string, value: string | null) => {
     }
 };
 
+const applyStage = () => {
+    stage?.setStage(backdrop, outline);
+    compareStrip?.setStage(backdrop, outline);
+};
+
 const setStage = (next: Backdrop) => {
     backdrop = next;
     saveSetting("gallery-stage", next);
-    stage?.setStage(backdrop, outline);
+    applyStage();
 };
 
 const setOutline = (next: boolean) => {
     outline = next;
     saveSetting("gallery-outline", next ? "true" : null);
-    stage?.setStage(backdrop, outline);
+    applyStage();
+};
+
+const setCompare = (next: CompareMode) => {
+    compare = next;
+    saveSetting("gallery-compare", next);
+};
+
+// A story link in a frame, as its hash. True if it's one of this page's.
+const followHash = (hash: string) => {
+    if (!parseHash(groups, hash)) return false;
+    location.hash = hash;
+    return true;
 };
 
 onMount(() => {
@@ -111,15 +134,22 @@ onMount(() => {
     const saved = readSetting("gallery-stage");
     if (saved === "dots" || saved === "surface") backdrop = saved;
     outline = readSetting("gallery-outline") === "true";
+    const savedCompare = COMPARE_MODES.find(
+        (mode) => mode.value === readSetting("gallery-compare"),
+    );
+    if (savedCompare) compare = savedCompare.value;
     mounted = true;
 
     const onHashChange = () => {
         current = fromHash();
     };
-    // A Display choice was just saved: reload the stage to pick it up.
+    // A Display choice was just saved: reload the frames to pick it up.
     const onDisplayChange = (event: Event) => {
         if (!(event.target as Element).closest(".display-menu")) return;
-        requestAnimationFrame(() => stage?.reload());
+        requestAnimationFrame(() => {
+            stage?.reload();
+            compareStrip?.reload();
+        });
     };
     window.addEventListener("hashchange", onHashChange);
     document.addEventListener("change", onDisplayChange);
@@ -145,17 +175,32 @@ onMount(() => {
                     }}
                 />
             </nav>
-            <div class="bench__stage" id="stage">
+            <div
+                class="bench__stage"
+                id="stage"
+                style:--bench-stage-height={mounted && compare !== "off"
+                    ? "70%"
+                    : null}
+            >
                 <BenchStage
                     bind:this={stage}
                     url={pickPath(current)}
                     title={id}
-                    onhashlink={(hash) => {
-                        if (!parseHash(groups, hash)) return false;
-                        location.hash = hash;
-                        return true;
+                    onhashlink={followHash}
+                    onwidth={(px) => {
+                        stageWidth = px;
                     }}
                 />
+                {#if mounted}
+                    <BenchCompare
+                        bind:this={compareStrip}
+                        url={pickPath(current)}
+                        title={id}
+                        width={stageWidth}
+                        mode={compare}
+                        onmode={setCompare}
+                    />
+                {/if}
             </div>
             <aside class="bench__inspector" aria-label="Inspector">
                 <BenchInspector

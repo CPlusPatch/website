@@ -23,6 +23,8 @@ const LOOKS = [
  * group id.
  */
 const TOGETHER: Record<string, string[]> = {
+    // Each story is a region named "Compare".
+    "bench-compare": ["landmark-unique"],
     // A navbar per story, each with the same "Main" nav.
     navbar: ["landmark-unique"],
     // Each story is a section named "README".

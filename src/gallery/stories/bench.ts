@@ -1,5 +1,6 @@
 import type { BenchGroup, BenchStory } from "../bench.ts";
 import BenchBar from "../bench-bar.svelte";
+import BenchCompare from "../bench-compare.svelte";
 import BenchControls from "../bench-controls.svelte";
 import BenchInspector from "../bench-inspector.svelte";
 import BenchList from "../bench-list.svelte";
@@ -167,6 +168,36 @@ export const bench: StoryGroup[] = [
             svelteStory("default", BenchStage, {
                 url: storyPath("button-size", "sm"),
                 title: "button-size/sm",
+            }),
+        ],
+    },
+    {
+        id: "bench-compare",
+        title: "Bench compare",
+        category: "gallery",
+        source: "src/gallery/bench-compare.svelte",
+        min: "full",
+        stories: [
+            svelteStory("light-and-dark", BenchCompare, {
+                url: storyPath("button-size", "sm"),
+                title: "button-size/sm",
+                width: 320,
+                mode: "schemes",
+                onmode: ignore,
+            }),
+            svelteStory("themes", BenchCompare, {
+                url: storyPath("button-size", "sm"),
+                title: "button-size/sm",
+                width: 320,
+                mode: "themes",
+                onmode: ignore,
+            }),
+            svelteStory("off", BenchCompare, {
+                url: storyPath("button-size", "sm"),
+                title: "button-size/sm",
+                width: 320,
+                mode: "off",
+                onmode: ignore,
             }),
         ],
     },

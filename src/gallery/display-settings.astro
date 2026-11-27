@@ -2,14 +2,12 @@
 import DisplayMenu, {
     type DisplayEffect,
 } from "@cpluspatch/ui/astro/sections/display/display-menu.astro";
-import DisplayRow from "@cpluspatch/ui/astro/sections/display/display-row.astro";
-import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import type { ComponentProps } from "astro/types";
 
 /**
- * The site's Display menu, with every page effect, and on a component
- * page, a way to see its sections in other schemes, themes and styles (compare.ts).
- * The gallery's other settings (stage) are in the bench's inspector.
+ * The site's Display menu, with every page effect. The gallery's other
+ * settings (stage) are in the bench's inspector, and the compare strip is
+ * under the stage.
  */
 type Props = Pick<ComponentProps<typeof DisplayMenu>, "collapseBelow">;
 
@@ -23,31 +21,7 @@ const EFFECTS: DisplayEffect[] = [
     id="display-settings"
     effects={EFFECTS}
     collapseBelow={Astro.props.collapseBelow}
->
-    {/* Not kept between pages, and hidden until compare.ts can size frames. */}
-    <DisplayRow class="gallery-compare" label="Compare" hidden>
-        <SegmentedControl
-            name="gallery-compare"
-            label="Compare"
-            options={[
-                { value: "page", label: "Off" },
-                { value: "schemes", label: "Light + dark" },
-                { value: "themes", label: "Themes" },
-                { value: "styles", label: "Styles" },
-            ]}
-            value="page"
-            size="sm"
-            variant="subtle"
-        />
-    </DisplayRow>
-</DisplayMenu>
-
-<script>
-import { initCompare } from "./compare.ts";
-
-const compare = document.querySelector<HTMLElement>(".gallery-compare");
-if (compare) initCompare(compare);
-</script>
+/>
 
 <script>
 /*
@@ -105,9 +79,3 @@ const keepPlace = () => {
 
 settings?.addEventListener("change", keepPlace);
 </script>
-
-<style>
-:global(.gallery-compare[hidden]) {
-    display: none;
-}
-</style>

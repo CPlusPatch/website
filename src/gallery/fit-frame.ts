@@ -1,9 +1,9 @@
 /*
  * A frame can't size itself to its content, so this grows one to its page's
- * height. Used by the Display menu's Compare row (compare.ts) and the bench's
- * stage (bench.svelte).
+ * height. Used by the bench's stage and compare strip.
  */
 
+import type { Backdrop } from "./bench.ts";
 import { STORY_NAME } from "./story.ts";
 
 /** Past this, a story sized to the viewport would grow its frame forever. */
@@ -55,4 +55,19 @@ export const fit = (
     frame.addEventListener("load", setup);
     // A frame that loaded before this ran has no load event left to come.
     if (frame.contentDocument?.readyState === "complete") setup();
+};
+
+/** Sets the stage settings on a frame's page. The page reads them itself on load (story-page.astro). */
+export const applyStage = (
+    frame: HTMLIFrameElement | undefined,
+    backdrop: Backdrop,
+    outline: boolean,
+): void => {
+    const root = frame?.contentDocument?.documentElement;
+    if (!root) return;
+
+    if (backdrop === "plain") delete root.dataset.galleryStage;
+    else root.dataset.galleryStage = backdrop;
+    if (outline) root.dataset.galleryOutline = "";
+    else delete root.dataset.galleryOutline;
 };

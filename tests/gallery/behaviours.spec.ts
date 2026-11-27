@@ -1,3 +1,4 @@
+import { THEMES } from "../../packages/ui/src/styles/themes/index.ts";
 import { expect, test } from "./fixtures.ts";
 
 /**
@@ -360,5 +361,70 @@ test.describe("a component's bench", () => {
             .toBe("/gallery/story/button-size/lg/");
         await expect.poll(() => frameAttr(page, "galleryStage")).toBe("dots");
         await expect.poll(() => frameAttr(page, "galleryOutline")).toBe("");
+    });
+
+    const copies = (page: import("@playwright/test").Page) =>
+        page.locator(".bench-compare iframe");
+    const compareMode = (page: import("@playwright/test").Page, name: string) =>
+        page
+            .getByRole("region", { name: "Compare" })
+            .getByText(name, { exact: true })
+            .click();
+    const copySrcs = (page: import("@playwright/test").Page) =>
+        copies(page).evaluateAll((frames) =>
+            frames.map((frame) => frame.getAttribute("src")),
+        );
+
+    test("compares the pick in light and dark under the stage", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect(copies(page)).toHaveCount(2);
+
+        expect(await copySrcs(page)).toEqual([
+            "/gallery/story/button-size/sm/?scheme=light",
+            "/gallery/story/button-size/sm/?scheme=dark",
+        ]);
+    });
+
+    test("compares every theme", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await compareMode(page, "Themes");
+
+        await expect(copies(page)).toHaveCount(THEMES.length);
+    });
+
+    test("moves the copies to another story", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect(copies(page)).toHaveCount(2);
+
+        await item(page, "lg").click();
+
+        await expect
+            .poll(() => copySrcs(page))
+            .toEqual([
+                "/gallery/story/button-size/lg/?scheme=light",
+                "/gallery/story/button-size/lg/?scheme=dark",
+            ]);
+    });
+
+    test("keeps the compare mode on the next component", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await compareMode(page, "Themes");
+        await expect(copies(page)).toHaveCount(THEMES.length);
+
+        await page.locator('a[rel="next"]').click();
+
+        await expect(page.locator("h1")).not.toHaveText("Buttons");
+        await expect(copies(page)).toHaveCount(THEMES.length);
+    });
+
+    test("has no Compare row in the Display menu", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await page.getByRole("button", { name: "Display" }).click();
+
+        const menu = page.locator("#display-settings");
+        await expect(menu).toBeVisible();
+        await expect(menu.getByText("Compare")).toHaveCount(0);
     });
 });

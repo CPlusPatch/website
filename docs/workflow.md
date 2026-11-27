@@ -4,7 +4,7 @@ Most work happens in the gallery. Run `deno run dev` and open http://localhost:4
 
 ## Making a change
 
-Before calling a change done, look at it in the gallery's Display menu (themes, styles, light and dark, effects), with the keyboard, with reduced motion, and with JavaScript off if it has a script. A new state gets a new story: see [Adding a component](components.md).
+Before calling a change done, look at it in the gallery's Display menu (themes, styles, light and dark, effects) and in the bench's compare strip (light and dark, every theme, every style), with the keyboard, with reduced motion, and with JavaScript off if it has a script. A new state gets a new story: see [Adding a component](components.md).
 
 ## Checks
 
