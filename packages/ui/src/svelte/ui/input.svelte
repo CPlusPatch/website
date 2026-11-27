@@ -1,0 +1,34 @@
+<script lang="ts">
+import type { HTMLInputAttributes } from "svelte/elements";
+
+/** The single-line text types. Others (checkbox, range, file...) have components or looks of their own. */
+type InputType =
+    | "text"
+    | "email"
+    | "password"
+    | "search"
+    | "tel"
+    | "url"
+    | "number";
+
+/**
+ * A single-line text field. Validation is native: `required`, `pattern`,
+ * `type="email"` and friends mark it invalid via :user-invalid, so only after
+ * the visitor has edited it or tried to submit. Set `aria-invalid` for errors
+ * found elsewhere (on the server, say).
+ */
+interface Props extends Omit<HTMLInputAttributes, "type"> {
+    /** Accessible name. Inputs have no visible label of their own. */
+    label: string;
+    type?: InputType;
+}
+
+const { label, type = "text", class: className, ...rest }: Props = $props();
+</script>
+
+<input
+    class={["field", "input", className]}
+    {type}
+    aria-label={label}
+    {...rest}
+>
