@@ -4,7 +4,7 @@ The components from my website, as a library. They're plain CSS, native HTML (`<
 
 It isn't published anywhere yet. For now it's a workspace package of this repo, and I haven't tried it from a packed tarball in another project, so setup elsewhere is untested.
 
-Only Astro has components so far. For anything else you can use the CSS, the class builders and the behaviours with your own markup.
+Astro and Svelte have components so far. For anything else you can use the CSS, the class builders and the behaviours with your own markup.
 
 Licensed under the [LGPL-3.0-only](COPYING.LESSER), with the [GPL](COPYING) it builds on.
 
@@ -18,6 +18,7 @@ Licensed under the [LGPL-3.0-only](COPYING.LESSER), with the [GPL](COPYING) it b
 | `@cpluspatch/ui/behaviours/<name>.ts` | The scripts, as `initX(root)` functions |
 | `@cpluspatch/ui/lib/<name>.ts` | Smaller helpers (`theme-init.ts`, `image.ts`, ...) |
 | `@cpluspatch/ui/astro/<path>` | Astro components, in `ui/`, `blocks/` and `sections/` |
+| `@cpluspatch/ui/svelte/<path>` | Svelte components: a subset of the Astro ones, at the same paths |
 
 It ships source as written (`.ts`, `.astro`, `.css`), so you need a bundler like Astro or Vite.
 
@@ -101,6 +102,20 @@ import Button from "@cpluspatch/ui/astro/ui/button.astro";
 ---
 <Button href="/about" variant="outline">About</Button>
 ```
+
+## Svelte
+
+`svelte` (5.16 or later) is an optional peer dependency. The Svelte components render the same HTML as the Astro ones, and a test checks that. Children are a `children` snippet. As with Astro, import `components.css` yourself.
+
+```svelte
+<script lang="ts">
+    import Button from "@cpluspatch/ui/svelte/ui/button.svelte";
+</script>
+
+<Button href="/about" variant="outline">About</Button>
+```
+
+The Svelte icon only draws the built-in icons. It has no `astro-icon` fallback.
 
 ## Browser support
 

@@ -27,7 +27,8 @@
         "./components.css": "./src/components.css",
         "./components/*.css": "./src/components/*.css",
         "./components/*.ts": "./src/components/*.ts",
-        "./astro/*": "./src/astro/*"
+        "./astro/*": "./src/astro/*",
+        "./svelte/*": "./src/svelte/*"
     },
     "files": [
         "src",
@@ -39,7 +40,8 @@
     "peerDependencies": {
         "astro": ">=7",
         "astro-icon": "^1.2.0",
-        "shiki": ">=4"
+        "shiki": ">=4",
+        "svelte": "^5.16"
     },
     "peerDependenciesMeta": {
         "astro": {
@@ -49,6 +51,9 @@
             "optional": true
         },
         "shiki": {
+            "optional": true
+        },
+        "svelte": {
             "optional": true
         }
     }
