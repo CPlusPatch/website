@@ -201,3 +201,49 @@ export const widened = (place: Place): Place =>
     place.pane === "right" && place.active === null
         ? { ...place, pane: "left", active: place.shown }
         : place;
+
+/** The DOM id of the active row's option, or "" when it isn't among the `listed` ids. */
+export const activeOptionOf = (
+    listed: readonly string[],
+    active: string | null,
+    list: Pane,
+): string =>
+    active !== null && listed.includes(active) ? optionId(list, active) : "";
+
+/**
+ * The id of the list the search box controls, or undefined when the list isn't a listbox.
+ * A note or empty state isn't an option.
+ */
+export const controlsOf = (
+    listed: readonly string[],
+    built: boolean,
+    searching: boolean,
+    pane: Place["pane"],
+): string | undefined => {
+    if (!built) return "orrery-search-left";
+    if (searching)
+        return listed.length > 0 ? "orrery-search-results" : undefined;
+    if (pane === "left") return "orrery-search-left";
+
+    return listed.length > 0 ? "orrery-search-right" : undefined;
+};
+
+/** The place after a left row was clicked, or null when it stays. `narrow` is true when the right pane covers the left one. */
+export const showPlace = (
+    bodies: readonly Body[],
+    place: Place,
+    id: string,
+    narrow: boolean,
+): Place | null => {
+    if (narrow) {
+        // It slides over even with nothing to list, so the head can pick the body.
+        return { shown: id, pane: "right", active: firstOf(bodies, id) };
+    }
+
+    // Rebuilding would detach the clicked row, so its dblclick would never reach the list.
+    if (id === place.shown && id === place.active && place.pane === "left") {
+        return null;
+    }
+
+    return { shown: id, pane: "left", active: id };
+};

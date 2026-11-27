@@ -5,14 +5,18 @@ import { formatRange } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
 import { assertEquals } from "@std/assert";
 import {
+    activeOptionOf,
+    controlsOf,
     firstOf,
     named,
     optionId,
+    type Place,
     placeAtOpen,
     rangesFor,
     reconcile,
     rootNote,
     rowIds,
+    showPlace,
     step,
     systemIds,
     widened,
@@ -259,4 +263,62 @@ Deno.test("a body with no distance has an empty range", () => {
 
     assertEquals(range("a"), "");
     assertEquals(range("b"), "");
+});
+
+Deno.test("the active option is named only when its row is listed", () => {
+    assertEquals(activeOptionOf(IDS, "b", "left"), "orrery-search-left-b");
+    assertEquals(activeOptionOf(IDS, "gone", "left"), "");
+    assertEquals(activeOptionOf(IDS, null, "hit"), "");
+});
+
+Deno.test("the search box controls the left list until the panel is built", () => {
+    assertEquals(controlsOf([], false, true, "right"), "orrery-search-left");
+});
+
+Deno.test("a query controls the results while there are matches", () => {
+    assertEquals(controlsOf(IDS, true, true, "left"), "orrery-search-results");
+    assertEquals(controlsOf([], true, true, "left"), undefined);
+});
+
+Deno.test("the tree controls the left list, and the right list when it has rows", () => {
+    assertEquals(controlsOf(IDS, true, false, "left"), "orrery-search-left");
+    assertEquals(controlsOf(IDS, true, false, "right"), "orrery-search-right");
+    assertEquals(controlsOf([], true, false, "right"), undefined);
+});
+
+Deno.test("a click on a left row shows its system and makes it active", () => {
+    const place: Place = { shown: "sun", pane: "left", active: "sun" };
+
+    assertEquals(showPlace(solar, place, "earth", false), {
+        shown: "earth",
+        pane: "left",
+        active: "earth",
+    });
+});
+
+Deno.test("a click on the row that is already shown changes nothing", () => {
+    const place: Place = { shown: "earth", pane: "left", active: "earth" };
+
+    assertEquals(showPlace(solar, place, "earth", false), null);
+});
+
+Deno.test("a click on the shown row from the right pane moves back to the left", () => {
+    const place: Place = { shown: "earth", pane: "right", active: "moon" };
+
+    assertEquals(showPlace(solar, place, "earth", false), {
+        shown: "earth",
+        pane: "left",
+        active: "earth",
+    });
+});
+
+Deno.test("narrow, a click slides the right pane over, on its first row", () => {
+    const place: Place = { shown: "earth", pane: "left", active: "earth" };
+
+    assertEquals(showPlace(solar, place, "earth", true), {
+        shown: "earth",
+        pane: "right",
+        active: "moon",
+    });
+    assertEquals(showPlace(solar, place, "mercury", true)?.active, null);
 });

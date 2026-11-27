@@ -6,24 +6,27 @@ import type { Attachment } from "svelte/attachments";
 import { on } from "svelte/events";
 import { found, treeOrder } from "../../search.ts";
 import { getDocument, getView } from "../../state/context.ts";
-import { leftPane } from "../../systems.ts";
+import AddButton from "./AddButton.svelte";
+import Field from "./Field.svelte";
+import Hint from "./Hint.svelte";
+import { SEARCH_ICON } from "./icons.ts";
+import { keyResult } from "./keys.ts";
+import { panelOffset } from "./layout.ts";
 import {
-    firstOf,
-    idsOf,
-    optionId,
+    activeOptionOf,
+    controlsOf,
     type Place,
     placeAtOpen,
-    RESULTS_HINT,
     rangesFor,
     reconcile,
     rowIds,
-    step,
-    systemIds,
-    TREE_HINT,
+    showPlace,
     widened,
 } from "./nav.ts";
-import Row from "./Row.svelte";
+import { panelHost } from "./panel-host.ts";
+import Results from "./Results.svelte";
 import SystemsList from "./SystemsList.svelte";
+import { more, updateMore } from "./scroll.ts";
 
 type Props = {
     /** The `.orrery` element, which the panel is appended to. */
@@ -35,14 +38,6 @@ type Props = {
 
 /** How often the ranges are patched while the panel is open, in ms. */
 const RANGE_MS = 250;
-
-/** The gap in px between the panel and the edges of the root. */
-const MARGIN = 8;
-
-const SEARCH_ICON =
-    '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/></g></svg>';
-const PLUS_ICON =
-    '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
 
 const { root, units, openAdd }: Props = $props();
 
@@ -77,13 +72,8 @@ let chosen = $state.raw<AUnit | null>(null);
 let renderedShown = "";
 
 const bodies = $derived(documents.presentBodies);
-const { root: top, groups } = $derived(leftPane(bodies));
 const searching = $derived(query.trim() !== "");
 const hits = $derived(searching ? found(treeOrder(bodies), query) : []);
-const body = $derived(
-    bodies.find((candidate) => candidate.id === shown) ?? top,
-);
-const hint = $derived(searching ? RESULTS_HINT : TREE_HINT);
 const resultsRange = $derived(
     rangesFor(
         distances,
@@ -93,29 +83,13 @@ const resultsRange = $derived(
 );
 
 // The ids of the options in the list the input drives.
-const listed = $derived(
-    searching
-        ? hits.map((hit) => hit.id)
-        : pane === "left"
-          ? [top.id, ...idsOf(groups)]
-          : systemIds(bodies, body.id),
-);
+const listed = $derived(rowIds(bodies, query, { shown, pane }));
 const activeOption = $derived(
-    active !== null && listed.includes(active)
-        ? optionId(searching ? "hit" : pane, active)
-        : "",
+    activeOptionOf(listed, active, searching ? "hit" : pane),
 );
 // A note or empty state isn't an option, so its list stops being a listbox.
 const resultsListed = $derived(!built || hits.length > 0);
-const controls = $derived.by((): string | undefined => {
-    if (!built) return "orrery-search-left";
-    if (searching) return hits.length > 0 ? "orrery-search-results" : undefined;
-    if (pane === "left") return "orrery-search-left";
-
-    return systemIds(bodies, body.id).length > 0
-        ? "orrery-search-right"
-        : undefined;
-});
+const controls = $derived(controlsOf(listed, built, searching, pane));
 
 const place = (): Place => ({ shown, pane, active });
 
@@ -137,19 +111,9 @@ const measure = () => {
     chosen = units.get();
 };
 
-/** Fades the foot of a list while more rows are below. */
-const updateMore = (list: HTMLElement | undefined) =>
-    list?.toggleAttribute(
-        "data-more",
-        list.scrollTop + list.clientHeight < list.scrollHeight - 1,
-    );
-
 const updateAllMore = () => {
     for (const scroller of [left, systemList, results]) updateMore(scroller);
 };
-
-const more: Attachment<HTMLElement> = (node) =>
-    on(node, "scroll", () => updateMore(node), { passive: true });
 
 const close = (back: boolean) => {
     if (!visible) return;
@@ -166,21 +130,15 @@ export const open = (): void => {
     // Measuring and focusing need the panel shown.
     flushSync();
 
-    const host = root.getBoundingClientRect();
-    const bar = root.querySelector(".orrery__panel--top");
-    const at = toggle.getBoundingClientRect();
-    const leftEdge = Math.max(
-        MARGIN,
-        Math.min(at.left, host.right - panel.offsetWidth - MARGIN),
+    const offset = panelOffset(
+        root.getBoundingClientRect(),
+        toggle.getBoundingClientRect(),
+        root.querySelector(".orrery__panel--top")?.getBoundingClientRect()
+            .bottom,
+        panel.offsetWidth,
     );
-    panel.style.setProperty(
-        "--orrery-search-top",
-        `${(bar?.getBoundingClientRect().bottom ?? at.bottom) - host.top}px`,
-    );
-    panel.style.setProperty(
-        "--orrery-search-left",
-        `${leftEdge - host.left}px`,
-    );
+    panel.style.setProperty("--orrery-search-top", `${offset.top}px`);
+    panel.style.setProperty("--orrery-search-left", `${offset.left}px`);
 
     input.value = "";
     query = "";
@@ -214,20 +172,9 @@ const add = () => {
 };
 
 const showSystem = (id: string) => {
-    if (narrowQuery.matches) {
-        // It slides over even with nothing to list, so the head can pick the body.
-        shown = id;
-        pane = "right";
-        active = firstOf(bodies, id);
+    const next = showPlace(bodies, place(), id, narrowQuery.matches);
 
-        return;
-    }
-
-    // Rebuilding would detach the clicked row, so its dblclick would never reach the list.
-    if (id === shown && id === active && pane === "left") return;
-
-    shown = active = id;
-    pane = "left";
+    if (next) go(next);
 };
 
 const back = () => {
@@ -318,79 +265,33 @@ $effect(() =>
     }),
 );
 
-// The panel must cover the scene without moving the label band, and the CSS positions it
-// against the root, so it can't stay in the top bar.
-// The keys are native: a delegated handler would run after the shortcuts on the document.
-const panelHost: Attachment<HTMLElement> = (node) => {
-    root.append(node);
-
-    const off = on(node, "keydown", (event) => {
-        // Tab past the last control lands where Escape does, not on the page body.
-        // Narrow, the Add button slides away with the left pane,
-        // so the last button of the right pane is last.
-        const last = panes?.hasAttribute("data-detail")
-            ? [...(right?.querySelectorAll("button:not(:disabled)") ?? [])].at(
-                  -1,
-              )
-            : addButton;
-        const leaving =
-            event.key === "Tab" && !event.shiftKey && event.target === last;
-        if (event.key === "Escape" || leaving) {
-            event.preventDefault();
-            close(true);
-        }
-    });
-
-    return () => {
-        off();
-        node.remove();
-    };
-};
+// Narrow, the Add button slides away with the left pane,
+// so the last button of the right pane is last.
+const lastControl = () =>
+    panes?.hasAttribute("data-detail")
+        ? [...(right?.querySelectorAll("button:not(:disabled)") ?? [])].at(-1)
+        : addButton;
 
 const inputKeys: Attachment<HTMLInputElement> = (node) =>
     on(node, "keydown", (event) => {
         if (event.isComposing) return;
 
-        const { key } = event;
+        const result = keyResult(event.key, event.shiftKey, {
+            bodies,
+            query,
+            narrow: narrowQuery.matches,
+            shown,
+            pane,
+            active,
+        });
+        if (!result) return;
 
-        if (
-            key === "ArrowDown" ||
-            key === "ArrowUp" ||
-            // In a query they move the caret.
-            ((key === "Home" || key === "End") && !searching)
-        ) {
-            event.preventDefault();
+        event.preventDefault();
 
-            const next = step(
-                rowIds(bodies, query, { shown, pane }),
-                active,
-                key,
-            );
-            if (next === undefined) return;
-
-            active = next;
-            if (pane === "left" && !searching && active) shown = active;
-        } else if (key === "Enter") {
-            event.preventDefault();
-
-            if (active) pick(active, event.shiftKey);
-            else if (searching) add();
-            else if (pane === "right") pick(shown, event.shiftKey);
-        } else if (!searching) {
-            // With a query, the caret keeps Left and Right.
-            if (key === "ArrowRight" && pane === "left") {
-                event.preventDefault();
-
-                const first = firstOf(bodies, shown);
-                if (first || narrowQuery.matches) {
-                    pane = "right";
-                    active = first;
-                }
-            } else if (key === "ArrowLeft" && pane === "right") {
-                event.preventDefault();
-                back();
-            }
-        }
+        if (result.type === "go") go(result.place);
+        else if (result.type === "pick") pick(result.id, result.andFocus);
+        else if (result.type === "add") add();
+        else if (result.type === "back") back();
     });
 
 // Pressing the button or a row would blur the input, and close the panel.
@@ -447,26 +348,16 @@ const onInput = () => {
         bind:this={panel}
         onpointerdown={onPanelDown}
         onfocusout={onFocusOut}
-        {@attach panelHost}
+        {@attach panelHost(root, lastControl, () => close(true))}
     >
-        <div class="orrery__search-field">
-            <span class="orrery__search-icon">{@html SEARCH_ICON}</span>
-            <input
-                type="text"
-                role="combobox"
-                aria-label="Find a body"
-                aria-expanded={visible}
-                aria-controls={controls}
-                aria-autocomplete="list"
-                aria-activedescendant={activeOption}
-                placeholder="Find a body"
-                autocomplete="off"
-                spellcheck="false"
-                bind:this={input}
-                oninput={onInput}
-                {@attach inputKeys}
-            >
-        </div>
+        <Field
+            {visible}
+            {controls}
+            {activeOption}
+            bind:input
+            oninput={onInput}
+            keys={inputKeys}
+        />
         <div
             class="orrery__search-panes"
             data-mode={searching ? "results" : "tree"}
@@ -497,60 +388,22 @@ const onInput = () => {
                 }}
                 onact={act}
             />
-            <!-- biome-ignore lint/a11y/useAriaPropsSupportedByRole: the role is on only while the list holds an option -->
-            <div
-                id="orrery-search-results"
-                class="orrery__search-results"
-                tabindex="-1"
-                role={resultsListed ? "listbox" : undefined}
-                aria-label={resultsListed ? "Matching bodies" : undefined}
-                bind:this={results}
-                {@attach more}
-            >
-                {#if built && searching}
-                    {#each hits as hit (hit.id)}
-                        <Row
-                            body={hit}
-                            {bodies}
-                            pane="hit"
-                            active={hit.id === active}
-                            {query}
-                            picked={hit.id === view.selected}
-                            range={resultsRange(hit.id)}
-                            onrow={(event) => pick(hit.id, event.shiftKey)}
-                        />
-                    {:else}
-                        <p class="orrery__search-nomatch">
-                            No body named “{query.trim()}”.
-                        </p>
-                    {/each}
-                {/if}
-            </div>
-            <button
-                type="button"
-                class="orrery__search-add"
-                data-act="add"
-                bind:this={addButton}
-                onclick={add}
-            >
-                <span class="orrery__search-add-icon">{@html PLUS_ICON}</span>
-                <span
-                    >{searching ? `Add “${query.trim()}”` : "Add a body…"}</span
-                >
-            </button>
+            <Results
+                {bodies}
+                {hits}
+                {query}
+                {active}
+                picked={view.selected}
+                {built}
+                {searching}
+                listed={resultsListed}
+                range={resultsRange}
+                bind:results
+                {more}
+                onpick={pick}
+            />
+            <AddButton {query} bind:button={addButton} onadd={add} />
         </div>
-        <p class="orrery__search-hint">
-            {#each hint as [symbol, label, action], index (symbol)}
-                {#if index > 0}
-                    <span class="orrery__search-sep" aria-hidden="true">·</span>
-                {/if}
-                <span class="orrery__search-keyhint">
-                    <kbd class="orrery__search-key" aria-label={label}
-                        >{symbol}</kbd
-                    >
-                    {action}
-                </span>
-            {/each}
-        </p>
+        <Hint {searching} />
     </section>
 {/if}
