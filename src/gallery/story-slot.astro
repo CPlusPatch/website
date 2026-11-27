@@ -1,0 +1,20 @@
+---
+import { Icon } from "astro-icon/components";
+import type { Story } from "./story.ts";
+import StoryNode from "./story-node.astro";
+
+/**
+ * A story's default-slot content: its icon, `slot` HTML and `children`.
+ * Split from story-node so the Svelte parity test can render the same
+ * content for a port's children.
+ */
+type Props = {
+    story: Story;
+};
+
+const { story } = Astro.props;
+---
+
+{story.icon && <Icon name={story.icon} aria-hidden="true" />}
+{story.slot && <Fragment set:html={story.slot} />}
+{story.children?.map((child) => <StoryNode story={child} />)}
