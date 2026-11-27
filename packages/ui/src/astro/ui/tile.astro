@@ -1,0 +1,54 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tileClasses, tileTitle } from "../../components/tile.ts";
+
+/**
+ * One choice in a <TilePicker>: a radio drawn as its preview (the default
+ * slot) and an optional `caption` under it. The caption, when there is one,
+ * is the accessible name. Without it, `label` is, as hidden text. `label`
+ * is also the tooltip, unless it matches the caption. The preview is
+ * hidden from assistive tech, since it's only a picture.
+ */
+interface Props extends HTMLAttributes<"label"> {
+    /** Which radio group it belongs to. */
+    name: string;
+    value: string;
+    checked?: boolean;
+    disabled?: boolean;
+    /** Accessible name when there's no caption, else a tooltip. */
+    label: string;
+    caption?: string;
+}
+
+const {
+    name,
+    value,
+    checked = false,
+    disabled = false,
+    label,
+    caption,
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<label
+    class:list={tileClasses(className)}
+    title={tileTitle(label, caption)}
+    {...rest}
+>
+    <input
+        class="visually-hidden"
+        type="radio"
+        name={name}
+        value={value}
+        checked={checked}
+        disabled={disabled}
+    >
+    <span class="tile__preview" aria-hidden="true"><slot /></span>
+    {caption ? (
+        <span class="tile__caption">{caption}</span>
+    ) : (
+        <span class="visually-hidden">{label}</span>
+    )}
+</label>

@@ -1,0 +1,78 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /* A row of tiles that share its width. Disabled tiles dim themselves (tile.css). */
+    .tile-picker {
+        --tile-height: 2.5rem;
+
+        display: flex;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+
+        &.tile-picker--size-sm {
+            --tile-height: 2rem;
+        }
+
+        .tile {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        &.tile-picker--cards {
+            gap: var(--space-xs);
+        }
+
+        /* One frame, like a segmented control, for previews too small to need a card. */
+        &.tile-picker--joined {
+            --tile-inner-radius: calc(var(--radius) - var(--border-width));
+
+            position: relative;
+            background-color: var(--color-surface);
+            border: var(--border-width) solid var(--color-border-strong);
+            border-radius: var(--radius);
+
+            .tile {
+                --tile-fill: transparent;
+
+                border: 0;
+                border-radius: var(--tile-inner-radius);
+            }
+
+            /* The pick is one layer under the tiles that slides to the checked one. */
+            @supports (anchor-scope: all) {
+                anchor-scope: --tile-pick;
+
+                &:has(:checked)::before {
+                    content: "";
+                    position: absolute;
+                    position-anchor: --tile-pick;
+                    inset: anchor(top) anchor(right) anchor(bottom) anchor(left);
+                    border: var(--border-width) solid var(--color-primary);
+                    border-radius: var(--tile-inner-radius);
+                    background-color: var(--pick-fill);
+                    transition:
+                        left var(--transition),
+                        right var(--transition);
+                }
+
+                .tile:has(:checked) {
+                    anchor-name: --tile-pick;
+                    background-color: transparent;
+
+                    &::before {
+                        content: none;
+                    }
+                }
+
+                @media (forced-colors: active) {
+                    &:has(:checked)::before {
+                        border-color: Highlight;
+                        border-width: 2px;
+                    }
+                }
+            }
+        }
+    }
+}

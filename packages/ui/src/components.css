@@ -12,6 +12,7 @@
 @import "./components/button-group.css";
 @import "./components/button.css";
 @import "./components/card.css";
+@import "./components/control-row.css";
 @import "./components/corner-window.css";
 @import "./components/dialog.css";
 @import "./components/dropdown.css";
@@ -26,7 +27,10 @@
 @import "./components/select.css";
 @import "./components/slider.css";
 @import "./components/status.css";
+@import "./components/swatch-picker.css";
 @import "./components/textarea.css";
+@import "./components/tile.css";
+@import "./components/tile-picker.css";
 @import "./components/toggle.css";
 @import "./components/window.css";
 @import "./components/window-manager.css";

@@ -1,0 +1,47 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import {
+    type SwatchOption,
+    swatchClasses,
+    swatchPickerClasses,
+    swatchStyle,
+} from "../../components/swatch-picker.ts";
+
+export type { SwatchOption };
+
+/**
+ * A row of colour swatches, as plain radios in a fieldset, so it submits
+ * with a form and can drive CSS through :has() without JS. Give each picker
+ * its own `name`. An option with an `accent` is drawn as a two-colour swatch.
+ */
+interface Props extends Omit<HTMLAttributes<"fieldset">, "name"> {
+    name: string;
+    /** Accessible name for the group. */
+    label: string;
+    options: SwatchOption[];
+    /** The initially checked option, if any. */
+    value?: string;
+}
+
+const { name, label, options, value, class: className, ...rest } = Astro.props;
+---
+
+<fieldset class:list={swatchPickerClasses(className)} {...rest}>
+    <legend class="visually-hidden">{label}</legend>
+    {options.map((option) => (
+        <label
+            class:list={swatchClasses(option)}
+            style={swatchStyle(option)}
+            title={option.label}
+        >
+            <input
+                class="visually-hidden"
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={option.value === value}
+            >
+            <span class="visually-hidden">{option.label}</span>
+        </label>
+    ))}
+</fieldset>

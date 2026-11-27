@@ -6,6 +6,7 @@ import { badgeClasses } from "./badge.ts";
 import { buttonClasses, isAnchor } from "./button.ts";
 import { cardClasses } from "./card.ts";
 import { autoplaySeconds } from "./carousel.ts";
+import { controlRowClasses, controlRowLabelClasses } from "./control-row.ts";
 import { cornerWindowClasses } from "./corner-window.ts";
 import { dialogClasses } from "./dialog.ts";
 import { dropdownClasses, dropdownPanelClasses } from "./dropdown.ts";
@@ -14,6 +15,13 @@ import { previewFrameClasses } from "./preview-frame.ts";
 import { progressClasses } from "./progress.ts";
 import { segmentedClasses } from "./segmented-control.ts";
 import { statusClasses, statusLightClasses } from "./status.ts";
+import {
+    swatchClasses,
+    swatchPickerClasses,
+    swatchStyle,
+} from "./swatch-picker.ts";
+import { tileClasses, tileTitle } from "./tile.ts";
+import { tilePickerClasses } from "./tile-picker.ts";
 import { toggleClasses } from "./toggle.ts";
 
 Deno.test("button defaults, in the order the stylesheet expects", () => {
@@ -169,6 +177,52 @@ Deno.test("segmented control classes", () => {
         "segmented",
         "segmented--size-sm",
         "segmented--subtle",
+    ]);
+});
+
+Deno.test("swatches", () => {
+    const tone = { value: "a", label: "A", color: "red" };
+    const theme = { ...tone, accent: "blue" };
+
+    assertEquals(swatchPickerClasses("x"), ["swatch-picker", "x"]);
+    assertEquals(swatchClasses(tone), ["swatch-picker__option"]);
+    assertEquals(swatchClasses(theme), [
+        "swatch-picker__option",
+        "swatch-picker__option--duo",
+    ]);
+    assertEquals(swatchStyle(tone), "--swatch-color: red");
+    assertEquals(
+        swatchStyle(theme),
+        "--swatch-color: red; --swatch-accent: blue",
+    );
+});
+
+Deno.test("tile classes and title", () => {
+    assertEquals(tilePickerClasses({ size: "sm" }), [
+        "tile-picker",
+        "tile-picker--size-sm",
+        "tile-picker--cards",
+    ]);
+    assertEquals(tilePickerClasses({ variant: "joined" }), [
+        "tile-picker",
+        "tile-picker--size-default",
+        "tile-picker--joined",
+    ]);
+    assertEquals(tileClasses("x"), ["tile", "x"]);
+    assertEquals(tileTitle("Poster"), "Poster");
+    assertEquals(tileTitle("Poster", "Poster"), undefined);
+    assertEquals(tileTitle("Poster face", "Poster"), "Poster face");
+});
+
+Deno.test("control row classes", () => {
+    assertEquals(controlRowClasses({ disabled: true }), [
+        "control-row",
+        "control-row--disabled",
+    ]);
+    assertEquals(controlRowLabelClasses(), ["control-row__label"]);
+    assertEquals(controlRowLabelClasses(true), [
+        "control-row__label",
+        "control-row__label--mono",
     ]);
 });
 

@@ -1,0 +1,44 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /* A label and its readout on one line, the control under them. */
+    .control-row {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        min-width: 0;
+
+        .control-row__header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: var(--space-sm);
+        }
+
+        .control-row__label {
+            font: var(--type-label);
+            color: var(--color-text);
+
+            &.control-row__label--mono {
+                font-family: var(--font-mono);
+            }
+        }
+
+        .control-row__value,
+        .control-row__note {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-muted);
+            text-align: end;
+        }
+
+        .control-row__value {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Only the control dims: the header stays readable. A disabled control dims itself. */
+        &.control-row--disabled .control-row__control:not(:has(:disabled)) {
+            opacity: 0.5;
+        }
+    }
+}
