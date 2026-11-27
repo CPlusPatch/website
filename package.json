@@ -31,7 +31,7 @@
         "video": "node scripts/orrery-video/record.ts"
     },
     "dependencies": {
-        "@astrojs/svelte": "9.0.1",
+        "@astrojs/svelte": "9.1.2",
         "@cpluspatch/catalog": "workspace:*",
         "@cpluspatch/destructor": "workspace:*",
         "@cpluspatch/orbit": "workspace:*",
