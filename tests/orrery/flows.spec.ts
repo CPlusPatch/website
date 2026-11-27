@@ -66,6 +66,51 @@ test("a prograde burn changes the period", async ({ page, problems }) => {
     expect(problems).toEqual([]);
 });
 
+test("Ctrl+Z undoes a burn and the Redo button applies it again", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    await selectBody(page, "Mars");
+    const before = await period(page).innerText();
+    await card(page).getByRole("button", { name: "Burn" }).click();
+    await page.getByRole("spinbutton", { name: "Prograde" }).fill("500");
+    await card(page).getByRole("button", { name: "Apply" }).click();
+    await expect(period(page)).not.toHaveText(before);
+    const after = await period(page).innerText();
+
+    await page.keyboard.press("Control+z");
+
+    await expect(period(page)).toHaveText(before);
+
+    await page.getByRole("button", { name: "Redo" }).click();
+
+    await expect(period(page)).toHaveText(after);
+    expect(problems).toEqual([]);
+});
+
+test("undo closes an open Edit form, so its stale draft can't be applied", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    await selectBody(page, "Mars");
+    const before = await period(page).innerText();
+    await card(page).getByRole("button", { name: "Edit" }).click();
+    await page.getByRole("spinbutton", { name: "Semi-major axis" }).fill("2");
+    await card(page).getByRole("button", { name: "Apply" }).click();
+    await expect(period(page)).not.toHaveText(before);
+    await card(page).getByRole("button", { name: "Edit" }).click();
+
+    await page.getByRole("button", { name: "Undo" }).click();
+
+    await expect(card(page).getByRole("button", { name: "Apply" })).toHaveCount(
+        0,
+    );
+    await expect(period(page)).toHaveText(before);
+    expect(problems).toEqual([]);
+});
+
 test("Esc in an edit field closes the form and focuses Edit", async ({
     page,
     problems,

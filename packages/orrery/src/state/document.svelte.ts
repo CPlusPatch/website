@@ -25,6 +25,14 @@ export class DocumentStore {
         return this.#scene.loads;
     }
 
+    get canUndo(): boolean {
+        return this.#scene.canUndo;
+    }
+
+    get canRedo(): boolean {
+        return this.#scene.canRedo;
+    }
+
     /** The colour of `body`, read from the system's bodies, which have their presets filled in. */
     colorOf(body: Body, parent: Body | undefined): string {
         const system = this.system;
@@ -54,6 +62,16 @@ export class DocumentStore {
     /** The orbit body `id` would have after burning `dv` at `t`. Changes nothing. */
     previewBurn(id: string, t: number, dv: Burn): ElementsResult {
         return previewBurn(this.doc.scenario, this.system, id, t, dv);
+    }
+
+    /** Restores the document before the last edit. Returns what the edit was, or `null` if there's none. */
+    undo(): string | null {
+        return this.#scene.undo();
+    }
+
+    /** Applies the edit the last undo took back. Returns what it was, or `null` if there's none. */
+    redo(): string | null {
+        return this.#scene.redo();
     }
 
     /** Replaces the whole document and sets the clock to `t`. */

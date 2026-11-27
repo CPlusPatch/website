@@ -17,6 +17,7 @@ import {
     announcement,
     bareAnnouncement,
     chaseAnnouncement,
+    historyAnnouncement,
     noChaseAnnouncement,
     satelliteAnnouncement,
 } from "../announce.ts";
@@ -33,6 +34,7 @@ import { createSession } from "../session.ts";
 import { setStores } from "../state/context.ts";
 import { createStores } from "../state/stores.svelte.ts";
 import Crumbs from "./Crumbs.svelte";
+import History from "./History.svelte";
 import Hud from "./Hud.svelte";
 import Inspector from "./inspector/Inspector.svelte";
 import Keys from "./Keys.svelte";
@@ -174,6 +176,20 @@ const setBare = (bare: boolean) => {
 };
 // Shortcuts that open a panel's control show the interface first.
 const showInterface = () => setBare(false);
+
+const travel = (kind: "undo" | "redo") => {
+    const able =
+        kind === "undo" ? documentStore.canUndo : documentStore.canRedo;
+    void inspector?.closeForms();
+
+    const label = kind === "undo" ? documentStore.undo() : documentStore.redo();
+    // A restore that failed to draw shows its own notice.
+    if (able && label === null) return;
+
+    announce(historyAnnouncement(kind, label));
+};
+const undo = () => travel("undo");
+const redo = () => travel("redo");
 
 // The satellite and chase events of the current view, until it's replaced.
 $effect(() => {
@@ -373,6 +389,8 @@ onMount(() => {
             showInterface();
             timeBar?.toggleDate();
         },
+        undo,
+        redo,
     });
 
     const session = createSession({
@@ -454,6 +472,7 @@ onMount(() => {
     {/if}
     <span class="orrery__spacer"></span>
     {#if shown}
+        <History onUndo={undo} onRedo={redo} />
         <ScenarioMenu
             bind:this={scenarios}
             {storage}

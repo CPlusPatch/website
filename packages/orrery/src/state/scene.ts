@@ -16,9 +16,46 @@ import {
 } from "@cpluspatch/sim";
 import { previewBurn } from "../burning.ts";
 
+/** A document to restore, and what the edit that left it was. */
+export type HistoryEntry = { doc: Document; label: string };
+
+const HISTORY_LIMIT = 100;
+
+/** The bodies of `doc` by id. */
+const bodiesOf = (doc: Document): Map<string, Body> =>
+    new Map(doc.scenario.bodies.map((body) => [body.id, body]));
+
+// `apply` validates, which rebuilds every body and event, so a reference check alone would flag them all.
+const same = (a: unknown, b: unknown): boolean =>
+    a === b || JSON.stringify(a) === JSON.stringify(b);
+
+/** Whether `a` and `b` have the same events for body `id`. */
+const sameEvents = (a: Document, b: Document, id: string): boolean => {
+    const mine = a.timeline.filter((event) => event.bodyId === id);
+    const theirs = b.timeline.filter((event) => event.bodyId === id);
+
+    return (
+        mine.length === theirs.length &&
+        mine.every((event, i) => same(event, theirs[i]))
+    );
+};
+
+/** What an edit is called in the history and the live region, from the edited body's name. */
+const HISTORY_LABELS = {
+    "add-body": (name: string) => `adding ${name}`,
+    "remove-body": (name: string) => `removing ${name}`,
+    "update-body": (name: string) => `the edit to ${name}`,
+    "set-orbit": (name: string) => `the orbit edit on ${name}`,
+    "schedule-burn": (name: string) => `the burn on ${name}`,
+};
+
 /** The state a `Scene` reads and writes. The stores hold it as `$state`. */
 export type Held = {
     doc: Document;
+    /** Documents before each edit, oldest first. Replaced, never changed. */
+    past: readonly HistoryEntry[];
+    /** Documents that undo left, the next redo last. Replaced, never changed. */
+    future: readonly HistoryEntry[];
     focused: string;
     selected: string | null;
     /** How many scenarios have been loaded. A body edit replaces `doc` too, but doesn't count. */
@@ -53,6 +90,8 @@ export class Scene {
         this.clock = clock;
         this.#held = hold({
             doc,
+            past: [],
+            future: [],
             focused: root.id,
             selected: null,
             loads: 0,
@@ -70,6 +109,14 @@ export class Scene {
     /** How many scenarios have been loaded. */
     get loads(): number {
         return this.#held.loads;
+    }
+
+    get canUndo(): boolean {
+        return this.#held.past.length > 0;
+    }
+
+    get canRedo(): boolean {
+        return this.#held.future.length > 0;
     }
 
     /** The scenario with its command history. */
@@ -160,6 +207,8 @@ export class Scene {
         if (!root) throw new Error("The scenario has no root body.");
 
         this.#dispatch({ type: "load", doc });
+        this.#held.past = [];
+        this.#held.future = [];
         this.#held.loads += 1;
         this.#held.selected = null;
         this.#held.focused = root.id;
@@ -169,7 +218,10 @@ export class Scene {
 
     /** Adds `body` to the scenario, or throws why it can't. Keeps the focus and selection. */
     addBody(body: Body): void {
-        this.#dispatch({ type: "add-body", body });
+        this.#dispatch(
+            { type: "add-body", body },
+            HISTORY_LABELS["add-body"](body.name),
+        );
         this.#emit({ type: "bodies", added: [body.id], removed: [] });
     }
 
@@ -185,29 +237,33 @@ export class Scene {
         const removed = subtreeIds(this.scenario, id);
         const gone = new Set(removed);
 
-        this.#dispatch({ type: "remove-body", id });
+        this.#dispatch(
+            { type: "remove-body", id },
+            HISTORY_LABELS["remove-body"](body.name),
+        );
 
+        const parent = body.orbit.parent;
         const refocus = gone.has(this.#held.focused);
         const deselect =
             this.#held.selected !== null && gone.has(this.#held.selected);
-        if (refocus) this.#held.focused = body.orbit.parent;
+        if (refocus) this.#held.focused = parent;
         if (deselect) this.#held.selected = null;
 
-        try {
-            this.#emit({ type: "bodies", added: [], removed });
-        } finally {
-            // A view that fails to draw restores the old scenario and its focus, which this mustn't undo.
-            const parent = body.orbit.parent;
-            try {
-                if (refocus && this.#held.focused === parent) {
-                    this.#emit({ type: "focus", id: parent });
-                }
-            } finally {
-                if (deselect && this.#held.selected === null) {
-                    this.#emit({ type: "selection", id: null });
-                }
-            }
-        }
+        this.#settle(
+            () => this.#emit({ type: "bodies", added: [], removed }),
+            refocus ? parent : null,
+            deselect,
+        );
+    }
+
+    /** Restores the document before the last edit. Returns what the edit was, or `null` if there's none. */
+    undo(): string | null {
+        return this.#travel("past", "future");
+    }
+
+    /** Applies the edit the last undo took back. Returns what it was, or `null` if there's none. */
+    redo(): string | null {
+        return this.#travel("future", "past");
     }
 
     /** Puts body `id` on a Kepler orbit of `el` from now on. Its perturbations keep acting. */
@@ -259,7 +315,8 @@ export class Scene {
             }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {
-        const result = apply(this.#held.doc, cmd, PRESETS);
+        const doc = this.#held.doc;
+        const result = apply(doc, cmd, PRESETS);
         if (!result.ok) return { ok: false, errors: result.errors };
 
         // Not committed here: `removeBody` also moves the focus and selection.
@@ -269,26 +326,131 @@ export class Scene {
             return { ok: true };
         }
 
+        const id =
+            cmd.type === "add-body"
+                ? cmd.body.id
+                : cmd.type === "update-body"
+                  ? cmd.id
+                  : cmd.bodyId;
+        const name =
+            cmd.type === "add-body"
+                ? cmd.body.name
+                : (doc.scenario.bodies.find((body) => body.id === id)?.name ??
+                  id);
+        this.#record(HISTORY_LABELS[cmd.type](name));
         this.#commit(result.doc);
         if (cmd.type === "add-body") {
-            this.#emit({ type: "bodies", added: [cmd.body.id], removed: [] });
+            this.#emit({ type: "bodies", added: [id], removed: [] });
 
             return { ok: true };
         }
 
-        this.#emit({
-            type: "body",
-            id: cmd.type === "update-body" ? cmd.id : cmd.bodyId,
-        });
+        this.#emit({ type: "body", id });
 
         return { ok: true };
     }
 
-    #dispatch(cmd: Command): void {
+    /** Applies `cmd`, or throws why it can't. Records `label` in the history when given. */
+    #dispatch(cmd: Command, label?: string): void {
         const result = apply(this.#held.doc, cmd, PRESETS);
         if (!result.ok) throw new Error(result.errors.join(" "));
 
+        if (label !== undefined) this.#record(label);
         this.#commit(result.doc);
+    }
+
+    #record(label: string): void {
+        const past = [...this.#held.past, { doc: this.#held.doc, label }];
+
+        this.#held.past = past.slice(-HISTORY_LIMIT);
+        this.#held.future = [];
+    }
+
+    /** Moves the last entry of `from` to `to`, with the current document, and restores the entry's. */
+    #travel(from: "past" | "future", to: "past" | "future"): string | null {
+        const entry = this.#held[from].at(-1);
+        if (!entry) return null;
+
+        this.#held[from] = this.#held[from].slice(0, -1);
+        this.#held[to] = [
+            ...this.#held[to],
+            { doc: this.#held.doc, label: entry.label },
+        ];
+        this.#restore(entry.doc);
+
+        // A view that failed to draw it loaded the last good document instead, and cleared the history.
+        return this.#held.doc === entry.doc ? entry.label : null;
+    }
+
+    /** Swaps in `next` and emits what differs. A gone focus or selection moves like it does on a remove. */
+    #restore(next: Document): void {
+        const prev = this.#held.doc;
+        const before = bodiesOf(prev);
+        const after = bodiesOf(next);
+
+        const removed = [...before.keys()].filter((id) => !after.has(id));
+        // Parents first, as the view's `patch` needs.
+        const added = sortByDepth(next.scenario)
+            .map((body) => body.id)
+            .filter((id) => !before.has(id));
+        const changed = [...after]
+            .filter(([id, body]) => {
+                const old = before.get(id);
+
+                return (
+                    old !== undefined &&
+                    (!same(old, body) || !sameEvents(prev, next, id))
+                );
+            })
+            .map(([id]) => id);
+
+        let refocus: string | null = null;
+        if (!after.has(this.#held.focused)) {
+            let id = before.get(this.#held.focused)?.orbit?.parent;
+            while (id !== undefined && !after.has(id)) {
+                id = before.get(id)?.orbit?.parent;
+            }
+
+            const root = next.scenario.bodies.find(
+                (body) => body.orbit === undefined,
+            );
+            refocus = id ?? root?.id ?? this.#held.focused;
+        }
+        const deselect =
+            this.#held.selected !== null && !after.has(this.#held.selected);
+
+        this.#commit(next);
+        if (refocus !== null) this.#held.focused = refocus;
+        if (deselect) this.#held.selected = null;
+
+        this.#settle(
+            () => {
+                if (added.length > 0 || removed.length > 0) {
+                    this.#emit({ type: "bodies", added, removed });
+                }
+                for (const id of changed) this.#emit({ type: "body", id });
+            },
+            refocus,
+            deselect,
+        );
+    }
+
+    /** Runs `emit`, then announces the focus moved to `refocus` and a cleared selection. */
+    #settle(emit: () => void, refocus: string | null, deselect: boolean): void {
+        try {
+            emit();
+        } finally {
+            // A view that fails to draw restores the old scenario and its focus, which this mustn't undo.
+            try {
+                if (refocus !== null && this.#held.focused === refocus) {
+                    this.#emit({ type: "focus", id: refocus });
+                }
+            } finally {
+                if (deselect && this.#held.selected === null) {
+                    this.#emit({ type: "selection", id: null });
+                }
+            }
+        }
     }
 
     #commit(doc: Document): void {

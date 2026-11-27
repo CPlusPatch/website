@@ -6,6 +6,11 @@ import type { Scene } from "../state/scene.ts";
 const TEXT = "input, select, textarea, [contenteditable], dialog";
 
 /** What the shortcuts call that isn't the scene's. */
+/** What the keyboard calls the key that undo takes with Z: Cmd on Apple devices, Ctrl elsewhere. */
+export const MOD_KEY = /Mac|iPhone|iPad/.test(navigator.userAgent)
+    ? "Cmd"
+    : "Ctrl";
+
 export type ShortcutActions = {
     /** Closes the keys card. Returns whether it was open. */
     closeKeys: () => boolean;
@@ -20,6 +25,8 @@ export type ShortcutActions = {
     /** Hides the interface, or shows it if it's hidden. */
     toggleBare: () => void;
     toggleDate: () => void;
+    undo: () => void;
+    redo: () => void;
 };
 
 /** The unit the card shows for the selected body, or AU when it shows none. */
@@ -38,6 +45,8 @@ const shownUnit = (scene: Scene): AUnit => {
  * or to the selected satellite when no body is selected.
  * U switches the distance `units`, C chases the focus, F1 hides the interface and `/` opens the
  * search.
+ * Ctrl or Cmd with Z undoes, and with Shift (or Ctrl with Y) redoes, except in a text field, which
+ * keeps its own undo.
  * Escape closes the keys card first. Returns a function that unbinds them.
  */
 export const bindShortcuts = (
@@ -52,6 +61,8 @@ export const bindShortcuts = (
         toggleChase,
         toggleBare,
         toggleDate,
+        undo,
+        redo,
     }: ShortcutActions,
 ): (() => void) => {
     let spaceOnButton = false;
@@ -67,6 +78,29 @@ export const bindShortcuts = (
 
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.defaultPrevented || event.isComposing) return;
+
+        // Before the repeat check, so a held Ctrl+Z keeps undoing.
+        if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+            const key = event.key.toLowerCase();
+            const redoing =
+                (key === "z" && event.shiftKey) ||
+                (key === "y" && event.ctrlKey && !event.shiftKey);
+            const undoing = key === "z" && !event.shiftKey;
+
+            if (undoing || redoing) {
+                const inText =
+                    event.target instanceof Element &&
+                    event.target.closest(TEXT) !== null;
+                if (inText) return;
+
+                if (undoing) undo();
+                else redo();
+                event.preventDefault();
+
+                return;
+            }
+        }
+
         if (event.ctrlKey || event.altKey || event.metaKey) return;
 
         // A held Space would toggle the clock many times a second.

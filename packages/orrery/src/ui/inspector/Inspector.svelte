@@ -193,6 +193,26 @@ const closeForm = async (opener: "edit" | "burn") => {
     actions?.focusOpener(opener);
 };
 
+/** Drops an open form's draft, as undo and redo change the document it was taken from. */
+export const closeForms = async () => {
+    if (mode === "card") return;
+
+    const opener = mode;
+    // Focus outside the form, like on the Undo button, stays where it is.
+    const held = content?.contains(document.activeElement) === true;
+    mode = "card";
+    if (!held) return;
+
+    if (opener === "add") {
+        restoreFocus(view.selected ?? view.focus);
+
+        return;
+    }
+
+    await tick();
+    actions?.focusOpener(opener);
+};
+
 const openForm = async (next: "edit" | "burn") => {
     mode = next;
     await tick();

@@ -19,6 +19,8 @@ const make = (): Scene =>
 Deno.test("a scene writes through the object its hold function returns", () => {
     const held: Held = {
         doc: documentOf(solarSystem),
+        past: [],
+        future: [],
         focused: "",
         selected: null,
         loads: 0,
@@ -668,4 +670,233 @@ Deno.test("a zero burn on a precessing body keeps its position", () => {
     assertAlmostEquals(parent.r.x + local.r.x, before.r.x, 1e-3);
     assertAlmostEquals(parent.r.y + local.r.y, before.r.y, 1e-3);
     assertAlmostEquals(parent.r.z + local.r.z, before.r.z, 1e-3);
+});
+
+// Applying a command validates the document, which can reorder a body's keys. Starting from
+// a validated one keeps an untouched body equal across an undo.
+const makeValid = (): Scene => {
+    const scene = make();
+    scene.load(documentOf(solarSystem), 0);
+
+    return scene;
+};
+
+const recorded = (scene: Scene): SceneEvent[] => {
+    const events: SceneEvent[] = [];
+    scene.on((e) => events.push(e));
+
+    return events;
+};
+
+Deno.test("undoing an add removes the body and emits one bodies event", () => {
+    const scene = makeValid();
+    const before = scene.doc;
+    scene.addBody(rock("rock", "earth"));
+    const events = recorded(scene);
+
+    const label = scene.undo();
+
+    assertEquals(label, "adding rock");
+    assert(scene.doc === before);
+    assertEquals(events, [{ type: "bodies", added: [], removed: ["rock"] }]);
+});
+
+Deno.test("undoing a remove brings the subtree back, parents first, as the same document", () => {
+    const scene = makeValid();
+    const before = scene.doc;
+    scene.removeBody("earth");
+    const events = recorded(scene);
+
+    const label = scene.undo();
+
+    const added = events.find((e) => e.type === "bodies");
+    assertEquals(label, "removing Earth");
+    assert(scene.doc === before);
+    assert(added?.type === "bodies");
+    assertEquals(
+        [...added.added].sort(),
+        [...subtreeIds(solarSystem, "earth")].sort(),
+    );
+    assertEquals(added.removed, []);
+    for (const id of added.added) {
+        const parent = scene.scenario.bodies.find((b) => b.id === id)?.orbit
+            ?.parent;
+        if (id !== "earth")
+            assert(added.added.indexOf(parent ?? "") < added.added.indexOf(id));
+    }
+});
+
+Deno.test("redoing a remove moves the focus to the parent and clears the selection", () => {
+    const scene = makeValid();
+    scene.removeBody("earth");
+    scene.undo();
+    scene.focus("moon");
+    scene.select("moon");
+    const events = recorded(scene);
+
+    scene.redo();
+
+    assertEquals(scene.focused, "sun");
+    assertEquals(scene.selected, null);
+    assertEquals(
+        events.map((e) => e.type),
+        ["bodies", "focus", "selection"],
+    );
+});
+
+Deno.test("redoing a remove focuses the nearest ancestor that is left", () => {
+    const scene = makeValid();
+    scene.removeBody("earth");
+    scene.undo();
+    scene.focus("moon");
+
+    scene.redo();
+
+    assertEquals(scene.focused, "sun");
+});
+
+Deno.test("undoing a burn restores the document and emits a body event, and redo applies it again", () => {
+    const scene = makeValid();
+    const before = scene.doc;
+    scene.burn("moon", PROGRADE);
+    const burned = scene.doc;
+    const events = recorded(scene);
+
+    const undone = scene.undo();
+
+    assertEquals(undone, "the burn on Moon");
+    assert(scene.doc === before);
+    assertEquals(events, [{ type: "body", id: "moon" }]);
+
+    const redone = scene.redo();
+
+    assertEquals(redone, "the burn on Moon");
+    assert(scene.doc === burned);
+    assertEquals(events.at(-1), { type: "body", id: "moon" });
+});
+
+Deno.test("undo and redo leave the clock alone", () => {
+    const scene = makeValid();
+    scene.burn("moon", PROGRADE);
+    scene.clock.set(500);
+
+    scene.undo();
+    scene.redo();
+
+    assertEquals(scene.clock.t, 500);
+});
+
+Deno.test("undo and redo with nothing to restore return null and change nothing", () => {
+    const scene = makeValid();
+    const before = scene.doc;
+    const events = recorded(scene);
+
+    assertEquals(scene.undo(), null);
+    assertEquals(scene.redo(), null);
+    assert(scene.doc === before);
+    assertEquals(events, []);
+    assertEquals([scene.canUndo, scene.canRedo], [false, false]);
+});
+
+Deno.test("an edit after an undo clears the redo stack", () => {
+    const scene = makeValid();
+    scene.burn("moon", PROGRADE);
+    scene.undo();
+    assert(scene.canRedo);
+
+    scene.addBody(rock("rock", "earth"));
+
+    assert(!scene.canRedo);
+    assertEquals(scene.redo(), null);
+    assert(scene.canUndo);
+});
+
+Deno.test("loading a scenario clears the history", () => {
+    const scene = makeValid();
+    scene.burn("moon", PROGRADE);
+    scene.burn("moon", PROGRADE);
+    scene.undo();
+
+    scene.load(documentOf(solarSystem), 0);
+
+    assertEquals([scene.canUndo, scene.canRedo], [false, false]);
+});
+
+Deno.test("a rejected dispatch records nothing", () => {
+    const scene = makeValid();
+
+    const result = scene.dispatch({ type: "remove-body", id: "nowhere" });
+    const added = scene.dispatch({
+        type: "add-body",
+        body: rock("rock", "nowhere"),
+    });
+
+    assert(!result.ok);
+    assert(!added.ok);
+    assert(!scene.canUndo);
+});
+
+Deno.test("a remove through dispatch records one entry", () => {
+    const scene = makeValid();
+
+    scene.dispatch({ type: "remove-body", id: "earth" });
+
+    assertEquals(scene.undo(), "removing Earth");
+    assert(!scene.canUndo);
+});
+
+Deno.test("the history keeps the last 100 edits", () => {
+    const scene = makeValid();
+    for (let i = 0; i < 105; i++) scene.addBody(rock(`rock-${i}`, "earth"));
+
+    let steps = 0;
+    while (scene.undo() !== null) steps++;
+
+    assertEquals(steps, 100);
+    assert(scene.scenario.bodies.some((b) => b.id === "rock-0"));
+    assert(!scene.scenario.bodies.some((b) => b.id === "rock-104"));
+});
+
+Deno.test("each kind of edit is labelled with the body's name", () => {
+    const scene = makeValid();
+    const moon = scene.scenario.bodies.find((b) => b.id === "moon");
+    if (!moon?.orbit) throw new Error("The scenario has no Moon.");
+
+    scene.dispatch({
+        type: "update-body",
+        id: "moon",
+        patch: { name: "Luna" },
+    });
+    scene.setElements("moon", moon.orbit.elements);
+    scene.burn("moon", PROGRADE);
+    scene.addBody(rock("rock", "earth"));
+    scene.removeBody("rock");
+
+    const labels: (string | null)[] = [];
+    for (let i = 0; i < 6; i++) labels.push(scene.undo());
+
+    assertEquals(labels, [
+        "removing rock",
+        "adding rock",
+        "the burn on Luna",
+        "the orbit edit on Luna",
+        "the edit to Moon",
+        null,
+    ]);
+});
+
+Deno.test("an undo that a listener replaces with another document returns null and clears the history", () => {
+    const scene = makeValid();
+    scene.addBody(rock("rock", "earth"));
+    const good = scene.doc;
+    scene.on((event) => {
+        if (event.type === "bodies") scene.load(good, 0);
+    });
+
+    const label = scene.undo();
+
+    assertEquals(label, null);
+    assert(scene.scenario.bodies.some((body) => body.id === "rock"));
+    assertEquals(scene.canUndo, false);
+    assertEquals(scene.canRedo, false);
 });

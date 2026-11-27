@@ -49,3 +49,15 @@ export const satelliteAnnouncement = (
 
     return event.k === null ? null : `Focused on ${name ?? "satellite"}.`;
 };
+
+/** What a screen reader says after undo or redo, with the `label` of the edit or `null` if there was none. */
+export const historyAnnouncement = (
+    kind: "undo" | "redo",
+    label: string | null,
+): string => {
+    if (label === null) {
+        return kind === "undo" ? "Nothing to undo." : "Nothing to redo.";
+    }
+
+    return kind === "undo" ? `Undid ${label}.` : `Redid ${label}.`;
+};

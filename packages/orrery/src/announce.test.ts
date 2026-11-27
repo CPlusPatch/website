@@ -4,6 +4,7 @@ import {
     announcement,
     bareAnnouncement,
     chaseAnnouncement,
+    historyAnnouncement,
     noChaseAnnouncement,
     satelliteAnnouncement,
 } from "./announce.ts";
@@ -82,4 +83,17 @@ Deno.test("chasing a body that orbits nothing says why it can't", () => {
         noChaseAnnouncement("Sun"),
         "Sun orbits nothing, so it can't be chased.",
     );
+});
+
+Deno.test("undo and redo name the edit, or say there is none", () => {
+    assertEquals(
+        historyAnnouncement("undo", "adding Vesta"),
+        "Undid adding Vesta.",
+    );
+    assertEquals(
+        historyAnnouncement("redo", "adding Vesta"),
+        "Redid adding Vesta.",
+    );
+    assertEquals(historyAnnouncement("undo", null), "Nothing to undo.");
+    assertEquals(historyAnnouncement("redo", null), "Nothing to redo.");
 });

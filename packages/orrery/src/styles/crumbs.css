@@ -40,7 +40,8 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        block-size: var(--orrery-control);
+        /* As tall as the tools, which add their border outside the control height. */
+        block-size: calc(var(--orrery-control) + 2px);
         padding: 0 8px;
         border: 1px solid transparent;
         border-radius: 0;
@@ -118,10 +119,44 @@
         }
     }
 
+    .orrery__history {
+        display: flex;
+        align-self: stretch;
+    }
+
+    .orrery__history-button {
+        display: grid;
+        place-items: center;
+        inline-size: 2rem;
+        min-block-size: var(--orrery-control);
+        padding: 0;
+        color: var(--orrery-text);
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orrery-panel-raised);
+        }
+
+        /* Clear of the shared frame, and above the other button. */
+        &:focus-visible {
+            position: relative;
+            z-index: 1;
+            outline-offset: 3px;
+        }
+
+        &[aria-disabled="true"] {
+            background-color: transparent;
+            color: var(--orrery-dim);
+            cursor: default;
+        }
+    }
+
     @media (max-width: 720px) {
         /* Takes the room the tools leave, and shrinks before they wrap. */
         .orrery__crumbs {
             flex: 1 1 0;
+            /* The first crumb keeps its label, even at 320px. */
+            min-inline-size: min-content;
         }
 
         .orrery__crumb-list {

@@ -8,6 +8,7 @@ import type { Attachment } from "svelte/attachments";
 import { TRACKS } from "../audio/music.ts";
 import { roleMarker } from "./body-marker.ts";
 import { ROLE_LABELS } from "./labels.ts";
+import { MOD_KEY } from "./shortcuts.ts";
 
 type Props = {
     /** The panel that holds the card. The button stays where the component is placed. */
@@ -31,6 +32,8 @@ const KEYS: [keys: string[], what: string][] = [
     [["C"], "Chase the focus, or stop"],
     [["F1"], "Hide the interface, labels, orbits and icons, or show them"],
     [["Esc"], "Close, or clear the pick"],
+    [[MOD_KEY, "Z"], "Undo"],
+    [[MOD_KEY, "Shift", "Z"], "Redo"],
 ];
 
 const ORBIT_CLASSES: [OrbitClass, string][] = [
