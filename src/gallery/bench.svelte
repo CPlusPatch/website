@@ -3,7 +3,6 @@ import { onMount, type Snippet } from "svelte";
 import {
     type Backdrop,
     type BenchGroup,
-    comboOf,
     firstPick,
     type Pick,
     parseHash,
@@ -17,13 +16,14 @@ import BenchInspector from "./bench-inspector.svelte";
 import BenchList from "./bench-list.svelte";
 import BenchStage from "./bench-stage.svelte";
 import { COMPARE_MODES, type CompareMode } from "./compare.ts";
+import { controlQuery } from "./controls.ts";
 import type { Tag } from "./story.ts";
 
 /**
  * A component's stories as a workbench: the story list, a stage (one page of
  * stories in a frame) and an inspector. Without JS the list's links load
  * into the frame. With it, the pick is the URL hash (`#<group>/<story>`,
- * `#<group>/<story>/<combo>` for a combination of the story's controls, or
+ * `#<group>/<story>?<query>` for a controlled story with values set, or
  * `#<group>` for all of a group's stories), and each pick is one history
  * entry. This owns the page-wide wiring (hash, history, Display menu); the
  * parts only take props.
@@ -77,8 +77,8 @@ const group = $derived(
     groups.find((g) => g.id === current.group) ?? (groups[0] as BenchGroup),
 );
 const id = $derived(pickId(current));
-const storyId = $derived(pickId({ ...current, combo: null }));
 const story = $derived(group.stories.find((s) => s.name === current.story));
+const path = $derived(pickPath(current, story));
 
 const fromHash = () => parseHash(groups, location.hash) ?? first;
 
@@ -168,8 +168,8 @@ onMount(() => {
             <nav class="bench__list" aria-label="Stories">
                 <BenchList
                     {groups}
-                    current={storyId}
-                    label={storyId}
+                    current={id}
+                    label={id}
                     onpick={(pick) => {
                         location.hash = pickHash(pick);
                     }}
@@ -184,7 +184,7 @@ onMount(() => {
             >
                 <BenchStage
                     bind:this={stage}
-                    url={pickPath(current)}
+                    url={path}
                     title={id}
                     onhashlink={followHash}
                     onwidth={(px) => {
@@ -194,7 +194,7 @@ onMount(() => {
                 {#if mounted}
                     <BenchCompare
                         bind:this={compareStrip}
-                        url={pickPath(current)}
+                        url={path}
                         title={id}
                         width={stageWidth}
                         mode={compare}
@@ -213,11 +213,11 @@ onMount(() => {
                     {mounted}
                     {backdrop}
                     {outline}
-                    oncombo={(values) => {
+                    oncontrols={(values) => {
                         if (!story) return;
                         location.hash = pickHash({
                             ...current,
-                            combo: comboOf(story, values),
+                            query: controlQuery(story.controls, values),
                         });
                     }}
                     onstage={setStage}

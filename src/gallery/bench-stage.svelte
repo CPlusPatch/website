@@ -3,13 +3,16 @@ import PreviewFrame from "@cpluspatch/ui/svelte/ui/preview-frame.svelte";
 import { onMount } from "svelte";
 import type { Backdrop } from "./bench.ts";
 import { applyStage, fit } from "./fit-frame.ts";
+import { followQuery, sendQuery, splitUrl } from "./play-frame.ts";
 import { PREVIEW_SNAPS } from "./widths.ts";
 
 /**
  * The bench's stage: one page of stories in a frame, grown to its height,
  * and as wide as the reader sets it (the preview frame's edge or ruler).
  * A new `url` moves the frame with location.replace(), so it adds no
- * history entry of its own. Without JS the frame stays on its first url.
+ * history entry of its own. A new query on the page already shown goes to
+ * the page as a message instead, so a live story changes without a reload
+ * (play-frame.ts). Without JS the frame stays on its first url.
  */
 type Props = {
     url: string;
@@ -24,10 +27,10 @@ type Props = {
 const { url, title, onhashlink, onwidth }: Props = $props();
 
 let frame: HTMLIFrameElement | undefined = $state();
-// The src stays the first url: later ones go through location.replace().
+// The src stays the first url: later ones go through location.replace() or a message.
 // svelte-ignore state_referenced_locally
 const initial = url;
-let shown = initial;
+let shown = splitUrl(initial);
 
 /** Loads the page in the frame again, for a changed Display choice. */
 export const reload = () => frame?.contentWindow?.location.reload();
@@ -39,6 +42,7 @@ onMount(() => {
     if (!frame) return;
 
     fit(frame, { onHashLink: (hash) => onhashlink?.(hash) ?? false });
+    const unfollow = followQuery(frame, () => shown.query);
 
     // The compare strip's copies follow the frame's width.
     const observer = new ResizeObserver(() =>
@@ -46,13 +50,22 @@ onMount(() => {
     );
     observer.observe(frame);
 
-    return () => observer.disconnect();
+    return () => {
+        observer.disconnect();
+        unfollow();
+    };
 });
 
 $effect(() => {
-    if (url === shown) return;
-    shown = url;
-    frame?.contentWindow?.location.replace(url);
+    const next = splitUrl(url);
+    if (next.path === shown.path && next.query === shown.query) return;
+
+    const samePage = next.path === shown.path;
+    shown = next;
+    if (!frame) return;
+
+    if (samePage) sendQuery(frame, next.query);
+    else frame.contentWindow?.location.replace(url);
 });
 </script>
 

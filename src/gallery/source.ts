@@ -73,17 +73,42 @@ const indent = (s: string) =>
         .map((line) => `    ${line}`)
         .join("\n");
 
-/** The story, and any it nests, as markup. */
-export const storySource = (story: Story): string => {
-    const name = componentName(story.component);
-    const attributes = Object.entries(story.props)
+/** A story's icon and slot, as lines of markup. */
+export const contentSource = (icon?: string, slot?: string): string[] =>
+    [icon && `<Icon name="${icon}" />`, slot && short(slot.trim())].filter(
+        Boolean,
+    ) as string[];
+
+/**
+ * A component as markup: its display name, props and body lines. `storySource`
+ * reads these from a story, and the bench from the live values of one.
+ */
+export const markup = (
+    name: string,
+    props: Record<string, unknown>,
+    body: string[],
+): string => {
+    const attributes = Object.entries(props)
         .filter(([, v]) => v !== undefined)
         .map(attribute);
     const open = [name, ...attributes].join(" ");
 
-    const body = [
-        story.icon && `<Icon name="${story.icon}" />`,
-        story.slot && short(story.slot.trim()),
+    if (!body.length) return `<${open} />`;
+    const [only] = body;
+    if (body.length === 1 && only && !only.includes("\n") && only.length < 40) {
+        return `<${open}>${only}</${name}>`;
+    }
+    return `<${open}>\n${indent(body.join("\n"))}\n</${name}>`;
+};
+
+/** The component's display name, as `storySource` and the bench show it. */
+export const displayName = (story: Story): string =>
+    componentName(story.component);
+
+/** The story, and any it nests, as markup. */
+export const storySource = (story: Story): string =>
+    markup(componentName(story.component), story.props, [
+        ...contentSource(story.icon, story.slot),
         ...(story.children ?? []).map(storySource),
         ...Object.entries(story.slots ?? {}).flatMap(([slot, children]) =>
             children.map((child) =>
@@ -93,12 +118,4 @@ export const storySource = (story: Story): string => {
                 ),
             ),
         ),
-    ].filter(Boolean) as string[];
-
-    if (!body.length) return `<${open} />`;
-    const [only] = body;
-    if (body.length === 1 && only && !only.includes("\n") && only.length < 40) {
-        return `<${open}>${only}</${name}>`;
-    }
-    return `<${open}>\n${indent(body.join("\n"))}\n</${name}>`;
-};
+    ]);

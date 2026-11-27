@@ -1,23 +1,19 @@
 // Loaded through Vite's ssrLoadModule (see parity.ts), which compiles the .astro and .svelte imports.
 import AstroBadge from "@cpluspatch/ui/astro/ui/badge.astro";
 import AstroButton from "@cpluspatch/ui/astro/ui/button.astro";
+import AstroInput from "@cpluspatch/ui/astro/ui/input.astro";
 import AstroPreviewFrame from "@cpluspatch/ui/astro/ui/preview-frame.astro";
 import AstroSegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import AstroSelect from "@cpluspatch/ui/astro/ui/select.astro";
 import AstroToggle from "@cpluspatch/ui/astro/ui/toggle.astro";
 import SvelteIcon from "@cpluspatch/ui/svelte/icon.svelte";
-import SvelteBadge from "@cpluspatch/ui/svelte/ui/badge.svelte";
-import SvelteButton from "@cpluspatch/ui/svelte/ui/button.svelte";
-import SveltePreviewFrame from "@cpluspatch/ui/svelte/ui/preview-frame.svelte";
-import SvelteSegmentedControl from "@cpluspatch/ui/svelte/ui/segmented-control.svelte";
-import SvelteSelect from "@cpluspatch/ui/svelte/ui/select.svelte";
-import SvelteToggle from "@cpluspatch/ui/svelte/ui/toggle.svelte";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import type { Component } from "svelte";
 import { render } from "svelte/server";
 import { isIconName } from "../../packages/ui/src/icons.ts";
+import { PORTS } from "../../src/gallery/ports.ts";
 import { groups } from "../../src/gallery/stories/index.ts";
-import { combinations, type Story } from "../../src/gallery/story.ts";
+import type { Story } from "../../src/gallery/story.ts";
 import StoryNode from "../../src/gallery/story-node.astro";
 import StorySlot from "../../src/gallery/story-slot.astro";
 import type { RenderedCase } from "./types.ts";
@@ -25,17 +21,15 @@ import WithChildren from "./with-children.svelte";
 
 type Port = Component<Record<string, unknown>>;
 
-// Each port types its own props, which don't fit a map of any component's.
-const port = (component: unknown): Port => component as Port;
-
 // Icon has no stories of its own: the segmented control draws it.
-const PORTS = new Map<Story["component"], Port>([
-    [AstroBadge, port(SvelteBadge)],
-    [AstroButton, port(SvelteButton)],
-    [AstroPreviewFrame, port(SveltePreviewFrame)],
-    [AstroSegmentedControl, port(SvelteSegmentedControl)],
-    [AstroSelect, port(SvelteSelect)],
-    [AstroToggle, port(SvelteToggle)],
+const PAIRS = new Map<Story["component"], Port>([
+    [AstroBadge, PORTS.badge],
+    [AstroButton, PORTS.button],
+    [AstroInput, PORTS.input],
+    [AstroPreviewFrame, PORTS["preview-frame"]],
+    [AstroSegmentedControl, PORTS["segmented-control"]],
+    [AstroSelect, PORTS.select],
+    [AstroToggle, PORTS.toggle],
 ]);
 
 /** `icon` values in a story's props, which the Svelte icon only draws if built in. */
@@ -50,7 +44,7 @@ const icons = (value: unknown): string[] => {
 
 /** Each story with a port, nested ones too, named by their path of story names. */
 const walk = (story: Story, path: string): [string, Story, Port][] => {
-    const found = PORTS.get(story.component);
+    const found = PAIRS.get(story.component);
     const nested = [
         ...(story.children ?? []),
         ...Object.values(story.slots ?? {}).flat(),
@@ -68,16 +62,9 @@ export const renderCases = async (): Promise<RenderedCase[]> => {
 
     for (const group of groups) {
         for (const top of group.stories) {
-            const tops = [
-                { story: top, path: `${group.id}/${top.name}` },
-                ...combinations(top).map(({ combo, story }) => ({
-                    story,
-                    path: `${group.id}/${top.name}/${combo}`,
-                })),
-            ];
-
-            for (const [name, story, svelte] of tops.flatMap(
-                ({ story, path }) => walk(story, path),
+            for (const [name, story, svelte] of walk(
+                top,
+                `${group.id}/${top.name}`,
             )) {
                 const unsupported = icons(story.props).find(
                     (icon) =>

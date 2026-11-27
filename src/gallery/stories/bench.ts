@@ -17,22 +17,22 @@ const sizes: BenchGroup = {
             name: "lg",
             tags: [],
             source: '<Button size="lg">Lg</Button>',
+            component: "Button",
             controls: [],
-            combos: {},
         },
         {
             name: "sm",
             tags: [],
             source: '<Button size="sm">Sm</Button>',
+            component: "Button",
             controls: [],
-            combos: {},
         },
         {
             name: "spinning",
             tags: ["animated"],
             source: "<Button loading>Saving</Button>",
+            component: "Button",
             controls: [],
-            combos: {},
         },
     ],
 };
@@ -41,24 +41,23 @@ const variant: BenchStory = {
     name: "default",
     tags: [],
     source: '<Button variant="solid" tone="primary">Button</Button>',
+    component: "Button",
     controls: [
         {
-            prop: "variant",
+            key: "variant",
+            kind: "choice",
             values: ["solid", "outline", "ghost", "link"],
             value: "solid",
         },
         {
-            prop: "tone",
+            key: "tone",
+            kind: "choice",
             values: ["primary", "secondary", "destructive"],
             value: "primary",
         },
     ],
-    combos: {
-        "outline-destructive": {
-            source: '<Button variant="outline" tone="destructive">Button</Button>',
-            values: { variant: "outline", tone: "destructive" },
-        },
-    },
+    play: "/gallery/play/button-variant/default/",
+    live: { props: { variant: "solid", tone: "primary" }, slot: "Button" },
 };
 
 const controlled: BenchGroup = {
@@ -78,8 +77,8 @@ const groups: BenchGroup[] = [
                 name: "segmented",
                 tags: [],
                 source: "<ButtonGroup>…</ButtonGroup>",
+                component: "ButtonGroup",
                 controls: [],
-                combos: {},
             },
         ],
     },
@@ -95,7 +94,7 @@ const inspector = {
     mounted: true,
     backdrop: "plain",
     outline: false,
-    oncombo: ignore,
+    oncontrols: ignore,
     onstage: ignore,
     onoutline: ignore,
 } as const;
@@ -217,7 +216,7 @@ export const bench: StoryGroup[] = [
                 current: {
                     group: "button-size",
                     story: "spinning",
-                    combo: null,
+                    query: "",
                 },
                 ...inspector,
             }),
@@ -227,7 +226,7 @@ export const bench: StoryGroup[] = [
                 site: false,
                 tags: [],
                 group: sizes,
-                current: { group: "button-size", story: null, combo: null },
+                current: { group: "button-size", story: null, query: "" },
                 ...inspector,
             }),
             svelteStory("site-only", BenchInspector, {
@@ -235,7 +234,7 @@ export const bench: StoryGroup[] = [
                 site: true,
                 tags: ["live"],
                 group: sizes,
-                current: { group: "button-size", story: "lg", combo: null },
+                current: { group: "button-size", story: "lg", query: "" },
                 ...inspector,
             }),
             svelteStory("with-controls", BenchInspector, {
@@ -247,7 +246,7 @@ export const bench: StoryGroup[] = [
                 current: {
                     group: "button-variant",
                     story: "default",
-                    combo: "outline-destructive",
+                    query: "variant=outline&tone=destructive",
                 },
                 ...inspector,
                 backdrop: "dots",
@@ -263,13 +262,13 @@ export const bench: StoryGroup[] = [
         min: 20,
         stories: [
             svelteStory("default", BenchControls, {
-                story: variant,
-                combo: null,
+                controls: variant.controls,
+                values: { variant: "solid", tone: "primary" },
                 onchange: ignore,
             }),
-            svelteStory("combination", BenchControls, {
-                story: variant,
-                combo: "outline-destructive",
+            svelteStory("values-set", BenchControls, {
+                controls: variant.controls,
+                values: { variant: "outline", tone: "destructive" },
                 onchange: ignore,
             }),
         ],

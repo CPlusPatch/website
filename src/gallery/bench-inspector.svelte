@@ -5,12 +5,15 @@ import Button from "@cpluspatch/ui/svelte/ui/button.svelte";
 import {
     type Backdrop,
     type BenchGroup,
+    liveSource,
     type Pick,
     pickPath,
     TAG_HINTS,
+    valuesOf,
 } from "./bench.ts";
 import BenchControls from "./bench-controls.svelte";
 import BenchSettings from "./bench-settings.svelte";
+import type { ControlValues } from "./controls.ts";
 import type { Tag } from "./story.ts";
 
 /** The bench's inspector: the component, then whatever is on the stage. */
@@ -27,7 +30,7 @@ type Props = {
     backdrop: Backdrop;
     outline: boolean;
     /** The controls' values after a pick. */
-    oncombo: (values: Record<string, string>) => void;
+    oncontrols: (values: ControlValues) => void;
     onstage: (backdrop: Backdrop) => void;
     onoutline: (outline: boolean) => void;
 };
@@ -42,26 +45,17 @@ const {
     mounted,
     backdrop,
     outline,
-    oncombo,
+    oncontrols,
     onstage,
     onoutline,
 }: Props = $props();
 
 const story = $derived(group.stories.find((s) => s.name === current.story));
-const source = $derived(
-    current.combo ? story?.combos[current.combo]?.source : story?.source,
+const values = $derived(story ? valuesOf(story, current.query) : {});
+const source = $derived(story && liveSource(story, values));
+const count = $derived(
+    `${group.stories.length} ${group.stories.length === 1 ? "story" : "stories"}`,
 );
-const count = $derived.by(() => {
-    const stories = group.stories.length;
-    const combos = group.stories.reduce(
-        (n, s) => n + Object.keys(s.combos).length,
-        0,
-    );
-    const text = `${stories} ${stories === 1 ? "story" : "stories"}`;
-    if (combos === 0) return text;
-
-    return `${text}, ${combos} ${combos === 1 ? "combination" : "combinations"}`;
-});
 // The component's own tags are already shown above.
 const storyTags = $derived(story?.tags.filter((t) => !tags.includes(t)) ?? []);
 </script>
@@ -83,7 +77,7 @@ const storyTags = $derived(story?.tags.filter((t) => !tags.includes(t)) ?? []);
 
 {#snippet openAlone()}
     <Button
-        href={pickPath(current)}
+        href={pickPath(current, story)}
         variant="outline"
         tone="secondary"
         size="sm"
@@ -121,9 +115,9 @@ const storyTags = $derived(story?.tags.filter((t) => !tags.includes(t)) ?? []);
             </p>
             {#if mounted}
                 <BenchControls
-                    {story}
-                    combo={current.combo}
-                    onchange={oncombo}
+                    controls={story.controls}
+                    {values}
+                    onchange={oncontrols}
                 />
             {/if}
             <!-- Above the source, which can run long. -->

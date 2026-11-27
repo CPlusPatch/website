@@ -16,11 +16,24 @@ export const buttons: StoryGroup[] = [
             story(
                 "default",
                 Button,
-                { variant: "solid", tone: "primary" },
                 {
-                    icon: "lucide:star",
+                    variant: "solid",
+                    tone: "primary",
+                    size: "default",
+                    disabled: false,
+                },
+                {
+                    icon: "lucide:heart",
                     slot: "Button",
-                    controls: { variant: VARIANTS, tone: TONES },
+                    controls: {
+                        variant: VARIANTS,
+                        tone: TONES,
+                        size: SIZES,
+                        disabled: "boolean",
+                        icon: "icon",
+                        slot: "text",
+                    },
+                    port: "button",
                 },
             ),
         ],

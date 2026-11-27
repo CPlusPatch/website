@@ -21,10 +21,24 @@ import type {
     Component as SvelteComponent,
     ComponentProps as SvelteProps,
 } from "svelte";
+import type { ControlDecl } from "./controls.ts";
 
 /** Any `.astro` component. */
 // biome-ignore lint/suspicious/noExplicitAny: matches astro's own ComponentProps constraint
 type Component = (args: any) => any;
+
+/**
+ * The ports that can render a story live (PORTS in ports.ts, which can't be
+ * imported here: Deno's tests can't load its Svelte files, even for a type).
+ */
+export type PortName =
+    | "badge"
+    | "button"
+    | "input"
+    | "preview-frame"
+    | "segmented-control"
+    | "select"
+    | "toggle";
 
 export interface Story {
     /**
@@ -45,10 +59,13 @@ export interface Story {
     /** What sets this story apart for tests (TAGS), on top of its group's. */
     tags?: Tag[];
     /**
-     * Props whose values the bench lets a reader set. Each prop in `props`
-     * is the default, and every other combination gets a page (combinations()).
+     * What the bench lets a reader set, by prop (see ControlDecl). The
+     * story's own props, `icon` and `slot` are the defaults, and it's
+     * rendered live through its `port`.
      */
-    controls?: Record<string, readonly string[]>;
+    controls?: Record<string, ControlDecl>;
+    /** The Svelte component that renders the story live. Needed with `controls`. */
+    port?: PortName;
 }
 
 /**
@@ -101,10 +118,18 @@ export interface StoryGroup {
     stories: Story[];
 }
 
-/** The values each prop of a component may be set to by a story's `controls`. */
+/** The ways a prop of type `V` may be controlled. */
+type ControlFor<V> =
+    | ([Extract<V, string>] extends [never]
+          ? never
+          : readonly Extract<V, string>[])
+    | ([Extract<V, boolean>] extends [never] ? never : "boolean")
+    | (string extends V ? "text" : never);
+
+/** The controls a story of a component may have: its props, `slot` and `icon`. */
 type Controls<P> = {
-    [K in keyof P]?: readonly Extract<NonNullable<P[K]>, string>[];
-};
+    [K in Exclude<keyof P, "slot" | "icon">]?: ControlFor<NonNullable<P[K]>>;
+} & { slot?: "text"; icon?: "icon" };
 
 type StoryContent<P> = Omit<
     Story,
@@ -168,76 +193,9 @@ export const slug = (s: string) =>
 export const storyPath = (groupId: string, name: string) =>
     `/gallery/story/${groupId}/${name}/`;
 
-/** The most combinations one story's controls may make, its default included. */
-export const MAX_COMBINATIONS = 64;
-
-/** A combination of a story's controls, as a story of its own. */
-export type Combination = { combo: string; story: Story };
-
-/** A combination's own page, with nothing else on it. */
-export const combinationPath = (
-    groupId: string,
-    name: string,
-    combo: string,
-): string => `/gallery/story/${groupId}/${name}/${combo}/`;
-
-/**
- * Every combination of a story's controls but the default (its own props),
- * named by the values in control order, the first control changing slowest.
- */
-export const combinations = (story: Story): Combination[] => {
-    const controls = Object.entries(story.controls ?? {});
-    if (controls.length === 0) return [];
-
-    for (const [prop, values] of controls) {
-        if (!(prop in story.props)) {
-            throw new Error(
-                `"${story.name}" controls "${prop}", but its props don't set it`,
-            );
-        }
-        const value = story.props[prop];
-        if (typeof value !== "string" || !values.includes(value)) {
-            throw new Error(
-                `"${story.name}" sets ${prop} to ${JSON.stringify(value)}, which isn't one of its controlled values: ${values.join(", ")}`,
-            );
-        }
-    }
-
-    const count = controls.reduce((n, [, values]) => n * values.length, 1);
-    if (count > MAX_COMBINATIONS) {
-        throw new Error(
-            `"${story.name}" has ${count} combinations, over the most there may be (${MAX_COMBINATIONS})`,
-        );
-    }
-
-    const picks = controls.reduce<string[][]>(
-        (rows, [, values]) =>
-            rows.flatMap((row) => values.map((value) => [...row, value])),
-        [[]],
-    );
-    const names = new Set<string>();
-    const found: Combination[] = [];
-    for (const pick of picks) {
-        const combo = pick.join("-");
-        if (!STORY_NAME.test(combo) || names.has(combo)) {
-            throw new Error(
-                `Combination "${combo}" of "${story.name}" is taken or not lowercase-with-hyphens`,
-            );
-        }
-        names.add(combo);
-
-        const props = {
-            ...story.props,
-            ...Object.fromEntries(controls.map(([prop], i) => [prop, pick[i]])),
-        };
-        if (controls.every(([prop]) => props[prop] === story.props[prop])) {
-            continue;
-        }
-        found.push({ combo, story: { ...story, props } });
-    }
-
-    return found;
-};
+/** A controlled story's live page, which sets its props from the query. */
+export const playPath = (groupId: string, name: string) =>
+    `/gallery/play/${groupId}/${name}/`;
 
 export const SIZES = ["lg", "default", "sm"] as const;
 

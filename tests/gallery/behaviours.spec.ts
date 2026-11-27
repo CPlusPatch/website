@@ -286,41 +286,78 @@ test.describe("a component's bench", () => {
             name,
         );
 
-    test("puts a combination of a story's controls on the stage, and Back returns", async ({
+    const frameSearch = (page: import("@playwright/test").Page) =>
+        stage(page).evaluate(
+            (frame: HTMLIFrameElement) => frame.contentWindow?.location.search,
+        );
+    const frameButtonClass = (page: import("@playwright/test").Page) =>
+        stage(page).evaluate(
+            (frame: HTMLIFrameElement) =>
+                frame.contentDocument?.querySelector("main button")?.className,
+        );
+
+    test("sets a controlled story's props in the frame without reloading it, and Back returns", async ({
         page,
     }) => {
         await page.goto("/gallery/buttons/#button-variant/default");
         const variant = inspector(page).getByRole("group", { name: "variant" });
         await expect(variant.getByLabel("solid")).toBeChecked();
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/play/button-variant/default/");
+        await expect
+            .poll(() => frameButtonClass(page))
+            .toContain("button--solid");
+
+        // Still there after the pick only if the frame didn't navigate.
+        await stage(page).evaluate((frame: HTMLIFrameElement) => {
+            (frame.contentWindow as Window & { marker?: boolean }).marker =
+                true;
+        });
 
         await variant.getByText("outline", { exact: true }).click();
         await expect(page).toHaveURL(
-            /#button-variant\/default\/outline-primary$/,
+            /#button-variant\/default\?variant=outline$/,
         );
+        await expect.poll(() => frameSearch(page)).toBe("?variant=outline");
         await expect
-            .poll(() => framePath(page))
-            .toBe("/gallery/story/button-variant/default/outline-primary/");
-        await expect(
-            page
-                .locator('nav a[href="/gallery/story/button-variant/default/"]')
-                .first(),
-        ).toHaveAttribute("aria-current", "true");
+            .poll(() => frameButtonClass(page))
+            .toContain("button--outline");
+        expect(await framePath(page)).toBe(
+            "/gallery/play/button-variant/default/",
+        );
+        expect(
+            await stage(page).evaluate(
+                (frame: HTMLIFrameElement) =>
+                    (frame.contentWindow as Window & { marker?: boolean })
+                        .marker,
+            ),
+        ).toBe(true);
 
         await page.goBack();
         await expect(page).toHaveURL(/#button-variant\/default$/);
         await expect(variant.getByLabel("solid")).toBeChecked();
         await expect
-            .poll(() => framePath(page))
-            .toBe("/gallery/story/button-variant/default/");
+            .poll(() => frameButtonClass(page))
+            .toContain("button--solid");
+        await expect.poll(() => frameSearch(page)).toBe("");
     });
 
-    test("loads a combination from the hash", async ({ page }) => {
+    test("loads a controlled story's values from the hash", async ({
+        page,
+    }) => {
         await page.goto(
-            "/gallery/buttons/#button-variant/default/ghost-destructive",
+            "/gallery/buttons/#button-variant/default?variant=ghost&tone=destructive",
         );
         await expect
             .poll(() => framePath(page))
-            .toBe("/gallery/story/button-variant/default/ghost-destructive/");
+            .toBe("/gallery/play/button-variant/default/");
+        await expect
+            .poll(() => frameSearch(page))
+            .toBe("?variant=ghost&tone=destructive");
+        await expect
+            .poll(() => frameButtonClass(page))
+            .toContain("button--ghost");
 
         const controls = inspector(page);
         await expect(
@@ -331,6 +368,42 @@ test.describe("a component's bench", () => {
         await expect(
             controls.getByRole("combobox", { name: "tone" }),
         ).toHaveValue("destructive");
+    });
+
+    test("turns a boolean control on, in the frame and the hash", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const button = page
+            .frameLocator('iframe[name="stage"]')
+            .locator("main button");
+        await expect(button).toBeEnabled();
+
+        // The switch's slider covers its input, so click what a reader sees.
+        await inspector(page)
+            .locator("label.toggle")
+            .filter({ has: page.getByRole("switch", { name: "disabled" }) })
+            .click();
+
+        await expect(page).toHaveURL(
+            /#button-variant\/default\?disabled=true$/,
+        );
+        await expect(button).toBeDisabled();
+    });
+
+    test("sets the slot text from an input on Enter", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const button = page
+            .frameLocator('iframe[name="stage"]')
+            .locator("main button");
+        await expect(button).toHaveText("Button");
+
+        const input = inspector(page).getByRole("textbox", { name: "slot" });
+        await input.fill("Save");
+        await input.press("Enter");
+
+        await expect(button).toHaveText("Save");
+        await expect(inspector(page).locator("pre")).toContainText("Save");
     });
 
     test("keeps the stage settings in the frame across stories", async ({

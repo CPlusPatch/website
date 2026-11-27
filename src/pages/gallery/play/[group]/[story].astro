@@ -1,0 +1,48 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { allStories } from "../../../../gallery/components.ts";
+import { normaliseControls } from "../../../../gallery/controls.ts";
+import Playground from "../../../../gallery/playground.svelte";
+import StoryPage from "../../../../gallery/story-page.astro";
+import StoryPreview from "../../../../gallery/story-preview.astro";
+
+/**
+ * A controlled story, live: rendered by its Svelte port, with its props set
+ * from the query (see playground.svelte). The bench's stage loads it.
+ */
+export const getStaticPaths = (() =>
+    allStories().flatMap(({ group, story }) => {
+        const controls = normaliseControls(story);
+
+        return story.port && controls.length > 0
+            ? [
+                  {
+                      params: { group: group.id, story: story.name },
+                      props: { group, story, controls, port: story.port },
+                  },
+              ]
+            : [];
+    })) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { group, story, controls, port } = Astro.props;
+---
+
+<StoryPage
+    title={`${group.title}: ${story.name} (live) · Component gallery`}
+    description={`The "${story.name}" story of ${group.title}, with its props set from the query.`}
+    story={`${group.id}/${story.name}`}
+    centre={group.min !== "full"}
+>
+    <StoryPreview>
+        <Playground
+            client:load
+            {port}
+            props={story.props}
+            {controls}
+            icon={story.icon}
+            text={story.slot}
+        />
+    </StoryPreview>
+</StoryPage>

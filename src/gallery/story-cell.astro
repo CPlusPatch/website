@@ -1,7 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import { storySource } from "./source.ts";
-import { combinationPath, type Story, storyPath } from "./story.ts";
+import { type Story, storyPath } from "./story.ts";
 import StoryPreview from "./story-preview.astro";
 import StoryTags from "./story-tags.astro";
 
@@ -13,17 +13,12 @@ import StoryTags from "./story-tags.astro";
 interface Props {
     group: string;
     story: Story;
-    /** Set when `story` is a combination of its story's controls. */
-    combo?: string;
 }
 
-const { group, story, combo } = Astro.props;
-// A combination's cell follows its story's, so its caption is the combination alone.
-const name = combo ? `${story.name}/${combo}` : story.name;
+const { group, story } = Astro.props;
+const name = story.name;
 const id = `${group}/${name}`;
-const path = combo
-    ? combinationPath(group, story.name, combo)
-    : storyPath(group, story.name);
+const path = storyPath(group, name);
 ---
 
 <figure class="story" id={id} data-story={id}>
@@ -31,7 +26,7 @@ const path = combo
         <span class="story__title">
             {/* A link to itself: where to point someone at this story. */}
             <a class="story__name" href={`#${id}`} title={name}
-                ><code>{combo ?? name}</code></a
+                ><code>{name}</code></a
             >
             <StoryTags tags={story.tags ?? []} />
         </span>

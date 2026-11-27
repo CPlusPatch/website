@@ -2,14 +2,20 @@ import { readFileSync } from "node:fs";
 
 /** A story as /gallery/manifest.json lists it (src/pages/gallery/manifest.json.ts). */
 export interface Story {
-    /** `<group>/<story>`, or `<group>/<story>/<combo>`: every test about a story is titled with it. */
+    /** `<group>/<story>`: every test about a story is titled with it. */
     id: string;
     component: string;
     group: string;
     story: string;
-    /** Set for a combination of the story's controls. */
-    combo?: string;
     path: string;
+    /** A controlled story's live page, and its controls (src/gallery/controls.ts). */
+    play?: string;
+    controls?: {
+        key: string;
+        kind: string;
+        values?: string[];
+        value: string | boolean;
+    }[];
     source: string;
     category: string;
     min: number | "full";

@@ -5,16 +5,17 @@ import StoryNode from "./story-node.astro";
 /**
  * A story, centred in a box of its own width: the same box in a gallery
  * cell, a table cell and the story's own page, so container queries and
- * layout match everywhere.
+ * layout match everywhere. Without a story, the slot goes in the box (the
+ * play page's live story).
  */
 interface Props {
-    story: Story;
+    story?: Story;
 }
 
 const { story } = Astro.props;
 ---
 
-<div class="story-preview"><StoryNode {story} /></div>
+<div class="story-preview">{story ? <StoryNode {story} /> : <slot />}</div>
 
 <style>
 .story-preview {

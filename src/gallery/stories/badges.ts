@@ -17,10 +17,17 @@ export const badges: StoryGroup[] = [
             story(
                 "default",
                 Badge,
-                { variant: "solid", tone: "primary" },
+                { variant: "solid", tone: "primary", size: "default" },
                 {
                     slot: "Badge",
-                    controls: { variant: BADGE_VARIANTS, tone: TONES },
+                    controls: {
+                        variant: BADGE_VARIANTS,
+                        tone: TONES,
+                        size: SIZES,
+                        icon: "icon",
+                        slot: "text",
+                    },
+                    port: "badge",
                 },
             ),
         ],

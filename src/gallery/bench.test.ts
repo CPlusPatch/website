@@ -4,11 +4,12 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
     type BenchGroup,
     type BenchStory,
-    comboOf,
     firstPick,
+    liveSource,
     parseHash,
     pickHash,
     pickPath,
+    valuesOf,
 } from "./bench.ts";
 
 const empty: BenchGroup = {
@@ -18,28 +19,35 @@ const empty: BenchGroup = {
     stories: [],
 };
 
+const plain = (name: string): BenchStory => ({
+    name,
+    tags: [],
+    source: "",
+    component: "Button",
+    controls: [],
+});
+
 const variant: BenchStory = {
     name: "default",
     tags: [],
     source: "",
+    component: "Button",
     controls: [
-        { prop: "variant", values: ["solid", "soft-edge"], value: "solid" },
-        { prop: "tone", values: ["primary", "danger"], value: "primary" },
+        {
+            key: "variant",
+            kind: "choice",
+            values: ["solid", "soft-edge"],
+            value: "solid",
+        },
+        {
+            key: "tone",
+            kind: "choice",
+            values: ["primary", "danger"],
+            value: "primary",
+        },
     ],
-    combos: {
-        "solid-danger": {
-            source: "",
-            values: { variant: "solid", tone: "danger" },
-        },
-        "soft-edge-primary": {
-            source: "",
-            values: { variant: "soft-edge", tone: "primary" },
-        },
-        "soft-edge-danger": {
-            source: "",
-            values: { variant: "soft-edge", tone: "danger" },
-        },
-    },
+    play: "/gallery/play/button-variant/default/",
+    live: { props: { variant: "solid", tone: "primary" }, slot: "Button" },
 };
 
 const groups: BenchGroup[] = [
@@ -47,10 +55,7 @@ const groups: BenchGroup[] = [
         id: "button-size",
         title: "Size",
         tags: [],
-        stories: [
-            { name: "sm", tags: [], source: "", controls: [], combos: {} },
-            { name: "lg", tags: [], source: "", controls: [], combos: {} },
-        ],
+        stories: [plain("sm"), plain("lg")],
     },
     { id: "button-variant", title: "Variant", tags: [], stories: [variant] },
     empty,
@@ -60,49 +65,53 @@ Deno.test("a story's hash names it, and a group's hash names all its stories", (
     assertEquals(
         parseHash(
             groups,
-            pickHash({ group: "button-size", story: "lg", combo: null }),
+            pickHash({ group: "button-size", story: "lg", query: "" }),
         ),
-        {
-            group: "button-size",
-            story: "lg",
-            combo: null,
-        },
+        { group: "button-size", story: "lg", query: "" },
     );
     assertEquals(parseHash(groups, "#button-size"), {
         group: "button-size",
         story: null,
-        combo: null,
+        query: "",
     });
 });
 
-Deno.test("a combination's hash names it, and an unknown one names nothing", () => {
+Deno.test("a hash carries the controls' query, and a bad value is dropped", () => {
     const pick = {
         group: "button-variant",
         story: "default",
-        combo: "soft-edge-danger",
+        query: "variant=soft-edge&tone=danger",
     };
 
-    assertEquals(pickHash(pick), "#button-variant/default/soft-edge-danger");
+    assertEquals(
+        pickHash(pick),
+        "#button-variant/default?variant=soft-edge&tone=danger",
+    );
     assertEquals(parseHash(groups, pickHash(pick)), pick);
     assertEquals(
-        parseHash(groups, "#button-variant/default/solid-solid"),
-        undefined,
+        parseHash(
+            groups,
+            "#button-variant/default?variant=nope&tone=danger&x=1",
+        ),
+        { group: "button-variant", story: "default", query: "tone=danger" },
     );
-    assertEquals(
-        parseHash(groups, "#button-variant/default/toString"),
-        undefined,
-    );
-    assertEquals(parseHash(groups, "#button-size/sm/solid-danger"), undefined);
+    assertEquals(parseHash(groups, "#button-variant/default?variant=solid"), {
+        group: "button-variant",
+        story: "default",
+        query: "",
+    });
+    assertEquals(parseHash(groups, "#button-size/sm?variant=ghost"), {
+        group: "button-size",
+        story: "sm",
+        query: "",
+    });
 });
 
 Deno.test("a hash names nothing when its group, story or depth isn't known", () => {
     assertEquals(parseHash(groups, "#nope"), undefined);
     assertEquals(parseHash(groups, "#button-size/xl"), undefined);
     assertEquals(parseHash(groups, "#button-size/sm/extra"), undefined);
-    assertEquals(
-        parseHash(groups, "#button-variant/default/solid-danger/extra"),
-        undefined,
-    );
+    assertEquals(parseHash(groups, "#button-size/sm/extra?a=b"), undefined);
     assertEquals(parseHash(groups, ""), undefined);
 });
 
@@ -112,46 +121,87 @@ Deno.test("a malformed hash names nothing instead of throwing", () => {
 
 Deno.test("a pick's page is its story's own, or its group's", () => {
     assertEquals(
-        pickPath({ group: "empty", story: null, combo: null }),
+        pickPath({ group: "empty", story: null, query: "" }),
         "/gallery/story/empty/",
     );
     assertEquals(
-        pickPath({ group: "button-size", story: "sm", combo: null }),
+        pickPath({ group: "button-size", story: "sm", query: "" }, plain("sm")),
         "/gallery/story/button-size/sm/",
     );
 });
 
-Deno.test("a combination's page is its own", () => {
+Deno.test("a controlled story's page is its live page, with the query when it has one", () => {
+    const pick = { group: "button-variant", story: "default", query: "" };
+
     assertEquals(
-        pickPath({
-            group: "button-variant",
-            story: "default",
-            combo: "solid-danger",
-        }),
-        "/gallery/story/button-variant/default/solid-danger/",
+        pickPath(pick, variant),
+        "/gallery/play/button-variant/default/",
+    );
+    assertEquals(
+        pickPath({ ...pick, query: "tone=danger" }, variant),
+        "/gallery/play/button-variant/default/?tone=danger",
     );
 });
 
-Deno.test("values name a combination, or none when each is the story's own", () => {
-    assertEquals(comboOf(variant, { variant: "solid", tone: "primary" }), null);
-    assertEquals(comboOf(variant, {}), null);
+Deno.test("a controlled story's source follows the values", () => {
     assertEquals(
-        comboOf(variant, { variant: "soft-edge", tone: "danger" }),
-        "soft-edge-danger",
+        liveSource(variant, valuesOf(variant, "")),
+        '<Button variant="solid" tone="primary">Button</Button>',
     );
-    assertEquals(comboOf(variant, { tone: "danger" }), "solid-danger");
+    assertEquals(
+        liveSource(variant, valuesOf(variant, "variant=soft-edge&tone=danger")),
+        '<Button variant="soft-edge" tone="danger">Button</Button>',
+    );
+    assertEquals(liveSource(plain("sm"), {}), "");
+});
+
+Deno.test("the live source takes the slot and icon from the values, when controlled", () => {
+    const story: BenchStory = {
+        ...variant,
+        controls: [
+            { key: "slot", kind: "text", value: "Button" },
+            { key: "icon", kind: "icon", value: "lucide:star" },
+        ],
+        live: { props: { size: "sm" }, icon: "lucide:star", slot: "Button" },
+    };
+
+    assertEquals(
+        liveSource(story, valuesOf(story, "slot=Go&icon=")),
+        '<Button size="sm">Go</Button>',
+    );
+    assertEquals(
+        liveSource(story, valuesOf(story, "")),
+        '<Button size="sm">\n    <Icon name="lucide:star" />\n    Button\n</Button>',
+    );
+});
+
+Deno.test("the live source leaves off a false boolean and shows a true one bare", () => {
+    const story: BenchStory = {
+        ...variant,
+        controls: [{ key: "disabled", kind: "boolean", value: false }],
+        live: { props: { disabled: false }, slot: "Button" },
+    };
+
+    assertEquals(
+        liveSource(story, valuesOf(story, "")),
+        "<Button>Button</Button>",
+    );
+    assertEquals(
+        liveSource(story, valuesOf(story, "disabled=true")),
+        "<Button disabled>Button</Button>",
+    );
 });
 
 Deno.test("the bench opens on the first group's first story, or the group when it has none", () => {
     assertEquals(firstPick(groups), {
         group: "button-size",
         story: "sm",
-        combo: null,
+        query: "",
     });
     assertEquals(firstPick([empty]), {
         group: "empty",
         story: null,
-        combo: null,
+        query: "",
     });
     assertThrows(() => firstPick([]));
 });

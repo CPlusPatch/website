@@ -1,12 +1,12 @@
 ---
 import { sourceOf, tagsOf } from "./components.ts";
-import { combinations, type StoryGroup } from "./story.ts";
+import type { StoryGroup } from "./story.ts";
 import StoryCell from "./story-cell.astro";
 import StoryTags from "./story-tags.astro";
 
 /**
  * One group of stories, as a section of its component's page: a grid of
- * stories on their stages, each followed by its combinations (controls).
+ * stories on their stages.
  *
  * A component of several groups gives each a heading and its source. A
  * component of one is just the stories: the page's bar already says the rest.
@@ -56,16 +56,9 @@ const count = group.stories.length;
     )}
     <div class="story-group__body">
         <div class="story-group__grid" style={`--cell: ${cell(group.min)}`}>
-            {group.stories.flatMap((story) => [
-                <StoryCell group={group.id} {story} />,
-                ...combinations(story).map((combination) => (
-                    <StoryCell
-                        group={group.id}
-                        story={combination.story}
-                        combo={combination.combo}
-                    />
-                )),
-            ])}
+            {group.stories.map((story) => (
+                <StoryCell group={group.id} {story} />
+            ))}
         </div>
     </div>
 </section>

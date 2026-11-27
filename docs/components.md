@@ -83,7 +83,13 @@ export const badges: StoryGroup[] = [
 Add a story for each state worth looking at, not each combination of props. The build fails on a story name that isn't lowercase words joined by hyphens, or isn't unique in its group.
 
 - Put the group's own component in its first story: the gallery reads the group's source file from it.
-- For two independent props, like a button's variant and tone, set `controls: { variant: VARIANTS, tone: TONES }`. Every combination gets a page named `<story>/<combo>`, like `default/ghost-destructive`, and is tested. A story can make up to 64.
+- To let the bench change a story's props live, add `controls` and a Svelte `port` (a name in `PORTS`, `src/gallery/ports.ts`). Each key of `controls` has a kind:
+    - a list of strings to choose from: `variant: VARIANTS`
+    - `"boolean"`, for a boolean prop that the story sets
+    - `"text"`, for a string prop that the story sets
+    - `slot: "text"` and `icon: "icon"` for the story's label and icon. Icons are the ones in `packages/ui/src/icons.ts`.
+
+  The story's own props, `slot` and `icon` are the defaults. The bench renders the story at `/gallery/play/<group-id>/<story>/` and puts the values in its query, like `?variant=ghost&tone=destructive`. The story's page under `/gallery/story/` shows the defaults only.
 - Tag a story that keeps moving on its own (autoplay, a count-up) as `animated`, and one that fetches data as `live`. The tests let only `animated` stories keep moving, and never compare `live` ones as pictures.
 - Each group gets a page at `/gallery/<group-id>/`. To put several groups on one page, list them together in `src/gallery/components.ts`.
 

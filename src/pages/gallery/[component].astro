@@ -10,11 +10,12 @@ import {
     sourceOf,
     tagsOf,
 } from "../../gallery/components.ts";
+import { normaliseControls } from "../../gallery/controls.ts";
 import DisplaySettings from "../../gallery/display-settings.astro";
 import GalleryLayout from "../../gallery/gallery-layout.astro";
 import GalleryMenu from "../../gallery/gallery-menu.astro";
-import { storySource } from "../../gallery/source.ts";
-import { combinations } from "../../gallery/story.ts";
+import { displayName, storySource } from "../../gallery/source.ts";
+import { playPath } from "../../gallery/story.ts";
 
 /**
  * One component's page: its stories as a bench (bench.svelte), which has the
@@ -47,32 +48,25 @@ const groups: BenchGroup[] = component.groups.map((group) => ({
     id: group.id,
     title: group.title,
     tags: tagsOf(group),
-    stories: group.stories.map((story) => ({
-        name: story.name,
-        tags: tagsOf(group, story),
-        source: storySource(story),
-        controls: Object.entries(story.controls ?? {}).map(
-            ([prop, values]) => ({
-                prop,
-                values: [...values],
-                value: String(story.props[prop]),
-            }),
-        ),
-        combos: Object.fromEntries(
-            combinations(story).map((c) => [
-                c.combo,
-                {
-                    source: storySource(c.story),
-                    values: Object.fromEntries(
-                        Object.keys(story.controls ?? {}).map((prop) => [
-                            prop,
-                            String(c.story.props[prop]),
-                        ]),
-                    ),
+    stories: group.stories.map((story) => {
+        const controls = normaliseControls(story);
+
+        return {
+            name: story.name,
+            tags: tagsOf(group, story),
+            source: storySource(story),
+            component: displayName(story),
+            controls,
+            ...(controls.length > 0 && {
+                play: playPath(group.id, story.name),
+                live: {
+                    props: story.props,
+                    icon: story.icon,
+                    slot: story.slot,
                 },
-            ]),
-        ),
-    })),
+            }),
+        };
+    }),
 }));
 ---
 
