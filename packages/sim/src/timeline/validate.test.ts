@@ -2,7 +2,9 @@
 
 import { PRESETS, solarSystem } from "@cpluspatch/catalog";
 import { assert, assertEquals } from "@std/assert";
+import { apply } from "../commands.ts";
 import type { TimelineEvent } from "../document.ts";
+import { documentOf } from "../document.ts";
 import { validateTimeline } from "./validate.ts";
 
 const elements = {
@@ -130,4 +132,63 @@ Deno.test("validateTimeline rejects a t that isn't finite", () => {
             `timeline[0].t: must be a finite number (got ${t})`,
         ]);
     }
+});
+
+const mortal = {
+    ...solarSystem,
+    bodies: solarSystem.bodies.map((body) =>
+        body.id === "earth"
+            ? { ...body, lifetime: { from: 10, to: 20 } }
+            : body,
+    ),
+};
+
+Deno.test("validateTimeline rejects events outside the body's lifetime", () => {
+    for (const t of [9, 20]) {
+        const result = validateTimeline([{ ...valid[0], t }], mortal, PRESETS);
+
+        assert(!result.ok);
+        assertEquals(result.errors, [
+            `timeline: can't burn "earth" at t=${t}: the body is only present for 10 <= t < 20`,
+        ]);
+    }
+
+    const setOrbit = validateTimeline(
+        [{ type: "set-orbit", id: "e1", bodyId: "earth", t: 5, elements }],
+        mortal,
+        PRESETS,
+    );
+
+    assert(!setOrbit.ok);
+    assertEquals(setOrbit.errors, [
+        'timeline: can\'t set the orbit of "earth" at t=5: the body is only present for 10 <= t < 20',
+    ]);
+});
+
+Deno.test("validateTimeline accepts events inside the body's lifetime", () => {
+    const result = validateTimeline([{ ...valid[0], t: 10 }], mortal, PRESETS);
+
+    assert(result.ok);
+});
+
+Deno.test("validateTimeline follows the lifetime of a parent", () => {
+    const result = validateTimeline(valid.slice(1), mortal, PRESETS);
+
+    assert(!result.ok);
+    assert(result.errors[0]?.includes('"iss"'));
+});
+
+Deno.test("apply rejects a burn outside the body's lifetime", () => {
+    const doc = documentOf(mortal);
+    const schedule = (t: number) =>
+        apply(doc, { type: "schedule-burn", bodyId: "earth", t, dv }, PRESETS);
+
+    const before = schedule(9);
+    const at = schedule(20);
+    const inside = schedule(15);
+
+    assert(!before.ok);
+    assert(before.errors[0]?.includes("only present for 10 <= t < 20"));
+    assert(!at.ok);
+    assert(inside.ok);
 });

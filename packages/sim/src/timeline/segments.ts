@@ -1,5 +1,6 @@
 import { applyBurn, type Elements } from "@cpluspatch/orbit";
 import type { TimelineEvent } from "../document.ts";
+import { effectiveLifetimes } from "../lifetime.ts";
 import { precessionsOf } from "../perturb/index.ts";
 import { elementsAt, type Precession } from "../precession.ts";
 import type { Body, OrbitingBody } from "../scenario.ts";
@@ -35,8 +36,8 @@ type BodySegments =
     | { ok: false; error: string; failure: BurnFailure };
 
 /**
- * The result of `segmentsByBody`: the segments of every orbiting body, or one error and one
- * failure per body that can't be burnt.
+ * The result of `segmentsByBody`: the segments of every orbiting body, or one error per body that
+ * can't be burnt or has an event outside its lifetime. Only the burns that fail have a failure.
  */
 export type SegmentsResult =
     | { ok: true; segments: Map<string, Segment[]> }
@@ -119,6 +120,7 @@ export const segmentsByBody = (
     const segments = new Map<string, Segment[]>();
     const errors: string[] = [];
     const failures: BurnFailure[] = [];
+    const lifetimes = effectiveLifetimes(bodies);
 
     for (const event of sorted) {
         const list = eventsByBody.get(event.bodyId);
@@ -134,11 +136,27 @@ export const segmentsByBody = (
 
         if (!isOrbiting(body) || !parent) continue;
 
-        const result = bodySegments(
-            body,
-            parent,
-            eventsByBody.get(body.id) ?? [],
+        const events = eventsByBody.get(body.id) ?? [];
+        const life = lifetimes.get(body.id) ?? {
+            from: -Infinity,
+            to: Infinity,
+        };
+        // Only the first event outside the lifetime is reported, and the burns aren't run.
+        const absent = events.find(
+            (event) => event.t < life.from || event.t >= life.to,
         );
+
+        if (absent) {
+            const verb = absent.type === "burn" ? "burn" : "set the orbit of";
+
+            errors.push(
+                `timeline: can't ${verb} "${body.id}" at t=${absent.t}: the body is only present for ${life.from} <= t < ${life.to}`,
+            );
+
+            continue;
+        }
+
+        const result = bodySegments(body, parent, events);
 
         if (result.ok) segments.set(body.id, result.segments);
         else {

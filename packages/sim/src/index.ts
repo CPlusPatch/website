@@ -54,6 +54,7 @@ export type {
     BodyOrbit,
     Gravity,
     J2,
+    Lifetime,
     Mass,
     OrbitingBody,
     Perturbation,

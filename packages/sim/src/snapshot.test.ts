@@ -252,3 +252,82 @@ Deno.test("an orbit with no events is one segment of its scenario orbit", () => 
         assertEquals(segment.elements, sat.orbit.elements);
     }
 });
+
+const lifetimes: Scenario = {
+    version: 3,
+    name: "lifetimes",
+    bodies: [
+        { id: "sun", name: "Sun", tags: [], mass: { mu: 1.3e20, radius: 7e8 } },
+        {
+            id: "planet",
+            name: "Planet",
+            tags: [],
+            mass: { mu: 4e14, radius: 6e6 },
+            lifetime: { from: 10, to: 20 },
+            orbit: {
+                parent: "sun",
+                elements: {
+                    a: 1.5e11,
+                    e: 0.01,
+                    i: 0,
+                    raan: 0,
+                    argp: 0,
+                    m0: 0,
+                    epoch: 0,
+                },
+            },
+        },
+        {
+            id: "moon",
+            name: "Moon",
+            tags: [],
+            mass: { mu: 0, radius: 1 },
+            lifetime: { from: 15 },
+            orbit: {
+                parent: "planet",
+                elements: {
+                    a: 4e8,
+                    e: 0.01,
+                    i: 0,
+                    raan: 0,
+                    argp: 0,
+                    m0: 0,
+                    epoch: 0,
+                },
+            },
+        },
+    ],
+};
+
+Deno.test("presentAt: from is present and to is absent", () => {
+    const system = compile(documentOf(lifetimes), PRESETS);
+
+    assertEquals(system.presentAt("planet", 9.5), false);
+    assertEquals(system.presentAt("planet", 10), true);
+    assertEquals(system.presentAt("planet", 19.5), true);
+    assertEquals(system.presentAt("planet", 20), false);
+});
+
+Deno.test("presentAt: a body without a lifetime is always present", () => {
+    const system = compile(documentOf(lifetimes), PRESETS);
+
+    for (const t of [-1e12, 0, 1e12]) {
+        assertEquals(system.presentAt("sun", t), true);
+    }
+});
+
+Deno.test("presentAt: a child is absent while its parent is, or its own bounds say so", () => {
+    const system = compile(documentOf(lifetimes), PRESETS);
+
+    assertEquals(system.presentAt("moon", 12), false);
+    assertEquals(system.presentAt("moon", 15), true);
+    assertEquals(system.presentAt("moon", 19.5), true);
+    assertEquals(system.presentAt("moon", 20), false);
+    assertEquals(system.presentAt("moon", 1e12), false);
+});
+
+Deno.test("presentAt: an unknown id throws", () => {
+    const system = compile(documentOf(lifetimes), PRESETS);
+
+    assertThrows(() => system.presentAt("nope", 0), Error, "Unknown body");
+});

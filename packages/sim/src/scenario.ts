@@ -44,6 +44,9 @@ export type Gravity = {
     radius: number;
 };
 
+/** The seconds since J2000 between which a body exists. An absent bound is open. */
+export type Lifetime = { from?: number; to?: number };
+
 /** One body in a scenario. */
 export type Body = {
     /** A unique slug of lowercase letters, digits and hyphens. */
@@ -65,6 +68,11 @@ export type Body = {
     rotation?: Rotation;
     /** The gravity field. Absent means the preset's gravity, if it has one. */
     gravity?: Gravity;
+    /**
+     * When the body exists, in seconds since J2000 like the timeline's `t`. Absent bounds are open.
+     * The body is present for `from <= t < to`, and a child is absent whenever its parent is.
+     */
+    lifetime?: Lifetime;
 };
 
 /** A body that orbits another. */
@@ -507,6 +515,51 @@ const validateMass = (
     return { mu: validMu, radius: validRadius };
 };
 
+const validateLifetime = (
+    path: string,
+    input: unknown,
+    root: boolean,
+    errors: string[],
+): Lifetime | null => {
+    if (!isRecord(input)) {
+        errors.push(`${path}: must be an object (got ${show(input)})`);
+
+        return null;
+    }
+
+    if (root) {
+        errors.push(`${path}: must be absent when orbit is absent`);
+
+        return null;
+    }
+
+    const before = errors.length;
+    const { from, to } = input;
+    const validFrom =
+        from !== undefined && finite(`${path}.from`, from, errors)
+            ? from
+            : undefined;
+    const validTo =
+        to !== undefined && finite(`${path}.to`, to, errors) ? to : undefined;
+
+    if (
+        validFrom !== undefined &&
+        validTo !== undefined &&
+        validFrom >= validTo
+    ) {
+        errors.push(
+            `${path}.from: must be less than to (got ${validFrom} and ${validTo})`,
+        );
+    }
+
+    if (errors.length > before) return null;
+
+    return {
+        ...(validFrom === undefined ? {} : { from: validFrom }),
+        ...(validTo === undefined ? {} : { to: validTo }),
+    };
+};
+
 /** Checks a body's own fields. Links between bodies are checked later. */
 const validateBody = (
     index: number,
@@ -543,6 +596,7 @@ const validateBody = (
         preset,
         rotation,
         gravity,
+        lifetime,
     } = input;
     const validId = typeof id === "string" && SLUG.test(id) ? id : null;
     const label = validId ?? `bodies[${index}]`;
@@ -725,6 +779,12 @@ const validateBody = (
             ? validateGravity(`${label}.gravity`, gravity, errors)
             : null;
 
+    // Versions 1 and 2 have no lifetime field.
+    const validLifetime =
+        version === 3 && lifetime !== undefined
+            ? validateLifetime(`${label}.lifetime`, lifetime, root, errors)
+            : null;
+
     let parsed: Elements | null = null;
 
     if (version === 3) {
@@ -794,6 +854,7 @@ const validateBody = (
         ...(validPreset === undefined ? {} : { preset: validPreset }),
         ...(validRotation ? { rotation: validRotation } : {}),
         ...(validGravity ? { gravity: validGravity } : {}),
+        ...(validLifetime ? { lifetime: validLifetime } : {}),
     };
 
     if (validParent === null) {

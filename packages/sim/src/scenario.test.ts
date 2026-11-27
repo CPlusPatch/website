@@ -1566,6 +1566,75 @@ Deno.test("gravity with a bad j2 or radius is rejected", () => {
     ]);
 });
 
+/** The tiny scenario with `lifetime` on the body at `index`. */
+const withLifetime = (
+    lifetime: unknown,
+    index = 1,
+): Record<string, unknown> => {
+    const scenario = structuredClone(valid) as Record<string, unknown>;
+
+    at(scenario.bodies as Record<string, unknown>[], index).lifetime = lifetime;
+
+    return scenario;
+};
+
+const lifetimeErrors = (lifetime: unknown, index = 1): string[] => {
+    const result = validateScenario(withLifetime(lifetime, index));
+
+    assert(!result.ok);
+
+    return result.errors;
+};
+
+Deno.test("a lifetime with from, to or both is accepted and round-trips", () => {
+    for (const lifetime of [{ from: 10 }, { to: 20 }, { from: -5, to: 20 }]) {
+        const result = validateScenario(withLifetime(lifetime));
+
+        assert(result.ok);
+        assertEquals(at(result.scenario.bodies, 1).lifetime, lifetime);
+    }
+});
+
+Deno.test("an empty lifetime is accepted", () => {
+    const result = validateScenario(withLifetime({}));
+
+    assert(result.ok);
+    assertEquals(at(result.scenario.bodies, 1).lifetime, {});
+});
+
+Deno.test("a lifetime that isn't an object is rejected", () => {
+    assertEquals(lifetimeErrors(3), [
+        "earth.lifetime: must be an object (got 3)",
+    ]);
+});
+
+Deno.test("a lifetime with a bound that isn't finite is rejected", () => {
+    assertEquals(lifetimeErrors({ from: Number.NaN }), [
+        "earth.lifetime.from: must be a finite number (got NaN)",
+    ]);
+    assertEquals(lifetimeErrors({ to: Number.POSITIVE_INFINITY }), [
+        "earth.lifetime.to: must be a finite number (got Infinity)",
+    ]);
+    assertEquals(lifetimeErrors({ from: "soon" }), [
+        'earth.lifetime.from: must be a finite number (got "soon")',
+    ]);
+});
+
+Deno.test("a lifetime whose from isn't before its to is rejected", () => {
+    assertEquals(lifetimeErrors({ from: 5, to: 5 }), [
+        "earth.lifetime.from: must be less than to (got 5 and 5)",
+    ]);
+    assertEquals(lifetimeErrors({ from: 6, to: 5 }), [
+        "earth.lifetime.from: must be less than to (got 6 and 5)",
+    ]);
+});
+
+Deno.test("a lifetime on the root is rejected", () => {
+    assertEquals(lifetimeErrors({ from: 1 }, 0), [
+        "sun.lifetime: must be absent when orbit is absent",
+    ]);
+});
+
 /** The tiny scenario with a moon on a j2 perturbation around the planet. */
 const withJ2Moon = (
     planet: Record<string, unknown>,

@@ -128,3 +128,18 @@ Deno.test("file: an invalid scenario is an error", () => {
 
     assert(!result.ok);
 });
+
+Deno.test("file: a body's lifetime survives a round trip", () => {
+    const withLifetime: Document = documentOf({
+        ...scenario,
+        bodies: scenario.bodies.map((body) =>
+            body.id === "sat"
+                ? { ...body, lifetime: { from: 10, to: 20 } }
+                : body,
+        ),
+    });
+    const result = reload(documentFile(withLifetime));
+
+    assert(result.ok);
+    assertEquals(result.doc, withLifetime);
+});

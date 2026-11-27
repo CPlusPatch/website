@@ -1,5 +1,6 @@
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
+import { effectiveLifetimes } from "./lifetime.ts";
 import { bodyOrientation } from "./orientation.ts";
 import { elementsAt } from "./precession.ts";
 import { expandPresets, type Presets } from "./presets.ts";
@@ -40,6 +41,8 @@ export type System = {
     elementsAt(id: string, t: number): Elements;
     /** The stretch of orbit of an orbiting body that covers `t`. Throws for the root or an unknown id. */
     segmentAt(id: string, t: number): Segment;
+    /** Whether body `id` and all its ancestors exist at `t`. Throws for an unknown id. */
+    presentAt(id: string, t: number): boolean;
 };
 
 /** Compiles `doc` into a `System`, with `presets` filling what its bodies leave out. Throws if a burn of `doc` fails. */
@@ -74,6 +77,8 @@ export const compile = (doc: Document, presets: Presets): System => {
 
         return body;
     };
+
+    const lifetimes = effectiveLifetimes(order);
 
     let cached: Snapshot | null = null;
 
@@ -140,6 +145,13 @@ export const compile = (doc: Document, presets: Presets): System => {
             return elementsAt(segment.elements, segment.precessions, t);
         },
         segmentAt,
+        presentAt: (id, t) => {
+            known(id);
+
+            const life = lifetimes.get(id);
+
+            return life !== undefined && life.from <= t && t < life.to;
+        },
     };
 };
 
