@@ -1,8 +1,6 @@
 <script lang="ts">
-import { loadSatellites, solarSystem } from "@cpluspatch/catalog";
-import { unixMsToJ2000s } from "@cpluspatch/orbit";
+import { loadSatellites } from "@cpluspatch/catalog";
 import {
-    advanceClock,
     Clock,
     createAssets,
     createUnits,
@@ -10,19 +8,9 @@ import {
     NARROW_QUERY,
     type View,
 } from "@cpluspatch/render";
-import { documentOf } from "@cpluspatch/sim";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { onMount, untrack } from "svelte";
-import {
-    announcement,
-    bareAnnouncement,
-    chaseAnnouncement,
-    historyAnnouncement,
-    noChaseAnnouncement,
-    presenceAnnouncement,
-    satelliteAnnouncement,
-} from "../announce.ts";
-import { cue } from "../audio/cues.ts";
+import { presenceAnnouncement } from "../announce.ts";
 import { createSound, type Sound } from "../audio/sound.ts";
 import {
     hashPayload,
@@ -33,9 +21,11 @@ import {
 import { readSatellites } from "../satellite-settings.ts";
 import { createSession } from "../session.ts";
 import { setAnnouncer, setStores } from "../state/context.ts";
-import type { Departure } from "../state/scene.ts";
 import { createStores } from "../state/stores.svelte.ts";
+import { createBare } from "./bare.ts";
 import Crumbs from "./Crumbs.svelte";
+import { startClockLoop } from "./clock-loop.ts";
+import { buildFirst, type FirstBuild } from "./first-build.ts";
 import History from "./History.svelte";
 import Hud from "./Hud.svelte";
 import Inspector from "./inspector/Inspector.svelte";
@@ -45,6 +35,7 @@ import { createLoading } from "./loading.ts";
 import { measure } from "./measure.ts";
 import Notices from "./Notices.svelte";
 import type { NoticeVariant } from "./notices.ts";
+import { createReveal } from "./reveal.ts";
 import SatelliteCard from "./SatelliteCard.svelte";
 import SatelliteMenu from "./SatelliteMenu.svelte";
 import SoundMenu from "./SoundMenu.svelte";
@@ -52,7 +43,13 @@ import ScenarioMenu from "./scenario-menu/ScenarioMenu.svelte";
 import Search from "./search/Search.svelte";
 import { bindShortcuts } from "./shortcuts.ts";
 import TimeBar from "./time/TimeBar.svelte";
+import { travel } from "./travel.ts";
 import Viewport from "./Viewport.svelte";
+import {
+    bindSceneEvents,
+    bindViewEvents,
+    viewShortcuts,
+} from "./view-bindings.ts";
 
 type Props = {
     /** The static `.orrery` element of the page. */
@@ -134,6 +131,15 @@ const openAdd = (name?: string) => {
     inspector?.openAdd(name);
 };
 
+const bare = untrack(() =>
+    createBare(
+        root,
+        () => view,
+        () => viewport?.focusCanvas(),
+        announce,
+    ),
+);
+
 // The view and the panels that depend on the scenario. Only the first build reports loading.
 const build = (
     onLoading?: (done: number, total: number, fill: number) => void,
@@ -147,7 +153,7 @@ const build = (
 
     try {
         built.satelliteGroups(satelliteGroups());
-        built.bare(root.classList.contains("orrery--bare"));
+        built.bare(bare.is());
     } catch (error) {
         // A throw leaves no view behind.
         viewport.destroy();
@@ -164,159 +170,55 @@ const stripHash = () => {
     history.replaceState(null, "", location.pathname + location.search);
 };
 
-const setBare = (bare: boolean) => {
-    if (root.classList.contains("orrery--bare") === bare) return;
-
-    // Focus on a hidden control would fall to the body.
-    if (bare && document.activeElement?.closest(".orrery__panel")) {
-        // A focus ring around the whole view would spoil it.
-        viewport?.focusCanvas();
-    }
-
-    root.classList.toggle("orrery--bare", bare);
-    view?.bare(bare);
-    announce(bareAnnouncement(bare));
-};
 // Shortcuts that open a panel's control show the interface first.
-const showInterface = () => setBare(false);
+const showInterface = () => bare.set(false);
 
-const travel = (kind: "undo" | "redo") => {
-    const able =
-        kind === "undo" ? documentStore.canUndo : documentStore.canRedo;
-    void inspector?.closeForms();
-
-    const label = kind === "undo" ? documentStore.undo() : documentStore.redo();
-    // A restore that failed to draw shows its own notice.
-    if (able && label === null) return;
-
-    announce(historyAnnouncement(kind, label));
-};
-const undo = () => travel("undo");
-const redo = () => travel("redo");
+const undo = () =>
+    travel(documentStore, "undo", () => void inspector?.closeForms(), announce);
+const redo = () =>
+    travel(documentStore, "redo", () => void inspector?.closeForms(), announce);
 
 // The satellite and chase events of the current view, until it's replaced.
 $effect(() => {
     const current = view;
     if (!current) return;
 
-    const offSatellite = current.satellite.on((event) => {
-        const k = event.k;
-        const name =
-            k === null ? null : (current.satellite.facts(k)?.name ?? null);
-
-        if (event.type === "focus") {
-            crumbs?.setSatellite(
-                k === null || name === null
-                    ? null
-                    : { name, onClick: () => current.satellite.focus(k) },
-            );
-        }
-        if (event.type === "selection" && k !== null) {
-            cue("select");
-            // The keys card hides the orbit card, so a new pick would show nothing.
-            keys?.close();
-        }
-
-        // A body pick clears the satellite, and the scene's "Selected ..." follows or comes first.
-        if (
-            event.type === "selection" &&
-            k === null &&
-            scene.selected !== null
-        ) {
-            return;
-        }
-
-        const message = satelliteAnnouncement(event, name);
-        if (message !== null) announce(message);
-    });
-
-    let wasChasing = untrack(() => current.chasing());
-    const offChase = current.onChase(({ chasing }) => {
-        if (chasing === wasChasing) return;
-
-        wasChasing = chasing;
-
-        const k = current.satellite.focused();
-        const name =
-            (k === null ? null : current.satellite.facts(k)?.name) ??
-            scene.scenario.bodies.find((body) => body.id === scene.focused)
-                ?.name ??
-            scene.focused;
-        announce(chaseAnnouncement(chasing, name));
-    });
-
-    return () => {
-        offSatellite();
-        offChase();
-        crumbs?.setSatellite(null);
-    };
+    return untrack(() =>
+        bindViewEvents(current, scene, {
+            setSatellite: (crumb) => crumbs?.setSatellite(crumb),
+            closeKeys: () => keys?.close(),
+            announce,
+        }),
+    );
 });
 
 onMount(() => {
-    // Registered before the build, so the clock ticks before the view's draw every frame.
-    let clockFrame = 0;
-    let lastFrame = performance.now();
-    let lastNowT = unixMsToJ2000s(Date.now());
-    let settling = false;
-    const tickClock = (now: number) => {
-        clockFrame = requestAnimationFrame(tickClock);
-
-        const dt = Math.min((now - lastFrame) / 1000, 0.1);
-        lastFrame = now;
-
-        const nowT = unixMsToJ2000s(Date.now());
-        advanceClock(scene.clock, dt, lastNowT, nowT);
-        lastNowT = nowT;
-
-        // The departure is one message, so the focus and selection events stay quiet.
-        settling = true;
-        let departure: Departure | null;
-        try {
-            departure = scene.settlePresence();
-        } finally {
-            settling = false;
-        }
-        if (departure !== null) {
-            announce(presenceAnnouncement(departure, scene.scenario.bodies));
-        }
-    };
-    clockFrame = requestAnimationFrame(tickClock);
+    // Started before the build, so the clock ticks before the view's draw every frame.
+    const clock = startClockLoop(scene, (departure) =>
+        announce(presenceAnnouncement(departure, scene.scenario.bodies)),
+    );
 
     if (hashPayload(location.hash) !== null) stripHash();
 
-    let fellBack = false;
-    let first: View | null;
+    let result: FirstBuild;
     try {
-        try {
-            first = build(loading.progress);
-        } catch (error) {
-            // A saved copy or link that can't be drawn mustn't lock the page out.
-            if (scene.scenario === solarSystem) throw error;
-
-            scene.load(documentOf(solarSystem), startTime(solarSystem));
-            first = build(loading.progress);
-            fellBack = true;
-            if (first) {
-                const subject =
-                    opened.source === "saved"
-                        ? "Your saved copy"
-                        : "The shared link";
-                showNotice(
-                    "warning",
-                    `${subject} can't be drawn, so the solar system opened.`,
-                );
-            }
-        }
+        result = buildFirst(
+            scene,
+            opened.source,
+            () => build(loading.progress),
+            (text) => showNotice("warning", text),
+        );
     } catch (error) {
-        cancelAnimationFrame(clockFrame);
+        clock.stop();
         showLoadFailed(root);
 
         throw error;
     }
+    const first = result.view;
 
     if (!first) {
         // With no view the clock stood still before, and nothing shows it moving.
-        cancelAnimationFrame(clockFrame);
+        clock.stop();
         loading.reveal();
         unavailable = true;
         if (opened.notice) showNotice("warning", opened.notice);
@@ -334,73 +236,32 @@ onMount(() => {
     sound = created;
     satellites?.setAvailable(satelliteHost() !== undefined);
 
-    let revealed = false;
-    let destroyed = false;
-
-    // A destroyed view's ready resolves too, so only the current one reveals.
-    const revealWhenReady = (built: View) => {
-        void built.ready.then(() => {
-            if (view === built) reveal();
-        });
-    };
-    const reveal = () => {
-        if (revealed || destroyed) return;
-
-        revealed = true;
-        clearTimeout(revealTimer);
-        inert = false;
-        loading.reveal();
-        view?.reveal();
-    };
+    const reveal = createReveal(
+        loading,
+        () => view,
+        () => {
+            inert = false;
+        },
+    );
 
     const rebuild = () => {
         const built = build();
         satellites?.setAvailable(satelliteHost() !== undefined);
         // A view built after the reveal has no loading state, so a sky that comes later fades in.
-        if (revealed) built?.reveal();
-        else if (built) revealWhenReady(built);
+        if (reveal.revealed()) built?.reveal();
+        else if (built) reveal.whenReady(built);
         if (!built) showNotice("destructive", "The model can't be drawn.");
     };
 
     const unbind = bindShortcuts(scene, units, {
         closeKeys: () => keys?.close() ?? false,
-        clearSatellite: () => {
-            const satellite = view?.satellite;
-            if (!satellite || satellite.selected() === null) return false;
-
-            satellite.select(null);
-
-            return true;
-        },
-        focusSatellite: () => {
-            const satellite = view?.satellite;
-            const k = satellite?.selected() ?? null;
-            if (!satellite || k === null) return false;
-
-            satellite.focus(k);
-
-            return true;
-        },
+        ...viewShortcuts(scene, () => view, announce),
         goLive: () => timeBar?.goLive(),
         openSearch: () => {
             showInterface();
             search?.open();
         },
-        toggleChase: () => {
-            const current = view;
-            if (!current) return;
-
-            if (current.canChase()) {
-                current.chase(!current.chasing());
-            } else {
-                const name =
-                    scene.scenario.bodies.find(
-                        (body) => body.id === scene.focused,
-                    )?.name ?? scene.focused;
-                announce(noChaseAnnouncement(name));
-            }
-        },
-        toggleBare: () => setBare(!root.classList.contains("orrery--bare")),
+        toggleBare: bare.toggle,
         toggleDate: () => {
             showInterface();
             timeBar?.toggleDate();
@@ -432,29 +293,20 @@ onMount(() => {
         },
     });
 
-    const off = scene.on((event) => {
-        if (event.type === "selection" && event.id !== null) cue("select");
-        // The keys card hides the orbit card, so a new pick would show nothing.
-        if (event.type === "selection" && event.id !== null) keys?.close();
-
-        // A rebuilt scenario isn't announced, as its view is new.
-        const message = settling
-            ? null
-            : announcement(event, scene.scenario.bodies);
-        if (message !== null) announce(message);
+    const off = bindSceneEvents(scene, clock.settling, {
+        closeKeys: () => keys?.close(),
+        announce,
     });
 
     // A link that fell back mustn't replace the saved copy with the solar system.
-    if (opened.source === "link" && !fellBack) session.saveNow();
+    if (opened.source === "link" && !result.fellBack) session.saveNow();
     if (opened.notice) showNotice("warning", opened.notice);
 
-    const revealTimer = setTimeout(reveal, REVEAL_AFTER_MS);
-    revealWhenReady(first);
+    reveal.start(first, REVEAL_AFTER_MS);
 
     return () => {
-        destroyed = true;
-        cancelAnimationFrame(clockFrame);
-        clearTimeout(revealTimer);
+        reveal.destroy();
+        clock.stop();
         loading.destroy();
         session.destroy();
         off();
