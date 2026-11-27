@@ -66,6 +66,16 @@ The clock isn't held. It ticks in one `requestAnimationFrame` loop in `Shell.sve
 
 `ui/Shell.svelte` makes the stores and passes them down with `setStores()`. Components read them with `getDocument()` and `getView()`.
 
+## Timeline
+
+A document's `timeline` holds the events that change an orbit at a time `t`. A `burn` adds `dv` to the body's velocity at `t`. A `set-orbit` replaces its elements. Both keep the body's perturbations.
+
+`compile` turns each orbiting body's events into segments, in `sim/src/timeline/segments.ts`. The first starts at `-Infinity` with the base orbit. Each event ends the current segment and starts the next at its `t`. A segment covers `from <= t < to`. Events at the same `t` apply in timeline order. J2 rates depend on the elements, so each segment resolves its own.
+
+`apply` rejects a command when a burn on the resulting timeline would escape the parent or leave no orbit. `load` checks the timeline with `validateTimeline`. Removing a body removes the events of it and its children.
+
+Code that only needs a body's usual orbit reads `body.orbit.elements`: the orbit class, framing and the systems list.
+
 ## Shell
 
 `orbits.astro` renders the loading state and `<Orrery client:only="svelte" />` inside `.orrery`. The components:
@@ -122,6 +132,6 @@ A perturbation turns an orbit's node and periapsis at a steady rate. `sim/src/pe
 | `secular` | Stored on the perturbation, with its pole                                                                          |
 | `j2`      | Computed from the parent's `mu`, `gravity` and `rotation`. The pole is the parent's spin axis at the orbit's epoch |
 
-`compile` resolves every body's precessions once. `System.precessions(id)` returns them, and `System.elementsAt(id, t)` applies them. A `j2` perturbation on a parent without gravity or rotation drifts by nothing. `validateScenario` reports it as an error when it's given `presets`, which `apply` and `persistence.ts` pass.
+`compile` resolves the precessions once per orbit segment (see [Timeline](#timeline)). `System.segmentAt(id, t)` returns the segment with them, and `System.elementsAt(id, t)` applies them. A `j2` perturbation on a parent without gravity or rotation drifts by nothing. `validateScenario` reports it as an error when it's given `presets`, which `apply` and `persistence.ts` pass.
 
 The built-in scenarios still store `secular` rates. The satellite swarm takes its host's `mu`, `radius`, `rotation` and `gravity` from the caller. The radius and rotation set the orbit classes: LEO is measured from the radius, and GEO is where the period equals the host's spin. The swarm reads its elements relative to the host's equator at the catalogue epoch and precesses about the host's pole. For Earth that's the IAU pole, about 0.15° off the J2000 one.
