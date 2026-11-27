@@ -226,3 +226,193 @@ const onDouble = (event: MouseEvent) => {
         {/if}
     </div>
 </div>
+
+<style>
+.orrery__search-left {
+    grid-column: 1;
+    grid-row: 1;
+    min-block-size: 0;
+    padding-block-end: 0.25rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Fades the foot of a list while more rows are below. */
+.orrery__search-left,
+.orrery__search-system {
+    &:global([data-more]) {
+        mask-image: linear-gradient(
+            to bottom,
+            #000 calc(100% - 1.5rem),
+            transparent
+        );
+    }
+}
+
+.orrery__search-right {
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-block-size: 0;
+    min-inline-size: 0;
+    border-inline-start: 1px solid var(--orrery-rule);
+}
+
+/* Shown under 720 px only, as the way back from the right pane. */
+.orrery__search-back {
+    display: none;
+    align-items: center;
+    gap: var(--space-sm);
+    inline-size: 100%;
+    min-block-size: var(--control-height-sm);
+    padding: 0 var(--orrery-pad);
+    border: 0;
+    border-block-end: 1px solid var(--orrery-rule);
+    border-radius: 0;
+    background: none;
+    color: var(--orrery-text);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--orrery-search-hover);
+    }
+
+    &:focus-visible {
+        outline-offset: -2px;
+    }
+}
+
+.orrery__search-back-icon {
+    display: flex;
+    inline-size: 8px;
+    block-size: 12px;
+    color: var(--orrery-muted);
+
+    :global(svg) {
+        inline-size: 100%;
+        block-size: 100%;
+    }
+}
+
+.orrery__search-head {
+    flex: none;
+    padding: var(--orrery-pad);
+    border-block-end: 1px solid var(--orrery-rule);
+}
+
+.orrery__search-rail {
+    /* Where the marks start after the primary, and the room kept at the far end for labels. */
+    --orrery-rail-start: 24px;
+    --orrery-rail-end: 2rem;
+
+    flex: none;
+    padding: 0.5rem var(--orrery-pad) 0.375rem;
+    border-block-end: 1px solid var(--orrery-rule);
+}
+
+.orrery__search-system {
+    flex: 1;
+    min-block-size: 0;
+    padding-block-end: 0.25rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.orrery__search-group {
+    display: flex;
+    gap: var(--space-sm);
+    padding: 0.625rem var(--orrery-pad) 0.25rem;
+    color: var(--orrery-dim);
+    font-size: var(--orrery-size-label);
+    font-weight: 500;
+
+    span {
+        font: 400 var(--orrery-size-label) var(--orrery-font-data);
+    }
+}
+
+.orrery__search-note,
+.orrery__search-nothing {
+    margin: 0;
+    padding: 1rem var(--orrery-pad);
+    color: var(--orrery-muted);
+    font-size: var(--orrery-size-sm);
+}
+
+.orrery__search-nothing {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    p {
+        margin: 0;
+    }
+}
+
+.orrery__search-button {
+    block-size: var(--orrery-control);
+    padding: 0 var(--orrery-pad);
+    border: 1px solid var(--orrery-frame);
+    border-radius: 0;
+    background: none;
+    color: inherit;
+    font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--orrery-panel-raised);
+    }
+
+    @media (pointer: coarse), (max-width: 720px) {
+        block-size: var(--control-height-sm);
+    }
+}
+
+@media (max-width: 720px) {
+    .orrery__search-left {
+        transition: transform var(--orrery-search-slide) ease;
+    }
+
+    .orrery__search-right {
+        position: relative;
+        z-index: 1;
+        display: block;
+        grid-column: 1;
+        border-inline-start: 0;
+        background-color: var(--orrery-panel-solid);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        transform: translateX(100%);
+        transition:
+            transform var(--orrery-search-slide) ease,
+            visibility 0s var(--orrery-search-slide);
+        visibility: hidden;
+    }
+
+    /* Sticky, so a long system doesn't scroll the way back out of reach. */
+    .orrery__search-back {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 3;
+        display: flex;
+        background-color: var(--orrery-panel-solid);
+    }
+
+    /* The pane scrolls as one column, so the list needs no scroll or fade of its own. */
+    .orrery__search-system {
+        overflow: visible;
+        mask-image: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .orrery__search-left,
+    .orrery__search-right {
+        transition: none;
+    }
+}
+</style>

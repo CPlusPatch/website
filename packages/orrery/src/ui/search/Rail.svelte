@@ -80,3 +80,127 @@ const labelled = $derived(
         <span style:--at={String(at)}>{formatRange(distance, unit)}</span>
     {/each}
 </div>
+
+<style>
+.orrery__search-rail-cap {
+    min-block-size: 1.1rem;
+    overflow: hidden;
+    color: var(--orrery-muted);
+    font-size: var(--orrery-size-label);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    b {
+        color: var(--orrery-text);
+        font-weight: 600;
+    }
+}
+
+.orrery__search-rail-data {
+    font-family: var(--orrery-font-data);
+}
+
+.orrery__search-rail-track {
+    position: relative;
+    block-size: 2.75rem;
+    margin-block-start: 0.125rem;
+    /* Half the primary, so its left edge lines up with the caption. */
+    margin-inline-start: 11px;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline: 0;
+        border-block-start: 1px solid var(--orrery-frame);
+    }
+
+    i {
+        position: absolute;
+        inset-block-start: 50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* Each mark, gridline and label sits at its --at, from 0 to 1 along the free part of the track. */
+.orrery__search-rail-mark,
+.orrery__search-rail-grid,
+.orrery__search-rail-labels span {
+    inset-inline-start: calc(
+        var(--orrery-rail-start) +
+        var(--at) *
+        (100% - var(--orrery-rail-start) - var(--orrery-rail-end))
+    );
+}
+
+.orrery__search-rail-primary {
+    inset-inline-start: 0;
+    inline-size: 22px;
+    block-size: 22px;
+    border-radius: 50%;
+    background-color: var(--orrery-rail-colour);
+}
+
+.orrery__search-rail-mark {
+    background-color: var(--orrery-rail-colour);
+    inline-size: 12px;
+    block-size: 12px;
+    border-radius: 50%;
+
+    &[data-active] {
+        z-index: 2;
+        outline: 2px solid var(--orrery-text);
+        outline-offset: 2px;
+    }
+}
+
+.orrery__search-rail-mark--craft {
+    inline-size: 3px;
+    block-size: 20px;
+    border-radius: 0;
+}
+
+.orrery__search-rail-track .orrery__search-rail-grid {
+    inset-block: 0;
+    inline-size: 1px;
+    background-color: var(--orrery-rule);
+    transform: translateX(-50%);
+}
+
+.orrery__search-rail-labels {
+    position: relative;
+    block-size: 1.1rem;
+    margin-inline-start: 0.75rem;
+    color: var(--orrery-dim);
+    font: 400 var(--orrery-size-xs) var(--orrery-font-data);
+
+    span {
+        position: absolute;
+        inset-block-start: 0;
+        transform: translateX(-50%);
+        white-space: nowrap;
+    }
+}
+
+@media (forced-colors: active) {
+    /* Forced colours would turn the marks into the page colour, and they'd vanish. */
+    .orrery__search-rail-primary,
+    .orrery__search-rail-mark {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+
+    .orrery__search-rail-mark[data-active] {
+        outline-color: Highlight;
+    }
+
+    .orrery__search-rail-track::before {
+        border-color: CanvasText;
+    }
+
+    .orrery__search-rail-track .orrery__search-rail-grid {
+        forced-color-adjust: none;
+        background-color: GrayText;
+    }
+}
+</style>

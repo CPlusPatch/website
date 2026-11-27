@@ -41,3 +41,43 @@ let {
         {@attach keys}
     >
 </div>
+
+<style>
+.orrery__search-field {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-sm);
+    block-size: var(--orrery-control-lg);
+    padding: 0 var(--orrery-pad);
+    border-block-end: 1px solid var(--orrery-rule);
+
+    input {
+        flex: 1;
+        min-inline-size: 0;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-md) var(--orrery-font-ui);
+        outline: none;
+
+        &::placeholder {
+            color: var(--orrery-dim);
+        }
+    }
+}
+
+.orrery__search-icon {
+    display: flex;
+    flex: none;
+    inline-size: 14px;
+    block-size: 14px;
+    color: var(--orrery-muted);
+
+    :global(svg) {
+        inline-size: 100%;
+        block-size: 100%;
+    }
+}
+</style>

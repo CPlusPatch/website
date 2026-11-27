@@ -407,3 +407,118 @@ const onInput = () => {
         <Hint {searching} />
     </section>
 {/if}
+
+<style>
+/* Above the side panels and the top bar, and below the dialogs, which sit in the top layer. */
+.orrery__search {
+    /* Halfway between the panel and the shown fill. */
+    --orrery-search-hover: color-mix(
+        in srgb,
+        var(--orrery-panel-raised) 50%,
+        var(--orrery-panel-solid)
+    );
+
+    /* A step above the shown fill, so the keyboard's row stands out in browse mode. */
+    --orrery-search-selected: color-mix(
+        in srgb,
+        var(--orrery-text) 12%,
+        var(--orrery-panel-raised)
+    );
+
+    /* How long the right pane takes to slide in on a narrow screen. */
+    --orrery-search-slide: 0.2s;
+
+    position: absolute;
+    z-index: 3;
+    inset-block-start: var(--orrery-search-top, 3rem);
+    inset-inline-start: var(--orrery-search-left, var(--space-sm));
+    display: flex;
+    flex-direction: column;
+    inline-size: min(40rem, 100% - 2 * var(--space-sm));
+    block-size: min(70vh, 36rem);
+    border: 1px solid var(--orrery-frame);
+    border-radius: 0;
+    background-color: var(--orrery-panel-solid);
+    color: var(--orrery-text);
+    box-shadow: none;
+
+    &[hidden] {
+        display: none;
+    }
+
+    /* A query fits the panel to its matches, up to the same cap. */
+    &:has(.orrery__search-panes[data-mode="results"]) {
+        block-size: auto;
+        max-block-size: min(70vh, 36rem);
+    }
+}
+
+.orrery__search-panes {
+    position: relative;
+    display: grid;
+    flex: 1;
+    grid-template-columns: 16.5rem 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-block-size: 0;
+}
+
+.orrery__search-panes[data-mode="results"] {
+    :global(.orrery__search-left),
+    :global(.orrery__search-right) {
+        display: none;
+    }
+
+    :global(.orrery__search-add) {
+        grid-column: 1 / -1;
+    }
+}
+
+.orrery__search-panes:not([data-mode="results"])
+    :global(.orrery__search-results) {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .orrery__search {
+        inset-inline: var(--space-sm);
+        inline-size: auto;
+    }
+
+    /* The right pane slides over the left one, and the Add button goes with the left. */
+    .orrery__search-panes {
+        grid-template-columns: minmax(0, 1fr);
+        overflow: clip;
+    }
+
+    .orrery__search-panes[data-detail] {
+        :global(.orrery__search-right) {
+            transform: none;
+            transition: transform var(--orrery-search-slide) ease;
+            visibility: visible;
+        }
+
+        /* Hidden only once the slide ends, and shown at once on the way back. */
+        :global(.orrery__search-left),
+        :global(.orrery__search-add) {
+            transform: translateX(-30%);
+            transition:
+                transform var(--orrery-search-slide) ease,
+                visibility 0s var(--orrery-search-slide);
+            visibility: hidden;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .orrery__search-panes[data-detail]
+        :global(
+            :is(
+                .orrery__search-left,
+                .orrery__search-right,
+                .orrery__search-add
+            )
+        ) {
+        transition: none;
+    }
+}
+</style>

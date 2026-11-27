@@ -67,3 +67,28 @@ let {
         {/each}
     {/if}
 </div>
+
+<style>
+.orrery__search-results {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    /* Fades the foot of a list while more rows are below. */
+    &:global([data-more]) {
+        mask-image: linear-gradient(
+            to bottom,
+            #000 calc(100% - 1.5rem),
+            transparent
+        );
+    }
+}
+
+.orrery__search-nomatch {
+    margin: 0;
+    padding: 1rem var(--orrery-pad);
+    color: var(--orrery-muted);
+}
+</style>

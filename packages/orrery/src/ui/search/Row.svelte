@@ -122,3 +122,146 @@ const opens = $derived(
         >
     {/if}
 </div>
+
+<style>
+.orrery__search-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-block-size: var(--orrery-control);
+    padding: 0 var(--orrery-pad);
+    cursor: default;
+
+    &:hover {
+        background-color: var(--orrery-search-hover);
+    }
+
+    &.orrery__search-row--shown {
+        background-color: var(--orrery-panel-raised);
+    }
+
+    &[aria-selected="true"] {
+        background-color: var(--orrery-search-selected);
+    }
+
+    b {
+        font-weight: 700;
+    }
+
+    @media (pointer: coarse), (max-width: 720px) {
+        min-block-size: 2.5rem;
+    }
+}
+
+.orrery__search-row--nested {
+    padding-inline-start: calc(var(--orrery-pad) + 1.5rem);
+}
+
+.orrery__search-row--two {
+    min-block-size: 2.75rem;
+    padding-block: 0.25rem;
+
+    @media (pointer: coarse), (max-width: 720px) {
+        min-block-size: 3rem;
+    }
+}
+
+.orrery__search-marker {
+    display: flex;
+    flex: none;
+    align-self: center;
+    inline-size: 16px;
+    block-size: 16px;
+
+    :global(svg) {
+        inline-size: 100%;
+        block-size: 100%;
+    }
+}
+
+.orrery__search-text {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.orrery__search-name {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.orrery__search-row--two .orrery__search-name {
+    font-weight: 400;
+}
+
+/* The role gives way before the name does. */
+.orrery__search-role {
+    flex: 0 100 auto;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--orrery-muted);
+    font-size: var(--orrery-size-sm);
+    white-space: nowrap;
+}
+
+.orrery__search-sub {
+    overflow: hidden;
+    color: var(--orrery-muted);
+    font-size: var(--orrery-size-label);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.orrery__search-range {
+    flex: none;
+    margin-inline-start: auto;
+    padding-inline-start: var(--space-sm);
+    color: var(--orrery-muted);
+    font: 400 var(--orrery-size-xs) var(--orrery-font-data);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    white-space: nowrap;
+}
+
+.orrery__search-chevron {
+    display: flex;
+    flex: none;
+    inline-size: 8px;
+    block-size: 12px;
+    color: var(--orrery-muted);
+
+    :global(svg) {
+        inline-size: 100%;
+        block-size: 100%;
+    }
+}
+
+.orrery__search-picked {
+    flex: none;
+    align-self: center;
+    inline-size: 7px;
+    block-size: 7px;
+    border-radius: 50%;
+    background-color: var(--orrery-pick);
+}
+
+@media (forced-colors: active) {
+    .orrery__search-row {
+        &[aria-selected="true"] {
+            outline: 2px solid Highlight;
+        }
+
+        &.orrery__search-row--shown:not([aria-selected="true"]) {
+            outline: 1px solid CanvasText;
+            outline-offset: -1px;
+        }
+    }
+
+    .orrery__search-picked {
+        background-color: CanvasText;
+    }
+}
+</style>
