@@ -1,26 +1,29 @@
 import Button from "@cpluspatch/ui/astro/ui/button.astro";
 import ButtonGroup from "@cpluspatch/ui/astro/ui/button-group.astro";
 import { TONES } from "@cpluspatch/ui/lib/tone.ts";
-import { matrix, SIZES, type StoryGroup, story, title } from "../story.ts";
+import { SIZES, type StoryGroup, story, title } from "../story.ts";
 
 const VARIANTS = ["solid", "outline", "ghost", "link"] as const;
 
 export const buttons: StoryGroup[] = [
     {
-        id: "button-matrix",
-        title: "Variant × tone",
+        id: "button-variant",
+        title: "Variant and tone",
         category: "primitives",
         description: "Fill style and color are independent axes.",
         min: 10,
-        ...matrix(
-            Button,
-            ["variant", VARIANTS],
-            ["tone", TONES],
-            (variant, tone) => [
-                { variant, tone },
-                { icon: "lucide:star", slot: title(tone) },
-            ],
-        ),
+        stories: [
+            story(
+                "default",
+                Button,
+                { variant: "solid", tone: "primary" },
+                {
+                    icon: "lucide:star",
+                    slot: "Button",
+                    controls: { variant: VARIANTS, tone: TONES },
+                },
+            ),
+        ],
     },
     {
         id: "button-size",

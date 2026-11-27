@@ -2,11 +2,13 @@ import { readFileSync } from "node:fs";
 
 /** A story as /gallery/manifest.json lists it (src/pages/gallery/manifest.json.ts). */
 export interface Story {
-    /** `<group>/<story>`: every test about a story is titled with it. */
+    /** `<group>/<story>`, or `<group>/<story>/<combo>`: every test about a story is titled with it. */
     id: string;
     component: string;
     group: string;
     story: string;
+    /** Set for a combination of the story's controls. */
+    combo?: string;
     path: string;
     source: string;
     category: string;

@@ -1,15 +1,17 @@
 ---
 import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
-import { allStories } from "../../../../gallery/components.ts";
-import StoryPage from "../../../../gallery/story-page.astro";
-import StoryPreview from "../../../../gallery/story-preview.astro";
+import { allStories } from "../../../../../gallery/components.ts";
+import StoryPage from "../../../../../gallery/story-page.astro";
+import StoryPreview from "../../../../../gallery/story-preview.astro";
 
 /** One story on a page of its own (see story-page.astro for its options). */
 export const getStaticPaths = (() =>
-    allStories().map(({ group, story }) => ({
-        params: { group: group.id, story: story.name },
-        props: { group, story },
-    }))) satisfies GetStaticPaths;
+    allStories()
+        .filter(({ combo }) => !combo)
+        .map(({ group, story }) => ({
+            params: { group: group.id, story: story.name },
+            props: { group, story },
+        }))) satisfies GetStaticPaths;
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 

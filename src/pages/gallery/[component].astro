@@ -45,7 +45,6 @@ const stepTo = (c: GalleryComponent | undefined) =>
 const groups: BenchGroup[] = component.groups.map((group) => ({
     id: group.id,
     title: group.title,
-    matrix: group.matrix,
     tags: tagsOf(group),
     stories: group.stories.map((story) => ({
         name: story.name,

@@ -156,7 +156,7 @@ function compareHtml(before: Story[], after: Story[]) {
         const a = storyHtml(dists.ref, story);
         const b = storyHtml(dists.head, story);
         if (a === b || a === undefined || b === undefined) continue;
-        const name = story.id.replace("/", "--");
+        const name = story.id.replaceAll("/", "--");
         const [fa, fb] = [join(dir, `${name}.ref`), join(dir, `${name}.head`)];
         writeFileSync(fa, `${a}\n`);
         writeFileSync(fb, `${b}\n`);

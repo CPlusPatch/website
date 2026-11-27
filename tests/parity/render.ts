@@ -17,7 +17,7 @@ import type { Component } from "svelte";
 import { render } from "svelte/server";
 import { isIconName } from "../../packages/ui/src/icons.ts";
 import { groups } from "../../src/gallery/stories/index.ts";
-import type { Story } from "../../src/gallery/story.ts";
+import { combinations, type Story } from "../../src/gallery/story.ts";
 import StoryNode from "../../src/gallery/story-node.astro";
 import StorySlot from "../../src/gallery/story-slot.astro";
 import type { RenderedCase } from "./types.ts";
@@ -68,9 +68,16 @@ export const renderCases = async (): Promise<RenderedCase[]> => {
 
     for (const group of groups) {
         for (const top of group.stories) {
-            for (const [name, story, svelte] of walk(
-                top,
-                `${group.id}/${top.name}`,
+            const tops = [
+                { story: top, path: `${group.id}/${top.name}` },
+                ...combinations(top).map(({ combo, story }) => ({
+                    story,
+                    path: `${group.id}/${top.name}/${combo}`,
+                })),
+            ];
+
+            for (const [name, story, svelte] of tops.flatMap(
+                ({ story, path }) => walk(story, path),
             )) {
                 const unsupported = icons(story.props).find(
                     (icon) =>

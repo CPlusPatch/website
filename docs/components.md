@@ -58,7 +58,7 @@ export const badges: StoryGroup[] = [
 ];
 ```
 
-Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story for every combination of props, just the states that are worth looking at. When two props really are independent axes, like a button's variant and tone, `matrix()` from `story.ts` makes every combination and the gallery shows them as a table. Its stories are named `<row>-<column>`, like `solid-primary`.
+Add it to the list in `src/gallery/stories/index.ts` too. You don't need a story for every combination of props, just the states that are worth looking at. When two props really are independent axes, like a button's variant and tone, set `controls` on the story, like `{ variant: VARIANTS, tone: TONES }`. The story's props are the default combination. Each other combination gets its own page, named `<story>/<combo>` like `default/ghost-destructive`, and the tests check every one. A story can make up to 64 combinations.
 
 Story names go in URLs, so they're lowercase words joined by hyphens, and unique within their group. The build fails otherwise.
 

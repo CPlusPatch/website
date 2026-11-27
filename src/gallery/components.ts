@@ -1,7 +1,7 @@
 /*
  * The gallery's components: its story groups sorted into one page each, at
  * /gallery/<id>/. Most components are a single group; a few gather several
- * (Buttons has its variant × tone table, its sizes and its groups).
+ * (Buttons has its variant and tone, its sizes and its groups).
  *
  * Checked when the module loads: every group belongs to exactly one
  * component, a component's groups share its category, and every story name
@@ -12,6 +12,8 @@ import { groups } from "./stories/index.ts";
 import {
     CATEGORIES,
     type CategoryId,
+    combinationPath,
+    combinations,
     STORY_NAME,
     type Story,
     type StoryGroup,
@@ -45,14 +47,14 @@ const SEVERAL: Several[] = [
         title: "Buttons",
         description:
             "Buttons, and links that look like them. Any variant works with any tone, and a group joins a few into one control.",
-        groups: ["button-matrix", "button-size", "button-group"],
+        groups: ["button-variant", "button-size", "button-group"],
     },
     {
         id: "badges",
         title: "Badges",
         description:
             "Small labels, with the same variants and tones as buttons.",
-        groups: ["badge-matrix", "badge-size"],
+        groups: ["badge-variant", "badge-size"],
     },
     {
         id: "attachments",
@@ -132,6 +134,8 @@ for (const group of groups) {
         }
         names.add(name);
     }
+    // Throws for a story whose controls don't fit it.
+    for (const story of group.stories) combinations(story);
 }
 
 const ids = new Set<string>();
@@ -213,19 +217,44 @@ export const tagsOf = (group: StoryGroup, story?: Story): Tag[] =>
         (tag) => group.tags?.includes(tag) || story?.tags?.includes(tag),
     );
 
+type StoryEntry = {
+    component: GalleryComponent;
+    group: StoryGroup;
+    story: Story;
+    /** Set for a combination of the story's controls. */
+    combo?: string;
+    path: string;
+    tags: Tag[];
+};
+
 /**
  * Every story with a page of its own, in gallery order, with where to find
- * it: what the story pages are built from, and the manifest lists.
+ * it: what the story pages are built from, and the manifest lists. A story's
+ * combinations (`combo`) follow it, as stories of their own.
  */
-export const allStories = () =>
+export const allStories = (): StoryEntry[] =>
     components.flatMap((component) =>
         component.groups.flatMap((group) =>
-            group.stories.map((story) => ({
-                component,
-                group,
-                story,
-                path: storyPath(group.id, story.name),
-                tags: tagsOf(group, story),
-            })),
+            group.stories.flatMap((story) => [
+                {
+                    component,
+                    group,
+                    story,
+                    path: storyPath(group.id, story.name),
+                    tags: tagsOf(group, story),
+                },
+                ...combinations(story).map((combination) => ({
+                    component,
+                    group,
+                    story: combination.story,
+                    combo: combination.combo,
+                    path: combinationPath(
+                        group.id,
+                        story.name,
+                        combination.combo,
+                    ),
+                    tags: tagsOf(group, story),
+                })),
+            ]),
         ),
     );

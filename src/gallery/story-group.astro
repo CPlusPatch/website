@@ -1,15 +1,12 @@
 ---
-import { Icon } from "astro-icon/components";
 import { sourceOf, tagsOf } from "./components.ts";
-import { type StoryGroup, slug, storyPath } from "./story.ts";
+import { combinations, type StoryGroup } from "./story.ts";
 import StoryCell from "./story-cell.astro";
-import StoryPreview from "./story-preview.astro";
 import StoryTags from "./story-tags.astro";
 
 /**
  * One group of stories, as a section of its component's page: a grid of
- * stories on their stages, or for a matrix() group, a table of them with
- * the two axes as its headings.
+ * stories on their stages, each followed by its combinations (controls).
  *
  * A component of several groups gives each a heading and its source. A
  * component of one is just the stories: the page's bar already says the rest.
@@ -23,14 +20,10 @@ interface Props {
 }
 
 const { group, titled, source = false } = Astro.props;
-const { matrix } = group;
 
 const cell = (min: number | "full" = 16) =>
     min === "full" ? "100%" : `${min}rem`;
 const count = group.stories.length;
-const id = (name: string) => `${group.id}/${name}`;
-const at = (row: string, column: string) =>
-    group.stories.find((s) => s.name === slug(`${row}-${column}`));
 ---
 
 <section
@@ -50,9 +43,7 @@ const at = (row: string, column: string) =>
             <p class="story-group__meta text-meta">
                 {source && <code>{sourceOf(group).split("/").at(-1)}</code>}
                 <span>
-                    {matrix
-                        ? `${matrix.rows.name} (${matrix.rows.values.length}) × ${matrix.columns.name} (${matrix.columns.values.length})`
-                        : `${count} ${count === 1 ? "story" : "stories"}`}
+                    {count} {count === 1 ? "story" : "stories"}
                 </span>
                 <StoryTags tags={tagsOf(group)} />
             </p>
@@ -64,68 +55,18 @@ const at = (row: string, column: string) =>
         </header>
     )}
     <div class="story-group__body">
-        {matrix ? (
-            <div class="story-group__matrix story__stage">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">
-                                <span class="visually-hidden">
-                                    {matrix.rows.name}
-                                </span>
-                            </th>
-                            {matrix.columns.values.map((column) => (
-                                <th scope="col">{column}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {matrix.rows.values.map((row) => (
-                            <tr>
-                                <th scope="row">{row}</th>
-                                {matrix.columns.values.map((column) => {
-                                    const story = at(row, column);
-                                    return (
-                                        story && (
-                                            <td
-                                                id={id(story.name)}
-                                                data-story={id(story.name)}
-                                                title={story.name}
-                                            >
-                                                <StoryPreview {story} />
-                                                <a
-                                                    class="story-group__open"
-                                                    href={storyPath(
-                                                        group.id,
-                                                        story.name,
-                                                    )}
-                                                    title="Open alone"
-                                                >
-                                                    <Icon
-                                                        name="lucide:square-arrow-out-up-right"
-                                                        aria-hidden="true"
-                                                    />
-                                                    <span class="visually-hidden">
-                                                        Open {id(story.name)} on
-                                                        its own
-                                                    </span>
-                                                </a>
-                                            </td>
-                                        )
-                                    );
-                                })}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        ) : (
-            <div class="story-group__grid" style={`--cell: ${cell(group.min)}`}>
-                {group.stories.map((story) => (
-                    <StoryCell group={group.id} {story} />
-                ))}
-            </div>
-        )}
+        <div class="story-group__grid" style={`--cell: ${cell(group.min)}`}>
+            {group.stories.flatMap((story) => [
+                <StoryCell group={group.id} {story} />,
+                ...combinations(story).map((combination) => (
+                    <StoryCell
+                        group={group.id}
+                        story={combination.story}
+                        combo={combination.combo}
+                    />
+                )),
+            ])}
+        </div>
     </div>
 </section>
 
@@ -153,40 +94,6 @@ const at = (row: string, column: string) =>
         row-gap: var(--space-xs);
         padding-bottom: var(--space-sm);
         border-bottom: var(--border-width) solid var(--border-color);
-    }
-
-    /* A cell's link to its story's page: in the corner, shown on hover. */
-    .story-group__open {
-        position: absolute;
-        top: 0;
-        right: 0;
-        display: grid;
-        place-items: center;
-        width: 1.25rem;
-        height: 1.25rem;
-        color: var(--color-text-muted);
-        background-color: var(--color-surface);
-        opacity: 0;
-        transition: opacity var(--transition);
-
-        :is(td:hover, td:focus-within) > &,
-        &:focus-visible {
-            opacity: 1;
-        }
-
-        @media (hover: none) {
-            opacity: 1;
-        }
-
-        &:hover {
-            color: var(--color-text);
-            background-color: var(--color-surface);
-        }
-
-        svg {
-            width: 0.75rem;
-            height: 0.75rem;
-        }
     }
 
     .story-group__title {
@@ -249,10 +156,6 @@ const at = (row: string, column: string) =>
         gap: var(--space-md);
         align-items: start;
 
-        &:global(.story-group__compare--stacked) {
-            grid-template-columns: minmax(0, 1fr);
-        }
-
         :global(figure) {
             display: flex;
             flex-direction: column;
@@ -282,49 +185,6 @@ const at = (row: string, column: string) =>
             );
         gap: var(--space-md);
         align-items: start;
-    }
-
-    /* One stage for the whole table; it scrolls sideways if it must. */
-    .story-group__matrix {
-        overflow-x: auto;
-        border: var(--border-width) solid var(--border-color);
-        border-radius: var(--radius);
-
-        table {
-            margin-inline: auto;
-            border-collapse: collapse;
-        }
-
-        th {
-            padding: var(--space-xs) var(--space-sm);
-            font-family: var(--font-mono);
-            font-size: var(--font-size-xs);
-            font-weight: 500;
-            color: var(--color-text-muted);
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        th[scope="row"] {
-            text-align: end;
-        }
-
-        td {
-            position: relative;
-            padding: var(--space-sm);
-            vertical-align: middle;
-
-            /* The story a link jumped to. */
-            &:target {
-                outline: 2px solid var(--color-primary);
-                outline-offset: -2px;
-            }
-        }
-
-        /* A size container has no width of its own, so a cell would shrink to nothing. */
-        td :global(.story-preview) {
-            container-type: normal;
-        }
     }
 }
 </style>

@@ -3,7 +3,7 @@
  * the Astro page can pass it as props, and pure functions on it.
  */
 
-import { type Axis, storyPath, type Tag } from "./story.ts";
+import { storyPath, type Tag } from "./story.ts";
 
 export type BenchStory = {
     name: string;
@@ -16,7 +16,6 @@ export type BenchStory = {
 export type BenchGroup = {
     id: string;
     title: string;
-    matrix?: { rows: Axis; columns: Axis };
     tags: Tag[];
     stories: BenchStory[];
 };

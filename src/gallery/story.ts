@@ -44,6 +44,11 @@ export interface Story {
     slots?: Record<string, Story[]>;
     /** What sets this story apart for tests (TAGS), on top of its group's. */
     tags?: Tag[];
+    /**
+     * Props whose values the bench lets a reader set. Each prop in `props`
+     * is the default, and every other combination gets a page (combinations()).
+     */
+    controls?: Record<string, readonly string[]>;
 }
 
 /**
@@ -89,8 +94,6 @@ export interface StoryGroup {
      * per row. Wider components need more. Defaults to 16.
      */
     min?: number | "full";
-    /** Set by matrix(): the stories are every combination of two axes. */
-    matrix?: { rows: Axis; columns: Axis };
     /** Tags (TAGS) every one of its stories has. */
     tags?: Tag[];
     /** The component's file from the repo root, where Astro can't say (a Svelte one). */
@@ -98,10 +101,34 @@ export interface StoryGroup {
     stories: Story[];
 }
 
-export interface Axis {
-    name: string;
-    values: readonly string[];
-}
+/** The values each prop of a component may be set to by a story's `controls`. */
+type Controls<P> = {
+    [K in keyof P]?: readonly Extract<NonNullable<P[K]>, string>[];
+};
+
+type StoryContent<P> = Omit<
+    Story,
+    "name" | "component" | "props" | "controls"
+> & { controls?: Controls<P> };
+
+// The generic Controls<P> can't be shown to fit Story's loose `controls`, so it's cast here.
+const build = (
+    name: string,
+    component: Component,
+    props: Record<string, unknown>,
+    {
+        controls,
+        ...content
+    }: Omit<Story, "name" | "component" | "props" | "controls"> & {
+        controls?: object;
+    },
+): Story => ({
+    name,
+    component,
+    props,
+    ...content,
+    ...(controls && { controls: controls as Story["controls"] }),
+});
 
 /**
  * Builds a story with its props checked against the component's own Props
@@ -112,10 +139,8 @@ export const story = <T extends Component>(
     name: string,
     component: T,
     props: ComponentProps<T>,
-    content: StoryContent = {},
-): Story => ({ name, component, props, ...content });
-
-type StoryContent = Omit<Story, "name" | "component" | "props">;
+    content: StoryContent<ComponentProps<T>> = {},
+): Story => build(name, component, props, content);
 
 /**
  * story() for a Svelte component, which Astro renders on the server like
@@ -126,13 +151,8 @@ export const svelteStory = <T extends SvelteComponent<any>>(
     name: string,
     component: T,
     props: SvelteProps<T>,
-    content: StoryContent = {},
-): Story => ({
-    name,
-    component: component as unknown as Component,
-    props,
-    ...content,
-});
+    content: StoryContent<SvelteProps<T>> = {},
+): Story => build(name, component as unknown as Component, props, content);
 
 /** What a story's name may be: lowercase words joined by hyphens. */
 export const STORY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -148,28 +168,76 @@ export const slug = (s: string) =>
 export const storyPath = (groupId: string, name: string) =>
     `/gallery/story/${groupId}/${name}/`;
 
+/** The most combinations one story's controls may make, its default included. */
+export const MAX_COMBINATIONS = 64;
+
+/** A combination of a story's controls, as a story of its own. */
+export type Combination = { combo: string; story: Story };
+
+/** A combination's own page, with nothing else on it. */
+export const combinationPath = (
+    groupId: string,
+    name: string,
+    combo: string,
+): string => `/gallery/story/${groupId}/${name}/${combo}/`;
+
 /**
- * Every combination of two props, as stories named `<row>-<column>` (in
- * row-major order) that the gallery shows as a table. Spread the result into
- * a group. Each combination still goes through story(), so its props are
- * type-checked.
+ * Every combination of a story's controls but the default (its own props),
+ * named by the values in control order, the first control changing slowest.
  */
-export const matrix = <T extends Component, R extends string, C extends string>(
-    component: T,
-    [rowName, rows]: [string, readonly R[]],
-    [columnName, columns]: [string, readonly C[]],
-    build: (row: R, column: C) => [ComponentProps<T>, StoryContent?],
-): Pick<StoryGroup, "matrix" | "stories"> => ({
-    matrix: {
-        rows: { name: rowName, values: rows },
-        columns: { name: columnName, values: columns },
-    },
-    stories: rows.flatMap((row) =>
-        columns.map((column) =>
-            story(slug(`${row}-${column}`), component, ...build(row, column)),
-        ),
-    ),
-});
+export const combinations = (story: Story): Combination[] => {
+    const controls = Object.entries(story.controls ?? {});
+    if (controls.length === 0) return [];
+
+    for (const [prop, values] of controls) {
+        if (!(prop in story.props)) {
+            throw new Error(
+                `"${story.name}" controls "${prop}", but its props don't set it`,
+            );
+        }
+        const value = story.props[prop];
+        if (typeof value !== "string" || !values.includes(value)) {
+            throw new Error(
+                `"${story.name}" sets ${prop} to ${JSON.stringify(value)}, which isn't one of its controlled values: ${values.join(", ")}`,
+            );
+        }
+    }
+
+    const count = controls.reduce((n, [, values]) => n * values.length, 1);
+    if (count > MAX_COMBINATIONS) {
+        throw new Error(
+            `"${story.name}" has ${count} combinations, over the most there may be (${MAX_COMBINATIONS})`,
+        );
+    }
+
+    const picks = controls.reduce<string[][]>(
+        (rows, [, values]) =>
+            rows.flatMap((row) => values.map((value) => [...row, value])),
+        [[]],
+    );
+    const names = new Set<string>();
+    const found: Combination[] = [];
+    for (const pick of picks) {
+        const combo = pick.join("-");
+        if (!STORY_NAME.test(combo) || names.has(combo)) {
+            throw new Error(
+                `Combination "${combo}" of "${story.name}" is taken or not lowercase-with-hyphens`,
+            );
+        }
+        names.add(combo);
+
+        const props = {
+            ...story.props,
+            ...Object.fromEntries(controls.map(([prop], i) => [prop, pick[i]])),
+        };
+        if (controls.every(([prop]) => props[prop] === story.props[prop])) {
+            continue;
+        }
+        found.push({ combo, story: { ...story, props } });
+    }
+
+    return found;
+};
 
 export const SIZES = ["lg", "default", "sm"] as const;
 

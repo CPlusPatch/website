@@ -45,11 +45,6 @@ const render = (section: HTMLElement, mode: Mode) => {
 
     const grid = document.createElement("div");
     grid.className = "story-group__compare";
-    // A table wants the whole width: one copy above the other.
-    grid.classList.toggle(
-        "story-group__compare--stacked",
-        Boolean(body.querySelector(".story-group__matrix")),
-    );
     for (const copy of copies(mode)) {
         const figure = document.createElement("figure");
         const caption = document.createElement("figcaption");
