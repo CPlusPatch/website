@@ -7,14 +7,13 @@ import {
 } from "@cpluspatch/orbit";
 import { formatDuration } from "@cpluspatch/render";
 import { isOrbiting } from "@cpluspatch/sim";
-import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
-import { segmentedClasses } from "@cpluspatch/ui/components/segmented-control.ts";
 import { onMount } from "svelte";
 import { cue } from "../audio/cues.ts";
-import { failureMessage, isZero, STEPS, sameElements } from "../burning.ts";
+import { failureMessage, isZero, sameElements } from "../burning.ts";
 import { getDocument, getView } from "../state/context.ts";
+import BurnApsides from "./BurnApsides.svelte";
+import BurnAxes from "./BurnAxes.svelte";
 import EditorForm from "./EditorForm.svelte";
-import NumberField from "./NumberField.svelte";
 import Warning from "./Warning.svelte";
 
 type Axis = keyof Burn;
@@ -30,18 +29,6 @@ type Props = {
     /** Called when typing or stepping changes the burn. */
     onDraft: () => void;
 };
-
-const AXES: [axis: Axis, name: string, hint?: string][] = [
-    ["prograde", "Prograde"],
-    ["normal", "Normal"],
-    [
-        "radial",
-        "Radial",
-        "Away from the parent, at right angles to the velocity. It points straight out only on a circular orbit.",
-    ],
-];
-
-const DEFAULT_STEP = 10;
 
 const { id, ghost, footTarget, done, onDraft }: Props = $props();
 
@@ -74,13 +61,12 @@ if (!start) throw new Error("The body has no orbit to burn on.");
 /** The parent's and the body's `mu` added, for the true anomaly of the elements. */
 export const mu = start.mu;
 
-let step = DEFAULT_STEP;
 let ghosted: Elements | null = null;
 let wasNonzero = false;
 // Only a pause this editor made is undone when the form closes.
 let pausedHere = false;
 
-const inputs = $state<Partial<Record<Axis, HTMLInputElement>>>({});
+let inputs = $state<Partial<Record<Axis, HTMLInputElement>>>({});
 // Set by `refresh`, so `elements` doesn't predict the burn again.
 let predicted = $state.raw<Elements | null>(null);
 let periodText = $state("");
@@ -213,75 +199,8 @@ onMount(() => () => {
     onApply={apply}
     onCancel={cancel}
 >
-    <fieldset class="orrery__burn-dv">
-        <legend class="visually-hidden">Δv</legend>
-        <div class="orrery__burn-step">
-            <span aria-hidden="true">Step</span>
-            <fieldset class={segmentedClasses({ variant: "subtle" }).join(" ")}>
-                <legend class="visually-hidden">Step</legend>
-                {#each STEPS as value (value)}
-                    <label class="segmented__option"
-                        ><input
-                            class="visually-hidden"
-                            type="radio"
-                            name="orrery-burn-step"
-                            value={String(value)}
-                            checked={value === DEFAULT_STEP}
-                            onchange={() => {
-                                step = value;
-                            }}
-                        ><span class="segmented__text"
-                            >{String(value)}<span class="visually-hidden"
-                                >{" m/s"}</span
-                            ></span
-                        ></label
-                    >
-                {/each}
-            </fieldset>
-            <span aria-hidden="true">m/s</span>
-        </div>
-        <!-- Any Δv is allowed; the step only sets how far − and + move it. -->
-        {#each AXES as [axis, name, hint] (axis)}
-            <NumberField
-                id="orrery-burn-{axis}"
-                name={axis}
-                label={name}
-                unit="m/s"
-                value="0"
-                step={() => step}
-                {hint}
-                onInput={changed}
-                onChange={() => {
-                    // An empty or half-typed field reads as 0, so it says so on blur.
-                    const input = inputs[axis];
-                    if (input?.value !== "") return;
-
-                    input.value = "0";
-                    changed();
-                }}
-                bind:input={inputs[axis]}
-            />
-        {/each}
-    </fieldset>
-    <div class="orrery__burn-actions">
-        <button
-            type="button"
-            class={buttonClasses({ variant: "outline", tone: "neutral" }).join(
-                " ",
-            )}
-            onclick={() => goTo("periapsis")}
-        >
-            Go to periapsis
-        </button><button
-            type="button"
-            class={buttonClasses({ variant: "outline", tone: "neutral" }).join(
-                " ",
-            )}
-            onclick={() => goTo("apoapsis")}
-        >
-            Go to apoapsis
-        </button>
-    </div>
+    <BurnAxes bind:inputs onChange={changed} />
+    <BurnApsides {goTo} />
     <div hidden={!predicted}>
         <h3 id="orrery-burn-after" class="orrery__burn-heading">
             After the burn
@@ -295,55 +214,6 @@ onMount(() => () => {
 </EditorForm>
 
 <style>
-/* Equal columns, so buttons that wrap still line up. */
-.orrery__burn-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-    margin-block-start: var(--space-md);
-    gap: var(--space-xs);
-}
-
-/* A wrapped label spills out of the fixed-height button. */
-.orrery__burn-actions :global(.button) {
-    white-space: nowrap;
-}
-
-.orrery__burn-dv {
-    display: grid;
-    gap: 0.625rem;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    min-inline-size: 0;
-}
-
-.orrery__burn-step {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-block-end: var(--space-md);
-    color: var(--color-text-muted);
-    font: var(--type-ui);
-}
-
-.orrery__burn-step :global(.segmented__text) {
-    font-family: var(--orrery-font-data);
-}
-
-/* The chosen step needs more than a text colour to be seen. */
-.orrery__burn-step :global(.segmented__option:has(:checked)) {
-    background-color: var(--orrery-panel-raised);
-    box-shadow: inset 0 0 0 1px var(--orrery-text);
-}
-
-@media (forced-colors: active) {
-    .orrery__burn-step :global(.segmented__option:has(:checked)) {
-        box-shadow: none;
-        background-color: Highlight;
-        color: HighlightText;
-    }
-}
-
 .orrery__burn-heading {
     margin: 0;
     color: var(--color-text-muted);
