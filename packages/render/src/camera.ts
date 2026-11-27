@@ -3,7 +3,12 @@ import type { Body, Scenario } from "@cpluspatch/sim";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { type Frame, positionOf as positionIn, velocityOf } from "./frame.ts";
+import {
+    type Frame,
+    positionOf as positionIn,
+    presentIn,
+    velocityOf,
+} from "./frame.ts";
 import { behindDirection, chaseFrame, chaseView } from "./geometry/chase.ts";
 import {
     fitDistanceKm,
@@ -207,10 +212,11 @@ export const createRig = (
     const tanHalfFov = Math.tan(fovRad / 2);
     controls.minDistance = minDistanceKm(bodyOf(focused), fovRad);
 
+    const present = (id: string) => presentIn(current, id);
     const fitTo = (reach: number) =>
         fitDistanceKm(reach, fovRad, camera.aspect, START_ELEVATION);
-    const fitDistance = () => fitTo(reachKm(scenario()));
-    const openingDistance = () => fitTo(openingReachKm(scenario()));
+    const fitDistance = () => fitTo(reachKm(scenario(), present));
+    const openingDistance = () => fitTo(openingReachKm(scenario(), present));
 
     const setDistance = (distance: number) => {
         proxy.position.setLength(distance);
@@ -364,7 +370,7 @@ export const createRig = (
     const frameDistance = (id: string) =>
         id === root.id
             ? openingDistance()
-            : frameDistanceKm(scenario(), id, fovRad, camera.aspect);
+            : frameDistanceKm(scenario(), id, fovRad, camera.aspect, present);
 
     const clampDistance = (id: string, distance: number) =>
         Math.min(

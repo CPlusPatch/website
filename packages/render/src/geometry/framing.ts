@@ -14,8 +14,11 @@ export type Pose = { distance: number; position: Vec3 };
 export const minDistanceKm = (body: Body, fovRad: number): number =>
     Math.max(body.mass.radius / 1000 / Math.sin(0.4 * fovRad), 0.01);
 
-/** The farthest a planet or star gets from the root, in km, or the root's radius if there are none. */
-export const reachKm = (scenario: Scenario): number => {
+/** The farthest a present planet or star gets from the root, in km, or the root's radius if there are none. */
+export const reachKm = (
+    scenario: Scenario,
+    present: (id: string) => boolean,
+): number => {
     const root = scenario.bodies.find((body) => body.orbit === undefined);
     if (!root) throw new Error("The scenario has no root body.");
 
@@ -26,7 +29,9 @@ export const reachKm = (scenario: Scenario): number => {
                 // companion star like 40 Eridani B stays in reach.
                 .filter(
                     (body): body is OrbitingBody =>
-                        body.orbit?.parent === root.id && styleOf(body).reach,
+                        body.orbit?.parent === root.id &&
+                        styleOf(body).reach &&
+                        present(body.id),
                 )
                 .map(
                     (body) =>
@@ -44,20 +49,26 @@ const apoapsisKm = (body: OrbitingBody): number =>
 /**
  * The radius in km the opening view frames: the 4th planet's apoapsis from the root, so the inner
  * planets fill the view. With fewer planets it is the farthest one's, and with none it is `reachKm`.
+ * Planets that aren't `present` don't count.
  */
-export const openingReachKm = (scenario: Scenario): number => {
+export const openingReachKm = (
+    scenario: Scenario,
+    present: (id: string) => boolean,
+): number => {
     const root = scenario.bodies.find((body) => body.orbit === undefined);
     if (!root) throw new Error("The scenario has no root body.");
 
     const planets = scenario.bodies
         .filter(
             (body): body is OrbitingBody =>
-                body.orbit?.parent === root.id && styleOf(body).opening,
+                body.orbit?.parent === root.id &&
+                styleOf(body).opening &&
+                present(body.id),
         )
         .sort((a, b) => a.orbit.elements.a - b.orbit.elements.a);
     const chosen = planets[3] ?? planets.at(-1);
 
-    return chosen ? apoapsisKm(chosen) : reachKm(scenario);
+    return chosen ? apoapsisKm(chosen) : reachKm(scenario, present);
 };
 
 /** The margin, as a share of the viewport, left around the orbit of the fit. */
@@ -88,19 +99,21 @@ export const fitDistanceKm = (
 /**
  * The camera distance in km that frames a body: its farthest child's orbit fits the view, or
  * the body spans 25% of the view's height if it has no children. Spacecraft are skipped when
- * the body has other children.
+ * the body has other children. Children that aren't `present` don't count.
  */
 export const frameDistanceKm = (
     scenario: Scenario,
     id: string,
     fovRad: number,
     aspect: number,
+    present: (id: string) => boolean,
 ): number => {
     const body = scenario.bodies.find((candidate) => candidate.id === id);
     if (!body) throw new Error(`There is no body "${id}".`);
 
     const children = scenario.bodies.filter(
-        (child): child is OrbitingBody => child.orbit?.parent === id,
+        (child): child is OrbitingBody =>
+            child.orbit?.parent === id && present(child.id),
     );
     if (children.length === 0) {
         return body.mass.radius / 1000 / Math.sin(0.125 * fovRad);
