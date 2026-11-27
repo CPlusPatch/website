@@ -13,7 +13,7 @@ orrery  →  catalog  →  sim
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | `@cpluspatch/orbit`   | Vectors, frames, time, constants, conic math, anomaly solvers, burns                                                                            | `sim`, `catalog`, `render`, `orrery`, `three`, `svelte` |
 | `@cpluspatch/sim`     | Scenario schema and validation, commands and the reducer, `compile` and snapshots, perturbations, readouts, the satellite swarm, grip drag math | `catalog`, `render`, `orrery`, `three`, `svelte`        |
-| `@cpluspatch/catalog` | Built-in scenarios and their data tables                                                                                                        | `render`, `orrery`, `three`, `svelte`                   |
+| `@cpluspatch/catalog` | Built-in scenarios and their data tables, the satellite snapshot and `loadSatellites`                                                           | `render`, `orrery`, `three`, `svelte`                   |
 | `@cpluspatch/render`  | The three.js scene, camera, picking, labels, theme colours, and the text and DOM helpers the UI shares                                          | `orrery`, `catalog`, `svelte`                           |
 | `@cpluspatch/orrery`  | The page: panels, audio, shortcuts                                                                                                              | nothing; it's the root                                  |
 
@@ -82,7 +82,7 @@ When Orrery's startup throws, it replaces the loading text with an error. When i
 
 ## Schema
 
-A version 3 body has `id`, `name`, `tags`, `mass` (`mu` and `radius`) and an optional `orbit` (`parent` and `elements`). It can also have `appearance`, `preset`, `rotation`, `gravity` and `perturbations`. A scenario can list `clouds`, each a `{ id, host, source }` set of small bodies drawn around the body `host`. Their positions aren't in `Snapshot`. `prepareCloud` returns a `Cloud`, and its `positionsAt(t, shown, out)` writes only the shown particles. The catalogue loads after `compile`.
+A version 3 body has `id`, `name`, `tags`, `mass` (`mu` and `radius`) and an optional `orbit` (`parent` and `elements`). It can also have `appearance`, `preset`, `rotation`, `gravity` and `perturbations`. A scenario can list `clouds`, each a `{ id, host, source }` set of small bodies drawn around the body `host`. Their positions aren't in `Snapshot`. `prepareCloud` returns a `Cloud`, and its `positionsAt(t, shown, out)` writes only the shown particles. The catalogue loads after `compile`. `orrery` passes `render` a loader for it, `loadSatellites` from `catalog`.
 
 `validateScenario` reads versions 1, 2 and 3 and always returns version 3. A legacy field becomes this:
 
@@ -125,11 +125,3 @@ A perturbation turns an orbit's node and periapsis at a steady rate. `sim/src/pe
 `compile` resolves every body's precessions once. `System.precessions(id)` returns them, and `System.elementsAt(id, t)` applies them. A `j2` perturbation on a parent without gravity or rotation drifts by nothing. `validateScenario` reports it as an error when it's given `presets`, which `apply` and `persistence.ts` pass.
 
 The built-in scenarios still store `secular` rates. The satellite swarm takes its host's `mu`, `radius`, `rotation` and `gravity` from the caller. The radius and rotation set the orbit classes: LEO is measured from the radius, and GEO is where the period equals the host's spin. The swarm reads its elements relative to the host's equator at the catalogue epoch and precesses about the host's pole. For Earth that's the IAU pole, about 0.15° off the J2000 one.
-
-## Temporary exceptions
-
-These break the rules above until a later step of the rewrite removes them.
-
-| Exception                                                                                                                      | Removed when                             |
-| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| The satellite snapshot build script and `assets/satellites.bin` live in `orrery`; the catalogue decoder and swarm are in `sim` | Satellite clouds are propagated in `sim` |

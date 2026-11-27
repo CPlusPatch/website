@@ -3,16 +3,8 @@
  * Scenarios, rotations, documents and the simulation that turns them into body states.
  */
 
-export type {
-    Catalogue,
-    CatalogueEntry,
-    SatelliteGroup,
-} from "./catalogue.ts";
-export {
-    decodeCatalogue,
-    encodeCatalogue,
-    SATELLITE_GROUPS,
-} from "./catalogue.ts";
+export type { Catalogue, SatelliteGroup } from "./catalogue.ts";
+export { SATELLITE_GROUPS } from "./catalogue.ts";
 export type { BodyPatch, Command, DocumentResult } from "./commands.ts";
 export { apply } from "./commands.ts";
 export type { Document, TimelineEvent } from "./document.ts";

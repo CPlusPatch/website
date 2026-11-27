@@ -1,4 +1,10 @@
-import { CURATED_CATALOG_NUMBERS, CURATED_NAMES } from "@cpluspatch/catalog";
+import {
+    CURATED_CATALOG_NUMBERS,
+    CURATED_NAMES,
+    GROUP_CLASSES,
+    SNAPSHOT_DATE,
+    SNAPSHOT_EPOCH,
+} from "@cpluspatch/catalog";
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import {
     type OrbitClass,
@@ -7,11 +13,6 @@ import {
     SNAPSHOT_WINDOW,
     snapshotGap,
 } from "@cpluspatch/sim";
-import {
-    GROUP_CLASSES,
-    SNAPSHOT_DATE,
-    SNAPSHOT_EPOCH,
-} from "../catalogue-snapshot.ts";
 
 /** The name of each satellite group in the menu. */
 export const LABELS: Record<SatelliteGroup, string> = {

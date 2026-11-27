@@ -1,7 +1,7 @@
 /// <reference types="deno" />
 /**
  * @module
- * Builds the Orrery's satellite snapshot: `src/assets/satellites.bin`, and
+ * Builds the satellite snapshot: `src/assets/satellites.bin`, and
  * `src/catalogue-snapshot.ts` with its group counts by orbit class, and date.
  *
  * Source: CelesTrak's "active" group as OMM CSV, https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=csv
@@ -13,24 +13,24 @@
  * Run it from the repository root:
  *
  *   curl -o active.csv 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=csv'
- *   deno run --allow-read --allow-write packages/orrery/scripts/build-satellites.ts active.csv
+ *   deno run --allow-read --allow-write packages/catalog/scripts/build-satellites.ts active.csv
  */
 
 import {
-    CURATED_CATALOG_NUMBERS,
-    PRESETS,
-    solarSystem,
-} from "@cpluspatch/catalog";
-import {
-    type CatalogueEntry,
-    decodeCatalogue,
-    encodeCatalogue,
     expandBody,
     type OrbitClass,
     prepareSwarm,
     SATELLITE_GROUPS,
     type SatelliteGroup,
 } from "@cpluspatch/sim";
+import {
+    type CatalogueEntry,
+    decodeCatalogue,
+    encodeCatalogue,
+} from "../src/catalogue.ts";
+import { PRESETS } from "../src/presets/index.ts";
+import { CURATED_CATALOG_NUMBERS } from "../src/satellites.ts";
+import { solarSystem } from "../src/solar-system.ts";
 import { parseOmmCsv, satelliteGroup } from "./celestrak.ts";
 
 const [csv] = Deno.args;
@@ -116,7 +116,7 @@ await Deno.writeTextFile(
     new URL("../src/catalogue-snapshot.ts", import.meta.url),
     `/**
  * @module
- * What the satellite snapshot holds. Written by \`scripts/build-satellites.ts\`: don't edit by hand.
+ * What the satellite snapshot holds. Written by \`packages/catalog/scripts/build-satellites.ts\`: don't edit by hand.
  */
 
 import type { OrbitClass, SatelliteGroup } from "@cpluspatch/sim";

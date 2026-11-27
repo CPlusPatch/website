@@ -1,7 +1,8 @@
 /// <reference types="deno" />
+
+import { GROUP_CLASSES } from "@cpluspatch/catalog";
 import { SNAPSHOT_WINDOW } from "@cpluspatch/sim";
 import { assertEquals } from "@std/assert";
-import { GROUP_CLASSES } from "../catalogue-snapshot.ts";
 import {
     ALL,
     EPOCH,

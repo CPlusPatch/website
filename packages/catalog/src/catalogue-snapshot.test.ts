@@ -1,13 +1,10 @@
 /// <reference types="deno" />
-import { PRESETS, solarSystem } from "@cpluspatch/catalog";
-import {
-    decodeCatalogue,
-    expandBody,
-    prepareSwarm,
-    SATELLITE_GROUPS,
-} from "@cpluspatch/sim";
+import { expandBody, prepareSwarm, SATELLITE_GROUPS } from "@cpluspatch/sim";
 import { assertEquals } from "@std/assert";
+import { decodeCatalogue } from "./catalogue.ts";
 import { GROUP_CLASSES, SNAPSHOT_EPOCH } from "./catalogue-snapshot.ts";
+import { PRESETS } from "./presets/index.ts";
+import { solarSystem } from "./solar-system.ts";
 
 Deno.test("the group classes match the snapshot file", async () => {
     const bytes = await Deno.readFile(

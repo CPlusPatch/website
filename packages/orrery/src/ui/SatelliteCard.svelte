@@ -1,4 +1,5 @@
 <script lang="ts">
+import { SNAPSHOT_DATE } from "@cpluspatch/catalog";
 import {
     formatAngle,
     formatDistance,
@@ -10,7 +11,6 @@ import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { flushSync, onMount, untrack } from "svelte";
-import { SNAPSHOT_DATE } from "../catalogue-snapshot.ts";
 import { FOCUS_ICON } from "./buttons.ts";
 import { LABELS } from "./satellite-groups.ts";
 

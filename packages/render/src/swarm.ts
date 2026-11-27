@@ -5,8 +5,6 @@
 
 import type { Vec3 } from "@cpluspatch/orbit";
 import {
-    type Catalogue,
-    decodeCatalogue,
     inSnapshotWindow,
     type OrbitHost,
     SATELLITE_GROUPS,
@@ -35,23 +33,6 @@ import { projectedRadiusPx } from "./geometry/visibility.ts";
 import { SELECTED_LINE_PX } from "./orbits/line-geometry.ts";
 import { pickNearest } from "./picking.ts";
 import type { Theme } from "./theme.ts";
-
-/** Fetches and decodes the satellite file at `url`. Rejects if `signal` aborts or the fetch fails. */
-export const fetchCatalogue = async (
-    url: URL,
-    signal: AbortSignal,
-): Promise<Catalogue> => {
-    const response = await fetch(url, { signal });
-    if (!response.ok) {
-        throw new Error(
-            `The satellite file gave ${response.status} ${response.statusText}.`,
-        );
-    }
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    signal.throwIfAborted();
-
-    return decodeCatalogue(bytes);
-};
 
 /** The GEO ring of a host that doesn't turn, in host radii (Earth's is 6.6). */
 const GEO_RADII = 6.6;

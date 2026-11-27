@@ -1,4 +1,5 @@
 <script lang="ts">
+import { GROUP_CLASSES } from "@cpluspatch/catalog";
 import {
     type OrbitClass,
     SATELLITE_GROUPS,
@@ -6,7 +7,6 @@ import {
 } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { onMount, untrack } from "svelte";
-import { GROUP_CLASSES } from "../catalogue-snapshot.ts";
 import type { SavedStorage } from "../persistence.ts";
 import { readSatellites, writeSatellites } from "../satellite-settings.ts";
 import { roleMarker } from "./body-marker.ts";

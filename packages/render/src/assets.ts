@@ -11,7 +11,6 @@ import {
 } from "@cpluspatch/sim";
 import { loadMapImage } from "./maps.ts";
 import { fetchSky, type SkyData } from "./sky.ts";
-import { fetchCatalogue } from "./swarm.ts";
 
 /** Decoded assets shared by every view of a page, so a rebuilt view doesn't fetch them again. */
 export type Assets = {
@@ -19,7 +18,7 @@ export type Assets = {
     sky: (onProgress?: (fraction: number) => void) => Promise<SkyData>;
     /** The image of map `id`, or null when there's no such map. */
     map: (id: string) => Promise<HTMLImageElement> | null;
-    /** The prepared satellite swarm for `host`, the body it orbits. The file is fetched and decoded once. */
+    /** The prepared satellite swarm for `host`, the body it orbits. The catalogue is loaded once. */
     swarm: (host: SwarmHost) => Promise<Swarm>;
     /** Aborts the fetches in flight. */
     dispose: () => void;
@@ -28,18 +27,16 @@ export type Assets = {
 /** The body a swarm orbits. Its radius and spin set the orbit classes, and its gravity field and pole set the precession. */
 export type SwarmHost = CloudHost;
 
-/** The functions that fetch and decode each asset, so a test can replace them. */
+/** The functions that fetch and decode each asset except the satellites, so a test can replace them. */
 export type Loaders = {
     sky: typeof fetchSky;
     map: typeof loadMapImage;
-    catalogue: typeof fetchCatalogue;
     prepare: (catalogue: Catalogue, host: SwarmHost) => Swarm;
 };
 
 const defaultLoaders: Loaders = {
     sky: fetchSky,
     map: loadMapImage,
-    catalogue: fetchCatalogue,
     prepare: prepareSwarm,
 };
 
@@ -61,9 +58,9 @@ const once = <K, V>(
     return promise;
 };
 
-/** Assets that load on first use. `satellitesUrl` is the satellite file, which the caller owns. */
+/** Assets that load on first use. `loadSatellites` fetches and decodes the satellite catalogue, which the caller owns. */
 export const createAssets = (
-    satellitesUrl: URL,
+    loadSatellites: (signal: AbortSignal) => Promise<Catalogue>,
     loaders: Loaders = defaultLoaders,
 ): Assets => {
     const loading = new AbortController();
@@ -96,7 +93,7 @@ export const createAssets = (
                 async () =>
                     loaders.prepare(
                         await once(catalogue, "catalogue", () =>
-                            loaders.catalogue(satellitesUrl, loading.signal),
+                            loadSatellites(loading.signal),
                         ),
                         host,
                     ),

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { solarSystem } from "@cpluspatch/catalog";
+import { loadSatellites, solarSystem } from "@cpluspatch/catalog";
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import {
     advanceClock,
@@ -78,9 +78,7 @@ const units = createUnits();
 const narrow = matchMedia(NARROW_QUERY);
 const loading = untrack(() => createLoading(root));
 // Outlives the views, so a rebuilt one doesn't fetch the sky, maps and satellites again.
-const assets = createAssets(
-    new URL("../assets/satellites.bin", import.meta.url),
-);
+const assets = createAssets(loadSatellites);
 
 // Panels stay hidden until the first build succeeds, then inert until the reveal.
 let shown = $state(false);

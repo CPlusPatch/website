@@ -1,6 +1,6 @@
 /**
  * @module
- * What the satellite snapshot holds. Written by `scripts/build-satellites.ts`: don't edit by hand.
+ * What the satellite snapshot holds. Written by `packages/catalog/scripts/build-satellites.ts`: don't edit by hand.
  */
 
 import type { OrbitClass, SatelliteGroup } from "@cpluspatch/sim";
