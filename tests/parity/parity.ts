@@ -63,9 +63,16 @@ const normalise = (nodes: Node[]): (Tree | string)[] => {
 // formatting, as whitespace beside a {…} in Astro is, which Astro drops.
 const SVELTE_BLOCK_EDGE = /\s+(?=<!--\[)|(?<=<!--\]-->)\s+/g;
 
+// Astro's dev server adds a <script> for a component's behaviour. Svelte ports run it in an $effect.
+const ASTRO_SCRIPT =
+    /<script type="module" src="[^"]*\?astro&type=script[^"]*"><\/script>/g;
+
 // Stripped before parsing: ultrahtml drops the text that sits right before a comment.
 const stripComments = (html: string): string =>
-    html.replace(SVELTE_BLOCK_EDGE, "").replace(/<!--[\s\S]*?-->/g, "");
+    html
+        .replace(ASTRO_SCRIPT, "")
+        .replace(SVELTE_BLOCK_EDGE, "")
+        .replace(/<!--[\s\S]*?-->/g, "");
 
 const tree = (html: string): (Tree | string)[] =>
     normalise(parse(stripComments(html)).children);

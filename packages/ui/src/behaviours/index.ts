@@ -21,6 +21,7 @@ import { initMarquees } from "./marquee.ts";
 import { initMediaPlayers } from "./media-player.ts";
 import { initNavbars } from "./navbar.ts";
 import { initPauseButtons } from "./pause-button.ts";
+import { initPreviewFrames } from "./preview-frame.ts";
 import { initScrollCues } from "./scroll-cue.ts";
 import { initSidebarNavs } from "./sidebar-nav.ts";
 import { initStats } from "./stat.ts";
@@ -54,6 +55,10 @@ export {
     playWhileVisible,
     setPaused,
 } from "./pause-button.ts";
+export {
+    initPreviewFrame,
+    initPreviewFrames,
+} from "./preview-frame.ts";
 export { initScrollCue, initScrollCues } from "./scroll-cue.ts";
 export { initSidebarNav, initSidebarNavs } from "./sidebar-nav.ts";
 export { initStat, initStats } from "./stat.ts";
@@ -86,6 +91,7 @@ export const initAll = (scope: ParentNode = document): (() => void) => {
         initMediaPlayers,
         initNavbars,
         initPauseButtons,
+        initPreviewFrames,
         initScrollCues,
         initSidebarNavs,
         initStats,

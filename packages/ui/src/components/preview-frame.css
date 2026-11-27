@@ -1,0 +1,220 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /*
+     * The controls need script, so they stay hidden until it sets data-ready.
+     * The range's thumb centre sits on the frame's right edge at every value:
+     * the input runs from min minus half a thumb to the body's right edge plus
+     * half a thumb, as a thumb's travel is the input's width less one thumb.
+     * The edge is in the root's right padding, so a full-width frame has room.
+     */
+    .preview-frame {
+        --preview-frame-min: 20;
+        --preview-frame-thumb: 0.75rem;
+        --preview-frame-thumb-height: 1.25rem;
+        --preview-frame-track: 0.25rem;
+        --preview-frame-edge: 0.75rem;
+        --preview-frame-grip: 0.5rem;
+
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-width: 0;
+        /* A tick wider than the body is hidden a frame late, so it mustn't widen the page. */
+        overflow-x: clip;
+
+        /* Coarse pointers: more to grab, without a bigger thumb. */
+        @media (pointer: coarse) {
+            --preview-frame-edge: 1.5rem;
+        }
+
+        .preview-frame__ruler {
+            display: none;
+            position: relative;
+            flex: none;
+            height: 4.75rem;
+            margin-block-end: var(--space-sm);
+
+            /* Every tick out of reach: room for the range only. */
+            &:not(:has(.preview-frame__tick:not([hidden]))) {
+                height: var(--preview-frame-thumb-height);
+            }
+        }
+
+        .preview-frame__range {
+            --left: calc(var(--preview-frame-min) * 1rem);
+
+            position: absolute;
+            bottom: 0;
+            left: calc(var(--left) - var(--preview-frame-thumb) / 2);
+            width: calc(100% - var(--left) + var(--preview-frame-thumb));
+            height: var(--preview-frame-thumb-height);
+            margin: 0;
+            appearance: none;
+            background: none;
+            cursor: ew-resize;
+
+            /* Own rules for each engine: an unknown pseudo-element drops a selector list. */
+            &::-webkit-slider-runnable-track {
+                height: var(--preview-frame-track);
+                background: var(--color-border-strong);
+            }
+
+            &::-moz-range-track {
+                height: var(--preview-frame-track);
+                background: var(--color-border-strong);
+            }
+
+            &::-webkit-slider-thumb {
+                appearance: none;
+                width: var(--preview-frame-thumb);
+                height: var(--preview-frame-thumb-height);
+                /* WebKit aligns the thumb to the top of the track */
+                margin-top: calc(
+                    (
+                        var(--preview-frame-track) -
+                        var(--preview-frame-thumb-height)
+                    ) /
+                    2
+                );
+                border: 0;
+                border-radius: var(--radius);
+                background: var(--color-primary);
+            }
+
+            &::-moz-range-thumb {
+                width: var(--preview-frame-thumb);
+                height: var(--preview-frame-thumb-height);
+                border: 0;
+                border-radius: var(--radius);
+                background: var(--color-primary);
+            }
+
+            /* One outline on the input, so focus looks the same in every engine. */
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: 2px;
+            }
+        }
+
+        /* In the room left of the range's start. */
+        .preview-frame__readout {
+            position: absolute;
+            bottom: 0;
+            left: var(--space-sm);
+            display: flex;
+            align-items: center;
+            height: var(--preview-frame-thumb-height);
+            font: var(--type-meta);
+            color: var(--color-text-muted);
+            white-space: nowrap;
+        }
+
+        .preview-frame__tick {
+            position: absolute;
+            /* Clear of the range's focus outline. */
+            bottom: calc(var(--preview-frame-thumb-height) + 0.25rem);
+            left: calc(var(--at) * 1rem);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font: var(--type-meta);
+            color: var(--color-text-muted);
+            white-space: nowrap;
+            transform: translateX(-50%);
+            pointer-events: none;
+
+            &[hidden] {
+                display: none;
+            }
+
+            .preview-frame__tick-name {
+                color: var(--color-text);
+            }
+
+            /* The mark, down to the track. */
+            &::after {
+                content: "";
+                width: var(--border-width);
+                height: 0.375rem;
+                margin-top: 0.125rem;
+                background: var(--color-border-strong);
+            }
+        }
+
+        .preview-frame__body {
+            position: relative;
+            display: flex;
+            flex: 1 0 auto;
+            min-width: 0;
+        }
+
+        .preview-frame__content {
+            flex: none;
+            width: var(--preview-frame-width, 100%);
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        /* A grab strip just outside the frame, with its line and grip. */
+        .preview-frame__edge {
+            display: none;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: var(--preview-frame-width, 100%);
+            width: var(--preview-frame-edge);
+            cursor: ew-resize;
+            touch-action: none;
+
+            &::before {
+                content: "";
+                position: absolute;
+                inset-block: 0;
+                left: 0;
+                width: var(--border-width);
+                background: var(--color-border-strong);
+            }
+
+            /* The grip, astride the line so it reads as the frame's own handle. */
+            &::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: calc(var(--border-width) / 2);
+                width: var(--preview-frame-grip);
+                height: calc(var(--preview-frame-grip) * 5);
+                border-radius: var(--radius);
+                background: var(--color-text);
+                transform: translate(-50%, -50%);
+                transition: background-color var(--transition);
+            }
+
+            &:hover::after {
+                background: var(--color-primary);
+            }
+        }
+
+        &[data-ready] {
+            padding-inline-end: var(--preview-frame-edge);
+
+            .preview-frame__ruler,
+            .preview-frame__edge {
+                display: block;
+            }
+        }
+
+        &[data-dragging] {
+            user-select: none;
+
+            .preview-frame__edge::after {
+                background: var(--color-primary);
+            }
+
+            /* A frame inside the content would swallow the pointer. */
+            .preview-frame__content {
+                pointer-events: none;
+            }
+        }
+    }
+}

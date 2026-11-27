@@ -10,6 +10,7 @@ import { cornerWindowClasses } from "./corner-window.ts";
 import { dialogClasses } from "./dialog.ts";
 import { dropdownClasses, dropdownPanelClasses } from "./dropdown.ts";
 import { formatCount, postActionClasses, postClasses } from "./post.ts";
+import { previewFrameClasses } from "./preview-frame.ts";
 import { progressClasses } from "./progress.ts";
 import { segmentedClasses } from "./segmented-control.ts";
 import { statusClasses, statusLightClasses } from "./status.ts";
@@ -76,6 +77,14 @@ Deno.test("badge, card, progress and toggle classes", () => {
     ]);
     assertEquals(toggleClasses(), ["toggle"]);
     assertEquals(toggleClasses({ text: true }), ["toggle", "toggle--text"]);
+});
+
+Deno.test("a preview frame takes a trailing class", () => {
+    assertEquals(previewFrameClasses(), ["preview-frame"]);
+    assertEquals(previewFrameClasses({ class: "mine" }), [
+        "preview-frame",
+        "mine",
+    ]);
 });
 
 Deno.test("an alert's default variant takes the primary tone", () => {

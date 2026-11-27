@@ -15,6 +15,7 @@ export * from "./components/carousel.ts";
 export * from "./components/corner-window.ts";
 export * from "./components/dropdown.ts";
 export * from "./components/launcher.ts";
+export * from "./components/preview-frame.ts";
 export * from "./components/progress.ts";
 export * from "./components/segmented-control.ts";
 export * from "./components/status.ts";

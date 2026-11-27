@@ -1,12 +1,14 @@
 // Loaded through Vite's ssrLoadModule (see parity.ts), which compiles the .astro and .svelte imports.
 import AstroBadge from "@cpluspatch/ui/astro/ui/badge.astro";
 import AstroButton from "@cpluspatch/ui/astro/ui/button.astro";
+import AstroPreviewFrame from "@cpluspatch/ui/astro/ui/preview-frame.astro";
 import AstroSegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import AstroSelect from "@cpluspatch/ui/astro/ui/select.astro";
 import AstroToggle from "@cpluspatch/ui/astro/ui/toggle.astro";
 import SvelteIcon from "@cpluspatch/ui/svelte/icon.svelte";
 import SvelteBadge from "@cpluspatch/ui/svelte/ui/badge.svelte";
 import SvelteButton from "@cpluspatch/ui/svelte/ui/button.svelte";
+import SveltePreviewFrame from "@cpluspatch/ui/svelte/ui/preview-frame.svelte";
 import SvelteSegmentedControl from "@cpluspatch/ui/svelte/ui/segmented-control.svelte";
 import SvelteSelect from "@cpluspatch/ui/svelte/ui/select.svelte";
 import SvelteToggle from "@cpluspatch/ui/svelte/ui/toggle.svelte";
@@ -30,6 +32,7 @@ const port = (component: unknown): Port => component as Port;
 const PORTS = new Map<Story["component"], Port>([
     [AstroBadge, port(SvelteBadge)],
     [AstroButton, port(SvelteButton)],
+    [AstroPreviewFrame, port(SveltePreviewFrame)],
     [AstroSegmentedControl, port(SvelteSegmentedControl)],
     [AstroSelect, port(SvelteSelect)],
     [AstroToggle, port(SvelteToggle)],
