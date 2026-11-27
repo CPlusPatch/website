@@ -22,14 +22,25 @@ export const BURN_FAILURES = {
     degenerate: "the burn would leave no orbit to describe",
 };
 
+/** The burn that can't be applied: which one, on which body, and why. */
+export type BurnFailure = {
+    bodyId: string;
+    eventId: string;
+    t: number;
+    reason: keyof typeof BURN_FAILURES;
+};
+
 type BodySegments =
     | { ok: true; segments: Segment[] }
-    | { ok: false; error: string };
+    | { ok: false; error: string; failure: BurnFailure };
 
-/** The result of `segmentsByBody`: the segments of every orbiting body, or one error per body that can't be burnt. */
+/**
+ * The result of `segmentsByBody`: the segments of every orbiting body, or one error and one
+ * failure per body that can't be burnt.
+ */
 export type SegmentsResult =
     | { ok: true; segments: Map<string, Segment[]> }
-    | { ok: false; errors: string[] };
+    | { ok: false; errors: string[]; failures: BurnFailure[] };
 
 const segmentOf = (
     body: OrbitingBody,
@@ -73,6 +84,12 @@ const bodySegments = (
                 return {
                     ok: false,
                     error: `timeline: can't burn "${body.id}" at t=${event.t}: ${BURN_FAILURES[burned.reason]}`,
+                    failure: {
+                        bodyId: body.id,
+                        eventId: event.id,
+                        t: event.t,
+                        reason: burned.reason,
+                    },
                 };
             }
 
@@ -101,6 +118,7 @@ export const segmentsByBody = (
     const eventsByBody = new Map<string, TimelineEvent[]>();
     const segments = new Map<string, Segment[]>();
     const errors: string[] = [];
+    const failures: BurnFailure[] = [];
 
     for (const event of sorted) {
         const list = eventsByBody.get(event.bodyId);
@@ -123,10 +141,15 @@ export const segmentsByBody = (
         );
 
         if (result.ok) segments.set(body.id, result.segments);
-        else errors.push(result.error);
+        else {
+            errors.push(result.error);
+            failures.push(result.failure);
+        }
     }
 
-    return errors.length > 0 ? { ok: false, errors } : { ok: true, segments };
+    return errors.length > 0
+        ? { ok: false, errors, failures }
+        : { ok: true, segments };
 };
 
 /** The index in `segments` of the one that covers `t`. `segments` start at `-Infinity` and are in order. */

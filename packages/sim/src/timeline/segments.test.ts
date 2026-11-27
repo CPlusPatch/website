@@ -152,6 +152,7 @@ Deno.test("segments: a burn that escapes is an error naming the body and time", 
         errors: [
             `timeline: can't burn "sat" at t=7: the burn would leave the parent's gravity`,
         ],
+        failures: [{ bodyId: "sat", eventId: "e1", t: 7, reason: "escape" }],
     });
 });
 

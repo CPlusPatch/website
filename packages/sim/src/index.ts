@@ -82,7 +82,11 @@ export {
     snapshotGap,
 } from "./swarm.ts";
 export { worldStates } from "./system.ts";
-export type { Segment, SegmentsResult } from "./timeline/segments.ts";
+export type {
+    BurnFailure,
+    Segment,
+    SegmentsResult,
+} from "./timeline/segments.ts";
 export {
     BURN_FAILURES,
     segmentIn,
