@@ -30,6 +30,7 @@ import { sheetAfterDrag } from "../sheet.ts";
 import Actions from "./Actions.svelte";
 import Children from "./Children.svelte";
 import Headline from "./Headline.svelte";
+import { lifetimeText } from "./lifetime.ts";
 import Maneuvers from "./Maneuvers.svelte";
 import Plate from "./Plate.svelte";
 import type { PlateData } from "./plate.ts";
@@ -90,6 +91,7 @@ const parent = $derived(
 );
 const hasOrbit = $derived(parent !== undefined && body?.orbit !== undefined);
 const adding = $derived(mode === "add");
+const lifetime = $derived(body ? lifetimeText(body.lifetime) : null);
 const title = $derived(
     adding
         ? "Add a body"
@@ -384,6 +386,9 @@ $effect(() => {
                     {/if}
                 {/if}
             </p>
+            {#if mode === "card" && body && lifetime}
+                <p class="orrery__orbit-lifetime">{lifetime}</p>
+            {/if}
         </div>
         <button
             type="button"

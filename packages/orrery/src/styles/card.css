@@ -138,11 +138,19 @@
         font-size: var(--orrery-size-sm);
     }
 
+    .orrery__orbit-lifetime {
+        margin: 0 0 calc(var(--space-md) - var(--space-xs) / 2);
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+        font-variant-numeric: tabular-nums;
+    }
+
     .orrery__inspector-titles {
         flex: 1;
         min-inline-size: 0;
 
-        .orrery__orbit-meta {
+        .orrery__orbit-meta,
+        .orrery__orbit-lifetime {
             margin: 0;
         }
     }
@@ -805,6 +813,7 @@
         /* Peeked: the grip, the head and the headline stay. */
         .orrery__inspector[data-peek] {
             .orrery__orbit-meta,
+            .orrery__orbit-lifetime,
             .orrery__plate,
             .orrery__inspector-body,
             .orrery__inspector-foot {
