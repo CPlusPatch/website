@@ -29,6 +29,14 @@ const TOGETHER: Record<string, string[]> = {
     window: ["landmark-unique"],
 };
 
+/**
+ * Groups whose stories frame a story page, which has no <h1> (see
+ * STORY_PAGE), by group id.
+ */
+const FRAMED: Record<string, string[]> = {
+    "bench-stage": ["page-has-heading-one"],
+};
+
 for (const group of groups) {
     for (const look of LOOKS) {
         test(`${group.id} ${look}`, async ({ page, browserName }) => {
@@ -36,7 +44,10 @@ for (const group of groups) {
             await page.goto(`${group.path}?${look}`);
             const { violations } = await new AxeBuilder({ page })
                 .include("[data-story] .story-preview")
-                .disableRules(TOGETHER[group.id] ?? [])
+                .disableRules([
+                    ...(TOGETHER[group.id] ?? []),
+                    ...(FRAMED[group.id] ?? []),
+                ])
                 .analyze();
             const found: string[] = [];
             for (const { id, nodes } of violations) {

@@ -192,6 +192,7 @@ export const sourceOf = (group: StoryGroup) => {
     }
     const [first] = group.stories;
     if (!first) throw new Error(`The group "${group.id}" has no stories`);
+    if (group.source) return group.source;
 
     const id = moduleOf(first.component);
     if (!id?.startsWith(ROOT)) {

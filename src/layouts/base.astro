@@ -5,18 +5,27 @@ import Jesse from "../components/effects/jesse.astro";
 import Scanlines from "../components/effects/scanlines.astro";
 import Head, { type Props as HeadProps } from "../components/head.astro";
 
-type Props = HeadProps;
+interface Props extends HeadProps {
+    /** The skip link's target id, or false for a page with nothing to skip. */
+    skipTo?: string | false;
+}
+
+const { skipTo = "main", ...head } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
     <head>
-        <Head {...Astro.props} />
+        <Head {...head} />
     </head>
     <body>
         <Scanlines />
         <Jesse />
-        <a class="skip-link" href="#main">Skip to content</a>
+        {skipTo && (
+            <a class="skip-link" href={`#${skipTo}`}>
+                Skip to content
+            </a>
+        )}
         <slot />
     </body>
 </html>

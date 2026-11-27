@@ -90,3 +90,18 @@ test("the index shows every component, and no filter", async ({ page }) => {
         await cards.count(),
     );
 });
+
+test("a story link in the list loads its page into the stage", async ({
+    page,
+}) => {
+    await page.goto("/gallery/buttons/");
+    await page
+        .getByRole("navigation", { name: "Stories" })
+        .getByRole("link", { name: "sm", exact: true })
+        .click();
+    await expect(page.locator('iframe[name="stage"]')).toHaveCount(1);
+    await expect
+        .poll(() => page.frames().map((f) => new URL(f.url()).pathname))
+        .toContain("/gallery/story/button-size/sm/");
+    await expect(page).toHaveURL(/\/gallery\/buttons\/$/);
+});

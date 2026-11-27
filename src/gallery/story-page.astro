@@ -18,9 +18,11 @@ interface Props {
     description: string;
     /** The one story's id, for a page of one. */
     story?: string;
+    /** Centre the story in the window, for one that doesn't fill its width. */
+    centre?: boolean;
 }
 
-const { title, description, story } = Astro.props;
+const { title, description, story, centre = false } = Astro.props;
 
 const options = {
     themes: THEMES.map((theme) => theme.value),
@@ -31,7 +33,8 @@ const options = {
 };
 ---
 
-<Layout {title} {description} noindex analytics={false}>
+{/* Framed in the bench, where a skip link would only be in the way. */}
+<Layout {title} {description} noindex analytics={false} skipTo={false}>
     {/* Before the story paints; ignores anything it doesn't know. */}
     <script is:inline define:vars={{ options }}>
     const params = new URLSearchParams(location.search);
@@ -48,7 +51,11 @@ const options = {
     if (rem) root.style.setProperty("--story-width", rem);
     </script>
 
-    <main id="main" class="story-page" data-story={story}>
+    <main
+        id="main"
+        class:list={["story-page", { "story-page--centre": centre }]}
+        data-story={story}
+    >
         <slot />
     </main>
 </Layout>
@@ -66,5 +73,13 @@ import "./dialogue-actions.ts";
     max-width: var(--story-width, none);
     margin-inline: auto;
     padding: var(--space-md);
+}
+
+/* A small story otherwise sits at the top of a tall stage, over empty space. */
+.story-page--centre {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100dvh;
 }
 </style>

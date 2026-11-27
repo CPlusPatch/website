@@ -4,13 +4,13 @@
  * section's own page (/gallery/story/<group>/), not the stories rendered
  * twice, since many stories carry ids and named radios that would clash.
  *
- * A frame can't size itself to its content, so this grows each one to its
- * page's height. Without JS there are no frames, and the row stays hidden,
- * as it does on pages without sections.
+ * Each frame grows to its page's height (fit-frame.ts). Without JS there are
+ * no frames, and the row stays hidden, as it does on pages without sections.
  */
 
 import { STYLES } from "@cpluspatch/ui/styles/styles/index.ts";
 import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
+import { fit } from "./fit-frame.ts";
 
 type Mode = "page" | "schemes" | "themes" | "styles";
 
@@ -18,9 +18,6 @@ interface Copy {
     label: string;
     params: Record<string, string>;
 }
-
-/** Past this, a story sized to the viewport would grow its frame forever. */
-const MAX_HEIGHT = 2400;
 
 /**
  * The copies a mode shows. Each frame reads the saved Display choices for
@@ -38,28 +35,6 @@ const copies = (mode: Mode): Copy[] =>
                 label: t.label,
                 params: { theme: t.value },
             }));
-
-/** Keeps a frame as tall as its page's main, and its links out of it. */
-const fit = (frame: HTMLIFrameElement) => {
-    let observer: ResizeObserver | undefined;
-    frame.addEventListener("load", () => {
-        observer?.disconnect();
-        const doc = frame.contentDocument;
-        const main = doc?.querySelector("main");
-        if (!doc || !main) return;
-        // Open alone, the section's own links: in the page, not the frame.
-        for (const link of doc.querySelectorAll("a[href]")) {
-            link.setAttribute("target", "_top");
-        }
-        observer = new ResizeObserver(() => {
-            const height = Math.min(Math.ceil(main.offsetHeight), MAX_HEIGHT);
-            if (Math.abs(frame.offsetHeight - height) > 1) {
-                frame.style.height = `${height}px`;
-            }
-        });
-        observer.observe(main);
-    });
-};
 
 const render = (section: HTMLElement, mode: Mode) => {
     const body = section.querySelector<HTMLElement>(".story-group__body");

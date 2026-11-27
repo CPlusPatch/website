@@ -5,6 +5,7 @@ import { attachments } from "./attachments.ts";
 import { audioPlayer } from "./audio-player.ts";
 import { avatars } from "./avatars.ts";
 import { badges, badges88x31 } from "./badges.ts";
+import { bench } from "./bench.ts";
 import { blueprintFrame } from "./blueprint-frame.ts";
 import { buttons } from "./buttons.ts";
 import { cardGrid } from "./card-grid.ts";
@@ -81,4 +82,5 @@ export const groups: StoryGroup[] = [
     ...destructor,
     ...statusBoard,
     ...sections,
+    ...bench,
 ];

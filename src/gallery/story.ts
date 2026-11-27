@@ -17,6 +17,10 @@
  */
 
 import type { ComponentProps } from "astro/types";
+import type {
+    Component as SvelteComponent,
+    ComponentProps as SvelteProps,
+} from "svelte";
 
 /** Any `.astro` component. */
 // biome-ignore lint/suspicious/noExplicitAny: matches astro's own ComponentProps constraint
@@ -69,6 +73,7 @@ export const CATEGORIES = [
     { id: "media", title: "Media", icon: "lucide:clapperboard" },
     { id: "toys", title: "Toys", icon: "lucide:gamepad-2" },
     { id: "sections", title: "Sections", icon: "lucide:panels-top-left" },
+    { id: "gallery", title: "Gallery", icon: "lucide:layout-panel-left" },
 ] as const;
 
 export type CategoryId = (typeof CATEGORIES)[number]["id"];
@@ -88,6 +93,8 @@ export interface StoryGroup {
     matrix?: { rows: Axis; columns: Axis };
     /** Tags (TAGS) every one of its stories has. */
     tags?: Tag[];
+    /** The component's file from the repo root, where Astro can't say (a Svelte one). */
+    source?: string;
     stories: Story[];
 }
 
@@ -109,6 +116,23 @@ export const story = <T extends Component>(
 ): Story => ({ name, component, props, ...content });
 
 type StoryContent = Omit<Story, "name" | "component" | "props">;
+
+/**
+ * story() for a Svelte component, which Astro renders on the server like
+ * its own. It isn't hydrated, so callbacks in its props never run.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: a component's props are contravariant, so only any fits them all
+export const svelteStory = <T extends SvelteComponent<any>>(
+    name: string,
+    component: T,
+    props: SvelteProps<T>,
+    content: StoryContent = {},
+): Story => ({
+    name,
+    component: component as unknown as Component,
+    props,
+    ...content,
+});
 
 /** What a story's name may be: lowercase words joined by hyphens. */
 export const STORY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

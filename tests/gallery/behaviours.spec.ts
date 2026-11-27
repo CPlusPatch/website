@@ -161,9 +161,69 @@ test.describe("the index's filter", () => {
     });
 });
 
-test("a story's name links to it on its component's page", async ({ page }) => {
-    await page.goto("/gallery/buttons/");
-    await page.locator('[id="button-size/sm"] .story__name').click();
-    await expect(page).toHaveURL(/#button-size\/sm$/);
-    await expect(page.locator('[id="button-size/sm"]')).toBeInViewport();
+test.describe("a component's bench", () => {
+    const stage = (page: import("@playwright/test").Page) =>
+        page.locator('iframe[name="stage"]');
+    const framePath = (page: import("@playwright/test").Page) =>
+        stage(page).evaluate(
+            (frame: HTMLIFrameElement) =>
+                frame.contentWindow?.location.pathname,
+        );
+    const item = (page: import("@playwright/test").Page, name: string) =>
+        page
+            .getByRole("navigation", { name: "Stories" })
+            .getByRole("link", { name, exact: true });
+
+    test("puts the story in the hash on the stage", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect(stage(page)).toHaveAttribute("title", /button-size\/sm/);
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/sm/");
+        await expect(item(page, "sm")).toHaveAttribute("aria-current", "true");
+    });
+
+    test("has one bar, with working menus and links to the next component", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect(page.locator("header")).toHaveCount(0);
+        await expect(page.locator("#gallery-menu")).toHaveCount(1);
+        await expect(
+            page.getByRole("link", { name: "Component gallery" }),
+        ).toHaveAttribute("href", "/gallery/");
+
+        await page.getByRole("button", { name: "Components" }).click();
+        await expect(
+            page.locator("#gallery-menu").getByRole("link", { name: "Badges" }),
+        ).toBeVisible();
+        await page.keyboard.press("Escape");
+
+        await page.getByRole("button", { name: "Display" }).click();
+        await expect(page.locator("#display-settings")).toBeVisible();
+        await page.keyboard.press("Escape");
+
+        await page.locator('a[rel="next"]').click();
+        await expect(page).toHaveURL(/\/gallery\/[a-z-]+\/(#.*)?$/);
+        await expect(page.locator("h1")).not.toHaveText("Buttons");
+    });
+
+    test("moves to another story, and Back returns", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect(item(page, "sm")).toHaveAttribute("aria-current", "true");
+
+        await item(page, "lg").click();
+        await expect(page).toHaveURL(/#button-size\/lg$/);
+        await expect(item(page, "lg")).toHaveAttribute("aria-current", "true");
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/lg/");
+
+        await page.goBack();
+        await expect(page).toHaveURL(/#button-size\/sm$/);
+        await expect(item(page, "sm")).toHaveAttribute("aria-current", "true");
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/sm/");
+    });
 });

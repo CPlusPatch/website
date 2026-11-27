@@ -23,6 +23,8 @@ for (const story of stories) {
             const seen = await page.evaluate(() => {
                 const el = document.activeElement as HTMLElement | null;
                 if (!el?.closest("#main") || el.id === "main") return null;
+                // Focus is inside a framed page, whose stories are tested on their own.
+                if (el.tagName === "IFRAME") return "";
                 const boxes: Element[] = [el, ...el.querySelectorAll("*")];
                 for (
                     let up = el.parentElement;

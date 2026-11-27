@@ -24,7 +24,7 @@
         "movie": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/flipbook/src/cli.ts --columns 70 --rows 30 --out src/data/movie",
         "radio": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/mixtape/src/cli.ts --out src/data/radio",
         "shorts": "deno run --allow-read --allow-write --allow-run=ffmpeg,yt-dlp packages/reel/src/cli.ts --out src/data/shorts",
-        "test": "deno test --allow-read=packages packages",
+        "test": "deno test --allow-read=packages packages src",
         "check": "biome check . && astro check && svelte-check --tsconfig ./tsconfig.svelte.json --fail-on-warnings && deno run theme:check && deno run test && deno run test:parity",
         "test:parity": "deno test -A tests/parity/parity.ts",
         "test:gallery": "astro build && playwright test",

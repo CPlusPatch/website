@@ -1,109 +1,107 @@
 ---
 import Sidebar from "@cpluspatch/ui/astro/sections/sidebar/sidebar.astro";
 import SidebarLayout from "@cpluspatch/ui/astro/sections/sidebar/sidebar-layout.astro";
-import SidebarNav from "@cpluspatch/ui/astro/sections/sidebar/sidebar-nav.astro";
-import Dropdown from "@cpluspatch/ui/astro/ui/dropdown.astro";
 import Layout from "../layouts/base.astro";
 import DisplaySettings from "./display-settings.astro";
+import GalleryMenu from "./gallery-menu.astro";
 import GalleryNav from "./gallery-nav.astro";
 import { PREVIEW_CSS } from "./widths.ts";
 
 /**
  * Every gallery page's frame: a sticky bar (the gallery's name, where you
- * are, and the Display menu), and on component pages a sidebar of every
- * component, which gives way to a menu in the bar on narrow screens.
+ * are, and the Display menu), and a way to every component: a sidebar that
+ * gives way to a menu in the bar on narrow screens, or just the menu.
+ * A `bare` page has neither: it fills the viewport and brings its own bar.
  */
 interface Props {
     /** The page's own title, before " · Component gallery". */
     title?: string;
     description: string;
-    /** Where the page is, after the gallery itself. The last is the page. */
-    crumbs?: { label: string; href?: string }[];
-    /** Id of the component whose page this is, for the sidebar. */
+    /** Id of the component whose page this is, for the sidebar and menu. */
     current?: string;
-    /** Off for the index, which is a list of the components itself. */
+    /** A sidebar of every component, beside the page. */
     sidebar?: boolean;
+    /**
+     * The bar's Components menu at every width, for a page without the
+     * sidebar. With the sidebar, the menu shows only when it's hidden. Off
+     * for the index, which is a list of the components itself.
+     */
+    menu?: boolean;
+    /**
+     * No bar, width cap or page padding: the page fills the viewport and
+     * carries its own bar, with the Components menu (gallery-menu.astro) and
+     * the Display menu. The skip link goes to its `#stage`. Ignores `sidebar`
+     * and `menu`.
+     */
+    bare?: boolean;
 }
 
 const {
     title,
     description,
-    crumbs = [],
     current,
     sidebar = true,
+    menu = false,
+    bare = false,
 } = Astro.props;
+
+// A name for <main>: the bench's frame has one too, and landmarks must differ.
+const main = title ?? "Component gallery";
 ---
 
 <Layout
     title={title ? `${title} · Component gallery` : "Component gallery"}
     {description}
     noindex
+    skipTo={bare ? "stage" : "main"}
 >
     <style is:inline set:html={PREVIEW_CSS} />
 
-    <div class="gallery" id="top">
-        <header class="gallery__bar">
-            <p class="gallery__title text-title">
-                <a href="/gallery/">Component gallery</a>
-            </p>
-            {crumbs.length > 0 && (
-                <nav class="gallery__crumbs text-meta" aria-label="Breadcrumb">
-                    <ol>
-                        {crumbs.map((crumb, i) => (
-                            <li>
-                                {crumb.href ? (
-                                    <a href={crumb.href}>{crumb.label}</a>
-                                ) : (
-                                    <span
-                                        aria-current={
-                                            i === crumbs.length - 1
-                                                ? "page"
-                                                : undefined
-                                        }
-                                    >
-                                        {crumb.label}
-                                    </span>
-                                )}
-                            </li>
-                        ))}
-                    </ol>
-                </nav>
-            )}
-            <span class="gallery__spacer"></span>
-            {sidebar && (
-                /* The sidebar's links, for when there is no room for it. */
-                <Dropdown
-                    class="gallery__menu"
-                    id="gallery-menu"
-                    label="Components"
-                    icon="lucide:menu"
-                    collapseBelow="30rem"
-                >
-                    <SidebarNav label="Components">
-                        <GalleryNav {current} />
-                    </SidebarNav>
-                </Dropdown>
-            )}
-            <DisplaySettings collapseBelow="30rem" />
-        </header>
-
-        {sidebar ? (
-            <SidebarLayout>
-                <Sidebar
-                    slot="sidebar"
-                    class="gallery__sidebar"
-                    label="Components"
-                >
-                    <GalleryNav {current} />
-                </Sidebar>
-                <main id="main" class="gallery__main">
-                    <slot />
-                </main>
-            </SidebarLayout>
-        ) : (
-            <main id="main" class="gallery__main">
+    <div class:list={["gallery", { "gallery--bare": bare }]} id="top">
+        {bare ? (
+            <main id="main" class="gallery__main" aria-label={main}>
                 <slot />
             </main>
+        ) : (
+            <>
+                <header class="gallery__bar">
+                    <p class="gallery__title text-title">
+                        <a href="/gallery/">Component gallery</a>
+                    </p>
+                    <span class="gallery__spacer"></span>
+                    {(sidebar || menu) && (
+                        /* The sidebar's links, for when there is no room for it. */
+                        <GalleryMenu
+                            {current}
+                            class={
+                                sidebar
+                                    ? "gallery__menu"
+                                    : "gallery__menu gallery__menu--always"
+                            }
+                        />
+                    )}
+                    <DisplaySettings collapseBelow="30rem" />
+                </header>
+
+                {sidebar ? (
+                    <SidebarLayout>
+                        <Sidebar
+                            slot="sidebar"
+                            class="gallery__sidebar"
+                            label="Components"
+                        >
+                            <GalleryNav {current} />
+                        </Sidebar>
+                        <main id="main" class="gallery__main" aria-label={main}>
+                            <slot />
+                        </main>
+                    </SidebarLayout>
+                ) : (
+                    <main id="main" class="gallery__main" aria-label={main}>
+                        <slot />
+                    </main>
+                )}
+            </>
         )}
     </div>
 </Layout>
@@ -167,39 +165,6 @@ import "./dialogue-actions.ts";
         }
     }
 
-    .gallery__crumbs {
-        min-width: 0;
-        overflow: hidden;
-
-        ol {
-            display: flex;
-            gap: var(--space-xs);
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            white-space: nowrap;
-        }
-
-        li {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-
-            &::before {
-                content: "/" / "";
-                margin-inline-end: var(--space-xs);
-            }
-        }
-
-        a {
-            color: inherit;
-        }
-
-        [aria-current] {
-            color: var(--color-text);
-        }
-    }
-
     .gallery__spacer {
         flex: 1;
     }
@@ -222,6 +187,16 @@ import "./dialogue-actions.ts";
         padding-bottom: var(--space-xl);
     }
 
+    &.gallery--bare {
+        width: auto;
+        margin-inline: 0;
+
+        .gallery__main {
+            gap: 0;
+            padding-bottom: 0;
+        }
+    }
+
     /*
      * Narrow: the sidebar gives way to the Components menu in the bar, so
      * the links stay in reach while scrolling. The two queries meet at the
@@ -229,6 +204,11 @@ import "./dialogue-actions.ts";
      */
     .gallery__menu {
         display: none;
+    }
+
+    /* With no sidebar, the menu is the only way to the other components. */
+    .gallery__menu--always {
+        display: inline-block;
     }
 
     @container (width < 58rem) {
@@ -239,13 +219,6 @@ import "./dialogue-actions.ts";
 
     @container sidebar-layout (width < 56rem) {
         .gallery__sidebar {
-            display: none;
-        }
-    }
-
-    /* Tiny: just the gallery's name; the dropdowns drop their words. */
-    @container (width < 40rem) {
-        .gallery__crumbs {
             display: none;
         }
     }

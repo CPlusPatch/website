@@ -5,6 +5,7 @@
         ".astro/types.d.ts",
         "packages/orrery/**/*",
         "packages/ui/src/svelte/**/*",
+        "src/gallery/**/*.svelte",
         "tests/parity/**/*.svelte"
     ],
     "exclude": ["dist", ".gallery-diff", "node_modules"]

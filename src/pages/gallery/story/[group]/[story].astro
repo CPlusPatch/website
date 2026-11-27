@@ -20,6 +20,7 @@ const { group, story } = Astro.props;
     title={`${group.title}: ${story.name} · Component gallery`}
     description={`The "${story.name}" story of ${group.title}, on its own.`}
     story={`${group.id}/${story.name}`}
+    centre={group.min !== "full"}
 >
     <StoryPreview {story} />
 </StoryPage>

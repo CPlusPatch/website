@@ -1,24 +1,23 @@
 ---
-import Badge from "@cpluspatch/ui/astro/ui/badge.astro";
 import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
-import { Icon } from "astro-icon/components";
+import Bench from "../../gallery/bench.svelte";
+import type { BenchGroup } from "../../gallery/bench.ts";
 import {
     categories,
     components,
     type GalleryComponent,
     origin,
     sourceOf,
-    storyCount,
     tagsOf,
 } from "../../gallery/components.ts";
+import DisplaySettings from "../../gallery/display-settings.astro";
 import GalleryLayout from "../../gallery/gallery-layout.astro";
-import StoryGroup from "../../gallery/story-group.astro";
-import StoryTags from "../../gallery/story-tags.astro";
-import Toolbar from "../../gallery/toolbar.astro";
+import GalleryMenu from "../../gallery/gallery-menu.astro";
+import { storySource } from "../../gallery/source.ts";
 
 /**
- * One component's page: what it is, where it lives, and every story of it,
- * a section per group.
+ * One component's page: its stories as a bench (bench.svelte), which has the
+ * page's bar, with the links to the components either side of it.
  */
 export const getStaticPaths = (() =>
     components.map((component, i) => ({
@@ -36,199 +35,48 @@ const { component, previous, next } = Astro.props;
 const category = categories.find((c) => c.id === component.category);
 const siblings = category?.components ?? [];
 const sources = [...new Set(component.groups.map(sourceOf))];
-const stories = storyCount(component);
 // A component of several groups shows each group's tags with the group.
 const [firstGroup] = component.groups;
 const tags =
     component.groups.length > 1 || !firstGroup ? [] : tagsOf(firstGroup);
-const several = component.groups.length > 1;
-const plural = (n: number, one: string, many = `${one}s`) =>
-    `${n} ${n === 1 ? one : many}`;
+const stepTo = (c: GalleryComponent | undefined) =>
+    c && { href: `/gallery/${c.id}/`, title: c.title };
+// Plain data, since the bench is a Svelte island.
+const groups: BenchGroup[] = component.groups.map((group) => ({
+    id: group.id,
+    title: group.title,
+    matrix: group.matrix,
+    tags: tagsOf(group),
+    stories: group.stories.map((story) => ({
+        name: story.name,
+        tags: tagsOf(group, story),
+        source: storySource(story),
+    })),
+}));
 ---
 
 <GalleryLayout
     title={component.title}
     description={component.description ??
         `Stories for the ${component.title} component.`}
-    crumbs={[
-        {
-            label: category?.title ?? "",
-            href: `/gallery/#${component.category}`,
-        },
-        { label: component.title },
-    ]}
     current={component.id}
+    bare
 >
-    <header class="component">
-        <p class="component__position text-meta">
-            {`${category?.title} · ${siblings.indexOf(component) + 1} of ${siblings.length}`}
-        </p>
-        <h1 class="component__title text-headline">{component.title}</h1>
-        {component.description && (
-            <p class="component__description">{component.description}</p>
-        )}
-        <p class="component__meta text-meta">
-            {sources.map((source) => <code>{source}</code>)}
-            <span>
-                {several && `${plural(component.groups.length, "section")} · `}
-                {plural(stories, "story", "stories")}
-            </span>
-            {origin(component) === "site" && (
-                <Badge variant="outline" tone="secondary" size="sm">
-                    site only
-                </Badge>
-            )}
-            <StoryTags {tags} />
-        </p>
-        {several && (
-            <nav class="component__sections" aria-label="Sections">
-                <ul>
-                    {component.groups.map((group) => (
-                        <li>
-                            <a
-                                class="component__section-link"
-                                href={`#${group.id}`}
-                            >
-                                {group.title}
-                                <span class="text-meta">
-                                    {group.stories.length}
-                                </span>
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
-        )}
-    </header>
-
-    <Toolbar />
-
-    {component.groups.map((group) => (
-        <StoryGroup {group} titled={several} source={sources.length > 1} />
-    ))}
-
-    <nav class="component__pager" aria-label="Components">
-        {previous ? (
-            <a
-                class="component__pager-link"
-                href={`/gallery/${previous.id}/`}
-                rel="prev"
-            >
-                <Icon name="lucide:chevron-left" aria-hidden="true" />
-                <span>
-                    <span class="text-meta">Previous</span>
-                    {previous.title}
-                </span>
-            </a>
-        ) : (
-            <span></span>
-        )}
-        {next && (
-            <a
-                class="component__pager-link"
-                href={`/gallery/${next.id}/`}
-                rel="next"
-            >
-                <span>
-                    <span class="text-meta">Next</span>
-                    {next.title}
-                </span>
-                <Icon name="lucide:chevron-right" aria-hidden="true" />
-            </a>
-        )}
-    </nav>
+    <Bench
+        client:load
+        title={component.title}
+        position={`${category?.title} · ${siblings.indexOf(component) + 1} of ${siblings.length}`}
+        previous={stepTo(previous)}
+        next={stepTo(next)}
+        description={component.description}
+        {sources}
+        site={origin(component) === "site"}
+        {tags}
+        {groups}
+    >
+        <Fragment slot="actions">
+            <GalleryMenu current={component.id} />
+            <DisplaySettings collapseBelow="30rem" />
+        </Fragment>
+    </Bench>
 </GalleryLayout>
-
-<style>
-.component {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-
-    p {
-        margin: 0;
-    }
-}
-
-.component__position {
-    font-family: var(--font-mono);
-}
-
-.component__title {
-    margin: 0;
-}
-
-.component__description {
-    max-width: 65ch;
-    color: var(--color-text-muted);
-}
-
-.component__meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-xs) var(--space-md);
-
-    code {
-        overflow-wrap: anywhere;
-    }
-}
-
-.component__sections ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    margin: var(--space-xs) 0 0;
-    padding: 0;
-    list-style: none;
-}
-
-.component__section-link {
-    display: inline-flex;
-    align-items: baseline;
-    gap: var(--space-xs);
-    padding: 0.125rem var(--space-sm);
-    font-size: var(--font-size-sm);
-    color: var(--color-text);
-    text-decoration: none;
-    background-color: var(--color-surface);
-    border: var(--border-width) solid var(--border-color);
-    border-radius: var(--radius);
-
-    &:hover {
-        color: var(--color-primary);
-        border-color: var(--color-primary);
-        background-color: var(--color-surface);
-    }
-}
-
-.component__pager {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: var(--border-width) solid var(--border-color);
-}
-
-.component__pager-link {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    color: var(--color-text);
-    text-decoration: none;
-
-    &[rel="next"] {
-        text-align: end;
-    }
-
-    > span {
-        display: flex;
-        flex-direction: column;
-    }
-
-    &:hover {
-        color: var(--color-primary);
-        background-color: transparent;
-    }
-}
-</style>

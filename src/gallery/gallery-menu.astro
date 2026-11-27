@@ -1,0 +1,30 @@
+---
+import SidebarNav from "@cpluspatch/ui/astro/sections/sidebar/sidebar-nav.astro";
+import Dropdown from "@cpluspatch/ui/astro/ui/dropdown.astro";
+import GalleryNav from "./gallery-nav.astro";
+
+/**
+ * The Components menu: a link to each component, in a dropdown. For where
+ * there's no room for the sidebar, or none. Its id is the page's only one.
+ */
+type Props = {
+    /** Id of the component whose page this is. */
+    current?: string;
+    /** Passed on to the dropdown, for the page to show and hide it. */
+    class?: string;
+};
+
+const { current, class: className } = Astro.props;
+---
+
+<Dropdown
+    class={className}
+    id="gallery-menu"
+    label="Components"
+    icon="lucide:menu"
+    collapseBelow="30rem"
+>
+    <SidebarNav label="Components">
+        <GalleryNav {current} />
+    </SidebarNav>
+</Dropdown>
