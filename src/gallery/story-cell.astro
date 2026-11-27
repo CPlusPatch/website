@@ -8,7 +8,7 @@ import StoryTags from "./story-tags.astro";
 /**
  * One story on its stage: a caption bar with its name, a Props panel (a
  * <details>, so no JS) and a link to the story's own page, above the story
- * on a backdrop the page toolbar picks (toolbar.astro).
+ * on the backdrop the bench's Backdrop setting picks (story-page.astro).
  */
 interface Props {
     group: string;
@@ -18,6 +18,7 @@ interface Props {
 }
 
 const { group, story, combo } = Astro.props;
+// A combination's cell follows its story's, so its caption is the combination alone.
 const name = combo ? `${story.name}/${combo}` : story.name;
 const id = `${group}/${name}`;
 const path = combo
@@ -29,7 +30,9 @@ const path = combo
     <figcaption class="story__caption">
         <span class="story__title">
             {/* A link to itself: where to point someone at this story. */}
-            <a class="story__name" href={`#${id}`}><code>{name}</code></a>
+            <a class="story__name" href={`#${id}`} title={name}
+                ><code>{combo ?? name}</code></a
+            >
             <StoryTags tags={story.tags ?? []} />
         </span>
         <span class="story__actions">
@@ -174,7 +177,7 @@ const path = combo
     overflow-wrap: anywhere;
 }
 
-/* The backdrop is set by the toolbar; dots until it says otherwise. */
+/* Its backdrop comes from the bench's Backdrop setting (story-page.astro). */
 .story__stage {
     display: flex;
     flex: 1;

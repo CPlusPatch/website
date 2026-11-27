@@ -2,7 +2,15 @@
 import Icon from "@cpluspatch/ui/svelte/icon.svelte";
 import Badge from "@cpluspatch/ui/svelte/ui/badge.svelte";
 import Button from "@cpluspatch/ui/svelte/ui/button.svelte";
-import { type BenchGroup, type Pick, pickPath, TAG_HINTS } from "./bench.ts";
+import {
+    type Backdrop,
+    type BenchGroup,
+    type Pick,
+    pickPath,
+    TAG_HINTS,
+} from "./bench.ts";
+import BenchControls from "./bench-controls.svelte";
+import BenchSettings from "./bench-settings.svelte";
 import type { Tag } from "./story.ts";
 
 /** The bench's inspector: the component, then whatever is on the stage. */
@@ -14,11 +22,46 @@ type Props = {
     tags: Tag[];
     group: BenchGroup;
     current: Pick;
+    /** Whether JS has run, which the controls and settings need. */
+    mounted: boolean;
+    backdrop: Backdrop;
+    outline: boolean;
+    /** The controls' values after a pick. */
+    oncombo: (values: Record<string, string>) => void;
+    onstage: (backdrop: Backdrop) => void;
+    onoutline: (outline: boolean) => void;
 };
 
-const { description, sources, site, tags, group, current }: Props = $props();
+const {
+    description,
+    sources,
+    site,
+    tags,
+    group,
+    current,
+    mounted,
+    backdrop,
+    outline,
+    oncombo,
+    onstage,
+    onoutline,
+}: Props = $props();
 
 const story = $derived(group.stories.find((s) => s.name === current.story));
+const source = $derived(
+    current.combo ? story?.combos[current.combo]?.source : story?.source,
+);
+const count = $derived.by(() => {
+    const stories = group.stories.length;
+    const combos = group.stories.reduce(
+        (n, s) => n + Object.keys(s.combos).length,
+        0,
+    );
+    const text = `${stories} ${stories === 1 ? "story" : "stories"}`;
+    if (combos === 0) return text;
+
+    return `${text}, ${combos} ${combos === 1 ? "combination" : "combinations"}`;
+});
 // The component's own tags are already shown above.
 const storyTags = $derived(story?.tags.filter((t) => !tags.includes(t)) ?? []);
 </script>
@@ -76,21 +119,32 @@ const storyTags = $derived(story?.tags.filter((t) => !tags.includes(t)) ?? []);
                 <code>{story.name}</code>
                 {@render tagBadges(storyTags)}
             </p>
+            {#if mounted}
+                <BenchControls
+                    {story}
+                    combo={current.combo}
+                    onchange={oncombo}
+                />
+            {/if}
             <!-- Above the source, which can run long. -->
             {@render openAlone()}
-            <pre
-                class="bench-inspector__source"
-            ><code>{story.source}</code></pre>
+            <pre class="bench-inspector__source"><code>{source}</code></pre>
         {:else}
             <h2 class="bench-inspector__heading">{group.title}</h2>
             <p class="bench-inspector__meta text-meta">
-                {group.stories.length}
-                {group.stories.length === 1 ? "story" : "stories"}
+                {count}
                 {@render tagBadges(group.tags)}
             </p>
             {@render openAlone()}
         {/if}
     </section>
+
+    {#if mounted}
+        <section class="bench-inspector__section">
+            <h2 class="bench-inspector__heading">Stage settings</h2>
+            <BenchSettings stage={backdrop} {outline} {onstage} {onoutline} />
+        </section>
+    {/if}
 </div>
 
 <style>

@@ -24,8 +24,12 @@ let open = $state(false);
 
 /** "All stories", then each story. */
 const picks = (group: BenchGroup): Pick[] => [
-    { group: group.id, story: null },
-    ...group.stories.map((story) => ({ group: group.id, story: story.name })),
+    { group: group.id, story: null, combo: null },
+    ...group.stories.map((story) => ({
+        group: group.id,
+        story: story.name,
+        combo: null,
+    })),
 ];
 
 const go = (event: MouseEvent, pick: Pick) => {

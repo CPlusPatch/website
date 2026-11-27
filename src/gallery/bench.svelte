@@ -1,7 +1,9 @@
 <script lang="ts">
 import { onMount, type Snippet } from "svelte";
 import {
+    type Backdrop,
     type BenchGroup,
+    comboOf,
     firstPick,
     type Pick,
     parseHash,
@@ -18,7 +20,8 @@ import type { Tag } from "./story.ts";
 /**
  * A component's stories as a workbench: the story list, a stage (one page of
  * stories in a frame) and an inspector. Without JS the list's links load
- * into the frame. With it, the pick is the URL hash (`#<group>/<story>`, or
+ * into the frame. With it, the pick is the URL hash (`#<group>/<story>`,
+ * `#<group>/<story>/<combo>` for a combination of the story's controls, or
  * `#<group>` for all of a group's stories), and each pick is one history
  * entry. This owns the page-wide wiring (hash, history, Display menu); the
  * parts only take props.
@@ -59,16 +62,56 @@ const first = firstPick(groups);
 
 let current = $state<Pick>(first);
 let stage: BenchStage | undefined = $state();
+// The inspector's controls and settings need JS, so they wait for this.
+let mounted = $state(false);
+let backdrop = $state<Backdrop>("plain");
+let outline = $state(false);
 
 const group = $derived(
     groups.find((g) => g.id === current.group) ?? (groups[0] as BenchGroup),
 );
 const id = $derived(pickId(current));
+const storyId = $derived(pickId({ ...current, combo: null }));
+const story = $derived(group.stories.find((s) => s.name === current.story));
 
 const fromHash = () => parseHash(groups, location.hash) ?? first;
 
+// The frame reads these keys itself before it paints (story-page.astro).
+const readSetting = (key: string) => {
+    try {
+        return sessionStorage.getItem(key);
+    } catch {
+        return null;
+    }
+};
+
+const saveSetting = (key: string, value: string | null) => {
+    try {
+        if (value === null) sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key, value);
+    } catch {
+        // Storage can be blocked (private mode).
+    }
+};
+
+const setStage = (next: Backdrop) => {
+    backdrop = next;
+    saveSetting("gallery-stage", next);
+    stage?.setStage(backdrop, outline);
+};
+
+const setOutline = (next: boolean) => {
+    outline = next;
+    saveSetting("gallery-outline", next ? "true" : null);
+    stage?.setStage(backdrop, outline);
+};
+
 onMount(() => {
     current = fromHash();
+    const saved = readSetting("gallery-stage");
+    if (saved === "dots" || saved === "surface") backdrop = saved;
+    outline = readSetting("gallery-outline") === "true";
+    mounted = true;
 
     const onHashChange = () => {
         current = fromHash();
@@ -95,8 +138,8 @@ onMount(() => {
             <nav class="bench__list" aria-label="Stories">
                 <BenchList
                     {groups}
-                    current={id}
-                    label={id}
+                    current={storyId}
+                    label={storyId}
                     onpick={(pick) => {
                         location.hash = pickHash(pick);
                     }}
@@ -122,6 +165,18 @@ onMount(() => {
                     {tags}
                     {group}
                     {current}
+                    {mounted}
+                    {backdrop}
+                    {outline}
+                    oncombo={(values) => {
+                        if (!story) return;
+                        location.hash = pickHash({
+                            ...current,
+                            combo: comboOf(story, values),
+                        });
+                    }}
+                    onstage={setStage}
+                    onoutline={setOutline}
                 />
             </aside>
         </div>

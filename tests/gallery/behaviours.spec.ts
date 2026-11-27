@@ -272,4 +272,93 @@ test.describe("a component's bench", () => {
             .poll(() => framePath(page))
             .toBe("/gallery/story/button-size/sm/");
     });
+
+    const inspector = (page: import("@playwright/test").Page) =>
+        page.getByRole("complementary", { name: "Inspector" });
+    const frameAttr = (
+        page: import("@playwright/test").Page,
+        name: "galleryStage" | "galleryOutline",
+    ) =>
+        stage(page).evaluate(
+            (frame: HTMLIFrameElement, key: string) =>
+                frame.contentDocument?.documentElement.dataset[key],
+            name,
+        );
+
+    test("puts a combination of a story's controls on the stage, and Back returns", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const variant = inspector(page).getByRole("group", { name: "variant" });
+        await expect(variant.getByLabel("solid")).toBeChecked();
+
+        await variant.getByText("outline", { exact: true }).click();
+        await expect(page).toHaveURL(
+            /#button-variant\/default\/outline-primary$/,
+        );
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-variant/default/outline-primary/");
+        await expect(
+            page
+                .locator('nav a[href="/gallery/story/button-variant/default/"]')
+                .first(),
+        ).toHaveAttribute("aria-current", "true");
+
+        await page.goBack();
+        await expect(page).toHaveURL(/#button-variant\/default$/);
+        await expect(variant.getByLabel("solid")).toBeChecked();
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-variant/default/");
+    });
+
+    test("loads a combination from the hash", async ({ page }) => {
+        await page.goto(
+            "/gallery/buttons/#button-variant/default/ghost-destructive",
+        );
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-variant/default/ghost-destructive/");
+
+        const controls = inspector(page);
+        await expect(
+            controls
+                .getByRole("group", { name: "variant" })
+                .getByLabel("ghost"),
+        ).toBeChecked();
+        await expect(
+            controls.getByRole("combobox", { name: "tone" }),
+        ).toHaveValue("destructive");
+    });
+
+    test("keeps the stage settings in the frame across stories", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/sm/");
+        expect(await frameAttr(page, "galleryStage")).toBeUndefined();
+
+        await inspector(page).getByText("Dots", { exact: true }).click();
+        await inspector(page).getByLabel("Outline boxes").check();
+        await expect.poll(() => frameAttr(page, "galleryStage")).toBe("dots");
+        await expect.poll(() => frameAttr(page, "galleryOutline")).toBe("");
+
+        await item(page, "lg").click();
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/lg/");
+        await expect.poll(() => frameAttr(page, "galleryStage")).toBe("dots");
+        await expect.poll(() => frameAttr(page, "galleryOutline")).toBe("");
+
+        // The frame's page reads the saved settings before it paints.
+        await page.reload();
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/lg/");
+        await expect.poll(() => frameAttr(page, "galleryStage")).toBe("dots");
+        await expect.poll(() => frameAttr(page, "galleryOutline")).toBe("");
+    });
 });

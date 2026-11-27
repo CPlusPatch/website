@@ -71,14 +71,9 @@ const count = group.stories.length;
 </section>
 
 <style>
-/* What stories stand on: a dot grid, unless the toolbar picks otherwise. */
+/* The page, unless the Backdrop setting says otherwise (story-page.astro). */
 :global(.story__stage) {
     background-color: var(--color-bg);
-    background-image: radial-gradient(
-        color-mix(in oklab, var(--color-text) 16%, transparent) 1px,
-        transparent 1px
-    );
-    background-size: 12px 12px;
 }
 
 .story-group {

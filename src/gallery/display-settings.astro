@@ -9,7 +9,7 @@ import type { ComponentProps } from "astro/types";
 /**
  * The site's Display menu, with every page effect, and on a component
  * page, a way to see its sections in other schemes, themes and styles (compare.ts).
- * The gallery's other settings (stage) are in each component page's toolbar.
+ * The gallery's other settings (stage) are in the bench's inspector.
  */
 type Props = Pick<ComponentProps<typeof DisplayMenu>, "collapseBelow">;
 
@@ -60,8 +60,6 @@ if (compare) initCompare(compare);
 const settings = document.getElementById("display-settings");
 const bar = document.querySelector(".gallery__bar");
 const main = document.querySelector(".gallery__main");
-// A component page's toolbar, which can stick under the bar.
-const toolbar = document.querySelector(".gallery-toolbar");
 
 let anchor: Element | null = null;
 let anchorTop = 0;
@@ -70,17 +68,11 @@ let pending = false;
 const remember = () => {
     pending = false;
     if (!bar || !main) return;
-    // Below the toolbar while it is stuck there, as it never moves.
-    const top = Math.max(
-        bar.getBoundingClientRect().bottom,
-        toolbar && getComputedStyle(toolbar).position === "sticky"
-            ? toolbar.getBoundingClientRect().bottom
-            : 0,
-    );
+    const top = bar.getBoundingClientRect().bottom;
     // elementsFromPoint, as the open dropdown's panel can be on top of the page.
     const hit = document
         .elementsFromPoint(window.innerWidth / 2, top + 8)
-        .find((el) => main.contains(el) && !toolbar?.contains(el));
+        .find((el) => main.contains(el));
     if (!hit) return;
     anchor = hit;
     anchorTop = hit.getBoundingClientRect().top;
@@ -112,7 +104,6 @@ const keepPlace = () => {
 };
 
 settings?.addEventListener("change", keepPlace);
-toolbar?.addEventListener("change", keepPlace);
 </script>
 
 <style>

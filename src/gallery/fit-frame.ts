@@ -9,9 +9,9 @@ import { STORY_NAME } from "./story.ts";
 /** Past this, a story sized to the viewport would grow its frame forever. */
 export const MAX_HEIGHT = 2400;
 
-/** A link to a story or a group on a group's page: `#<group>/<story>`, `#<group>`. */
+/** A link to a story or a group on a group's page: `#<group>/<story>[/<combo>]`, `#<group>`. */
 const NAME = STORY_NAME.source.slice(1, -1);
-const STORY_HASH = new RegExp(`^#${NAME}(?:/${NAME})?$`);
+const STORY_HASH = new RegExp(`^#${NAME}(?:/${NAME}){0,2}$`);
 
 type FitOptions = {
     /** Takes a story link's hash; true if it handled it, so the frame stays put. */

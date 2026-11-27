@@ -47,6 +47,18 @@ const options = {
     const rem =
         options.widths[width] ?? (/^\d+(\.\d+)?rem$/.test(width) && width);
     if (rem) root.style.setProperty("--story-width", rem);
+    // The bench's stage settings, kept for the tab (bench.svelte).
+    try {
+        const stage = sessionStorage.getItem("gallery-stage");
+        if (stage === "dots" || stage === "surface") {
+            root.dataset.galleryStage = stage;
+        }
+        if (sessionStorage.getItem("gallery-outline") === "true") {
+            root.dataset.galleryOutline = "";
+        }
+    } catch {
+        // Storage can be blocked (private mode).
+    }
     </script>
 
     <main
@@ -62,6 +74,31 @@ const options = {
 // The page-wide easter eggs the dialogue stories run.
 import "./dialogue-actions.ts";
 </script>
+
+<style is:global>
+/* The stage setting's backdrops: the page, and a group page's stages. */
+html[data-gallery-stage="dots"] body,
+html[data-gallery-stage="dots"] .story__stage {
+    background-color: var(--color-bg);
+    background-image: radial-gradient(
+        color-mix(in oklab, var(--color-text) 16%, transparent) 1px,
+        transparent 1px
+    );
+    background-size: 12px 12px;
+}
+
+html[data-gallery-stage="surface"] body,
+html[data-gallery-stage="surface"] .story__stage {
+    background-color: var(--color-surface);
+}
+
+/* Every box a story draws, outlined: for checking alignment and spacing. */
+html[data-gallery-outline] :is(.story-preview, .story-preview *) {
+    outline: 1px dashed
+        color-mix(in oklab, var(--color-primary) 55%, transparent);
+    outline-offset: -1px;
+}
+</style>
 
 <style>
 /* The gallery's padding, and its width when the page asks for one. */

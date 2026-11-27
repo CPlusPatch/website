@@ -1,7 +1,9 @@
-import type { BenchGroup } from "../bench.ts";
+import type { BenchGroup, BenchStory } from "../bench.ts";
 import BenchBar from "../bench-bar.svelte";
+import BenchControls from "../bench-controls.svelte";
 import BenchInspector from "../bench-inspector.svelte";
 import BenchList from "../bench-list.svelte";
+import BenchSettings from "../bench-settings.svelte";
 import BenchStage from "../bench-stage.svelte";
 import { type StoryGroup, storyPath, svelteStory } from "../story.ts";
 
@@ -10,14 +12,59 @@ const sizes: BenchGroup = {
     title: "Size and state",
     tags: [],
     stories: [
-        { name: "lg", tags: [], source: '<Button size="lg">Lg</Button>' },
-        { name: "sm", tags: [], source: '<Button size="sm">Sm</Button>' },
+        {
+            name: "lg",
+            tags: [],
+            source: '<Button size="lg">Lg</Button>',
+            controls: [],
+            combos: {},
+        },
+        {
+            name: "sm",
+            tags: [],
+            source: '<Button size="sm">Sm</Button>',
+            controls: [],
+            combos: {},
+        },
         {
             name: "spinning",
             tags: ["animated"],
             source: "<Button loading>Saving</Button>",
+            controls: [],
+            combos: {},
         },
     ],
+};
+
+const variant: BenchStory = {
+    name: "default",
+    tags: [],
+    source: '<Button variant="solid" tone="primary">Button</Button>',
+    controls: [
+        {
+            prop: "variant",
+            values: ["solid", "outline", "ghost", "link"],
+            value: "solid",
+        },
+        {
+            prop: "tone",
+            values: ["primary", "secondary", "destructive"],
+            value: "primary",
+        },
+    ],
+    combos: {
+        "outline-destructive": {
+            source: '<Button variant="outline" tone="destructive">Button</Button>',
+            values: { variant: "outline", tone: "destructive" },
+        },
+    },
+};
+
+const controlled: BenchGroup = {
+    id: "button-variant",
+    title: "Variant and tone",
+    tags: [],
+    stories: [variant],
 };
 
 const groups: BenchGroup[] = [
@@ -30,6 +77,8 @@ const groups: BenchGroup[] = [
                 name: "segmented",
                 tags: [],
                 source: "<ButtonGroup>…</ButtonGroup>",
+                controls: [],
+                combos: {},
             },
         ],
     },
@@ -40,6 +89,15 @@ const sources = ["packages/ui/src/astro/ui/button.astro"];
 
 // Stories render on the server only, so a pick goes nowhere.
 const ignore = () => undefined;
+
+const inspector = {
+    mounted: true,
+    backdrop: "plain",
+    outline: false,
+    oncombo: ignore,
+    onstage: ignore,
+    onoutline: ignore,
+} as const;
 
 export const bench: StoryGroup[] = [
     {
@@ -125,7 +183,12 @@ export const bench: StoryGroup[] = [
                 site: false,
                 tags: [],
                 group: sizes,
-                current: { group: "button-size", story: "spinning" },
+                current: {
+                    group: "button-size",
+                    story: "spinning",
+                    combo: null,
+                },
+                ...inspector,
             }),
             svelteStory("all-stories", BenchInspector, {
                 description: "Buttons, and links that look like them.",
@@ -133,14 +196,71 @@ export const bench: StoryGroup[] = [
                 site: false,
                 tags: [],
                 group: sizes,
-                current: { group: "button-size", story: null },
+                current: { group: "button-size", story: null, combo: null },
+                ...inspector,
             }),
             svelteStory("site-only", BenchInspector, {
                 sources: ["src/components/blocks/terminal/terminal.astro"],
                 site: true,
                 tags: ["live"],
                 group: sizes,
-                current: { group: "button-size", story: "lg" },
+                current: { group: "button-size", story: "lg", combo: null },
+                ...inspector,
+            }),
+            svelteStory("with-controls", BenchInspector, {
+                description: "Buttons, and links that look like them.",
+                sources,
+                site: false,
+                tags: [],
+                group: controlled,
+                current: {
+                    group: "button-variant",
+                    story: "default",
+                    combo: "outline-destructive",
+                },
+                ...inspector,
+                backdrop: "dots",
+                outline: true,
+            }),
+        ],
+    },
+    {
+        id: "bench-controls",
+        title: "Bench controls",
+        category: "gallery",
+        source: "src/gallery/bench-controls.svelte",
+        min: 20,
+        stories: [
+            svelteStory("default", BenchControls, {
+                story: variant,
+                combo: null,
+                onchange: ignore,
+            }),
+            svelteStory("combination", BenchControls, {
+                story: variant,
+                combo: "outline-destructive",
+                onchange: ignore,
+            }),
+        ],
+    },
+    {
+        id: "bench-settings",
+        title: "Bench settings",
+        category: "gallery",
+        source: "src/gallery/bench-settings.svelte",
+        min: 20,
+        stories: [
+            svelteStory("default", BenchSettings, {
+                stage: "plain",
+                outline: false,
+                onstage: ignore,
+                onoutline: ignore,
+            }),
+            svelteStory("dots-and-outlines", BenchSettings, {
+                stage: "dots",
+                outline: true,
+                onstage: ignore,
+                onoutline: ignore,
             }),
         ],
     },

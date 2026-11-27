@@ -1,6 +1,7 @@
 <script lang="ts">
 import PreviewFrame from "@cpluspatch/ui/svelte/ui/preview-frame.svelte";
 import { onMount } from "svelte";
+import type { Backdrop } from "./bench.ts";
 import { fit } from "./fit-frame.ts";
 import { PREVIEW_SNAPS } from "./widths.ts";
 
@@ -28,6 +29,16 @@ let shown = initial;
 
 /** Loads the page in the frame again, for a changed Display choice. */
 export const reload = () => frame?.contentWindow?.location.reload();
+
+export const setStage = (backdrop: Backdrop, outline: boolean) => {
+    const root = frame?.contentDocument?.documentElement;
+    if (!root) return;
+
+    if (backdrop === "plain") delete root.dataset.galleryStage;
+    else root.dataset.galleryStage = backdrop;
+    if (outline) root.dataset.galleryOutline = "";
+    else delete root.dataset.galleryOutline;
+};
 
 onMount(() => {
     if (frame)
