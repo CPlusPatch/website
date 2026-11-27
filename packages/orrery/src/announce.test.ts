@@ -6,6 +6,7 @@ import {
     chaseAnnouncement,
     historyAnnouncement,
     noChaseAnnouncement,
+    presenceAnnouncement,
     satelliteAnnouncement,
 } from "./announce.ts";
 
@@ -96,4 +97,44 @@ Deno.test("undo and redo name the edit, or say there is none", () => {
     );
     assertEquals(historyAnnouncement("undo", null), "Nothing to undo.");
     assertEquals(historyAnnouncement("redo", null), "Nothing to redo.");
+});
+
+Deno.test("a body that left while it was focused says where the focus went", () => {
+    assertEquals(
+        presenceAnnouncement(
+            { gone: ["moon"], focused: "earth", deselected: false },
+            bodies,
+        ),
+        "Moon isn't there at this date. Focused on Earth.",
+    );
+});
+
+Deno.test("a body that left while it was selected says the selection cleared", () => {
+    assertEquals(
+        presenceAnnouncement(
+            { gone: ["moon"], focused: null, deselected: true },
+            bodies,
+        ),
+        "Moon isn't there at this date. Selection cleared.",
+    );
+});
+
+Deno.test("a body that was focused and selected says both", () => {
+    assertEquals(
+        presenceAnnouncement(
+            { gone: ["moon"], focused: "earth", deselected: true },
+            bodies,
+        ),
+        "Moon isn't there at this date. Focused on Earth. Selection cleared.",
+    );
+});
+
+Deno.test("two bodies that left are named together, with an id for an unknown one", () => {
+    assertEquals(
+        presenceAnnouncement(
+            { gone: ["moon", "probe"], focused: "earth", deselected: true },
+            bodies,
+        ),
+        "Moon and probe aren't there at this date. Focused on Earth. Selection cleared.",
+    );
 });

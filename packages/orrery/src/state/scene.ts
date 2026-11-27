@@ -62,7 +62,20 @@ export type Held = {
     selected: string | null;
     /** How many scenarios have been loaded. A body edit replaces `doc` too, but doesn't count. */
     loads: number;
+    /** The ids of the bodies absent at the clock's time. Replaced, never changed. */
+    absent: readonly string[];
 };
+
+/** What left when the clock passed the end of a lifetime. */
+export type Departure = {
+    /** The ids that left: the focused body first, then the selected one if different. */
+    gone: string[];
+    /** The id that took the focus, or `null` if the focus stayed. */
+    focused: string | null;
+    deselected: boolean;
+};
+
+const NONE: readonly string[] = [];
 
 /**
  * The scenario, the clock, what's focused and what's selected.
@@ -75,6 +88,11 @@ export class Scene {
     #listeners = new Set<(e: SceneEvent) => void>();
     // Each cache remembers the doc it was built from, so a doc swap invalidates it.
     #order: { doc: Document; bodies: Body[] } | null = null;
+    #present: {
+        doc: Document;
+        absent: readonly string[];
+        bodies: Body[];
+    } | null = null;
     #system: { doc: Document; system: System } | null = null;
     #states: { doc: Document; t: number; states: Map<string, State> } | null =
         null;
@@ -97,6 +115,7 @@ export class Scene {
             focused: root.id,
             selected: null,
             loads: 0,
+            absent: NONE,
         });
     }
 
@@ -140,6 +159,26 @@ export class Scene {
         }
 
         return this.#order.bodies;
+    }
+
+    /** The bodies present at the clock's time, as of the last `settlePresence`. */
+    get presentBodies(): Body[] {
+        const doc = this.#held.doc;
+        const absent = this.#held.absent;
+
+        if (this.#present?.doc !== doc || this.#present.absent !== absent) {
+            const gone = new Set(absent);
+
+            this.#present = {
+                doc,
+                absent,
+                bodies: doc.scenario.bodies.filter(
+                    (body) => !gone.has(body.id),
+                ),
+            };
+        }
+
+        return this.#present.bodies;
     }
 
     /** Calls `fn` on every change. Returns a function that stops it. */
@@ -199,6 +238,65 @@ export class Scene {
         if (change.paused !== undefined) this.clock.paused = change.paused;
 
         this.#emit({ type: "clock" });
+    }
+
+    /**
+     * Records which bodies are absent at the clock's time. Moves the focus to the nearest present
+     * ancestor and clears the selection if they're absent. Returns what left, or `null` if nothing did.
+     */
+    settlePresence(): Departure | null {
+        const bodies = this.#held.doc.scenario.bodies;
+
+        // Most scenarios have no lifetimes, and this runs every frame.
+        if (!bodies.some((body) => body.lifetime !== undefined)) {
+            if (this.#held.absent.length > 0) this.#held.absent = NONE;
+
+            return null;
+        }
+
+        const system = this.system;
+        const t = this.clock.t;
+        const absent = bodies
+            .filter((body) => !system.presentAt(body.id, t))
+            .map((body) => body.id);
+        const old = this.#held.absent;
+        if (
+            absent.length !== old.length ||
+            absent.some((id, i) => id !== old[i])
+        ) {
+            this.#held.absent = absent;
+        }
+
+        const gone = new Set(absent);
+        const from = this.#held.focused;
+        const was = this.#held.selected;
+        let refocus: string | null = null;
+        if (gone.has(from)) {
+            const parents = new Map(
+                bodies.map((body) => [body.id, body.orbit?.parent]),
+            );
+            let id = parents.get(from);
+            // The root is never absent, so the walk ends.
+            while (id !== undefined && gone.has(id)) id = parents.get(id);
+
+            refocus = id ?? from;
+            this.#held.focused = refocus;
+        }
+        const deselect = was !== null && gone.has(was);
+        if (deselect) this.#held.selected = null;
+
+        if (refocus === null && !deselect) return null;
+
+        this.#settle(() => {}, refocus, deselect);
+
+        return {
+            gone: [
+                ...(refocus !== null ? [from] : []),
+                ...(deselect && was !== null && was !== from ? [was] : []),
+            ],
+            focused: refocus,
+            deselected: deselect,
+        };
     }
 
     /** Replaces the whole document and sets the clock to `t`. */

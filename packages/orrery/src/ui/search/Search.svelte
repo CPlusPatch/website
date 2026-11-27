@@ -76,7 +76,7 @@ let distances = $state.raw<ReadonlyMap<string, number | null>>(new Map());
 let chosen = $state.raw<AUnit | null>(null);
 let renderedShown = "";
 
-const bodies = $derived(documents.doc.scenario.bodies);
+const bodies = $derived(documents.presentBodies);
 const { root: top, groups } = $derived(leftPane(bodies));
 const searching = $derived(query.trim() !== "");
 const hits = $derived(searching ? found(treeOrder(bodies), query) : []);

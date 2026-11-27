@@ -74,7 +74,7 @@ A document's `timeline` holds the events that change an orbit at a time `t`. A `
 
 `apply` rejects a command when a burn on the resulting timeline would escape the parent or leave no orbit. `load` checks the timeline with `validateTimeline`. Removing a body removes the events of it and its children.
 
-A body other than the root can have a `lifetime` with optional `from` and `to` (seconds since J2000, v3 files only). It's present for `from <= t < to`, and a missing bound is open. A child is absent whenever its parent is. The timeline rejects an event outside its body's lifetime, and `System.presentAt(id, t)` tells whether a body is present. Snapshots still compute states for absent bodies.
+A body other than the root can have a `lifetime` with optional `from` and `to` (seconds since J2000, v3 files only). It's present for `from <= t < to`, and a missing bound is open. A child is absent whenever its parent is. The timeline rejects an event outside its body's lifetime, and `System.presentAt(id, t)` tells whether a body is present. Snapshots still compute states for absent bodies. In the orrery, search and the satellite chips skip absent bodies. When the clock leaves the lifetime of the focused or selected body, the focus moves to its nearest present ancestor and the selection clears.
 
 Saves, share links and the autosave store the events as an optional top-level `timeline` array next to the scenario's fields. `validateDocument` checks it, and the key is left out when there are no events. A file without it loads with no events.
 

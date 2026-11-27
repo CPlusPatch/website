@@ -336,6 +336,51 @@ const jumpTo2030 = async (page: Page) => {
     await dateEditor(page).getByRole("button", { name: "Go to date" }).click();
 };
 
+test("a body that leaves its lifetime drops the focus and selection, and out of search", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event("pagehide"));
+
+        const saved = JSON.parse(localStorage.getItem("orrery:v1") ?? "");
+        const moon = saved.bodies.find((b: { id: string }) => b.id === "moon");
+        moon.lifetime = { to: saved.time + 365 * 86400 };
+        localStorage.setItem("orrery:v1", JSON.stringify(saved));
+
+        // The app saves again as the page goes, which would undo the edit.
+        Storage.prototype.setItem = () => {};
+    });
+    await openOrbits(page);
+
+    const crumbs = page.getByRole("navigation", { name: "Focus" });
+    await selectBody(page, "Moon");
+    await expect(card(page)).toContainText(/Until \d{4}-\d{2}-\d{2}/);
+    await card(page).getByRole("button", { name: "Focus" }).click();
+    await expect(crumbs.getByRole("button")).toHaveText([
+        "Sun",
+        "Earth",
+        "Moon",
+    ]);
+
+    await jumpTo2030(page);
+
+    await expect(card(page)).toBeHidden();
+    await expect(crumbs.getByRole("button")).toHaveText(["Sun", "Earth"]);
+    await expect(
+        page.locator('.visually-hidden[aria-live="polite"]'),
+    ).toHaveText(
+        "Moon isn't there at this date. Focused on Earth. Selection cleared.",
+    );
+
+    await page.keyboard.press("/");
+    await page.getByRole("combobox", { name: "Find a body" }).fill("Moon");
+    await expect(page.getByRole("option", { name: /Moon/ })).toHaveCount(0);
+    expect(problems).toEqual([]);
+});
+
 test("the run button toggles between running and held", async ({
     page,
     problems,

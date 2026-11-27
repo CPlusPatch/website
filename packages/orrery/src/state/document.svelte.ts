@@ -20,6 +20,11 @@ export class DocumentStore {
         return this.#scene.system;
     }
 
+    /** The bodies present at the clock's time. */
+    get presentBodies(): readonly Body[] {
+        return this.#scene.presentBodies;
+    }
+
     /** How many scenarios have been loaded. A body edit replaces `doc` too, but doesn't count. */
     get loads(): number {
         return this.#scene.loads;

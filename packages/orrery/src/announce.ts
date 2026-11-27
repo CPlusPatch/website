@@ -1,5 +1,6 @@
 import type { SatelliteEvent, SceneEvent } from "@cpluspatch/render";
 import type { Body } from "@cpluspatch/sim";
+import type { Departure } from "./state/scene.ts";
 
 /** What a screen reader says for a selection or focus change, or `null` for any other event. */
 export const announcement = (
@@ -17,6 +18,26 @@ export const announcement = (
     if (event.type === "focus") return `Focused on ${name(event.id)}.`;
 
     return null;
+};
+
+/** What a screen reader says when the clock leaves the lifetime of the focused or selected body. */
+export const presenceAnnouncement = (
+    departure: Departure,
+    bodies: readonly Pick<Body, "id" | "name">[],
+): string => {
+    const names = departure.gone.map(
+        (id) => bodies.find((body) => body.id === id)?.name ?? id,
+    );
+    const gone =
+        names.length === 1
+            ? `${names[0]} isn't there`
+            : `${names.join(" and ")} aren't there`;
+    const focus =
+        departure.focused === null
+            ? ""
+            : ` Focused on ${bodies.find((body) => body.id === departure.focused)?.name ?? departure.focused}.`;
+
+    return `${gone} at this date.${focus}${departure.deselected ? " Selection cleared." : ""}`;
 };
 
 /** What a screen reader says when the camera starts or stops chasing `name`. */

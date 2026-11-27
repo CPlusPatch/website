@@ -2,7 +2,12 @@
 import { solarSystem } from "@cpluspatch/catalog";
 import { stateAt } from "@cpluspatch/orbit";
 import { Clock, type SceneEvent } from "@cpluspatch/render";
-import { type Body, documentOf, subtreeIds } from "@cpluspatch/sim";
+import {
+    type Body,
+    documentOf,
+    type Lifetime,
+    subtreeIds,
+} from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,
@@ -24,6 +29,7 @@ Deno.test("a scene writes through the object its hold function returns", () => {
         focused: "",
         selected: null,
         loads: 0,
+        absent: [],
     };
     const scene = new Scene(
         documentOf(solarSystem),
@@ -929,4 +935,135 @@ Deno.test("an undo that a listener replaces with another document returns null a
     assert(scene.scenario.bodies.some((body) => body.id === "rock"));
     assertEquals(scene.canUndo, false);
     assertEquals(scene.canRedo, false);
+});
+
+/** The solar system with a probe around the Moon, and `lifetimes` on the bodies they name. */
+const mortal = (lifetimes: Record<string, Lifetime>): Scene => {
+    const moon = solarSystem.bodies.find((body) => body.id === "moon");
+    if (!moon?.orbit) throw new Error("The scenario has no Moon.");
+
+    const probe: Body = {
+        ...newBody(
+            {
+                id: "probe",
+                name: "Probe",
+                tag: "spacecraft",
+                parent: moon,
+                radiusKm: 1,
+                massKg: 0,
+                aKm: 5000,
+                e: 0,
+                iDeg: 0,
+            },
+            0,
+        ),
+    };
+    const bodies = [...solarSystem.bodies, probe].map((body) =>
+        body.id in lifetimes ? { ...body, lifetime: lifetimes[body.id] } : body,
+    );
+
+    return new Scene(
+        documentOf({ ...solarSystem, bodies }),
+        new Clock(0, 1, false),
+    );
+};
+
+Deno.test("settlePresence moves the focus to the nearest present ancestor", () => {
+    const scene = mortal({ moon: { to: 100 } });
+    const events: SceneEvent[] = [];
+    scene.on((event) => events.push(event));
+    scene.focus("probe");
+    events.length = 0;
+
+    scene.clock.set(200);
+    const departure = scene.settlePresence();
+
+    assertEquals(scene.focused, "earth");
+    assertEquals(departure, {
+        gone: ["probe"],
+        focused: "earth",
+        deselected: false,
+    });
+    assertEquals(events, [{ type: "focus", id: "earth" }]);
+});
+
+Deno.test("settlePresence skips an absent parent when it walks up", () => {
+    const scene = mortal({ moon: { to: 100 }, earth: { to: 100 } });
+    scene.focus("probe");
+
+    scene.clock.set(200);
+    scene.settlePresence();
+
+    assertEquals(scene.focused, "sun");
+});
+
+Deno.test("settlePresence clears a selection that's absent and leaves the focus", () => {
+    const scene = mortal({ moon: { to: 100 } });
+    scene.select("moon");
+
+    scene.clock.set(200);
+    const departure = scene.settlePresence();
+
+    assertEquals(scene.selected, null);
+    assertEquals(scene.focused, "sun");
+    assertEquals(departure, {
+        gone: ["moon"],
+        focused: null,
+        deselected: true,
+    });
+});
+
+Deno.test("settlePresence lists the focused body first, then a different selection", () => {
+    const scene = mortal({ moon: { to: 100 } });
+    scene.focus("probe");
+    scene.select("moon");
+
+    scene.clock.set(200);
+
+    assertEquals(scene.settlePresence(), {
+        gone: ["probe", "moon"],
+        focused: "earth",
+        deselected: true,
+    });
+});
+
+Deno.test("settlePresence returns null and keeps the absent list when nothing changes", () => {
+    const held: Held[] = [];
+    const scene = new Scene(
+        mortal({ moon: { to: 100 } }).doc,
+        new Clock(200, 1, false),
+        (initial) => {
+            held.push(initial);
+
+            return initial;
+        },
+    );
+
+    assertEquals(scene.settlePresence(), null);
+    const absent = held[0]?.absent;
+    assert(absent?.includes("moon") && absent.includes("probe"));
+
+    assertEquals(scene.settlePresence(), null);
+    assert(held[0]?.absent === absent);
+});
+
+Deno.test("presentBodies drops the absent bodies and brings them back", () => {
+    const scene = mortal({ moon: { from: 100, to: 300 } });
+    const ids = () => scene.presentBodies.map((body) => body.id);
+
+    scene.settlePresence();
+    assert(!ids().includes("moon"));
+    assert(!ids().includes("probe"));
+
+    scene.clock.set(200);
+    scene.settlePresence();
+    assert(ids().includes("moon"));
+    assert(ids().includes("probe"));
+});
+
+Deno.test("a scenario with no lifetimes has every body present", () => {
+    const scene = make();
+
+    assertEquals(scene.settlePresence(), null);
+    assertEquals(scene.presentBodies.length, scene.scenario.bodies.length);
 });

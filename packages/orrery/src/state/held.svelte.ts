@@ -9,6 +9,7 @@ export class ReactiveHeld implements Held {
     focused: string;
     selected: string | null;
     loads: number;
+    absent: readonly string[];
 
     constructor(initial: Held) {
         // Raw: a document is replaced as a whole and never edited, so it needs no proxy.
@@ -18,5 +19,6 @@ export class ReactiveHeld implements Held {
         this.focused = $state(initial.focused);
         this.selected = $state(initial.selected);
         this.loads = $state(initial.loads);
+        this.absent = $state.raw(initial.absent);
     }
 }

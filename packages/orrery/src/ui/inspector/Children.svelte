@@ -15,7 +15,7 @@ const documents = getDocument();
 const view = getView();
 
 const children = $derived(
-    documents.doc.scenario.bodies.filter(
+    documents.presentBodies.filter(
         (candidate) => candidate.orbit?.parent === centre.id,
     ),
 );

@@ -19,6 +19,7 @@ import {
     chaseAnnouncement,
     historyAnnouncement,
     noChaseAnnouncement,
+    presenceAnnouncement,
     satelliteAnnouncement,
 } from "../announce.ts";
 import { cue } from "../audio/cues.ts";
@@ -32,6 +33,7 @@ import {
 import { readSatellites } from "../satellite-settings.ts";
 import { createSession } from "../session.ts";
 import { setAnnouncer, setStores } from "../state/context.ts";
+import type { Departure } from "../state/scene.ts";
 import { createStores } from "../state/stores.svelte.ts";
 import Crumbs from "./Crumbs.svelte";
 import History from "./History.svelte";
@@ -255,6 +257,7 @@ onMount(() => {
     let clockFrame = 0;
     let lastFrame = performance.now();
     let lastNowT = unixMsToJ2000s(Date.now());
+    let settling = false;
     const tickClock = (now: number) => {
         clockFrame = requestAnimationFrame(tickClock);
 
@@ -264,6 +267,18 @@ onMount(() => {
         const nowT = unixMsToJ2000s(Date.now());
         advanceClock(scene.clock, dt, lastNowT, nowT);
         lastNowT = nowT;
+
+        // The departure is one message, so the focus and selection events stay quiet.
+        settling = true;
+        let departure: Departure | null;
+        try {
+            departure = scene.settlePresence();
+        } finally {
+            settling = false;
+        }
+        if (departure !== null) {
+            announce(presenceAnnouncement(departure, scene.scenario.bodies));
+        }
     };
     clockFrame = requestAnimationFrame(tickClock);
 
@@ -423,7 +438,9 @@ onMount(() => {
         if (event.type === "selection" && event.id !== null) keys?.close();
 
         // A rebuilt scenario isn't announced, as its view is new.
-        const message = announcement(event, scene.scenario.bodies);
+        const message = settling
+            ? null
+            : announcement(event, scene.scenario.bodies);
         if (message !== null) announce(message);
     });
 
