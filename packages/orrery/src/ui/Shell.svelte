@@ -10,6 +10,7 @@ import {
     NARROW_QUERY,
     type View,
 } from "@cpluspatch/render";
+import { documentOf } from "@cpluspatch/sim";
 import { reducedMotion } from "@cpluspatch/ui/lib/motion.ts";
 import { onMount, untrack } from "svelte";
 import {
@@ -66,8 +67,12 @@ const { root, opened, storage, announce }: Props = $props();
 // The scenario doesn't change for the life of the component, so the first read is enough.
 const { scene, documentStore, viewState } = untrack(() =>
     createStores(
-        opened.scenario,
-        new Clock(startTime(opened.scenario), DEFAULT_RATE, reducedMotion()),
+        opened.doc,
+        new Clock(
+            startTime(opened.doc.scenario),
+            DEFAULT_RATE,
+            reducedMotion(),
+        ),
     ),
 );
 // Set before the components that read them are made.
@@ -256,7 +261,7 @@ onMount(() => {
             // A saved copy or link that can't be drawn mustn't lock the page out.
             if (scene.scenario === solarSystem) throw error;
 
-            scene.load(solarSystem, startTime(solarSystem));
+            scene.load(documentOf(solarSystem), startTime(solarSystem));
             first = build(loading.progress);
             fellBack = true;
             if (first) {

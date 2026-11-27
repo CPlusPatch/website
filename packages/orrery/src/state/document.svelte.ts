@@ -1,12 +1,6 @@
 import type { Burn, ElementsResult } from "@cpluspatch/orbit";
 import { colorOf } from "@cpluspatch/render";
-import type {
-    Body,
-    Command,
-    Document,
-    Scenario,
-    System,
-} from "@cpluspatch/sim";
+import type { Body, Command, Document, System } from "@cpluspatch/sim";
 import { previewBurn } from "../burning.ts";
 import type { Scene } from "./scene.ts";
 
@@ -62,8 +56,8 @@ export class DocumentStore {
         return previewBurn(this.doc.scenario, this.system, id, t, dv);
     }
 
-    /** Replaces the whole scenario and sets the clock to `t`. */
-    load(scenario: Scenario, t: number): void {
-        this.#scene.load(scenario, t);
+    /** Replaces the whole document and sets the clock to `t`. */
+    load(doc: Document, t: number): void {
+        this.#scene.load(doc, t);
     }
 }

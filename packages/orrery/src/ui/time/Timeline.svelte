@@ -83,9 +83,9 @@ const readColors = (target: HTMLElement): Colors => {
 };
 
 const readSaved = () => {
-    saved = readList(storage).map(({ savedAt, scenario }) => ({
-        t: startTime(scenario, savedAt),
-        name: scenario.name,
+    saved = readList(storage).map(({ savedAt, doc }) => ({
+        t: startTime(doc.scenario, savedAt),
+        name: doc.scenario.name,
     }));
     dirty = true;
 };

@@ -1,18 +1,24 @@
 /// <reference types="deno" />
 import { solarSystem } from "@cpluspatch/catalog";
-import { validateScenario } from "@cpluspatch/sim";
+import {
+    type Document,
+    documentFile,
+    documentOf,
+    type TimelineEvent,
+    validateScenario,
+} from "@cpluspatch/sim";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import edited from "../../catalog/src/fixtures/edited-v2.json" with {
     type: "json",
 };
 import {
-    decodeScenario,
-    encodeScenario,
+    decodeDocument,
+    encodeDocument,
     hashPayload,
     MAX_PAYLOAD_CHARS,
     nameProblem,
     openScenario,
-    parseScenarioJson,
+    parseDocumentJson,
     readList,
     readSaved,
     SAVED_LIST_KEY,
@@ -24,6 +30,17 @@ import {
 } from "./persistence.ts";
 
 const scenario = { ...solarSystem, time: 123456 };
+
+const burn: TimelineEvent = {
+    type: "burn",
+    id: "e1",
+    bodyId: "moon",
+    t: 1000,
+    dv: { prograde: 100, normal: 0, radial: 0 },
+};
+
+const doc = documentOf(scenario);
+const burned: Document = { ...doc, timeline: [burn] };
 
 const badColour = {
     ...scenario,
@@ -58,50 +75,57 @@ const throwing = {
 Deno.test("a scenario survives encoding and decoding", async () => {
     const expected = validateScenario(scenario);
 
-    const text = await encodeScenario(scenario);
-    const result = await decodeScenario(text);
+    const text = await encodeDocument(doc);
+    const result = await decodeDocument(text);
 
     assert(expected.ok);
-    assertEquals(result, expected);
-    assertEquals(result.ok && result.scenario.time, 123456);
+    assertEquals(result, { ok: true, doc: documentOf(expected.scenario) });
+    assertEquals(result.ok && result.doc.scenario.time, 123456);
 });
 
-// Captured from `encodeScenario` on the edited-v2 fixture, so old links keep opening.
+Deno.test("a share link keeps a burn", async () => {
+    const result = await decodeDocument(await encodeDocument(burned));
+
+    assert(result.ok);
+    assertEquals(result.doc.timeline, [burn]);
+});
+
+// Captured from `encodeDocument` on the edited-v2 fixture, so old links keep opening.
 const EDITED_V2_LINK =
     "hZRNb9swDIb_SqBdU0ES9Zn7jr10x2EH1VFWo45tyM6wLMh_H21LsbIFrS82KZHi84r0hfwKcai7luzElrT-GMiOPJ83dduGuBnOwxiOZEvGelqwLD1b8trt6zCQ3fcLqfcYMpxacov_NhvvdTuvjD6idTyRHQdhuJCSMX5Lhbmi39cnzKWdMslVdU0XMfjL4bAXxmN872NoR7JrT02zJaEJRzSHxb5uUxXBx_FtreNrMlMlfePbMKZawFnNmJSpkqIKMJwxSyXu6_ahKdLmGhLtWsSFeKSTTjnLBMzp8HxGGddmS2r8nPL7dv7w8WePu6lxWuMZDI-kQjKOMX1XveGe6w3o2HWFrs-LlXDS2gQjHRP2f0G5ASMnRwZJITeODPYPCVgJzhUYSroFgzLrbGYRlFshM5CiSgmzAAkKSosCCM-MoQrD0mkX0ndNmN6_Z0XOU2ZwBh-ulHUwqYja_Jn8jhtpBdOCWWwPhalapHnxIyZ44pQZzsOTXapYvALlNBqdq47YhGN9J-V5s_pyp_a-ClX0h9wjhZSqbEr3GuBwwE1xxiiyf6asNo4Vuk6XPsuKXp1l5VRkTRlVi6BAH7ZH7Kr3lellsRKNx9GNHW5Ls_dg4Li4H7aKWab8p40OwIpkMwm3CYSbFYNnDEHdgsGmqXrQ5T4OxdUs1qOhlcKKR38OAOvUXaMvOT7mEMI4cKB1cSMOZO50EHCbWmq1grXTMUBmIgDjSqgf178";
 
 Deno.test("a share link from the version 2 encoder decodes to the same scenario", async () => {
     const expected = validateScenario(edited);
 
-    const result = await decodeScenario(EDITED_V2_LINK);
+    const result = await decodeDocument(EDITED_V2_LINK);
 
     assert(expected.ok);
-    assertEquals(result, expected);
+    assertEquals(result, { ok: true, doc: documentOf(expected.scenario) });
 });
 
 Deno.test("an encoded scenario is URL-safe and smaller than its JSON", async () => {
-    const text = await encodeScenario(scenario);
+    const text = await encodeDocument(doc);
 
     assert(/^[A-Za-z0-9_-]+$/.test(text));
     assert(text.length < JSON.stringify(scenario).length);
 });
 
 Deno.test("text that isn't base64 doesn't decode", async () => {
-    const result = await decodeScenario("not base64!");
+    const result = await decodeDocument("not base64!");
 
     assertEquals(result.ok, false);
 });
 
 Deno.test("a truncated payload doesn't decode", async () => {
-    const text = await encodeScenario(scenario);
+    const text = await encodeDocument(doc);
 
-    const result = await decodeScenario(text.slice(0, text.length / 2));
+    const result = await decodeDocument(text.slice(0, text.length / 2));
 
     assertEquals(result.ok, false);
 });
 
 Deno.test("base64 of something that isn't deflate doesn't decode", async () => {
-    const result = await decodeScenario(btoa("hello world, not deflate"));
+    const result = await decodeDocument(btoa("hello world, not deflate"));
 
     assertEquals(result.ok, false);
 });
@@ -112,14 +136,14 @@ Deno.test("a payload that inflates past the limit doesn't decode", async () => {
         .pipeThrough(new CompressionStream("deflate-raw"));
     const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
 
-    const result = await decodeScenario(toBase64Url(bytes));
+    const result = await decodeDocument(toBase64Url(bytes));
 
     assert(!result.ok);
     assertStringIncludes(result.errors[0] ?? "", "too large");
 });
 
 Deno.test("a payload longer than the limit isn't decoded", async () => {
-    const result = await decodeScenario("A".repeat(MAX_PAYLOAD_CHARS + 1));
+    const result = await decodeDocument("A".repeat(MAX_PAYLOAD_CHARS + 1));
 
     assert(!result.ok);
     assertStringIncludes(result.errors[0] ?? "", "too long");
@@ -141,28 +165,30 @@ Deno.test("a payload of text that isn't JSON doesn't decode", async () => {
         .replaceAll("/", "_")
         .replaceAll("=", "");
 
-    const result = await decodeScenario(text);
+    const result = await decodeDocument(text);
 
     assertEquals(result.ok, false);
 });
 
 Deno.test("a payload of JSON that isn't a scenario lists the errors", async () => {
-    const text = await encodeScenario({ version: 2, bodies: [] } as never);
+    const text = await encodeDocument(
+        documentOf({ version: 2, bodies: [] } as never),
+    );
 
-    const result = await decodeScenario(text);
+    const result = await decodeDocument(text);
 
     assert(!result.ok);
     assert(result.errors.length > 0);
 });
 
 Deno.test("scenario JSON that fails to parse or validate is an error", () => {
-    assertEquals(parseScenarioJson("{").ok, false);
-    assertEquals(parseScenarioJson("{}").ok, false);
-    assertEquals(parseScenarioJson(JSON.stringify(scenario)).ok, true);
+    assertEquals(parseDocumentJson("{").ok, false);
+    assertEquals(parseDocumentJson("{}").ok, false);
+    assertEquals(parseDocumentJson(JSON.stringify(scenario)).ok, true);
 });
 
 Deno.test("scenario JSON with a bad body colour is an error", () => {
-    const result = parseScenarioJson(JSON.stringify(badColour));
+    const result = parseDocumentJson(JSON.stringify(badColour));
 
     assert(!result.ok);
     assertStringIncludes(
@@ -175,10 +201,20 @@ Deno.test("a saved scenario is read back, and nothing saved is null", () => {
     const storage = memory();
     assertEquals(readSaved(storage), null);
 
-    writeSaved(storage, scenario);
+    writeSaved(storage, doc);
 
     assert(storage.data.has(STORAGE_KEY));
-    assertEquals(readSaved(storage), validateScenario(scenario));
+    assertEquals(readSaved(storage), { ok: true, doc });
+});
+
+Deno.test("a saved copy keeps a burn, and leaves the key out when there is none", () => {
+    const storage = memory();
+
+    writeSaved(storage, burned);
+    assertEquals(readSaved(storage), { ok: true, doc: burned });
+
+    writeSaved(storage, doc);
+    assertEquals(storage.data.get(STORAGE_KEY)?.includes("timeline"), false);
 });
 
 Deno.test("a saved copy that is damaged reads as an error", () => {
@@ -191,7 +227,7 @@ Deno.test("a saved copy that is damaged reads as an error", () => {
 Deno.test("a storage that throws reads as nothing saved and ignores writes", () => {
     assertEquals(readSaved(throwing), null);
 
-    writeSaved(throwing, scenario);
+    writeSaved(throwing, doc);
 });
 
 Deno.test("only a hash with a payload is a share link", () => {
@@ -203,24 +239,26 @@ Deno.test("only a hash with a payload is a share link", () => {
 
 Deno.test("a valid share link opens first, with no notice", async () => {
     const storage = memory();
-    writeSaved(storage, solarSystem);
-    const link = await encodeScenario({ ...scenario, name: "Linked" });
+    writeSaved(storage, documentOf(solarSystem));
+    const link = await encodeDocument(
+        documentOf({ ...scenario, name: "Linked" }),
+    );
 
     const opened = await openScenario(`#s=${link}`, storage);
 
     assertEquals(opened.source, "link");
-    assertEquals(opened.scenario.name, "Linked");
+    assertEquals(opened.doc.scenario.name, "Linked");
     assertEquals(opened.notice, null);
 });
 
 Deno.test("a bad share link falls back to the saved copy and says so", async () => {
     const storage = memory();
-    writeSaved(storage, { ...scenario, name: "Mine" });
+    writeSaved(storage, documentOf({ ...scenario, name: "Mine" }));
 
     const opened = await openScenario("#s=garbage!", storage);
 
     assertEquals(opened.source, "saved");
-    assertEquals(opened.scenario.name, "Mine");
+    assertEquals(opened.doc.scenario.name, "Mine");
     assertEquals(
         opened.notice,
         "The shared link isn't a valid scenario, so your saved one opened.",
@@ -231,7 +269,7 @@ Deno.test("with no link and nothing saved, the solar system opens quietly", asyn
     const opened = await openScenario("", memory());
 
     assertEquals(opened.source, "default");
-    assertEquals(opened.scenario, solarSystem);
+    assertEquals(opened.doc, documentOf(solarSystem));
     assertEquals(opened.notice, null);
 });
 
@@ -253,7 +291,13 @@ Deno.test("a scenario starts at its own time, else now", () => {
 
 const entry = (name: string, savedAt = 1) => ({
     savedAt,
-    scenario: { ...scenario, name },
+    doc: documentOf({ ...scenario, name }),
+});
+
+// The entry as `writeList` puts it on disk.
+const onDisk = ({ savedAt, doc }: { savedAt: number; doc: Document }) => ({
+    savedAt,
+    scenario: documentFile(doc),
 });
 
 Deno.test("a saved list reads back as it was written", () => {
@@ -289,7 +333,7 @@ Deno.test("entries that aren't valid scenarios are dropped from the list", () =>
     storage.setItem(
         SAVED_LIST_KEY,
         JSON.stringify([
-            entry("Good"),
+            onDisk(entry("Good")),
             { savedAt: 2, scenario: { version: 2, bodies: [] } },
             { savedAt: "later", scenario },
             null,
@@ -300,7 +344,7 @@ Deno.test("entries that aren't valid scenarios are dropped from the list", () =>
     const list = readList(storage);
 
     assertEquals(
-        list.map((saved) => saved.scenario.name),
+        list.map((saved) => saved.doc.scenario.name),
         ["Good"],
     );
 });
@@ -309,13 +353,16 @@ Deno.test("a saved entry with a bad body colour is dropped from the list", () =>
     const storage = memory();
     storage.setItem(
         SAVED_LIST_KEY,
-        JSON.stringify([entry("Good"), { savedAt: 2, scenario: badColour }]),
+        JSON.stringify([
+            onDisk(entry("Good")),
+            { savedAt: 2, scenario: badColour },
+        ]),
     );
 
     const list = readList(storage);
 
     assertEquals(
-        list.map((saved) => saved.scenario.name),
+        list.map((saved) => saved.doc.scenario.name),
         ["Good"],
     );
 });
@@ -327,7 +374,7 @@ Deno.test("writing a list reports a storage that refuses it", () => {
 Deno.test("the saved list and the autosave use different keys", () => {
     const storage = memory();
 
-    writeSaved(storage, scenario);
+    writeSaved(storage, doc);
     writeList(storage, [entry("One")]);
 
     assert(storage.data.has(STORAGE_KEY));
@@ -351,4 +398,21 @@ Deno.test("a name that's taken is a problem, ignoring case and padding", () => {
 
 Deno.test("a new name is fine", () => {
     assertEquals(nameProblem([entry("One")], "Two"), null);
+});
+
+Deno.test("a saved list keeps a burn and drops an entry whose timeline is invalid", () => {
+    const storage = memory();
+    const good = { savedAt: 1, doc: burned };
+    const bad = { ...burn, bodyId: "nowhere" };
+    storage.setItem(
+        SAVED_LIST_KEY,
+        JSON.stringify([
+            onDisk(good),
+            { savedAt: 2, scenario: { ...scenario, timeline: [bad] } },
+        ]),
+    );
+
+    assertEquals(readList(storage), [good]);
+    assertEquals(writeList(storage, [good]), true);
+    assertEquals(readList(storage), [good]);
 });

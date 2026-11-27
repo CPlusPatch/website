@@ -7,14 +7,12 @@ import {
     type Command,
     compile,
     type Document,
-    documentOf,
     type Scenario,
     type Snapshot,
     type System,
     sortByDepth,
     statesAt,
     subtreeIds,
-    type TimelineEvent,
 } from "@cpluspatch/sim";
 import { previewBurn } from "../burning.ts";
 
@@ -43,16 +41,18 @@ export class Scene {
         null;
 
     constructor(
-        scenario: Scenario,
+        doc: Document,
         clock: Clock,
         hold: (initial: Held) => Held = (initial) => initial,
     ) {
-        const root = scenario.bodies.find((body) => body.orbit === undefined);
+        const root = doc.scenario.bodies.find(
+            (body) => body.orbit === undefined,
+        );
         if (!root) throw new Error("The scenario has no root body.");
 
         this.clock = clock;
         this.#held = hold({
-            doc: documentOf(scenario),
+            doc,
             focused: root.id,
             selected: null,
             loads: 0,
@@ -152,12 +152,14 @@ export class Scene {
         this.#emit({ type: "clock" });
     }
 
-    /** Replaces the whole scenario and its `timeline` and sets the clock to `t`. */
-    load(scenario: Scenario, t: number, timeline: TimelineEvent[] = []): void {
-        const root = scenario.bodies.find((body) => body.orbit === undefined);
+    /** Replaces the whole document and sets the clock to `t`. */
+    load(doc: Document, t: number): void {
+        const root = doc.scenario.bodies.find(
+            (body) => body.orbit === undefined,
+        );
         if (!root) throw new Error("The scenario has no root body.");
 
-        this.#dispatch({ type: "load", doc: { scenario, timeline } });
+        this.#dispatch({ type: "load", doc });
         this.#held.loads += 1;
         this.#held.selected = null;
         this.#held.focused = root.id;

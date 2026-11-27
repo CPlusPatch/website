@@ -74,6 +74,8 @@ A document's `timeline` holds the events that change an orbit at a time `t`. A `
 
 `apply` rejects a command when a burn on the resulting timeline would escape the parent or leave no orbit. `load` checks the timeline with `validateTimeline`. Removing a body removes the events of it and its children.
 
+Saves, share links and the autosave store the events as an optional top-level `timeline` array next to the scenario's fields. `validateDocument` checks it, and the key is left out when there are no events. A file without it loads with no events.
+
 Code that only needs a body's usual orbit reads `body.orbit.elements`: the orbit class, framing and the systems list.
 
 ## Shell

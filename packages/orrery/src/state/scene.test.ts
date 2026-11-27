@@ -13,7 +13,8 @@ import {
 import { newBody } from "../adding.ts";
 import { type Held, Scene } from "./scene.ts";
 
-const make = (): Scene => new Scene(solarSystem, new Clock(0, 1, false));
+const make = (): Scene =>
+    new Scene(documentOf(solarSystem), new Clock(0, 1, false));
 
 Deno.test("a scene writes through the object its hold function returns", () => {
     const held: Held = {
@@ -22,8 +23,10 @@ Deno.test("a scene writes through the object its hold function returns", () => {
         selected: null,
         loads: 0,
     };
-    const scene = new Scene(solarSystem, new Clock(0, 1, false), (initial) =>
-        Object.assign(held, initial),
+    const scene = new Scene(
+        documentOf(solarSystem),
+        new Clock(0, 1, false),
+        (initial) => Object.assign(held, initial),
     );
 
     scene.select("earth");
@@ -33,7 +36,7 @@ Deno.test("a scene writes through the object its hold function returns", () => {
     assertEquals(held.focused, "moon");
     assertEquals(held.loads, 0);
 
-    scene.load(solarSystem, 0);
+    scene.load(documentOf(solarSystem), 0);
 
     assertEquals(held.loads, 1);
     assertEquals(scene.loads, 1);
@@ -343,7 +346,7 @@ Deno.test("loading a scenario resets the selection and focus, and sets the clock
         bodies: solarSystem.bodies.filter((body) => !gone.has(body.id)),
     };
 
-    scene.load(next, 500);
+    scene.load(documentOf(next), 500);
 
     assertEquals(events, [{ type: "scenario" }]);
     assertEquals(scene.scenario, next);
@@ -579,7 +582,7 @@ Deno.test("removing the focus doesn't move it to the parent after a listener res
     scene.on((event) => {
         if (event.type === "bodies" && !restored) {
             restored = true;
-            scene.load(solarSystem, 0);
+            scene.load(documentOf(solarSystem), 0);
             scene.focus("earth");
         }
         if (event.type === "focus") focused.push(event.id);
@@ -622,7 +625,10 @@ const makePrecessing = (): Scene => {
             : body,
     );
 
-    return new Scene({ ...solarSystem, bodies }, new Clock(1e7, 1, false));
+    return new Scene(
+        documentOf({ ...solarSystem, bodies }),
+        new Clock(1e7, 1, false),
+    );
 };
 
 Deno.test("setElements keeps a precessing body precessing", () => {

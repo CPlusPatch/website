@@ -5,7 +5,7 @@
 
 import { cue } from "./audio/cues.ts";
 import {
-    decodeScenario,
+    decodeDocument,
     hashPayload,
     type SavedStorage,
     startTime,
@@ -55,7 +55,10 @@ export const createSession = (options: {
     const saveNow = () => {
         clearTimeout(saveTimer);
         saveTimer = undefined;
-        writeSaved(storage, { ...scene.scenario, time: scene.clock.t });
+        writeSaved(storage, {
+            ...scene.doc,
+            scenario: { ...scene.scenario, time: scene.clock.t },
+        });
     };
     const saveSoon = () => {
         clearTimeout(saveTimer);
@@ -90,7 +93,7 @@ export const createSession = (options: {
             const focused = scene.focused;
             restoring = true;
             try {
-                scene.load(lastGood.scenario, scene.clock.t, lastGood.timeline);
+                scene.load(lastGood, scene.clock.t);
             } finally {
                 restoring = false;
             }
@@ -133,7 +136,7 @@ export const createSession = (options: {
         page.stripHash();
 
         const id = ++loadId;
-        const result = await decodeScenario(payload);
+        const result = await decodeDocument(payload);
         if (destroyed || id !== loadId) return;
 
         if (!result.ok) {
@@ -145,7 +148,7 @@ export const createSession = (options: {
         }
 
         cue("load");
-        scene.load(result.scenario, startTime(result.scenario));
+        scene.load(result.doc, startTime(result.doc.scenario));
         saveNow();
     };
     const onHashChange = () => {

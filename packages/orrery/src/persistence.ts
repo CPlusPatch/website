@@ -2,9 +2,12 @@ import { PRESETS, solarSystem } from "@cpluspatch/catalog";
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import { validateAppearance } from "@cpluspatch/render";
 import {
+    type Document,
+    type DocumentResult,
+    documentFile,
+    documentOf,
     type Scenario,
-    type ScenarioResult,
-    validateScenario,
+    validateDocument,
 } from "@cpluspatch/sim";
 
 /** The `localStorage` key of the saved scenario. */
@@ -19,7 +22,9 @@ export const HASH_PREFIX = "#s=";
 /** The `Storage` methods the saved copy needs. */
 export type SavedStorage = Pick<Storage, "getItem" | "setItem">;
 
-const fail = (message: string): ScenarioResult => ({
+const OPTIONS = { appearance: validateAppearance, presets: PRESETS };
+
+const fail = (message: string): DocumentResult => ({
     ok: false,
     errors: [message],
 });
@@ -57,9 +62,9 @@ const pipe = async (
         ).arrayBuffer(),
     );
 
-/** The scenario as compressed JSON in base64url, for a share link. */
-export const encodeScenario = async (s: Scenario): Promise<string> => {
-    const json = new TextEncoder().encode(JSON.stringify(s));
+/** The document as compressed JSON in base64url, for a share link. */
+export const encodeDocument = async (doc: Document): Promise<string> => {
+    const json = new TextEncoder().encode(JSON.stringify(documentFile(doc)));
 
     return toBase64Url(await pipe(json, new CompressionStream("deflate-raw")));
 };
@@ -97,8 +102,8 @@ const inflate = async (
     return out;
 };
 
-/** The scenario in `text` (from `encodeScenario`), or why it isn't one. */
-export const decodeScenario = async (text: string): Promise<ScenarioResult> => {
+/** The document in `text` (from `encodeDocument`), or why it isn't one. */
+export const decodeDocument = async (text: string): Promise<DocumentResult> => {
     if (text.length > MAX_PAYLOAD_CHARS) return fail("The link is too long.");
 
     let json: string;
@@ -112,11 +117,11 @@ export const decodeScenario = async (text: string): Promise<ScenarioResult> => {
         return fail("The data is damaged or cut short.");
     }
 
-    return parseScenarioJson(json);
+    return parseDocumentJson(json);
 };
 
-/** The scenario in JSON `text`, or why it isn't one. */
-export const parseScenarioJson = (text: string): ScenarioResult => {
+/** The document in JSON `text`, or why it isn't one. */
+export const parseDocumentJson = (text: string): DocumentResult => {
     let input: unknown;
 
     try {
@@ -125,14 +130,11 @@ export const parseScenarioJson = (text: string): ScenarioResult => {
         return fail("The text isn't valid JSON.");
     }
 
-    return validateScenario(input, {
-        appearance: validateAppearance,
-        presets: PRESETS,
-    });
+    return validateDocument(input, OPTIONS);
 };
 
-/** The saved scenario, or `null` when nothing (readable) is saved. */
-export const readSaved = (storage: SavedStorage): ScenarioResult | null => {
+/** The saved document, or `null` when nothing (readable) is saved. */
+export const readSaved = (storage: SavedStorage): DocumentResult | null => {
     let text: string | null;
 
     try {
@@ -142,13 +144,13 @@ export const readSaved = (storage: SavedStorage): ScenarioResult | null => {
         return null;
     }
 
-    return text === null ? null : parseScenarioJson(text);
+    return text === null ? null : parseDocumentJson(text);
 };
 
-/** Saves the scenario. Does nothing when the storage refuses it. */
-export const writeSaved = (storage: SavedStorage, s: Scenario): void => {
+/** Saves the document. Does nothing when the storage refuses it. */
+export const writeSaved = (storage: SavedStorage, doc: Document): void => {
     try {
-        storage.setItem(STORAGE_KEY, JSON.stringify(s));
+        storage.setItem(STORAGE_KEY, JSON.stringify(documentFile(doc)));
     } catch {
         // A full or blocked storage only costs the autosave.
     }
@@ -158,7 +160,7 @@ export const writeSaved = (storage: SavedStorage, s: Scenario): void => {
 export type SavedScenario = {
     /** When it was saved, in Unix ms. */
     savedAt: number;
-    scenario: Scenario;
+    doc: Document;
 };
 
 /** The named scenarios, in the order they were saved. Bad entries are dropped. */
@@ -183,11 +185,8 @@ export const readList = (storage: SavedStorage): SavedScenario[] => {
         const { savedAt, scenario } = entry as Record<string, unknown>;
         if (typeof savedAt !== "number" || !Number.isFinite(savedAt)) continue;
 
-        const result = validateScenario(scenario, {
-            appearance: validateAppearance,
-            presets: PRESETS,
-        });
-        if (result.ok) list.push({ savedAt, scenario: result.scenario });
+        const result = validateDocument(scenario, OPTIONS);
+        if (result.ok) list.push({ savedAt, doc: result.doc });
     }
 
     return list;
@@ -202,7 +201,12 @@ export const writeList = (
     list: SavedScenario[],
 ): boolean => {
     try {
-        storage.setItem(SAVED_LIST_KEY, JSON.stringify(list));
+        const entries = list.map(({ savedAt, doc }) => ({
+            savedAt,
+            scenario: documentFile(doc),
+        }));
+
+        storage.setItem(SAVED_LIST_KEY, JSON.stringify(entries));
 
         return true;
     } catch {
@@ -219,8 +223,8 @@ export const nameProblem = (
     if (trimmed === "") return "Enter a name.";
 
     const taken = list.some(
-        ({ scenario }) =>
-            scenario.name.trim().toLowerCase() === trimmed.toLowerCase(),
+        ({ doc }) =>
+            doc.scenario.name.trim().toLowerCase() === trimmed.toLowerCase(),
     );
 
     return taken ? `A scenario called ${trimmed} already exists.` : null;
@@ -237,7 +241,7 @@ export type Source = "link" | "saved" | "default";
 
 /** The scenario to open, where it came from, and what to tell the user. */
 export type Opened = {
-    scenario: Scenario;
+    doc: Document;
     source: Source;
     /** Set when a source that was there turned out to be invalid. */
     notice: string | null;
@@ -261,9 +265,9 @@ export const openScenario = async (
 
     const payload = hashPayload(hash);
     if (payload !== null) {
-        const result = await decodeScenario(payload);
+        const result = await decodeDocument(payload);
         if (result.ok) {
-            return { scenario: result.scenario, source: "link", notice: null };
+            return { doc: result.doc, source: "link", notice: null };
         }
 
         failed.push("the shared link");
@@ -272,7 +276,7 @@ export const openScenario = async (
     const saved = readSaved(storage);
     if (saved?.ok) {
         return {
-            scenario: saved.scenario,
+            doc: saved.doc,
             source: "saved",
             notice:
                 failed.length > 0 ? failure(failed, "your saved one") : null,
@@ -281,7 +285,7 @@ export const openScenario = async (
     if (saved) failed.push("your saved copy");
 
     return {
-        scenario: solarSystem,
+        doc: documentOf(solarSystem),
         source: "default",
         notice: failed.length > 0 ? failure(failed, "the solar system") : null,
     };

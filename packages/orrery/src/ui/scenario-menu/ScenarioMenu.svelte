@@ -1,18 +1,18 @@
 <script lang="ts">
 import { builtInScenarios } from "@cpluspatch/catalog";
-import type { Scenario } from "@cpluspatch/sim";
+import { type Document, documentFile, documentOf } from "@cpluspatch/sim";
 import { iconSvg } from "@cpluspatch/ui";
 import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
 import type { Attachment } from "svelte/attachments";
 import { on } from "svelte/events";
 import { cue } from "../../audio/cues.ts";
 import {
-    encodeScenario,
+    encodeDocument,
     HASH_PREFIX,
     MAX_INFLATED_BYTES,
     MAX_PAYLOAD_CHARS,
     nameProblem,
-    parseScenarioJson,
+    parseDocumentJson,
     readList,
     SAVED_CHANGED,
     type SavedScenario,
@@ -84,10 +84,10 @@ const closeClasses = buttonClasses({
     size: "icon-sm",
 }).join(" ");
 
-/** The scenario as it is now, with the clock's time. */
-const current = (): Scenario => ({
-    ...documents.doc.scenario,
-    time: view.now(),
+/** The document as it is now, with the clock's time on its scenario. */
+const current = (): Document => ({
+    ...documents.doc,
+    scenario: { ...documents.doc.scenario, time: view.now() },
 });
 
 const close = () => {
@@ -98,7 +98,7 @@ const buildLink = () => {
     const id = ++linkId;
     link = "";
 
-    encodeScenario(current()).then(
+    encodeDocument(current()).then(
         (payload) => {
             if (id !== linkId) return;
 
@@ -129,9 +129,9 @@ const open = () => {
     dialog.showModal();
 };
 
-const loadScenario = (scenario: Scenario) => {
+const loadDocument = (doc: Document) => {
     cue("load");
-    documents.load(scenario, startTime(scenario));
+    documents.load(doc, startTime(doc.scenario));
     close();
 };
 
@@ -145,15 +145,12 @@ const save = () => {
         return;
     }
 
+    const now = current();
     const next = [
         ...saved,
         {
             savedAt: Date.now(),
-            scenario: {
-                ...documents.doc.scenario,
-                name: trimmed,
-                time: view.now(),
-            },
+            doc: { ...now, scenario: { ...now.scenario, name: trimmed } },
         },
     ];
     if (!writeList(storage, next)) {
@@ -181,13 +178,13 @@ const remove = (index: number) => {
 
     saved = next;
     window.dispatchEvent(new Event(SAVED_CHANGED));
-    status = `Deleted ${gone.scenario.name}.`;
+    status = `Deleted ${gone.doc.scenario.name}.`;
     nameInput?.focus();
 };
 
 /** Press-twice: the first press arms the button, the second deletes. */
 const pressDelete = (index: number) => {
-    const target = saved[index]?.scenario.name;
+    const target = saved[index]?.doc.scenario.name;
     if (target === undefined) return;
 
     if (armed === index) {
@@ -200,10 +197,10 @@ const pressDelete = (index: number) => {
 };
 
 const exportJson = () => {
-    const scenario = current();
-    const fileLabel = fileName(scenario.name);
+    const doc = current();
+    const fileLabel = fileName(doc.scenario.name);
 
-    download(fileLabel, JSON.stringify(scenario, null, 2));
+    download(fileLabel, JSON.stringify(documentFile(doc), null, 2));
     status = `Exported ${fileLabel}.`;
 };
 
@@ -227,13 +224,13 @@ const importFile = async () => {
         file.value = "";
     }
 
-    const result = parseScenarioJson(text);
+    const result = parseDocumentJson(text);
     if (!result.ok) {
         status = { invalid: result.errors };
         return;
     }
 
-    loadScenario(result.scenario);
+    loadDocument(result.doc);
 };
 
 const copyLink = async () => {
@@ -349,7 +346,7 @@ $effect(() => {
                             data-action="built-in"
                             data-index={index}
                             aria-label="Load {scenario.name}"
-                            onclick={() => loadScenario(scenario)}
+                            onclick={() => loadDocument(documentOf(scenario))}
                         >
                             Load
                         </button>
@@ -366,7 +363,7 @@ $effect(() => {
             {:else}
                 <ul class="orrery__scenarios-list">
                     {#each rows as { entry, index } (entry)}
-                        {@const entryName = entry.scenario.name}
+                        {@const entryName = entry.doc.scenario.name}
                         <li class="orrery__scenarios-row">
                             <div>
                                 <strong>{entryName}</strong
@@ -378,7 +375,7 @@ $effect(() => {
                                 data-action="load"
                                 data-index={index}
                                 aria-label="Load {entryName}"
-                                onclick={() => loadScenario(entry.scenario)}
+                                onclick={() => loadDocument(entry.doc)}
                             >
                                 Load
                             </button>
