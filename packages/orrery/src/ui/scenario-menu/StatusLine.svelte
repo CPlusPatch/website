@@ -26,3 +26,21 @@ const { status }: Props = $props();
         </ul>
     {/if}
 </div>
+
+<style>
+/* Not display: none, so the live region still announces. */
+.orrery__scenarios-status {
+    p {
+        margin: 0;
+    }
+
+    ul {
+        margin: var(--space-xs) 0 0;
+        padding-inline-start: var(--space-md);
+    }
+
+    &:empty {
+        margin-block-start: -0.625rem;
+    }
+}
+</style>

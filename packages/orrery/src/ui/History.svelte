@@ -39,3 +39,37 @@ const documentStore = getDocument();
         <span class="orrery__tool-icon">{@html iconSvg("redo-2")}</span>
     </button>
 </div>
+
+<style>
+.orrery__history {
+    display: flex;
+    align-self: stretch;
+}
+
+.orrery__history-button {
+    display: grid;
+    place-items: center;
+    inline-size: 2rem;
+    min-block-size: var(--orrery-control);
+    padding: 0;
+    color: var(--orrery-text);
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--orrery-panel-raised);
+    }
+
+    /* Clear of the shared frame, and above the other button. */
+    &:focus-visible {
+        position: relative;
+        z-index: 1;
+        outline-offset: 3px;
+    }
+
+    &[aria-disabled="true"] {
+        background-color: transparent;
+        color: var(--orrery-dim);
+        cursor: default;
+    }
+}
+</style>

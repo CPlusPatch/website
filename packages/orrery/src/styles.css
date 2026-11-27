@@ -2,11 +2,6 @@
 @import "./styles/scene.css";
 @import "./styles/loading.css";
 @import "./styles/panels.css";
-@import "./styles/hud.css";
-@import "./styles/crumbs.css";
-@import "./styles/clock.css";
-@import "./styles/satellites.css";
+@import "./styles/tools.css";
 @import "./styles/panel-parts.css";
-@import "./styles/keys.css";
 @import "./styles/forms.css";
-@import "./styles/scenarios.css";

@@ -54,6 +54,7 @@ onMount(() => sound.onChange(show));
 <style>
 .orrery__sound {
     position: relative;
+    grid-area: 1 / 3;
 }
 
 /* Menu renders the button and the popup. */
@@ -118,6 +119,10 @@ onMount(() => sound.onChange(show));
 }
 
 @media (max-width: 720px) {
+    .orrery__sound {
+        grid-area: 1 / 4;
+    }
+
     :global(.orrery__sound-button) {
         inline-size: var(--control-height-md);
         block-size: var(--control-height-md);
@@ -127,6 +132,12 @@ onMount(() => sound.onChange(show));
     :global(.orrery__sound-menu) {
         inset-inline: auto 0;
         inset-block: calc(100% + 8px) auto;
+    }
+}
+
+@media (forced-colors: active) {
+    .orrery__sound {
+        border-color: ButtonText;
     }
 }
 </style>

@@ -254,3 +254,72 @@ $effect(() => {
         <StatusLine {status} />
     </div>
 </dialog>
+
+<style>
+.orrery__scenarios {
+    /* One width for Save, Copy, Load and Delete, so their columns line up. */
+    --scenarios-button-size: 4.5rem;
+    --scenarios-fade: 0.2s;
+    inline-size: min(460px, 100% - 32px);
+    max-block-size: min(640px, 100% - 32px);
+    margin: auto;
+    padding: 0;
+    color: var(--orrery-text);
+    opacity: 0;
+    scale: 0.97;
+    /* Display and overlay are discrete, so the dialog stays in the top layer while it fades out. */
+    transition:
+        opacity var(--scenarios-fade) ease-out,
+        scale var(--scenarios-fade) ease-out,
+        display var(--scenarios-fade) allow-discrete,
+        overlay var(--scenarios-fade) allow-discrete;
+
+    &[open] {
+        display: flex;
+        flex-direction: column;
+        opacity: 1;
+        scale: 1;
+
+        @starting-style {
+            opacity: 0;
+            scale: 0.97;
+        }
+    }
+
+    &::backdrop {
+        background-color: transparent;
+        transition:
+            background-color var(--scenarios-fade) ease-out,
+            display var(--scenarios-fade) allow-discrete,
+            overlay var(--scenarios-fade) allow-discrete;
+    }
+
+    &[open]::backdrop {
+        background-color: var(--orrery-scrim);
+
+        @starting-style {
+            background-color: transparent;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        &,
+        &::backdrop {
+            transition: none;
+        }
+    }
+
+    .orrery__inspector-head {
+        flex: none;
+    }
+}
+
+.orrery__scenarios-body {
+    display: grid;
+    gap: 0.625rem;
+    min-block-size: 0;
+    padding: 0 var(--orrery-pad) var(--orrery-pad);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+</style>

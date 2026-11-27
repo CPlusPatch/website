@@ -74,3 +74,11 @@ const importFile = async () => {
     hidden
     onchange={() => void importFile()}
 >
+
+<style>
+.orrery__scenarios-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+</style>

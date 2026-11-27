@@ -103,3 +103,96 @@ $effect(() => {
         {/each}
     </ol>
 </nav>
+
+<style>
+.orrery__crumbs {
+    min-inline-size: 0;
+}
+
+.orrery__crumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    /* A mask, not a rotated border, so the glyph sits in the middle of its box. */
+    li + li::before {
+        content: "";
+        inline-size: 6px;
+        block-size: 10px;
+        margin-inline: 4px;
+        background-color: var(--orrery-dim);
+        mask:
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 10'%3E%3Cpath d='m1 1 4 4-4 4' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E")
+            center / contain no-repeat;
+
+        @media (forced-colors: active) {
+            forced-color-adjust: none;
+            background-color: CanvasText;
+        }
+    }
+}
+
+.orrery__crumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    /* As tall as the tools, which add their border outside the control height. */
+    block-size: calc(var(--orrery-control) + 2px);
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background: none;
+    color: var(--orrery-text);
+    font: 500 var(--orrery-size-sm) / 1 var(--orrery-font-ui);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+
+    &:hover,
+    &[aria-current] {
+        border-color: var(--orrery-frame);
+    }
+}
+
+.orrery__crumb-marker {
+    display: flex;
+    inline-size: 14px;
+    block-size: 14px;
+
+    :global(svg) {
+        inline-size: 100%;
+        block-size: 100%;
+    }
+}
+
+@media (max-width: 720px) {
+    /* Takes the room the tools leave, and shrinks before they wrap. */
+    .orrery__crumbs {
+        flex: 1 1 0;
+        /* The first crumb keeps its label, even at 320px. */
+        min-inline-size: min-content;
+    }
+
+    .orrery__crumb-list {
+        flex-wrap: nowrap;
+    }
+
+    /* Past the first crumb only the marker shows. */
+    .orrery__crumb-list li + li .orrery__crumb-label {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+}
+</style>

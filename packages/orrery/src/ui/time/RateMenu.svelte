@@ -143,15 +143,36 @@ onMount(() =>
 
 <style>
 .orrery__rate {
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 4px;
     /* The width stays the same whatever the label says. */
     min-inline-size: 7.75rem;
+    block-size: var(--orrery-clock-control);
     padding: 0 0.625rem;
+    border: 1px solid var(--orrery-control-frame);
+    border-radius: 0;
+    background-color: var(--orrery-panel-raised);
+    color: var(--orrery-text);
     font: 500 var(--orrery-size-sm) var(--orrery-font-data);
     white-space: nowrap;
+    cursor: pointer;
+
+    /* Over the neighbour whose border it overlaps. */
+    &:focus-visible {
+        position: relative;
+        z-index: 3;
+        outline: 2px solid var(--orrery-text);
+        outline-offset: 2px;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--orrery-panel-hover);
+        }
+    }
 
     &[aria-expanded="true"] {
         border-color: var(--orrery-muted);
@@ -237,6 +258,17 @@ onMount(() =>
 
     :global(.orrery__rate-item) {
         block-size: var(--control-height-md);
+    }
+}
+
+.orrery__rate-wrap {
+    position: relative;
+    margin-inline-start: -1px;
+}
+
+@media (forced-colors: active) {
+    .orrery__rate {
+        border-color: ButtonText;
     }
 }
 </style>

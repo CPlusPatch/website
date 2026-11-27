@@ -41,3 +41,98 @@ const stampIso = $derived(
 {#snippet part(
     name: PartName,
 )}<span class="orrery__date-digits" class:orrery__fast={stamp[name].fast} data-part={name}>{stamp[name].text}</span>{/snippet}
+
+<style>
+/* The one light block in the bar, over the playhead. */
+.orrery__date {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 2px;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    display: flex;
+    align-items: center;
+    block-size: 20px;
+    padding: 0 0.625rem;
+    border: 0;
+    border-radius: 0;
+    background-color: var(--orrery-text);
+    color: var(--orrery-tag-ink);
+    cursor: pointer;
+    /* A drag on the tag scrubs the strip. */
+    touch-action: none;
+
+    &:focus-visible {
+        outline: 2px solid var(--orrery-tag-ink);
+        outline-offset: -3px;
+    }
+
+    time {
+        font: 500 var(--orrery-size-md) / 1 var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+}
+
+.orrery__date-live {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    margin-inline: -0.625rem 0.5rem;
+    padding: 0 0.5rem;
+    background-color: var(--orrery-go);
+    color: var(--orrery-go-ink);
+    font: 600 var(--orrery-size-label) / 1 var(--orrery-font-ui);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.orrery__secs,
+.orrery__utc {
+    color: var(--orrery-tag-muted);
+    font-size: var(--orrery-size-label);
+}
+
+/* Digits changing faster than twice a second are faded, but legible, so the clock doesn't look off. */
+.orrery__fast {
+    color: var(--orrery-tag-fade);
+}
+
+@media (max-width: 720px) {
+    .orrery__secs {
+        display: none;
+    }
+
+    .orrery__date {
+        block-size: 18px;
+        padding: 0 0.5rem;
+
+        /* The tag is small, so the touch target reaches down the timeline. */
+        &::after {
+            content: "";
+            position: absolute;
+            inset: -2px -6px -26px;
+        }
+
+        time {
+            font-size: var(--orrery-size-label);
+        }
+    }
+
+    .orrery__date-live {
+        margin-inline-start: -0.5rem;
+    }
+
+    .orrery__utc {
+        font-size: var(--orrery-size-xs);
+    }
+}
+
+@media (forced-colors: active) {
+    .orrery__date {
+        border: 1px solid ButtonText;
+    }
+}
+</style>

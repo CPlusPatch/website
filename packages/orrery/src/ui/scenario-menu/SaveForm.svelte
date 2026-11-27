@@ -47,3 +47,31 @@ export const focus = (): void => input?.focus();
         {error ?? ""}
     </p>
 </form>
+
+<style>
+/* The stepper class is doubled in this file to outrank the shared rules in forms.css. */
+
+/* The text fields here are left-aligned, unlike the number steppers. */
+.orrery__stepper.orrery__stepper input {
+    text-align: start;
+    font: 500 var(--orrery-size-md) var(--orrery-font-ui);
+
+    &::placeholder {
+        color: var(--orrery-dim);
+    }
+}
+
+/* On a phone the buttons are taller than the field, so it grows with them. */
+.orrery__stepper.orrery__stepper {
+    block-size: auto;
+    min-block-size: var(--orrery-control-lg);
+}
+
+/* The same width, so the Save and Copy rows line up. */
+.orrery__stepper.orrery__stepper > :global(.button) {
+    block-size: auto;
+    min-inline-size: var(--scenarios-button-size);
+    border-width: 0 0 0 1px;
+    border-color: var(--orrery-frame);
+}
+</style>

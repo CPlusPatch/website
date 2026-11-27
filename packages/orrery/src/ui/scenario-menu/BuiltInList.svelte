@@ -36,3 +36,49 @@ const { onLoad }: Props = $props();
         {/each}
     </ul>
 </section>
+
+<style>
+.orrery__scenarios-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.625rem 0;
+    border-block-end: 1px solid var(--orrery-rule);
+
+    > div {
+        flex: 1;
+        min-inline-size: 0;
+    }
+
+    strong {
+        display: block;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    > :global(.button) {
+        flex: none;
+        min-inline-size: var(--scenarios-button-size);
+    }
+
+    small {
+        color: var(--orrery-muted);
+        font: 400 var(--orrery-size-sm) var(--orrery-font-ui);
+    }
+}
+
+/* Styled like the form labels, so the lists don't outrank the dialog title. */
+.orrery__scenarios-heading {
+    margin: 0;
+    color: var(--orrery-muted);
+    font-size: var(--orrery-size-sm);
+    font-weight: 600;
+}
+
+.orrery__scenarios-list {
+    margin: 0 0 var(--space-sm);
+    padding: 0;
+    border-block-start: 1px solid var(--orrery-rule);
+    list-style: none;
+}
+</style>

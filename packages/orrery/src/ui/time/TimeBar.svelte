@@ -273,3 +273,248 @@ onMount(() => {
         <DateEditor bind:this={editor} opener={date} />
     </div>
 </div>
+
+<style>
+.orrery__clock {
+    /* The height of the buttons and the menu items in the bar. */
+    --orrery-clock-control: var(--orrery-control-lg);
+
+    position: relative;
+    box-sizing: border-box;
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    block-size: 64px;
+    border-block-start: 1px solid var(--orrery-frame);
+    background-color: var(--orrery-panel);
+    backdrop-filter: blur(6px);
+}
+
+.orrery__transport {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-inline-size: 0;
+    padding: 0 var(--orrery-pad);
+}
+
+.orrery__run,
+.orrery__reverse {
+    box-sizing: border-box;
+    block-size: var(--orrery-clock-control);
+    border: 1px solid var(--orrery-control-frame);
+    border-radius: 0;
+    background-color: var(--orrery-panel-raised);
+    color: var(--orrery-text);
+    cursor: pointer;
+
+    /* Over the neighbour whose border it overlaps. */
+    &:focus-visible {
+        position: relative;
+        z-index: 3;
+        outline: 2px solid var(--orrery-text);
+        outline-offset: 2px;
+    }
+
+    @media (hover: hover) {
+        &:hover:not(.orrery__run--held, [aria-pressed="true"]) {
+            background-color: var(--orrery-panel-hover);
+        }
+    }
+}
+
+.orrery__run,
+.orrery__reverse {
+    display: grid;
+    place-items: center;
+    inline-size: var(--orrery-clock-control);
+    padding: 0;
+}
+
+.orrery__run {
+    color: var(--orrery-go);
+
+    /* The stroked icons read as outlines at this size. */
+    :global(svg) {
+        inline-size: 14px;
+        block-size: 14px;
+    }
+
+    :global(svg *) {
+        fill: currentColor;
+    }
+
+    /* The orange frame and glyph mark the held state. */
+    &.orrery__run--held {
+        border-color: var(--orrery-hold);
+        background-color: var(--orrery-panel-solid);
+        color: var(--orrery-hold);
+    }
+}
+
+.orrery__reverse {
+    :global(svg) {
+        inline-size: 16px;
+        block-size: 16px;
+    }
+
+    /* A fill as well as the colour, so the state doesn't rest on hue. */
+    &[aria-pressed="true"] {
+        border-color: var(--orrery-hold);
+        background-color: var(--orrery-hold);
+        color: var(--orrery-ground);
+    }
+}
+
+/* Reverse and the rate button, joined. */
+.orrery__ratebox {
+    display: flex;
+}
+
+.orrery__stage {
+    position: relative;
+    min-inline-size: 0;
+    border-inline-start: 1px solid var(--orrery-frame);
+    background-color: var(--orrery-ground);
+}
+
+/* A fixed slot, so the bar doesn't shift when Go live hides. */
+.orrery__live-slot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    inline-size: 11rem;
+    min-inline-size: 0;
+}
+
+/* The longest text, "Go live · 26y 327d behind", is about 147px wide. */
+@media (width < 1000px) {
+    .orrery__live-slot {
+        inline-size: 9.75rem;
+    }
+}
+
+.orrery__go-live {
+    min-inline-size: 0;
+    block-size: var(--orrery-clock-control);
+    padding: 0 4px;
+    border: 0;
+    background: none;
+    color: var(--orrery-go);
+    font: 600 var(--orrery-size-sm) / 1 var(--orrery-font-ui);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    cursor: pointer;
+
+    &[hidden] {
+        display: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--orrery-text);
+        outline-offset: -2px;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+    }
+}
+
+/* The Now flag: the button over the Now line, placed in px by the time bar. */
+.orrery__go-live:global(.orrery__go-live--flag) {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 2px;
+    block-size: 20px;
+    padding: 0 0.375rem;
+    background-color: var(--orrery-ground);
+    font: 600 var(--orrery-size-label) / 1 var(--orrery-font-ui);
+    overflow: visible;
+    text-overflow: clip;
+
+    /* Clear of the bar's top border. */
+    &:focus-visible {
+        outline-offset: 0;
+    }
+}
+
+.orrery__live-short {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    /* The timeline on top, then a row of controls. */
+    .orrery__clock {
+        --orrery-clock-control: var(--control-height-md);
+
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) var(--control-height-md);
+        block-size: calc(108px + env(safe-area-inset-bottom, 0px));
+        padding-block-end: env(safe-area-inset-bottom, 0px);
+    }
+
+    .orrery__stage {
+        grid-row: 1;
+        border-inline-start: 0;
+        border-block-end: 1px solid var(--orrery-rule);
+    }
+
+    .orrery__transport {
+        grid-row: 2;
+        padding: 0 var(--orrery-inset);
+    }
+
+    .orrery__live-slot {
+        flex: 1;
+        inline-size: auto;
+    }
+
+    .orrery__live-full {
+        display: none;
+    }
+
+    .orrery__live-short {
+        display: inline;
+    }
+
+    .orrery__go-live:global(.orrery__go-live--flag) {
+        block-size: 18px;
+        padding: 0 0.25rem;
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: -3px -4px -25px;
+        }
+    }
+}
+
+@media (forced-colors: active) {
+    .orrery__clock {
+        border-block-start-color: CanvasText;
+    }
+
+    .orrery__stage {
+        border-color: CanvasText;
+    }
+
+    .orrery__run,
+    .orrery__reverse {
+        border-color: ButtonText;
+    }
+
+    .orrery__reverse[aria-pressed="true"] {
+        border-color: Highlight;
+        background-color: Highlight;
+        color: HighlightText;
+    }
+
+    .orrery__go-live:global(.orrery__go-live--flag) {
+        border: 1px solid ButtonText;
+    }
+}
+</style>
