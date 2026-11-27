@@ -38,3 +38,7 @@ export const orientationOf = (frame: Frame, id: string): Orientation | null => {
         z: vec(frame.snapshot.orientation, at + 6),
     };
 };
+
+/** Whether body `id` and its ancestors exist at the frame's time. False for an unknown id. */
+export const presentIn = (frame: Frame, id: string): boolean =>
+    frame.system.index.has(id) && frame.system.presentAt(id, frame.snapshot.t);

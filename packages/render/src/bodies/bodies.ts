@@ -13,7 +13,13 @@ import {
     Vector3,
 } from "three";
 import type { Assets } from "../assets.ts";
-import { type Frame, orientationOf, positionOf, velocityOf } from "../frame.ts";
+import {
+    type Frame,
+    orientationOf,
+    positionOf,
+    presentIn,
+    velocityOf,
+} from "../frame.ts";
 import { lvlhMatrix } from "../geometry/attitude.ts";
 import { projectedBox } from "../geometry/footprint.ts";
 import {
@@ -197,7 +203,7 @@ export const createBodies = (
             const positions = new Map<string, Vec3>();
             for (const id of frame.system.ids) {
                 const r = positionOf(frame, id);
-                if (!r) continue;
+                if (!r || !presentIn(frame, id)) continue;
 
                 positions.set(id, {
                     x: (r.x - origin.x) / 1000,
@@ -205,18 +211,20 @@ export const createBodies = (
                     z: (r.z - origin.z) / 1000,
                 });
             }
-            const screenBodies = entries.map(
-                ({ body, model }): ScreenBody => ({
-                    id: body.id,
-                    parent: body.orbit?.parent ?? null,
-                    style: styleOf(body),
-                    mu: body.mass.mu,
-                    radius: body.mass.radius,
-                    a: body.orbit?.elements.a ?? null,
-                    model: model !== null,
-                    markerPx: markerPx(body),
-                }),
-            );
+            const screenBodies = entries
+                .filter(({ body }) => presentIn(frame, body.id))
+                .map(
+                    ({ body, model }): ScreenBody => ({
+                        id: body.id,
+                        parent: body.orbit?.parent ?? null,
+                        style: styleOf(body),
+                        mu: body.mass.mu,
+                        radius: body.mass.radius,
+                        a: body.orbit?.elements.a ?? null,
+                        model: model !== null,
+                        markerPx: markerPx(body),
+                    }),
+                );
 
             // An orbit's size on screen sets what folds and which labels show.
             const sizes = orbitSizes(
@@ -252,7 +260,7 @@ export const createBodies = (
                 const { body, sphere, model, marker, corona } = entry;
                 if (!frame.system.index.has(body.id)) continue;
 
-                if (folded.has(body.id)) {
+                if (folded.has(body.id) || !presentIn(frame, body.id)) {
                     sphere.visible = false;
                     if (model) model.visible = false;
                     marker.visible = false;
@@ -391,7 +399,7 @@ export const createBodies = (
             placed = settled.placed;
             for (const entry of entries) {
                 if (
-                    frame.system.index.has(entry.body.id) &&
+                    presentIn(frame, entry.body.id) &&
                     !folded.has(entry.body.id)
                 ) {
                     restyle(entry);

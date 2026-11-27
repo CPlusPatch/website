@@ -13,7 +13,7 @@ import {
     formatSoon,
     formatSpeed,
 } from "./format.ts";
-import { type Frame, positionOf } from "./frame.ts";
+import { type Frame, positionOf, presentIn } from "./frame.ts";
 import type { Rect } from "./geometry/labels.ts";
 import {
     blockSpots,
@@ -191,7 +191,13 @@ export const createReadouts = (
             const parentR = body?.orbit
                 ? positionOf(frame, body.orbit.parent)
                 : undefined;
-            if (hidden || !body || !body.orbit || !parentR) {
+            if (
+                hidden ||
+                !body ||
+                !body.orbit ||
+                !parentR ||
+                !presentIn(frame, body.id)
+            ) {
                 setShown(false);
                 return;
             }

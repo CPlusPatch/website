@@ -19,7 +19,7 @@ import {
 } from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
-import { type Frame, positionOf } from "../frame.ts";
+import { type Frame, positionOf, presentIn } from "../frame.ts";
 import {
     nearestPoint,
     orbitNear,
@@ -97,6 +97,8 @@ export const createOrbits = (
     // The orbit after the picked body's next event, dashed like the ghost.
     let planned: Ghost | null = null;
     let plannedFrom = Number.NaN;
+    // Whether the ghost is hidden only because its body is absent, so it comes back with the body.
+    let ghostSuspended = false;
     // The ghost may be made after the last resize.
     let size = { width: 0, height: 0 };
     let pickedId: string | null = null;
@@ -276,7 +278,10 @@ export const createOrbits = (
     ) => {
         const body = orbits.find((orbit) => orbit.body.id === pickedId)?.body;
         const next =
-            body && pickedId && !ghost?.line.visible
+            body &&
+            pickedId &&
+            presentIn(frame, pickedId) &&
+            !ghost?.line.visible
                 ? plannedElements(frame.system, pickedId, t)
                 : null;
         if (!body || !next) {
@@ -308,6 +313,7 @@ export const createOrbits = (
 
     return {
         ghost: (body, elements) => {
+            ghostSuspended = false;
             if (!elements || !isOrbiting(body)) {
                 if (ghost) ghost.line.visible = false;
                 return;
@@ -336,6 +342,7 @@ export const createOrbits = (
                 (ghost.body.id === id || ghost.body.orbit.parent === id)
             ) {
                 ghost.line.visible = false;
+                ghostSuspended = false;
             }
         },
         rebuild: (body) => {
@@ -350,10 +357,26 @@ export const createOrbits = (
         update: (origin, frame, camera, rate, t) => {
             const fov = (camera.fov * Math.PI) / 180;
             const direction = rate < 0 ? -1 : 1;
+            if (ghost) {
+                const absent = !presentIn(frame, ghost.body.id);
+                if (absent && ghost.line.visible) {
+                    ghost.line.visible = false;
+                    ghostSuspended = true;
+                } else if (!absent && ghostSuspended) {
+                    ghost.line.visible = true;
+                    ghostSuspended = false;
+                }
+            }
             const dim = ghost?.line.visible ? GHOST_DIM : 1;
 
             for (const orbit of orbits) {
                 const { body, line, casing } = orbit;
+                if (!presentIn(frame, body.id)) {
+                    line.visible = false;
+                    casing.visible = false;
+                    continue;
+                }
+
                 const parentR = positionOf(frame, body.orbit.parent);
                 if (!parentR) continue;
 
