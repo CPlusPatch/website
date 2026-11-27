@@ -85,6 +85,11 @@
         }
     }
 
+    /* Plex's ascent and descent differ, so the untrimmed caps sat 1px above centre. */
+    .orrery__tool-label {
+        text-box: trim-both cap alphabetic;
+    }
+
     .orrery__tool-icon {
         display: flex;
         inline-size: 16px;
