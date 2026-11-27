@@ -775,6 +775,36 @@ Deno.test("undoing a burn restores the document and emits a body event, and redo
     assertEquals(events.at(-1), { type: "body", id: "moon" });
 });
 
+Deno.test("dispatch of remove-event removes the event, records the label and undo restores it", () => {
+    const scene = makeValid();
+    scene.burn("moon", PROGRADE);
+    const burned = scene.doc;
+    const id = burned.timeline[0]?.id ?? "";
+    const events = recorded(scene);
+
+    const result = scene.dispatch({ type: "remove-event", id });
+
+    assertEquals(result, { ok: true });
+    assertEquals(scene.doc.timeline, []);
+    assertEquals(events, [{ type: "body", id: "moon" }]);
+
+    const undone = scene.undo();
+
+    assertEquals(undone, "removing the burn on Moon");
+    assert(scene.doc === burned);
+});
+
+Deno.test("dispatch of remove-event of an unknown id is rejected", () => {
+    const scene = makeValid();
+    const before = scene.doc;
+
+    const result = scene.dispatch({ type: "remove-event", id: "nope" });
+
+    assert(!result.ok);
+    assert(scene.doc === before);
+    assertEquals(scene.undo(), null);
+});
+
 Deno.test("undo and redo leave the clock alone", () => {
     const scene = makeValid();
     scene.burn("moon", PROGRADE);

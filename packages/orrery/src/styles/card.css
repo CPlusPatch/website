@@ -302,7 +302,8 @@
     }
 
     .orrery__orbit-around,
-    .orrery__body-stats {
+    .orrery__body-stats,
+    .orrery__maneuvers {
         margin-block-start: var(--orrery-pad);
 
         h3 {
@@ -315,8 +316,272 @@
 
     /* The scroll body has its own top padding. */
     .orrery__inspector-body
-        > :is(.orrery__body-stats, .orrery__orbit-around):first-child {
+        > :is(
+            .orrery__body-stats,
+            .orrery__orbit-around,
+            .orrery__maneuvers
+        ):first-child {
         margin-block-start: 0;
+    }
+
+    .orrery__maneuvers {
+        --maneuver-node-col: 1.25rem;
+        --maneuver-col-gap: 8px;
+        --maneuver-line: 2px;
+        --maneuver-box: 1.75rem;
+        --maneuver-row: 1.75rem;
+        --maneuver-row-gap: 12px;
+        --maneuver-node: 0.75rem;
+
+        /* A touch target on a phone. */
+        @media (max-width: 720px) {
+            --maneuver-row: 2.75rem;
+        }
+    }
+
+    .orrery__maneuver-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            --half: calc(var(--maneuver-row) / 2);
+
+            position: relative;
+            display: grid;
+            grid-template-columns: var(--maneuver-node-col) minmax(0, 1fr);
+            column-gap: var(--maneuver-col-gap);
+            padding-block-end: var(--maneuver-row-gap);
+
+            &:last-child {
+                padding-block-end: 0;
+            }
+
+            /* The line through a row, from its top to the next row's top. */
+            &::before {
+                content: "";
+                position: absolute;
+                inset-inline-start: calc(
+                    (var(--maneuver-node-col) - var(--maneuver-line)) /
+                    2
+                );
+                inset-block: 0;
+                inline-size: var(--maneuver-line);
+                background: var(--orrery-dim);
+            }
+
+            &:first-child::before {
+                inset-block-start: var(--half);
+            }
+
+            &:last-child::before {
+                inset-block-end: auto;
+                block-size: var(--half);
+            }
+
+            &:first-child:last-child::before {
+                display: none;
+            }
+        }
+    }
+
+    /* Upcoming stretches are dashed. */
+    .orrery__maneuver:not([data-past])::before {
+        background: repeating-linear-gradient(
+            to bottom,
+            var(--orrery-dim) 0 4px,
+            transparent 4px 8px
+        );
+    }
+
+    .orrery__maneuver-node {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        block-size: var(--maneuver-row);
+
+        svg {
+            inline-size: var(--maneuver-node);
+            block-size: var(--maneuver-node);
+            overflow: visible;
+        }
+
+        [data-shape] {
+            fill: var(--orrery-panel-solid);
+            stroke: var(--orrery-text);
+            stroke-width: 2;
+            stroke-linejoin: miter;
+        }
+    }
+
+    [data-past] > .orrery__maneuver-node [data-shape] {
+        fill: var(--orrery-muted);
+        stroke: var(--orrery-muted);
+    }
+
+    .orrery__maneuver-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        min-block-size: var(--maneuver-row);
+    }
+
+    .orrery__maneuver-detail {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        column-gap: var(--space-sm);
+        margin-block-start: 2px;
+        /* Lines up with the time's digits, past the button's border and padding. */
+        padding-inline-start: 7px;
+        font-size: var(--orrery-size-sm);
+    }
+
+    .orrery__maneuver-what {
+        font-family: var(--orrery-font-ui);
+
+        [data-past] & {
+            color: var(--orrery-muted);
+        }
+    }
+
+    .orrery__maneuver-dv {
+        font-family: var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .orrery__maneuver-ago {
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-label);
+    }
+
+    .orrery__maneuver-when {
+        position: relative;
+        min-block-size: var(--maneuver-box);
+        padding: 0 6px;
+        border: 1px solid var(--orrery-rule);
+        background: transparent;
+        color: var(--orrery-text);
+        font: 500 var(--orrery-size-sm) var(--orrery-font-data);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        cursor: pointer;
+
+        [data-past] & {
+            color: var(--orrery-muted);
+        }
+
+        /* Reaches the row's height on a phone without drawing a taller box. */
+        &::after {
+            content: "";
+            position: absolute;
+            inset-block: calc((var(--maneuver-box) - var(--maneuver-row)) / 2);
+            inset-inline: 0;
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 2px;
+        }
+    }
+
+    .orrery__maneuver-remove {
+        display: grid;
+        place-items: center;
+        inline-size: var(--maneuver-row);
+        block-size: var(--maneuver-row);
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--orrery-muted);
+        font-size: 0.875rem;
+        cursor: pointer;
+
+        &:focus-visible {
+            outline: 2px solid var(--orrery-text);
+            outline-offset: 2px;
+        }
+    }
+
+    @media (hover: hover) {
+        .orrery__maneuver-when:hover {
+            border-color: var(--orrery-control-frame);
+            background: var(--orrery-panel-raised);
+        }
+
+        .orrery__maneuver-remove:hover {
+            background: var(--orrery-panel-raised);
+            color: var(--orrery-abort);
+        }
+    }
+
+    /* Quiet until the row is hovered or focused. Touch has no hover, so it stays visible there. */
+    @media (hover: hover) and (pointer: fine) {
+        .orrery__maneuver .orrery__maneuver-remove {
+            opacity: 0;
+        }
+
+        .orrery__maneuver:is(:hover, :focus-within) .orrery__maneuver-remove {
+            opacity: 1;
+        }
+    }
+
+    /* The clock: the one light block on the rail, like the timeline's date tag. */
+    .orrery__maneuver-list > .orrery__maneuver-clock {
+        --half: 0.75rem;
+
+        align-items: center;
+
+        &::before {
+            inset-block-end: auto;
+            block-size: var(--half);
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset-inline-start: calc(
+                (var(--maneuver-node-col) - var(--maneuver-line)) /
+                2
+            );
+            inset-block: var(--half) 0;
+            inline-size: var(--maneuver-line);
+            background: repeating-linear-gradient(
+                to bottom,
+                var(--orrery-dim) 0 4px,
+                transparent 4px 8px
+            );
+        }
+
+        &:first-child::before,
+        &:last-child::after {
+            display: none;
+        }
+    }
+
+    .orrery__maneuver-bar {
+        position: relative;
+        z-index: 1;
+        inline-size: calc(100% + var(--maneuver-col-gap));
+        block-size: var(--maneuver-line);
+        background: var(--orrery-text);
+    }
+
+    .orrery__maneuver-tag {
+        justify-self: start;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        block-size: 1.5rem;
+        padding: 0 8px;
+        background: var(--orrery-text);
+        color: var(--orrery-tag-ink);
+        font: 600 var(--orrery-size-label) var(--orrery-font-ui);
+        letter-spacing: 0.02em;
+        font-variant-numeric: tabular-nums;
     }
 
     /* One row. The fit hides the chips that don't leave room for "+N more". */

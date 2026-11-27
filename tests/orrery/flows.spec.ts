@@ -66,6 +66,41 @@ test("a prograde burn changes the period", async ({ page, problems }) => {
     expect(problems).toEqual([]);
 });
 
+test("a burn is listed under Maneuvers, jumps the clock to it and can be removed", async ({
+    page,
+    problems,
+}) => {
+    await openOrbits(page);
+    await selectBody(page, "Mars");
+    const before = await period(page).innerText();
+    const maneuvers = card(page).locator(".orrery__maneuvers");
+    // The tests run with reduced motion, so the clock starts held.
+    await page.getByRole("button", { name: "Held. Run time" }).click();
+
+    await card(page).getByRole("button", { name: "Burn" }).click();
+    await page.getByRole("spinbutton", { name: "Prograde" }).fill("500");
+    await card(page).getByRole("button", { name: "Apply" }).click();
+
+    await expect(period(page)).not.toHaveText(before);
+    await expect(maneuvers).toBeVisible();
+    await expect(maneuvers).toContainText("Δv");
+    await expect(
+        page.getByRole("button", { name: "Running. Hold time" }),
+    ).toBeVisible();
+
+    await maneuvers.getByRole("button", { name: /^Jump clock to / }).click();
+
+    await expect(
+        page.getByRole("button", { name: "Held. Run time" }),
+    ).toBeVisible();
+
+    await maneuvers.getByRole("button", { name: /^Remove burn at / }).click();
+
+    await expect(maneuvers).toBeHidden();
+    await expect(period(page)).toHaveText(before);
+    expect(problems).toEqual([]);
+});
+
 test("Ctrl+Z undoes a burn and the Redo button applies it again", async ({
     page,
     problems,

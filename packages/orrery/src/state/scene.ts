@@ -47,6 +47,8 @@ const HISTORY_LABELS = {
     "update-body": (name: string) => `the edit to ${name}`,
     "set-orbit": (name: string) => `the orbit edit on ${name}`,
     "schedule-burn": (name: string) => `the burn on ${name}`,
+    "remove-burn": (name: string) => `removing the burn on ${name}`,
+    "remove-set-orbit": (name: string) => `removing the orbit edit on ${name}`,
 };
 
 /** The state a `Scene` reads and writes. The stores hold it as `$state`. */
@@ -311,13 +313,33 @@ export class Scene {
                     | "schedule-burn"
                     | "update-body"
                     | "add-body"
-                    | "remove-body";
+                    | "remove-body"
+                    | "remove-event";
             }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {
         const doc = this.#held.doc;
         const result = apply(doc, cmd, PRESETS);
         if (!result.ok) return { ok: false, errors: result.errors };
+
+        if (cmd.type === "remove-event") {
+            // The command succeeded, so the event exists.
+            const event = doc.timeline.find((e) => e.id === cmd.id);
+            if (!event) throw new Error(`"${cmd.id}" has no event.`);
+
+            const name =
+                doc.scenario.bodies.find((body) => body.id === event.bodyId)
+                    ?.name ?? event.bodyId;
+            const label =
+                event.type === "burn"
+                    ? HISTORY_LABELS["remove-burn"](name)
+                    : HISTORY_LABELS["remove-set-orbit"](name);
+            this.#record(label);
+            this.#commit(result.doc);
+            this.#emit({ type: "body", id: event.bodyId });
+
+            return { ok: true };
+        }
 
         // Not committed here: `removeBody` also moves the focus and selection.
         if (cmd.type === "remove-body") {

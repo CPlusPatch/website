@@ -52,7 +52,8 @@ export class DocumentStore {
                     | "schedule-burn"
                     | "update-body"
                     | "add-body"
-                    | "remove-body";
+                    | "remove-body"
+                    | "remove-event";
             }
         >,
     ): { ok: true } | { ok: false; errors: string[] } {

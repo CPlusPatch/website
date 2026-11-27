@@ -30,6 +30,7 @@ import { sheetAfterDrag } from "../sheet.ts";
 import Actions from "./Actions.svelte";
 import Children from "./Children.svelte";
 import Headline from "./Headline.svelte";
+import Maneuvers from "./Maneuvers.svelte";
 import Plate from "./Plate.svelte";
 import type { PlateData } from "./plate.ts";
 import Stats from "./Stats.svelte";
@@ -47,6 +48,8 @@ type Live = {
     current: Readouts | null;
     unit: AUnit | null;
     plate: PlateData | null;
+    /** The clock in seconds since J2000. */
+    t: number;
 };
 
 const { units, restoreFocus, scene }: Props = $props();
@@ -68,7 +71,12 @@ let addName = $state("");
 // On a phone the card is a sheet. It starts peeked and keeps its state across bodies.
 let open = $state(false);
 let pressedAt: number | null = null;
-let live = $state.raw<Live>({ current: null, unit: null, plate: null });
+let live = $state.raw<Live>({
+    current: null,
+    unit: null,
+    plate: null,
+    t: 0,
+});
 
 const body = $derived(
     documents.doc.scenario.bodies.find(
@@ -155,7 +163,7 @@ const refresh = () => {
         }
     }
 
-    live = { current, unit, plate };
+    live = { current, unit, plate, t };
 };
 
 const focusFirst = () => {
@@ -448,6 +456,11 @@ $effect(() => {
                 {#key body.id}
                     {#if parent}
                         <Children centre={body} />
+                        <Maneuvers
+                            id={body.id}
+                            now={live.t}
+                            onEmptied={() => actions?.focusOpener("burn")}
+                        />
                     {/if}
                     <Stats id={body.id} />
                 {/key}

@@ -31,7 +31,7 @@ import {
 } from "../persistence.ts";
 import { readSatellites } from "../satellite-settings.ts";
 import { createSession } from "../session.ts";
-import { setStores } from "../state/context.ts";
+import { setAnnouncer, setStores } from "../state/context.ts";
 import { createStores } from "../state/stores.svelte.ts";
 import Crumbs from "./Crumbs.svelte";
 import History from "./History.svelte";
@@ -79,6 +79,7 @@ const { scene, documentStore, viewState } = untrack(() =>
 );
 // Set before the components that read them are made.
 setStores(documentStore, viewState);
+setAnnouncer((text) => announce(text));
 
 const units = createUnits();
 // Below this width the inspector becomes a sheet.
