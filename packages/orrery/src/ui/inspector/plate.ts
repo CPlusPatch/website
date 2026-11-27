@@ -1,4 +1,10 @@
-import { AU, type Elements } from "@cpluspatch/orbit";
+import {
+    AU,
+    apoapsis,
+    type Elements,
+    periapsis,
+    trueAnomalyAt,
+} from "@cpluspatch/orbit";
 import {
     type AUnit,
     formatPlateDistance,
@@ -42,6 +48,47 @@ export type PlateData = Pick<Elements, "a" | "e" | "raan" | "argp"> &
         /** The unit the reader chose, or `null` while the plate picks one. */
         unit: AUnit | null;
     };
+
+/** What a plate takes from the scene rather than from the orbit. */
+export type Drawn = Pick<
+    PlateData,
+    "parentRadius" | "bodyColor" | "parentColor" | "unit"
+>;
+
+/** The plate of a form's draft. It has no times, as they'd be of the saved orbit. */
+export const draftPlate = (
+    draft: Elements,
+    mu: number,
+    t: number,
+    drawn: Drawn,
+): PlateData => ({
+    a: draft.a,
+    e: draft.e,
+    raan: draft.raan,
+    argp: draft.argp,
+    trueAnomaly: trueAnomalyAt(draft, mu, t),
+    periapsisAltitude: periapsis(draft) - drawn.parentRadius,
+    apoapsisAltitude: apoapsis(draft) - drawn.parentRadius,
+    ...drawn,
+});
+
+/** The plate of a saved orbit, with the readouts' altitudes and times. */
+export const livePlate = (
+    now: Pick<Elements, "a" | "e" | "raan" | "argp">,
+    current: Readouts,
+    drawn: Drawn,
+): PlateData => ({
+    a: now.a,
+    e: now.e,
+    raan: now.raan,
+    argp: now.argp,
+    trueAnomaly: current.trueAnomaly,
+    periapsisAltitude: current.periapsisAltitude,
+    apoapsisAltitude: current.apoapsisAltitude,
+    timeToPeriapsis: current.timeToPeriapsis,
+    timeToApoapsis: current.timeToApoapsis,
+    ...drawn,
+});
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 type Dot = { cx: number; cy: number };

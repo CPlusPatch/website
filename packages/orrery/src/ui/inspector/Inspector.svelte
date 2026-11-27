@@ -1,39 +1,25 @@
 <script module lang="ts">
-/** What the card shows: the readouts, or a form that replaces them. */
-type Mode = "card" | "edit" | "burn" | "add";
-
 /** How often the readouts refresh while the clock runs, in ms. */
 const REFRESH_MS = 250;
 </script>
 
 <script lang="ts">
-import { apoapsis, periapsis, trueAnomalyAt } from "@cpluspatch/orbit";
-import {
-    type AUnit,
-    type EditScene,
-    styleOf,
-    type Units,
-} from "@cpluspatch/render";
-import { isOrbiting, type Readouts, readouts, statesAt } from "@cpluspatch/sim";
-import { iconSvg } from "@cpluspatch/ui";
-import { buttonClasses } from "@cpluspatch/ui/components/button.ts";
+import type { EditScene, Units } from "@cpluspatch/render";
 import { cardClasses } from "@cpluspatch/ui/components/card.ts";
 import { tick, untrack } from "svelte";
-import type { Attachment } from "svelte/attachments";
-import { on } from "svelte/events";
 import { getDocument, getView } from "../../state/context.ts";
 import BodyAdder from "../BodyAdder.svelte";
 import BurnEditor from "../BurnEditor.svelte";
-import { bodyMarker } from "../body-marker.ts";
 import ElementEditor from "../ElementEditor.svelte";
-import { sheetAfterDrag } from "../sheet.ts";
 import Actions from "./Actions.svelte";
 import Children from "./Children.svelte";
+import Grip from "./Grip.svelte";
+import Head from "./Head.svelte";
 import Headline from "./Headline.svelte";
-import { lifetimeText } from "./lifetime.ts";
+import { type Live, liveAt } from "./live.ts";
 import Maneuvers from "./Maneuvers.svelte";
+import type { Mode } from "./mode.ts";
 import Plate from "./Plate.svelte";
-import type { PlateData } from "./plate.ts";
 import Stats from "./Stats.svelte";
 
 type Props = {
@@ -44,15 +30,6 @@ type Props = {
     scene: EditScene;
 };
 
-/** What the headline and the plate show, as of the last refresh. */
-type Live = {
-    current: Readouts | null;
-    unit: AUnit | null;
-    plate: PlateData | null;
-    /** The clock in seconds since J2000. */
-    t: number;
-};
-
 const { units, restoreFocus, scene }: Props = $props();
 
 const documents = getDocument();
@@ -60,8 +37,7 @@ const view = getView();
 
 let card = $state<HTMLElement>();
 let content: HTMLElement | undefined;
-let grip: HTMLButtonElement | undefined;
-let close: HTMLButtonElement | undefined;
+let head = $state.raw<ReturnType<typeof Head>>();
 let actions = $state.raw<ReturnType<typeof Actions>>();
 let editor = $state.raw<ReturnType<typeof ElementEditor>>();
 let burn = $state.raw<ReturnType<typeof BurnEditor>>();
@@ -71,7 +47,6 @@ let mode = $state<Mode>("card");
 let addName = $state("");
 // On a phone the card is a sheet. It starts peeked and keeps its state across bodies.
 let open = $state(false);
-let pressedAt: number | null = null;
 let live = $state.raw<Live>({
     current: null,
     unit: null,
@@ -91,14 +66,6 @@ const parent = $derived(
 );
 const hasOrbit = $derived(parent !== undefined && body?.orbit !== undefined);
 const adding = $derived(mode === "add");
-const lifetime = $derived(body ? lifetimeText(body.lifetime) : null);
-const title = $derived(
-    adding
-        ? "Add a body"
-        : mode === "card"
-          ? (body?.name ?? "")
-          : `${mode === "edit" ? "Edit" : "Burn"} ${body?.name ?? ""}`,
-);
 
 const refresh = () => {
     if (mode === "burn") burn?.refresh();
@@ -108,64 +75,7 @@ const refresh = () => {
     const id = view.selected;
     if (!id) return;
 
-    const t = view.now();
-    const scenario = documents.doc.scenario;
-    const current = readouts(
-        documents.system,
-        id,
-        statesAt(documents.system, t),
-        t,
-    );
-    const selected = scenario.bodies.find((b) => b.id === id);
-    const around = scenario.bodies.find(
-        (b) => b.id === selected?.orbit?.parent,
-    );
-    const unit = units.get();
-    let plate: PlateData | null = null;
-
-    if (selected && isOrbiting(selected) && around) {
-        const grandparent = scenario.bodies.find(
-            (b) => b.id === around.orbit?.parent,
-        );
-        const drawn = {
-            parentRadius: around.mass.radius,
-            bodyColor: documents.colorOf(selected, around),
-            parentColor: documents.colorOf(around, grandparent),
-            unit,
-        };
-
-        // A form draws its draft, without the times, as they'd be of the saved orbit.
-        const draft = form?.elements();
-        if (form && draft) {
-            plate = {
-                a: draft.a,
-                e: draft.e,
-                raan: draft.raan,
-                argp: draft.argp,
-                trueAnomaly: trueAnomalyAt(draft, form.mu, t),
-                periapsisAltitude: periapsis(draft) - around.mass.radius,
-                apoapsisAltitude: apoapsis(draft) - around.mass.radius,
-                ...drawn,
-            };
-        } else if (current) {
-            // Precession turns the node and the periapsis.
-            const now = documents.system.elementsAt(selected.id, t);
-            plate = {
-                a: now.a,
-                e: now.e,
-                raan: now.raan,
-                argp: now.argp,
-                trueAnomaly: current.trueAnomaly,
-                periapsisAltitude: current.periapsisAltitude,
-                apoapsisAltitude: current.apoapsisAltitude,
-                timeToPeriapsis: current.timeToPeriapsis,
-                timeToApoapsis: current.timeToApoapsis,
-                ...drawn,
-            };
-        }
-    }
-
-    live = { current, unit, plate, t };
+    live = liveAt(documents, id, view.now(), units.get(), form);
 };
 
 const focusFirst = () => {
@@ -173,7 +83,8 @@ const focusFirst = () => {
         card?.querySelector<HTMLElement>(
             "li:not([hidden]) > .orrery__orbit-chip",
         ) ?? card?.querySelector<HTMLElement>(".orrery__orbit-link");
-    (next ?? close)?.focus();
+    if (next) next.focus();
+    else head?.focusClose();
 };
 
 // Back to the card, or nothing, with the focus on the search button.
@@ -230,34 +141,6 @@ const openForm = async (next: "edit" | "burn") => {
     content?.querySelector<HTMLElement>("input:not(.visually-hidden)")?.focus();
     refresh();
 };
-
-const setSheet = (next: boolean) => {
-    open = next;
-
-    // The actions are about to be hidden, which would drop the focus.
-    const held = document.activeElement?.closest(
-        ".orrery__orbit-meta, .orrery__inspector-body, .orrery__inspector-foot",
-    );
-    if (!next && held && card?.contains(held)) grip?.focus();
-};
-
-const dragEnd = (event: PointerEvent) => {
-    if (pressedAt === null) return;
-
-    const dy = event.clientY - pressedAt;
-    pressedAt = null;
-    setSheet(sheetAfterDrag(dy, open));
-};
-
-// A native listener, as the shortcut that clears the selection would see a delegated one too late.
-const cancelOnEscape: Attachment<HTMLElement> = (node) =>
-    on(node, "keydown", (event) => {
-        if (event.key !== "Escape" || mode !== "add") return;
-
-        // The form's Esc doesn't reach the head.
-        event.preventDefault();
-        cancelAdd();
-    });
 
 // A new selection shows the card, even if a form was open.
 $effect.pre(() => {
@@ -331,83 +214,8 @@ $effect(() => {
     data-peek={!open && mode === "card" ? "" : undefined}
     bind:this={card}
 >
-    <button
-        type="button"
-        class="orrery__orbit-grip"
-        aria-label="All readouts"
-        aria-expanded={open}
-        hidden={mode !== "card"}
-        bind:this={grip}
-        onpointerdown={(event) => {
-            if (event.button !== 0 || !event.isPrimary) return;
-
-            pressedAt = event.clientY;
-            grip?.setPointerCapture(event.pointerId);
-        }}
-        onpointerup={dragEnd}
-        onpointercancel={() => {
-            pressedAt = null;
-        }}
-        onclick={(event) => {
-            // A pointer tap is handled on pointerup, so only a keyboard click gets here.
-            if (event.detail === 0) setSheet(!open);
-        }}
-    ></button>
-    <div class="orrery__inspector-head orrery__inspector-head--ruled">
-        <div class="orrery__inspector-titles">
-            <h2 id="orrery-orbit-title" class="orrery__inspector-title">
-                <span
-                    class="orrery__orbit-marker"
-                    hidden={adding}
-                    style:color={body
-                        ? documents.colorOf(body, parent)
-                        : undefined}
-                    >{@html body ? bodyMarker(body) : ""}</span
-                ><span>{title}</span>
-            </h2>
-            <!-- Under the title, so the form heads keep the kind and parent in view too. -->
-            <p class="orrery__orbit-meta" hidden={mode !== "card"}>
-                {#if body && !adding}
-                    {`${styleOf(body).label} `}
-                    {#if parent}
-                        around
-                        <!-- Keyed, so following it re-renders the link and the focus moves on. -->
-                        {#key body.id}
-                            <button
-                                type="button"
-                                class="orrery__orbit-link"
-                                onclick={() => view.select(parent.id)}
-                            >
-                                {parent.name}
-                            </button>
-                        {/key}
-                    {:else}
-                        at the centre
-                    {/if}
-                {/if}
-            </p>
-            {#if mode === "card" && body && lifetime}
-                <p class="orrery__orbit-lifetime">{lifetime}</p>
-            {/if}
-        </div>
-        <button
-            type="button"
-            class={buttonClasses({
-                variant: "ghost",
-                tone: "neutral",
-                size: "icon-sm",
-            }).join(" ")}
-            aria-label={adding ? "Cancel" : "Clear selection"}
-            bind:this={close}
-            onclick={() => {
-                if (mode === "add") cancelAdd();
-                else view.select(null);
-            }}
-            {@attach cancelOnEscape}
-        >
-            {@html iconSvg("x")}
-        </button>
-    </div>
+    <Grip bind:open hidden={mode !== "card"} {card} />
+    <Head bind:this={head} {body} {parent} {mode} cancel={cancelAdd} />
     {#if mode === "card" && parent && live.current}
         <Headline
             parentName={parent.name}
