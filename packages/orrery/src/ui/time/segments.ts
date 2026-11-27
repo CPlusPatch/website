@@ -1,4 +1,9 @@
-import { PART_NAMES, type PartName } from "@cpluspatch/render";
+import {
+    type DateParts,
+    formatYear,
+    PART_NAMES,
+    type PartName,
+} from "@cpluspatch/render";
 
 /** What each part is called, and how many digits it takes. The year may also have a leading minus. */
 export const SEGMENTS: Record<PartName, { label: string; digits: number }> = {
@@ -67,3 +72,31 @@ export const segmentNumber = (name: PartName, value: string): number =>
     (name === "y" ? /^-?\d+$/ : /^\d+$/).test(value)
         ? Number(value)
         : Number.NaN;
+
+/** The part `by` places from `name`, or `name` itself at either end. */
+export const partBeside = (name: PartName, by: -1 | 1): PartName =>
+    PART_NAMES[PART_NAMES.indexOf(name) + by] ?? name;
+
+/** The text a part shows for `value`: the year as it is, the rest padded with zeros. */
+export const partText = (name: PartName, value: number): string =>
+    name === "y"
+        ? formatYear(value)
+        : String(value).padStart(SEGMENTS[name].digits, "0");
+
+/** The parts that `textOf` gives the text of, each read with `segmentNumber`. */
+export const readParts = (textOf: (name: PartName) => string): DateParts => {
+    const number = (name: PartName) => segmentNumber(name, textOf(name));
+
+    return {
+        y: number("y"),
+        mo: number("mo"),
+        d: number("d"),
+        h: number("h"),
+        mi: number("mi"),
+        s: number("s"),
+    };
+};
+
+/** Whether the focus moves to the next part after typing `value`: the part is full, and not the last. */
+export const movesOn = (name: PartName, value: string): boolean =>
+    isFull(name, value) && name !== PART_NAMES.at(-1);

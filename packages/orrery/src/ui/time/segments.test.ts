@@ -1,9 +1,14 @@
 /// <reference types="deno" />
+import { formatYear, type PartName } from "@cpluspatch/render";
 import { assertEquals } from "@std/assert";
 import {
     cleanSegment,
     type Field,
     isFull,
+    movesOn,
+    partBeside,
+    partText,
+    readParts,
     segmentAction,
     segmentNumber,
 } from "./segments.ts";
@@ -72,4 +77,44 @@ Deno.test("text that isn't a number reads as NaN", () => {
     assertEquals(Number.isNaN(segmentNumber("mo", "")), true);
     assertEquals(Number.isNaN(segmentNumber("mo", "-1")), true);
     assertEquals(Number.isNaN(segmentNumber("y", "-")), true);
+});
+
+Deno.test("the part beside another is the next or the one before, and the same at either end", () => {
+    assertEquals(partBeside("mo", 1), "d");
+    assertEquals(partBeside("mo", -1), "y");
+    assertEquals(partBeside("y", -1), "y");
+    assertEquals(partBeside("s", 1), "s");
+});
+
+Deno.test("a part shows its digits padded with zeros, and the year as formatted", () => {
+    assertEquals(partText("mo", 7), "07");
+    assertEquals(partText("s", 0), "00");
+    assertEquals(partText("y", 2030), formatYear(2030));
+    assertEquals(partText("y", -12), formatYear(-12));
+});
+
+Deno.test("parts are read from the text of each one", () => {
+    const text: Record<PartName, string> = {
+        y: "-12",
+        mo: "07",
+        d: "",
+        h: "23",
+        mi: "5",
+        s: "x",
+    };
+
+    const parts = readParts((name) => text[name]);
+
+    assertEquals(parts.y, -12);
+    assertEquals(parts.mo, 7);
+    assertEquals(parts.h, 23);
+    assertEquals(parts.mi, 5);
+    assertEquals(Number.isNaN(parts.d), true);
+    assertEquals(Number.isNaN(parts.s), true);
+});
+
+Deno.test("the focus moves on from a full part, except the last", () => {
+    assertEquals(movesOn("mo", "12"), true);
+    assertEquals(movesOn("mo", "1"), false);
+    assertEquals(movesOn("s", "59"), false);
 });

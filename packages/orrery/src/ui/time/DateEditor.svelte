@@ -2,13 +2,9 @@
 import { unixMsToJ2000s } from "@cpluspatch/orbit";
 import {
     type DateParts,
-    formatYear,
     fromParts,
-    PART_NAMES,
     type PartName,
-    parsePasted,
     partsProblem,
-    stepPart,
     toParts,
 } from "@cpluspatch/render";
 import { iconSvg } from "@cpluspatch/ui";
@@ -17,13 +13,7 @@ import { flushSync, onDestroy, untrack } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import { on } from "svelte/events";
 import { getDocument, getView } from "../../state/context.ts";
-import {
-    cleanSegment,
-    isFull,
-    SEGMENTS,
-    segmentAction,
-    segmentNumber,
-} from "./segments.ts";
+import DateEntry from "./DateEntry.svelte";
 
 type Props = {
     /** The button that toggles the editor. It gets `aria-expanded`, and the focus when the editor closes. */
@@ -45,7 +35,7 @@ const outline = buttonClasses({
 }).join(" ");
 
 let element: HTMLElement | undefined;
-const inputs: Partial<Record<PartName, HTMLInputElement>> = {};
+let entry = $state.raw<ReturnType<typeof DateEntry>>();
 
 let open = $state(false);
 let errorText = $state("");
@@ -56,38 +46,12 @@ let openedT = 0;
 let savedPaused = false;
 let touched = false;
 
-const neighbour = (name: PartName, by: -1 | 1) =>
-    inputs[PART_NAMES[PART_NAMES.indexOf(name) + by] ?? name];
-
-const fill = (parts: DateParts) => {
-    for (const name of PART_NAMES) {
-        const input = inputs[name];
-        if (!input) continue;
-
-        const value = parts[name];
-
-        input.value =
-            name === "y"
-                ? formatYear(value)
-                : String(value).padStart(SEGMENTS[name].digits, "0");
-    }
-    invalid = null;
+const edited = (name?: PartName) => {
+    if (!name || invalid === name) invalid = null;
     errorText = "";
 };
 
-const read = (): DateParts => {
-    const number = (name: PartName) =>
-        segmentNumber(name, inputs[name]?.value ?? "");
-
-    return {
-        y: number("y"),
-        mo: number("mo"),
-        d: number("d"),
-        h: number("h"),
-        mi: number("mi"),
-        s: number("s"),
-    };
-};
+const fill = (parts: DateParts) => entry?.fill(parts);
 
 const openEditor = () => {
     openedT = view.now();
@@ -99,7 +63,7 @@ const openEditor = () => {
         open = true;
     });
     if (!view.clock.paused) view.setClock({ paused: true });
-    inputs.d?.focus();
+    entry?.focus("d");
 };
 
 const close = () => {
@@ -120,62 +84,17 @@ onDestroy(close);
 /** Opens the editor, or closes it if it's open. */
 export const toggle = () => (open ? close() : openEditor());
 
-const step = (name: PartName, by: number) => {
-    const next = stepPart(read(), name, by);
-    if (!next) return;
-
-    fill(next);
-    inputs[name]?.select();
-};
-
-const onKeydown = (event: KeyboardEvent, name: PartName) => {
-    // Ctrl+- zooms the page out.
-    if (event.ctrlKey || event.metaKey || event.altKey) return;
-
-    const input = inputs[name];
-    if (!input) return;
-
-    const action = segmentAction(event.key, name, {
-        value: input.value,
-        start: input.selectionStart,
-        end: input.selectionEnd,
-    });
-    if (!action) return;
-
-    event.preventDefault();
-    if (action === "up") step(name, 1);
-    else if (action === "down") step(name, -1);
-    else neighbour(name, action === "before" ? -1 : 1)?.focus();
-};
-
-const onInput = (name: PartName) => {
-    const input = inputs[name];
-    if (!input) return;
-
-    input.value = cleanSegment(name, input.value);
-    if (invalid === name) invalid = null;
-    errorText = "";
-    if (isFull(name, input.value) && name !== PART_NAMES.at(-1))
-        neighbour(name, 1)?.focus();
-};
-
-const onPaste = (event: ClipboardEvent) => {
-    const parts = parsePasted(event.clipboardData?.getData("text") ?? "");
-    if (!parts) return;
-
-    event.preventDefault();
-    fill(parts);
-};
-
 const submit = (event: SubmitEvent) => {
     event.preventDefault();
 
-    const parts = read();
+    const parts = entry?.read();
+    if (!parts) return;
+
     const problem = partsProblem(parts);
     if (problem) {
         invalid = problem.part;
         errorText = problem.message;
-        inputs[problem.part]?.focus();
+        entry?.focus(problem.part);
 
         return;
     }
@@ -212,31 +131,6 @@ $effect(() => {
     });
 });
 </script>
-
-{#snippet segment(
-    name: PartName,
-)}
-    <input
-        class="orrery__date-part"
-        data-part={name}
-        aria-label={SEGMENTS[name].label}
-        aria-invalid={invalid === name ? "true" : undefined}
-        inputmode={name === "y" ? "text" : "numeric"}
-        maxlength={SEGMENTS[name].digits + (name === "y" ? 1 : 0)}
-        autocomplete="off"
-        bind:this={inputs[name]}
-        onfocus={() => inputs[name]?.select()}
-        onkeydown={(event) => onKeydown(event, name)}
-        oninput={() => onInput(name)}
-        onpaste={onPaste}
-    >
-{/snippet}
-
-{#snippet separator(
-    text: string,
-)}
-    <span class="orrery__date-sep" aria-hidden="true">{text}</span>
-{/snippet}
 
 {#snippet preset(
     label: string,
@@ -275,26 +169,7 @@ $effect(() => {
         </button>
     </div>
     <form class="orrery__date-form" novalidate onsubmit={submit}>
-        <!-- biome-ignore lint/a11y/useSemanticElements: A <fieldset> would change the DOM and its styles. -->
-        <div
-            class="orrery__date-entry"
-            role="group"
-            aria-label="Date and time, UTC"
-            aria-describedby="orrery-date-error"
-        >
-            {@render segment("y")}
-            {@render separator("-")}
-            {@render segment("mo")}
-            {@render separator("-")}
-            {@render segment("d")}
-            <span class="orrery__date-gap" aria-hidden="true"></span>
-            {@render segment("h")}
-            {@render separator(":")}
-            {@render segment("mi")}
-            {@render separator(":")}
-            {@render segment("s")}
-            <span class="orrery__date-utc">UTC</span>
-        </div>
+        <DateEntry bind:this={entry} {invalid} onEdit={edited} />
         <p
             class="orrery__stepper-error"
             id="orrery-date-error"
