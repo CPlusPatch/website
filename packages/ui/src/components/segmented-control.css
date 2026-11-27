@@ -4,11 +4,15 @@
     .segmented {
         --segmented-height: var(--control-height-md);
         --segmented-inner-radius: calc(var(--radius) - var(--border-width));
+        --segmented-pick-fill: var(--pick-fill);
+        --segmented-pick-border: var(--color-primary);
 
+        position: relative;
         display: inline-flex;
         min-width: 0;
         margin: 0;
         padding: 0;
+        background-color: var(--color-surface);
         border: var(--border-width) solid var(--color-border-strong);
         border-radius: var(--radius);
 
@@ -16,11 +20,18 @@
             --segmented-height: var(--control-height-sm);
         }
 
+        /* A neutral pick, for controls that sit among many (inspectors, menus). */
+        &.segmented--subtle {
+            --segmented-pick-fill: var(--color-surface-raised);
+            --segmented-pick-border: var(--color-border-strong);
+        }
+
         &:disabled {
             opacity: 0.5;
         }
 
         .segmented__option {
+            position: relative;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -34,35 +45,28 @@
                 color var(--transition),
                 background-color var(--transition);
 
-            & + & {
-                border-left: var(--border-width) solid
-                    var(--color-border-strong);
-            }
+            /* Every corner, since the pick doesn't sit against a divider. */
+            border-radius: var(--segmented-inner-radius);
 
-            /* Round the checked fill into the frame's corners, without clipping the focus ring. */
-            &:first-of-type {
-                border-start-start-radius: var(--segmented-inner-radius);
-                border-end-start-radius: var(--segmented-inner-radius);
-            }
-
-            &:last-of-type {
-                border-start-end-radius: var(--segmented-inner-radius);
-                border-end-end-radius: var(--segmented-inner-radius);
-            }
-
-            &:hover {
-                color: var(--color-text);
-                background-color: var(--color-bg-alt);
-            }
-
+            /* Without anchor positioning, the checked option draws the pick itself. */
             &:has(:checked) {
-                color: var(--color-on-accent);
-                background-color: var(--color-primary);
+                color: var(--color-text);
+                background-color: var(--segmented-pick-fill);
+                box-shadow: inset 0 0 0 var(--border-width)
+                    var(--segmented-pick-border);
             }
 
             &:has(:focus-visible) {
                 outline: 2px solid var(--color-primary);
                 outline-offset: 2px;
+            }
+        }
+
+        /* Gated, since a tap would leave :hover stuck on and read as a second pick. */
+        @media (hover: hover) {
+            &:not(:disabled) .segmented__option:hover:not(:has(:checked)) {
+                color: var(--color-text);
+                background-color: var(--hover-fill);
             }
         }
 
@@ -77,11 +81,6 @@
             }
         }
 
-        &.segmented--subtle .segmented__option:has(:checked) {
-            color: var(--color-text);
-            background-color: var(--color-bg-alt);
-        }
-
         &:disabled .segmented__option {
             cursor: not-allowed;
         }
@@ -90,11 +89,39 @@
             white-space: nowrap;
         }
 
-        /* Last, and per variant, so it outranks both checked styles above. */
+        /* The pick is one layer under the options that slides to the checked one. */
+        @supports (anchor-scope: all) {
+            anchor-scope: --segmented-pick;
+
+            &:has(:checked)::before {
+                content: "";
+                position: absolute;
+                position-anchor: --segmented-pick;
+                inset: anchor(top) anchor(right) anchor(bottom) anchor(left);
+                background-color: var(--segmented-pick-fill);
+                border: var(--border-width) solid var(--segmented-pick-border);
+                border-radius: var(--segmented-inner-radius);
+                transition:
+                    left var(--transition),
+                    right var(--transition);
+            }
+
+            .segmented__option:has(:checked) {
+                anchor-name: --segmented-pick;
+                background-color: transparent;
+                box-shadow: none;
+            }
+        }
+
+        /* Forced colours drop the fill and the shadow, so the pick turns Highlight. */
         @media (forced-colors: active) {
-            &.segmented--solid .segmented__option:has(:checked),
-            &.segmented--subtle .segmented__option:has(:checked) {
+            .segmented__option:has(:checked) {
                 color: HighlightText;
+                background-color: Highlight;
+                forced-color-adjust: none;
+            }
+
+            &:has(:checked)::before {
                 background-color: Highlight;
                 forced-color-adjust: none;
             }

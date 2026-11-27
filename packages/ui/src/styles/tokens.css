@@ -125,6 +125,8 @@
         --transition: 120ms ease-out;
         /* A hover fill for items on a plain surface: lighter in dark, darker in light. */
         --hover-fill: color-mix(in oklab, var(--color-text) 10%, transparent);
+        /* The fill of a picked option, under its primary border: a tile, a segment. */
+        --pick-fill: color-mix(in oklab, var(--color-primary) 15%, transparent);
     }
 
     @media (prefers-reduced-motion: reduce) {
