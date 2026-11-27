@@ -6,8 +6,7 @@
 @import "./styles/crumbs.css";
 @import "./styles/clock.css";
 @import "./styles/satellites.css";
-@import "./styles/card.css";
-@import "./styles/card-actions.css";
+@import "./styles/panel-parts.css";
 @import "./styles/keys.css";
 @import "./styles/forms.css";
 @import "./styles/scenarios.css";

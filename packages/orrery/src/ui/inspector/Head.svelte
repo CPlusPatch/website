@@ -104,3 +104,82 @@ const cancelOnEscape: Attachment<HTMLElement> = (node) =>
         {@html iconSvg("x")}
     </button>
 </div>
+
+<style>
+/* The body inspector's head: a rule under it, as the headline and the scroll area follow. */
+.orrery__inspector-head--ruled {
+    border-block-end: 1px solid var(--orrery-rule);
+}
+
+.orrery__orbit-lifetime {
+    margin: 0 0 calc(var(--space-md) - var(--space-xs) / 2);
+    color: var(--orrery-muted);
+    font-size: var(--orrery-size-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.orrery__inspector-titles {
+    flex: 1;
+    min-inline-size: 0;
+
+    .orrery__orbit-meta,
+    .orrery__orbit-lifetime {
+        margin: 0;
+    }
+}
+
+/* The marker and the name share a line, so the marker needs no offset. */
+.orrery__inspector-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin: 0;
+    overflow-wrap: anywhere;
+    font: 600 var(--orrery-size-lg) / 1.75rem var(--orrery-font-ui);
+    letter-spacing: 0.02em;
+
+    .orrery__orbit-marker {
+        margin-block-start: 0;
+    }
+}
+
+.orrery__orbit-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--orrery-text);
+    font: inherit;
+    text-decoration: underline 1px var(--orrery-frame);
+    text-underline-offset: 3px;
+    cursor: pointer;
+
+    @media (hover: hover) {
+        &:hover {
+            text-decoration-color: var(--orrery-text);
+        }
+    }
+}
+
+@media (max-width: 720px) {
+    /* Touch targets. The hit areas of small controls reach past their boxes. */
+    .orrery__inspector-head--ruled :global(.button--size-icon-sm) {
+        /* Paints above the parent link's hit area. */
+        position: relative;
+        inline-size: var(--control-height-md);
+        block-size: var(--control-height-md);
+    }
+
+    .orrery__orbit-link {
+        position: relative;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 50% auto auto 50%;
+            inline-size: var(--control-height-md);
+            block-size: var(--control-height-md);
+            transform: translate(-50%, -50%);
+        }
+    }
+}
+</style>

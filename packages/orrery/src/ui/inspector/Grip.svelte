@@ -55,3 +55,51 @@ const dragEnd = (event: PointerEvent) => {
         if (event.detail === 0) setSheet(!open);
     }}
 ></button>
+
+<style>
+/* The handle that opens and closes the card on a phone. */
+.orrery__orbit-grip {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .orrery__orbit-grip {
+        display: grid;
+        flex: none;
+        align-content: center;
+        block-size: var(--control-height-md);
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: grab;
+        touch-action: none;
+
+        &[hidden] {
+            display: none;
+        }
+
+        &::before {
+            content: "";
+            display: block;
+            inline-size: 40px;
+            block-size: 4px;
+            margin: 0 auto;
+            background: var(--orrery-frame);
+        }
+
+        @media (hover: hover) {
+            &:hover::before {
+                background: var(--orrery-muted);
+            }
+        }
+
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+
+        &:not([hidden]) + :global(.orrery__inspector-head) {
+            padding-block-start: 0;
+        }
+    }
+}
+</style>

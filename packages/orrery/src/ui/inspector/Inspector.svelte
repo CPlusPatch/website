@@ -293,3 +293,36 @@ $effect(() => {
         {/key}
     {/if}
 </section>
+
+<style>
+.orrery__inspector-scroll {
+    display: contents;
+}
+
+@media (max-width: 720px) {
+    /* The plate scrolls with the body, so the sheet pins only the head and the footer. */
+    .orrery__inspector-scroll {
+        display: flex;
+        flex-direction: column;
+        min-block-size: 0;
+        overflow: auto;
+
+        .orrery__inspector-body {
+            flex: none;
+            max-block-size: none;
+            overflow: visible;
+        }
+    }
+
+    /* Peeked: the grip, the head and the headline stay. */
+    .orrery__inspector[data-peek] {
+        :global(.orrery__orbit-meta),
+        :global(.orrery__orbit-lifetime),
+        :global(.orrery__plate),
+        .orrery__inspector-body,
+        :global(.orrery__inspector-foot) {
+            display: none;
+        }
+    }
+}
+</style>

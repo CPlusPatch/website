@@ -41,3 +41,36 @@ const cells = $derived<[string, string][]>([
     </dl>
     <p class="visually-hidden" aria-live="off">{spoken(current, unit)}</p>
 </div>
+
+<style>
+/* The numbers that matter most, above the scroll area. */
+.orrery__inspector-headline {
+    flex: none;
+    padding: var(--space-sm) var(--orrery-pad);
+
+    p {
+        font: 400 var(--orrery-size-sm) / 1.2 var(--orrery-font-ui);
+    }
+
+    .orrery__headline-grid {
+        margin-block-start: var(--space-sm);
+    }
+}
+
+.orrery__headline-now {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px var(--space-sm);
+    color: var(--orrery-text);
+}
+
+.orrery__headline-distance {
+    font: 500 var(--orrery-size-lg) / 1.2 var(--orrery-font-data);
+    font-variant-numeric: tabular-nums;
+}
+
+.orrery__headline-from {
+    color: var(--orrery-muted);
+}
+</style>

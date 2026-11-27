@@ -158,3 +158,94 @@ const focused = $derived(view.focus === id);
         {/if}
     {/if}
 </div>
+
+<style>
+/* Doubled so it keeps beating the shared footer's columns. */
+.orrery__inspector-foot.orrery__inspector-foot--confirm {
+    grid-template-columns: 1fr auto auto;
+}
+
+.orrery__foot-remove {
+    grid-column: 4;
+    justify-self: end;
+    block-size: var(--orrery-control-lg);
+    padding: 0 var(--space-sm);
+    border: 0;
+    background: none;
+    color: var(--orrery-abort);
+    font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+    letter-spacing: 0.02em;
+    cursor: pointer;
+
+    @media (hover: hover) {
+        &:hover {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+    }
+}
+
+.orrery__foot-button {
+    min-inline-size: 0;
+    block-size: var(--orrery-control-lg);
+    padding: 0 var(--space-sm);
+    border: 1px solid var(--orrery-control-frame);
+    background: transparent;
+    color: var(--orrery-text);
+    font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--orrery-panel-raised);
+        }
+    }
+
+    &[aria-pressed="true"] {
+        border-color: var(--orrery-go);
+        color: var(--orrery-go);
+    }
+
+    &.orrery__foot-button--danger {
+        border-color: var(--orrery-abort);
+        background-color: var(--orrery-abort);
+        color: var(--orrery-ground);
+        font-weight: 600;
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: color-mix(
+                    in srgb,
+                    var(--orrery-abort) 80%,
+                    var(--orrery-text)
+                );
+            }
+        }
+    }
+}
+
+.orrery__foot-question {
+    min-inline-size: 0;
+
+    p {
+        margin: 0;
+        color: var(--orrery-text);
+        font: 400 var(--orrery-size-md) / 1.35 var(--orrery-font-ui);
+    }
+
+    .orrery__foot-question-note {
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-sm);
+    }
+}
+
+@media (max-width: 720px) {
+    /* Touch targets. */
+    .orrery__foot-button,
+    .orrery__foot-remove {
+        min-block-size: var(--control-height-md);
+    }
+}
+</style>

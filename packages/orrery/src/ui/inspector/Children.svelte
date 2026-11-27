@@ -147,3 +147,89 @@ $effect(() => {
         </ul>
     </section>
 {/if}
+
+<style>
+.orrery__orbit-around {
+    margin-block-start: var(--orrery-pad);
+
+    h3 {
+        margin: 0 0 6px;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-label);
+        font-weight: 500;
+    }
+
+    /* The scroll body has its own top padding. */
+    &:first-child {
+        margin-block-start: 0;
+    }
+}
+
+/* One row. The fit hides the chips that don't leave room for "+N more". */
+.orrery__orbit-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    list-style: none;
+
+    &[data-expanded] {
+        flex-wrap: wrap;
+    }
+
+    li {
+        display: flex;
+        flex: none;
+    }
+
+    > :global([hidden]) {
+        display: none;
+    }
+}
+
+.orrery__orbit-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    block-size: 1.5rem;
+    padding: 0 6px;
+    border: 1px solid var(--orrery-rule);
+    background: transparent;
+    color: var(--orrery-text);
+    font: 500 var(--orrery-size-label) var(--orrery-font-ui);
+    white-space: nowrap;
+    cursor: pointer;
+
+    @media (hover: hover) {
+        &:hover {
+            background: var(--orrery-panel-raised);
+        }
+    }
+}
+
+.orrery__orbit-chip--more {
+    color: var(--orrery-muted);
+}
+
+.orrery__orbit-chip-marker {
+    flex: none;
+    display: flex;
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+
+    :global(svg) {
+        inline-size: 100%;
+        block-size: 100%;
+    }
+}
+
+@media (max-width: 720px) {
+    /* A touch target. */
+    .orrery__orbit-chip {
+        min-block-size: var(--control-height-md);
+    }
+}
+</style>

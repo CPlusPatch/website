@@ -16,7 +16,7 @@ import {
 import type { Readouts } from "@cpluspatch/sim";
 import { type Point, plateGeometry } from "../../plate.ts";
 
-/** The SVG's size in its own units. The CSS scales it to the card, see `styles/card.css`. */
+/** The SVG's size in its own units. The CSS in `Plate.svelte` scales it to the card. */
 export const WIDTH = 224;
 export const HEIGHT = 158;
 /** Half a badge's width, and the gap it keeps to the drawing's left and right edges. */

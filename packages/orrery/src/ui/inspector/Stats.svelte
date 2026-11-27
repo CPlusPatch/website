@@ -29,3 +29,21 @@ const rows = $derived(statRows(bodyStats(documents.system, id, view.now())));
         </dl>
     </section>
 {/if}
+
+<style>
+.orrery__body-stats {
+    margin-block-start: var(--orrery-pad);
+
+    h3 {
+        margin: 0 0 6px;
+        color: var(--orrery-muted);
+        font-size: var(--orrery-size-label);
+        font-weight: 500;
+    }
+
+    /* The scroll body has its own top padding. */
+    &:first-child {
+        margin-block-start: 0;
+    }
+}
+</style>

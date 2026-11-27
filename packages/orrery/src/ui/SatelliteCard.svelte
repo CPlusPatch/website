@@ -125,3 +125,75 @@ $effect(() => {
 <!-- biome-ignore format: Whitespace between the elements would be rendered. -->
 <section class="{cardClasses().join(" ")} orrery__inspector orrery__satellite-card" aria-label="Selected satellite" hidden={!visible} bind:this={section}><div class="orrery__inspector-head"><span class="orrery__orbit-marker orrery__satellite-ring"></span><h2 class="orrery__orbit-title">{name}</h2><button type="button" class={buttonClasses({ variant: "ghost", tone: "neutral", size: "icon-sm" }).join(" ")} aria-label="Clear selection" onclick={() => satellite.select(null)}>{@html iconSvg("x")}</button></div
 ><div class="orrery__inspector-body">{#if facts}{#key shown}<p class="orrery__orbit-meta">{meta}</p><dl class="orrery__readouts">{#each readouts as [label, value] (label)}<dt>{label}</dt><dd class="orrery__readout">{value}</dd>{/each}</dl><p class="orrery__satellite-source">Orbits from CelesTrak, {SNAPSHOT_DATE}.</p><div class="orrery__orbit-actions"><div class="orrery__orbit-buttons"><button type="button" class="orrery__orbit-button orrery__orbit-focus" aria-pressed={pressed} bind:this={focusButton} onclick={() => shown !== null && satellite.focus(shown)}>{@html FOCUS_ICON}<span class="orrery__orbit-button-label">{pressed ? "Focused" : "Focus"}</span></button></div></div>{/key}{/if}</div></section>
+
+<style>
+.orrery__satellite-source {
+    margin: var(--space-sm) 0 0;
+    color: var(--orrery-muted);
+    font: 400 var(--orrery-size-xs) / 1.4 var(--orrery-font-ui);
+}
+
+.orrery__orbit-title {
+    flex: 1;
+    min-inline-size: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font: 600 var(--orrery-size-lg) / 1.75rem var(--orrery-font-ui);
+    letter-spacing: 0.02em;
+}
+
+.orrery__orbit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-block-start: var(--space-md);
+}
+
+.orrery__orbit-buttons {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+/* Sized by label, so Focused gets more room than Edit and Burn. */
+.orrery__orbit-button {
+    flex: auto;
+    min-inline-size: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    block-size: var(--orrery-control-lg);
+    padding: 0 0.75rem;
+    border: 1px solid var(--orrery-control-frame);
+    background-color: var(--orrery-panel-raised);
+    color: var(--orrery-text);
+    font: 500 var(--orrery-size-sm) var(--orrery-font-ui);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+
+    @media (hover: hover) {
+        &:hover {
+            border-color: var(--orrery-text);
+        }
+    }
+
+    &[aria-pressed="true"] {
+        border-color: var(--orrery-go);
+        background-color: var(--orrery-go);
+        color: var(--orrery-go-ink);
+    }
+
+    /* From {@html}, so Svelte doesn't scope it. */
+    :global(svg) {
+        flex: none;
+        inline-size: 15px;
+        block-size: 15px;
+    }
+
+    /* A touch target on a phone. */
+    @media (max-width: 720px) {
+        min-block-size: var(--control-height-md);
+    }
+}
+</style>

@@ -58,3 +58,22 @@ const { rows, armed, onLoad, onPressDelete }: Props = $props();
         </ul>
     {/if}
 </section>
+
+<style>
+/* The small-button rules in forms.css set its padding, font and phone height. */
+.orrery__orbit-quiet {
+    flex: none;
+    border: 0;
+    background: none;
+    color: var(--orrery-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+
+    @media (hover: hover) {
+        &:hover {
+            color: var(--orrery-text);
+        }
+    }
+}
+</style>
