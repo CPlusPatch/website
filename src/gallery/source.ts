@@ -24,6 +24,10 @@ const componentName = (fn: { name: string }) =>
 const short = (s: string) =>
     s.length > MAX_STRING ? `${s.slice(0, MAX_STRING - 1)}…` : s;
 
+/** An image's file name, without its path or query, so dev paths don't leak. */
+export const imageName = (src: string): string =>
+    decodeURIComponent(src.split("?")[0]?.split("/").pop() ?? "");
+
 /** A JS value, cut to a few items and levels, on one line. */
 const value = (v: unknown, depth = 0, seen = new Set<object>()): string => {
     if (v === null || v === undefined) return String(v);
@@ -46,7 +50,7 @@ const value = (v: unknown, depth = 0, seen = new Set<object>()): string => {
     }
     // An imported image (astro:assets): its file is what matters.
     if ("src" in v && "width" in v && "format" in v) {
-        return `image(${JSON.stringify(short(String(v.src)))})`;
+        return `image(${JSON.stringify(short(imageName(String(v.src))))})`;
     }
     const entries = Object.entries(v);
     if (depth >= MAX_DEPTH) return entries.length ? "{…}" : "{}";
