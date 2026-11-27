@@ -14,6 +14,7 @@ import {
     sortByDepth,
     statesAt,
     subtreeIds,
+    type TimelineEvent,
 } from "@cpluspatch/sim";
 import { previewBurn } from "../burning.ts";
 
@@ -151,12 +152,12 @@ export class Scene {
         this.#emit({ type: "clock" });
     }
 
-    /** Replaces the whole scenario and sets the clock to `t`. */
-    load(scenario: Scenario, t: number): void {
+    /** Replaces the whole scenario and its `timeline` and sets the clock to `t`. */
+    load(scenario: Scenario, t: number, timeline: TimelineEvent[] = []): void {
         const root = scenario.bodies.find((body) => body.orbit === undefined);
         if (!root) throw new Error("The scenario has no root body.");
 
-        this.#dispatch({ type: "load", doc: documentOf(scenario) });
+        this.#dispatch({ type: "load", doc: { scenario, timeline } });
         this.#held.loads += 1;
         this.#held.selected = null;
         this.#held.focused = root.id;
@@ -207,7 +208,7 @@ export class Scene {
         }
     }
 
-    /** Replaces the orbit of body `id` with a fixed Kepler orbit, dropping any perturbations. */
+    /** Puts body `id` on a Kepler orbit of `el` from now on. Its perturbations keep acting. */
     setElements(id: string, el: Elements): void {
         const result = this.dispatch({
             type: "set-orbit",
@@ -223,7 +224,7 @@ export class Scene {
         return previewBurn(this.scenario, this.system, id, this.clock.t, dv);
     }
 
-    /** Burns `dv` on body `id` now, or says why it can't and changes nothing. */
+    /** Burns `dv` on body `id` now as a timeline event, or says why it can't and changes nothing. */
     burn(
         id: string,
         dv: Burn,

@@ -12,6 +12,7 @@ import { precessionsOf } from "./perturb/index.ts";
 import { elementsAt, j2Precession } from "./precession.ts";
 import type { Body, OrbitingBody } from "./scenario.ts";
 import { isOrbiting, subtreeIds } from "./scenario.ts";
+import { compile } from "./snapshot.ts";
 
 const doc = documentOf(solarSystem);
 
@@ -213,25 +214,15 @@ Deno.test("update-body returns the validator's errors", () => {
     assert(error?.includes("earth.mass.radius"));
 });
 
-Deno.test("set-orbit replaces the elements and drops perturbations", () => {
-    const precessing = solarSystem.bodies.find(
-        (body) => body.orbit !== undefined && body.perturbations !== undefined,
-    );
-    assert(precessing);
-
+Deno.test("set-orbit appends an event and leaves the scenario alone", () => {
     const next = ok(
-        apply(doc, {
-            type: "set-orbit",
-            bodyId: precessing.id,
-            t: 0,
-            elements,
-        }),
+        apply(doc, { type: "set-orbit", bodyId: "earth", t: 5, elements }),
     );
-    const body = find(next, precessing.id);
 
-    assertEquals(body?.orbit?.elements, elements);
-    assertEquals(body?.perturbations, undefined);
-    assert(!("perturbations" in (body ?? {})));
+    assertEquals(next.scenario, doc.scenario);
+    assertEquals(next.timeline, [
+        { type: "set-orbit", id: "e1", bodyId: "earth", t: 5, elements },
+    ]);
 });
 
 Deno.test("set-orbit of an unknown id or the root is an error", () => {
@@ -260,7 +251,7 @@ Deno.test("set-orbit returns the validator's errors", () => {
     );
 });
 
-Deno.test("schedule-burn gives the elements applyBurn does", () => {
+Deno.test("schedule-burn appends an event whose orbit is the one applyBurn gives", () => {
     const earth = orbiting("earth");
     const sun = solarSystem.bodies.find((body) => body.id === "sun");
     const dv = { prograde: 100, normal: 20, radial: -5 };
@@ -277,17 +268,40 @@ Deno.test("schedule-burn gives the elements applyBurn does", () => {
         apply(doc, { type: "schedule-burn", bodyId: "earth", t, dv }),
     );
 
-    assertEquals(find(next, "earth")?.orbit?.elements, direct.elements);
-    assertEquals(next.timeline, []);
+    assertEquals(next.scenario, doc.scenario);
+    assertEquals(next.timeline, [
+        { type: "burn", id: "e1", bodyId: "earth", t, dv },
+    ]);
+    assertEquals(
+        compile(next, PRESETS).elementsAt("earth", t),
+        direct.elements,
+    );
 });
 
-Deno.test("schedule-burn drops perturbations like set-orbit", () => {
+Deno.test("a burn changes the orbit from its time on, and not before", () => {
+    const dv = { prograde: 100, normal: 0, radial: 0 };
+    const t = 1e7;
+    const next = ok(
+        apply(doc, { type: "schedule-burn", bodyId: "earth", t, dv }),
+    );
+    const before = compile(doc, PRESETS);
+    const after = compile(next, PRESETS);
+
+    assertEquals(
+        after.elementsAt("earth", t - 1),
+        before.elementsAt("earth", t - 1),
+    );
+    assertEquals(after.elementsAt("earth", 0), before.elementsAt("earth", 0));
+    assert(after.elementsAt("earth", t).a !== before.elementsAt("earth", t).a);
+});
+
+Deno.test("a burn and a set-orbit keep the perturbations", () => {
     const precessing = solarSystem.bodies.find(
         (body) => body.orbit !== undefined && body.perturbations !== undefined,
     );
     assert(precessing);
 
-    const next = ok(
+    const burned = ok(
         apply(doc, {
             type: "schedule-burn",
             bodyId: precessing.id,
@@ -295,8 +309,163 @@ Deno.test("schedule-burn drops perturbations like set-orbit", () => {
             dv: { prograde: 1, normal: 0, radial: 0 },
         }),
     );
+    const set = ok(
+        apply(doc, {
+            type: "set-orbit",
+            bodyId: precessing.id,
+            t: 0,
+            elements: orbiting(precessing.id).orbit.elements,
+        }),
+    );
 
-    assert(!("perturbations" in (find(next, precessing.id) ?? {})));
+    for (const next of [burned, set]) {
+        assertEquals(find(next, precessing.id), precessing);
+        assertEquals(
+            compile(next, PRESETS).segmentAt(precessing.id, 1).precessions
+                .length,
+            precessing.perturbations?.length,
+        );
+    }
+});
+
+Deno.test("event ids are e<n> with n one more than the largest", () => {
+    const dv = { prograde: 1, normal: 0, radial: 0 };
+    const first = ok(
+        apply(doc, { type: "schedule-burn", bodyId: "earth", t: 0, dv }),
+    );
+    const second = ok(
+        apply(first, { type: "set-orbit", bodyId: "iss", t: 1, elements }),
+    );
+    const loaded: Document = {
+        ...second,
+        timeline: second.timeline.map((event) => ({
+            ...event,
+            id: event.id === "e1" ? "e7" : "x",
+        })),
+    };
+    const third = ok(
+        apply(loaded, { type: "schedule-burn", bodyId: "earth", t: 2, dv }),
+    );
+
+    assertEquals(
+        second.timeline.map((event) => event.id),
+        ["e1", "e2"],
+    );
+    assertEquals(third.timeline.at(-1)?.id, "e8");
+});
+
+Deno.test("remove-event takes the event out and the orbit goes back", () => {
+    const dv = { prograde: 100, normal: 0, radial: 0 };
+    const burned = ok(
+        apply(doc, { type: "schedule-burn", bodyId: "earth", t: 1e7, dv }),
+    );
+    const next = ok(apply(burned, { type: "remove-event", id: "e1" }));
+
+    assertEquals(next.timeline, []);
+    assertEquals(next.scenario, doc.scenario);
+});
+
+Deno.test("remove-event of an unknown id is an error", () => {
+    assertEquals(errors(apply(doc, { type: "remove-event", id: "e1" })), [
+        'id: there is no event "e1"',
+    ]);
+});
+
+// Moon around Earth: a 1 km/s burn escapes from its own orbit but not from a low circular one.
+const lowOrbit: Elements = { ...elements, a: 1e7, e: 0, i: 0, epoch: 0 };
+const lift = { prograde: 1e3, normal: 0, radial: 0 };
+const lowThenBurn: Document = {
+    ...doc,
+    timeline: [
+        {
+            type: "set-orbit",
+            id: "e1",
+            bodyId: "moon",
+            t: 0,
+            elements: lowOrbit,
+        },
+        { type: "burn", id: "e2", bodyId: "moon", t: 10, dv: lift },
+    ],
+};
+
+Deno.test("remove-event is rejected if a later burn then fails", () => {
+    const [error, ...rest] = errors(
+        apply(lowThenBurn, { type: "remove-event", id: "e1" }),
+    );
+
+    assertEquals(rest, []);
+    assert(error?.startsWith('timeline: can\'t burn "moon" at t=10'));
+});
+
+Deno.test("a new event is rejected if it makes a later burn fail", () => {
+    const moon = orbiting("moon");
+    const [error] = errors(
+        apply(lowThenBurn, {
+            type: "set-orbit",
+            bodyId: "moon",
+            t: 5,
+            elements: moon.orbit.elements,
+        }),
+    );
+
+    assert(error?.startsWith('timeline: can\'t burn "moon" at t=10'));
+});
+
+Deno.test("remove-body drops the events of the removed subtree", () => {
+    const dv = { prograde: 1, normal: 0, radial: 0 };
+    const withEvents = ok(
+        apply(
+            ok(
+                apply(doc, {
+                    type: "schedule-burn",
+                    bodyId: "earth",
+                    t: 0,
+                    dv,
+                }),
+            ),
+            {
+                type: "set-orbit",
+                bodyId: "mars",
+                t: 1,
+                elements: orbiting("mars").orbit.elements,
+            },
+        ),
+    );
+    const withMoonBurn = ok(
+        apply(withEvents, { type: "schedule-burn", bodyId: "iss", t: 2, dv }),
+    );
+    const next = ok(apply(withMoonBurn, { type: "remove-body", id: "earth" }));
+
+    assertEquals(
+        next.timeline.map((event) => event.bodyId),
+        ["mars"],
+    );
+});
+
+Deno.test("load validates the timeline", () => {
+    const bad = {
+        ...doc,
+        timeline: [{ type: "burn", id: "e1", bodyId: "sun", t: 0, dv: {} }],
+    } as unknown as Document;
+    const messages = errors(apply(doc, { type: "load", doc: bad }));
+
+    assert(
+        messages.some((message) => message.startsWith("timeline[0].bodyId")),
+    );
+    assert(
+        messages.some((message) =>
+            message.startsWith("timeline[0].dv.prograde"),
+        ),
+    );
+});
+
+Deno.test("load keeps a valid timeline", () => {
+    const dv = { prograde: 1, normal: 0, radial: 0 };
+    const withEvent = ok(
+        apply(doc, { type: "schedule-burn", bodyId: "earth", t: 0, dv }),
+    );
+
+    assertEquals(ok(apply(doc, { type: "load", doc: withEvent })), withEvent);
 });
 
 Deno.test("schedule-burn that escapes is an error naming the body", () => {
@@ -448,5 +617,8 @@ Deno.test("schedule-burn on a j2 body burns the elements as precessed", () => {
         apply(withBody, { type: "schedule-burn", bodyId: "probe", t, dv }),
     );
 
-    assertEquals(find(next, "probe")?.orbit?.elements, direct.elements);
+    assertEquals(
+        compile(next, PRESETS).elementsAt("probe", t),
+        direct.elements,
+    );
 });

@@ -1,13 +1,18 @@
 import type { Elements, State, Vec3 } from "@cpluspatch/orbit";
 import type { Document } from "./document.ts";
 import { bodyOrientation } from "./orientation.ts";
-import { precessionsByBody } from "./perturb/index.ts";
-import { elementsAt, type Precession } from "./precession.ts";
+import { elementsAt } from "./precession.ts";
 import { expandPresets, type Presets } from "./presets.ts";
-import { tracksByBody } from "./propagate/index.ts";
+import type { Track } from "./propagate/index.ts";
 import type { Body } from "./scenario.ts";
 import { isOrbiting, sortByDepth } from "./scenario.ts";
 import { worldStates } from "./system.ts";
+import {
+    type Segment,
+    segmentIn,
+    segmentsByBody,
+} from "./timeline/segments.ts";
+import { piecewiseTrack } from "./timeline/track.ts";
 
 /** Every body at one time, packed into flat arrays indexed by `System.index`. */
 export type Snapshot = {
@@ -33,11 +38,11 @@ export type System = {
     snapshot(t: number): Snapshot;
     /** The orbit of an orbiting body at `t`, with its perturbations applied. Throws for the root or an unknown id. */
     elementsAt(id: string, t: number): Elements;
-    /** The resolved perturbations of body `id`, in order. Empty for the root. Throws for an unknown id. */
-    precessions(id: string): readonly Precession[];
+    /** The stretch of orbit of an orbiting body that covers `t`. Throws for the root or an unknown id. */
+    segmentAt(id: string, t: number): Segment;
 };
 
-/** Compiles the scenario of `doc` into a `System`, with `presets` filling what its bodies leave out. */
+/** Compiles `doc` into a `System`, with `presets` filling what its bodies leave out. Throws if a burn of `doc` fails. */
 export const compile = (doc: Document, presets: Presets): System => {
     const scenario = expandPresets(doc.scenario, presets);
     const order = sortByDepth(scenario);
@@ -45,8 +50,20 @@ export const compile = (doc: Document, presets: Presets): System => {
     const index = new Map(ids.map((id, i) => [id, i]));
     const byId = new Map(order.map((body) => [body.id, body]));
 
-    const resolved = precessionsByBody(order);
-    const tracks = tracksByBody(order, resolved);
+    const result = segmentsByBody(order, doc.timeline);
+
+    if (!result.ok) throw new Error(result.errors.join("; "));
+
+    const tracks = new Map<string, Track>();
+
+    for (const [id, segments] of result.segments) {
+        const body = byId.get(id);
+        const parent = body && isOrbiting(body) && byId.get(body.orbit.parent);
+
+        if (body && isOrbiting(body) && parent) {
+            tracks.set(id, piecewiseTrack(body, parent, segments));
+        }
+    }
 
     const known = (id: string): Body => {
         const body = byId.get(id);
@@ -101,25 +118,28 @@ export const compile = (doc: Document, presets: Presets): System => {
         return cached;
     };
 
+    const segmentAt = (id: string, t: number): Segment => {
+        const body = known(id);
+        const segments = result.segments.get(id);
+
+        if (!isOrbiting(body) || !segments) {
+            throw new Error(`${id} is the root and has no orbit`);
+        }
+
+        return segmentIn(segments, t);
+    };
+
     return {
         ids,
         index,
         body: known,
         snapshot,
         elementsAt: (id, t) => {
-            const body = known(id);
+            const segment = segmentAt(id, t);
 
-            if (!isOrbiting(body)) {
-                throw new Error(`${id} is the root and has no orbit`);
-            }
-
-            return elementsAt(body.orbit.elements, resolved.get(id) ?? [], t);
+            return elementsAt(segment.elements, segment.precessions, t);
         },
-        precessions: (id) => {
-            known(id);
-
-            return resolved.get(id) ?? [];
-        },
+        segmentAt,
     };
 };
 

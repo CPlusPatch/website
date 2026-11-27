@@ -26,7 +26,7 @@ export type ShortcutActions = {
 const shownUnit = (scene: Scene): AUnit => {
     const id = scene.selected;
     const current = id
-        ? readouts(scene.scenario, id, scene.states(), scene.clock.t)
+        ? readouts(scene.system, id, scene.states(), scene.clock.t)
         : null;
 
     // From AU, so the first U picks km.

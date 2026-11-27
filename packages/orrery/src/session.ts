@@ -71,14 +71,14 @@ export const createSession = (options: {
     let loadId = 0;
     let destroyed = false;
 
-    let lastGood = scene.scenario;
+    let lastGood = scene.doc;
     let restoring = false;
 
     // Redraws from scratch. A scenario that can't be drawn goes back to the last good one.
     const rebuildOrRestore = (): boolean => {
         try {
             rebuild();
-            lastGood = scene.scenario;
+            lastGood = scene.doc;
 
             return true;
         } catch {
@@ -90,7 +90,7 @@ export const createSession = (options: {
             const focused = scene.focused;
             restoring = true;
             try {
-                scene.load(lastGood, scene.clock.t);
+                scene.load(lastGood.scenario, scene.clock.t, lastGood.timeline);
             } finally {
                 restoring = false;
             }
@@ -113,14 +113,14 @@ export const createSession = (options: {
         if (event.type === "bodies") {
             try {
                 update({ added: event.added, removed: event.removed });
-                lastGood = scene.scenario;
+                lastGood = scene.doc;
             } catch {
                 if (!rebuildOrRestore()) return;
             }
         }
 
         // A burn or an edit is kept if a later rebuild fails.
-        if (event.type === "body") lastGood = scene.scenario;
+        if (event.type === "body") lastGood = scene.doc;
 
         // Neither is saved, so they don't need a write.
         if (event.type !== "selection" && event.type !== "focus") saveSoon();

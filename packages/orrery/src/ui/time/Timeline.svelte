@@ -113,7 +113,12 @@ const draw = (nowT: number, live: boolean, half: number) => {
     const readout =
         picked === null
             ? null
-            : readouts(scenario, picked, statesAt(documents.system, t), t);
+            : readouts(
+                  documents.system,
+                  picked,
+                  statesAt(documents.system, t),
+                  t,
+              );
     const bodyName =
         scenario.bodies.find((body) => body.id === picked)?.name ?? null;
 

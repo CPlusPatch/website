@@ -2,7 +2,7 @@
 import { solarSystem } from "@cpluspatch/catalog";
 import { stateAt } from "@cpluspatch/orbit";
 import { Clock, type SceneEvent } from "@cpluspatch/render";
-import { type Body, documentOf, isOrbiting, subtreeIds } from "@cpluspatch/sim";
+import { type Body, documentOf, subtreeIds } from "@cpluspatch/sim";
 import {
     assert,
     assertAlmostEquals,
@@ -177,12 +177,7 @@ Deno.test("setElements emits one body event and the states follow the new orbit"
 
     assertEquals(events, [{ type: "body", id: "moon" }]);
     assertEquals(
-        scene.scenario.bodies.find((body) => body.id === "moon")?.orbit
-            ?.elements.a,
-        moon.orbit.elements.a * 2,
-    );
-    assertEquals(
-        scene.order.find((body) => body.id === "moon")?.orbit?.elements.a,
+        scene.system.elementsAt("moon", scene.clock.t).a,
         moon.orbit.elements.a * 2,
     );
     assertNotEquals(scene.states().get("moon"), before);
@@ -204,19 +199,31 @@ Deno.test("setElements throws for an unknown body or one with no parent", () => 
 
 const PROGRADE = { prograde: 100, normal: 0, radial: 0 };
 
-Deno.test("a burn emits one body event and changes the orbit", () => {
+Deno.test("a burn emits one body event and changes the orbit from now on", () => {
     const scene = make();
-    const before = scene.scenario.bodies.find((body) => body.id === "moon");
+    const before = scene.scenario;
+    const orbitBefore = scene.system.elementsAt("moon", scene.clock.t);
     const events: SceneEvent[] = [];
     scene.on((e) => events.push(e));
 
     const result = scene.burn("moon", PROGRADE);
 
-    const after = scene.scenario.bodies.find((body) => body.id === "moon");
     assertEquals(result, { ok: true });
     assertEquals(events, [{ type: "body", id: "moon" }]);
-    assertNotEquals(after?.orbit?.elements, before?.orbit?.elements);
-    assertEquals(after?.orbit?.elements.epoch, scene.clock.t);
+    assert(scene.scenario === before);
+    assertEquals(scene.doc.timeline.length, 1);
+    assertNotEquals(
+        scene.system.elementsAt("moon", scene.clock.t),
+        orbitBefore,
+    );
+    assertEquals(
+        scene.system.segmentAt("moon", scene.clock.t).elements.epoch,
+        scene.clock.t,
+    );
+    assertEquals(
+        scene.system.elementsAt("moon", scene.clock.t - 1).a,
+        orbitBefore.a,
+    );
 });
 
 Deno.test("a burn that escapes returns why and emits nothing", () => {
@@ -618,7 +625,7 @@ const makePrecessing = (): Scene => {
     return new Scene({ ...solarSystem, bodies }, new Clock(1e7, 1, false));
 };
 
-Deno.test("setElements turns a precessing body into a fixed orbit", () => {
+Deno.test("setElements keeps a precessing body precessing", () => {
     const scene = makePrecessing();
     const moon = scene.scenario.bodies.find((body) => body.id === "moon");
 
@@ -628,7 +635,9 @@ Deno.test("setElements turns a precessing body into a fixed orbit", () => {
     scene.setElements("moon", moon.orbit.elements);
 
     const after = scene.scenario.bodies.find((body) => body.id === "moon");
-    assert(after && !("perturbations" in after));
+    const { precessions } = scene.system.segmentAt("moon", scene.clock.t);
+    assertEquals(after?.perturbations, moon.perturbations);
+    assertEquals(precessions.length, moon.perturbations.length);
 });
 
 Deno.test("a zero burn on a precessing body keeps its position", () => {
@@ -643,18 +652,13 @@ Deno.test("a zero burn on a precessing body keeps its position", () => {
     const result = scene.burn("moon", { prograde: 0, normal: 0, radial: 0 });
     assert(result.ok);
 
-    const fixed = scene.scenario.bodies.find((body) => body.id === "moon");
-    assert(fixed && isOrbiting(fixed));
+    const fixed = scene.system.segmentAt("moon", t);
 
-    const local = stateAt(
-        fixed.orbit.elements,
-        earth.mass.mu + moon.mass.mu,
-        t,
-    );
+    const local = stateAt(fixed.elements, earth.mass.mu + moon.mass.mu, t);
     const parent = scene.states().get("earth");
     assert(parent);
 
-    assertEquals(scene.system.elementsAt("moon", t), fixed.orbit.elements);
+    assertEquals(fixed.elements.epoch, t);
     assertAlmostEquals(parent.r.x + local.r.x, before.r.x, 1e-3);
     assertAlmostEquals(parent.r.y + local.r.y, before.r.y, 1e-3);
     assertAlmostEquals(parent.r.z + local.r.z, before.r.z, 1e-3);

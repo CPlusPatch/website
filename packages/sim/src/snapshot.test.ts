@@ -208,7 +208,8 @@ const j2Earth = (): Scenario => ({
 Deno.test("a j2 body under a preset parent compiles and precesses by the j2 rates", () => {
     const system = compile(documentOf(j2Earth()), PRESETS);
     const earth = system.body("earth");
-    const [precession] = system.precessions("sat");
+    const { precessions } = system.segmentAt("sat", 0);
+    const [precession] = precessions;
 
     assert(precession);
     assert(earth.gravity);
@@ -223,12 +224,31 @@ Deno.test("a j2 body under a preset parent compiles and precesses by the j2 rate
         system.elementsAt("sat", t),
         precess(sat.orbit.elements, precession, t),
     );
-    assertEquals(system.precessions("sun" as string).length, 0);
 });
 
-Deno.test("system.precessions and system.body throw for an unknown id", () => {
+Deno.test("system.segmentAt and system.body throw for an unknown id", () => {
     const system = compile(documentOf(j2Earth()), PRESETS);
 
-    assertThrows(() => system.precessions("nope"), Error, "Unknown body");
+    assertThrows(() => system.segmentAt("nope", 0), Error, "Unknown body");
     assertThrows(() => system.body("nope"), Error, "Unknown body");
+});
+
+Deno.test("system.segmentAt throws for the root", () => {
+    const system = compile(documentOf(j2Earth()), PRESETS);
+
+    assertThrows(() => system.segmentAt("sun", 0), Error, "root");
+});
+
+Deno.test("an orbit with no events is one segment of its scenario orbit", () => {
+    const system = compile(documentOf(j2Earth()), PRESETS);
+    const sat = system.body("sat");
+    assert(isOrbiting(sat));
+
+    for (const t of [-1e12, 0, 1e12]) {
+        const segment = system.segmentAt("sat", t);
+
+        assertEquals(segment.from, Number.NEGATIVE_INFINITY);
+        assertEquals(segment.to, Number.POSITIVE_INFINITY);
+        assertEquals(segment.elements, sat.orbit.elements);
+    }
 });

@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { solarSystem } from "@cpluspatch/catalog";
+import { PRESETS, solarSystem } from "@cpluspatch/catalog";
 import { AU } from "@cpluspatch/orbit";
 import {
     assert,
@@ -7,17 +7,16 @@ import {
     assertEquals,
     assertThrows,
 } from "@std/assert";
+import { documentOf } from "./document.ts";
 import { distanceOf, readouts } from "./readouts.ts";
 import { sortByDepth } from "./scenario.ts";
+import { compile, statesAt } from "./snapshot.ts";
 import { worldStates } from "./system.ts";
 
+const system = compile(documentOf(solarSystem), PRESETS);
+
 const at = (id: string, t: number) =>
-    readouts(
-        solarSystem,
-        id,
-        worldStates(solarSystem, sortByDepth(solarSystem), t),
-        t,
-    );
+    readouts(system, id, statesAt(system, t), t);
 
 Deno.test("the root has no readouts", () => {
     assertEquals(at("sun", 0), null);
@@ -102,4 +101,32 @@ Deno.test("a body's distance matches its readouts, and the root has none", () =>
 
     assertEquals(distanceOf(states, body("sun")), null);
     assertEquals(distanceOf(states, body("moon")), at("moon", 0)?.distance);
+});
+
+Deno.test("readouts follow a burn: the base orbit before it, the burned orbit after", () => {
+    const t0 = 1e6;
+    const burned = compile(
+        {
+            scenario: solarSystem,
+            timeline: [
+                {
+                    type: "burn",
+                    id: "b1",
+                    bodyId: "iss",
+                    t: t0,
+                    dv: { prograde: 100, normal: 0, radial: 0 },
+                },
+            ],
+        },
+        PRESETS,
+    );
+    const of = (t: number) => {
+        const result = readouts(burned, "iss", statesAt(burned, t), t);
+        assert(result);
+
+        return result;
+    };
+
+    assertEquals(of(t0 - 1000).period, at("iss", t0 - 1000)?.period);
+    assert(of(t0 + 1000).period > (at("iss", t0 + 1000)?.period ?? 0) + 1);
 });

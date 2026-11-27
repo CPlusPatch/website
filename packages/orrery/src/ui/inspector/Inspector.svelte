@@ -100,7 +100,12 @@ const refresh = () => {
 
     const t = view.now();
     const scenario = documents.doc.scenario;
-    const current = readouts(scenario, id, statesAt(documents.system, t), t);
+    const current = readouts(
+        documents.system,
+        id,
+        statesAt(documents.system, t),
+        t,
+    );
     const selected = scenario.bodies.find((b) => b.id === id);
     const around = scenario.bodies.find(
         (b) => b.id === selected?.orbit?.parent,

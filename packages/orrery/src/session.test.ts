@@ -326,8 +326,7 @@ Deno.test("a failed rebuild keeps an orbit edited before it", () => {
     scene.setElements("moon", { ...moon.orbit.elements, e: 0.2 });
     scene.addBody(rock("rock"));
 
-    const after = scene.scenario.bodies.find((body) => body.id === "moon");
-    assertEquals(after?.orbit?.elements.e, 0.2);
+    assertEquals(scene.system.elementsAt("moon", scene.clock.t).e, 0.2);
 
     session.destroy();
 });

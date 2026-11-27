@@ -156,7 +156,8 @@ const inRange = (
     }
 };
 
-const validateElements = (
+/** Checks the elements at `path` and returns the clean value, or null after pushing errors. */
+export const validateElements = (
     path: string,
     input: unknown,
     errors: string[],

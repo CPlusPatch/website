@@ -8,8 +8,9 @@ import {
     sub,
     trueAnomalyAt,
 } from "@cpluspatch/orbit";
-import type { Body, Scenario } from "./scenario.ts";
+import type { Body } from "./scenario.ts";
 import { isOrbiting } from "./scenario.ts";
+import type { System } from "./snapshot.ts";
 
 /** A body's orbit around its parent, in SI units and radians. */
 export type Readouts = {
@@ -49,35 +50,33 @@ export const distanceOf = (
 
 /** The readouts of body `id` at time `t`, or `null` for a body with no orbit. */
 export const readouts = (
-    scenario: Scenario,
+    system: System,
     id: string,
     states: Map<string, State>,
     t: number,
 ): Readouts | null => {
-    const body = scenario.bodies.find((candidate) => candidate.id === id);
-    if (!body) throw new Error(`There is no body "${id}".`);
+    const body = system.body(id);
     if (!isOrbiting(body)) return null;
 
-    const parent = scenario.bodies.find(({ id }) => id === body.orbit.parent);
+    const parent = system.body(body.orbit.parent);
     const state = states.get(body.id);
     const parentState = states.get(body.orbit.parent);
-    if (!parent || !state || !parentState) {
+    if (!state || !parentState) {
         throw new Error(`There is no state for "${id}" or its parent.`);
     }
 
     const mu = parent.mass.mu + body.mass.mu;
+    const { elements } = system.segmentAt(id, t);
 
     // Precession only turns `i`, `raan` and `argp`, and these read only `a`, `e`, `m0` and `epoch`.
     return {
         distance: length(sub(state.r, parentState.r)),
         speed: length(sub(state.v, parentState.v)),
-        period: period(body.orbit.elements, mu),
-        periapsisAltitude: periapsis(body.orbit.elements) - parent.mass.radius,
-        apoapsisAltitude: apoapsis(body.orbit.elements) - parent.mass.radius,
-        trueAnomaly: trueAnomalyAt(body.orbit.elements, mu, t),
-        timeToPeriapsis:
-            nextApsisTime(body.orbit.elements, mu, t, "periapsis") - t,
-        timeToApoapsis:
-            nextApsisTime(body.orbit.elements, mu, t, "apoapsis") - t,
+        period: period(elements, mu),
+        periapsisAltitude: periapsis(elements) - parent.mass.radius,
+        apoapsisAltitude: apoapsis(elements) - parent.mass.radius,
+        trueAnomaly: trueAnomalyAt(elements, mu, t),
+        timeToPeriapsis: nextApsisTime(elements, mu, t, "periapsis") - t,
+        timeToApoapsis: nextApsisTime(elements, mu, t, "apoapsis") - t,
     };
 };

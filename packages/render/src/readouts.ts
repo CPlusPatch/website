@@ -211,7 +211,7 @@ export const createReadouts = (
                 size.height,
             );
             const numbers = readouts(
-                source.scenario,
+                source.system,
                 body.id,
                 source.states(),
                 source.clock.t,

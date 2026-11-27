@@ -1,5 +1,10 @@
 import type { Elements, Vec3 } from "@cpluspatch/orbit";
-import { type Body, isOrbiting, precessionTurnsThrough } from "@cpluspatch/sim";
+import {
+    type Body,
+    isOrbiting,
+    precessionTurnsThrough,
+    type Segment,
+} from "@cpluspatch/sim";
 import {
     Color,
     CustomBlending,
@@ -52,7 +57,7 @@ export type Orbits = {
     ) => void;
     /** Draws the orbit of a body, or of none, in the pick colour and thicker. */
     highlight: (id: string | null) => void;
-    /** Draws the line of `body` again from its new elements. */
+    /** Draws the line of `body` again from its new elements, at the next `update`. */
     rebuild: (body: Body) => void;
     /** Adds the line of `body`, if it has an orbit. */
     add: (body: Body) => void;
@@ -164,6 +169,33 @@ export const createOrbits = (
         else orbit.fade.ground.value.copy(background);
     };
 
+    // The geometry depends only on the elements, so an equal segment keeps it.
+    const sameElements = (a: Elements, b: Elements): boolean =>
+        a.a === b.a &&
+        a.e === b.e &&
+        a.i === b.i &&
+        a.raan === b.raan &&
+        a.argp === b.argp &&
+        a.m0 === b.m0 &&
+        a.epoch === b.epoch;
+
+    // The segment's elements change when the clock crosses an event, or the document changes.
+    const rebuildGeometry = (orbit: Orbit, segment: Segment) => {
+        const { geometry, positions, colors, segments } = orbitGeometry(
+            segment.elements,
+        );
+        orbit.line.geometry.dispose();
+        orbit.line.geometry = geometry;
+        orbit.casing.geometry = geometry;
+        orbit.positions = positions;
+        orbit.colors = colors;
+        orbit.segments = segments;
+        orbit.segment = segment;
+        orbit.paint = null;
+        // The new geometry has the static layout.
+        if (orbit.near) restoreStatic(orbit);
+    };
+
     const addOrbit = (body: Body): Orbit | null => {
         if (!isOrbiting(body)) return null;
 
@@ -205,6 +237,8 @@ export const createOrbits = (
             colors,
             segments,
             near: false,
+            // The first `update` builds the geometry for the segment at its time.
+            segment: null,
             paint: null,
             ramp: new Float32Array(3 * SAMPLES),
         };
@@ -263,19 +297,8 @@ export const createOrbits = (
             );
             if (!orbit || !isOrbiting(body)) return;
 
-            const { geometry, positions, colors, segments } = orbitGeometry(
-                body.orbit.elements,
-            );
-            orbit.line.geometry.dispose();
-            orbit.line.geometry = geometry;
-            orbit.casing.geometry = geometry;
             orbit.body = body;
-            orbit.positions = positions;
-            orbit.colors = colors;
-            orbit.segments = segments;
-            orbit.paint = null;
-            // The new geometry has the static layout.
-            if (orbit.near) restoreStatic(orbit);
+            orbit.segment = null;
         },
         update: (origin, frame, camera, rate, t) => {
             const fov = (camera.fov * Math.PI) / 180;
@@ -287,6 +310,18 @@ export const createOrbits = (
                 const parentR = positionOf(frame, body.orbit.parent);
                 if (!parentR) continue;
 
+                const segment = frame.system.segmentAt(body.id, t);
+                if (
+                    !orbit.segment ||
+                    !sameElements(orbit.segment.elements, segment.elements)
+                ) {
+                    rebuildGeometry(orbit, segment);
+                } else {
+                    // Keep the precessions current.
+                    orbit.segment = segment;
+                }
+
+                const { elements } = segment;
                 parentAt.set(
                     (parentR.x - origin.x) / 1000,
                     (parentR.y - origin.y) / 1000,
@@ -294,7 +329,7 @@ export const createOrbits = (
                 );
 
                 const aPx = projectedRadiusPx(
-                    body.orbit.elements.a / 1000,
+                    elements.a / 1000,
                     camera.position.distanceTo(parentAt),
                     fov,
                     size.height,
@@ -305,7 +340,7 @@ export const createOrbits = (
                 line.visible = shown;
                 casing.visible = shown;
                 if (shown) {
-                    const { e, a } = body.orbit.elements;
+                    const { e, a } = elements;
                     orbit.fade.parentDepth.value = inView
                         .copy(parentAt)
                         .applyMatrix4(camera.matrixWorldInverse).z;
@@ -326,16 +361,15 @@ export const createOrbits = (
                           ),
                       )
                     : Infinity;
-                const near = orbitNear(distance, body.orbit.elements.a / 1000);
+                const near = orbitNear(distance, elements.a / 1000);
                 if (orbit.near && !near) restoreStatic(orbit);
 
                 // The near points are already placed in the world, so they take no turn.
                 turn.identity();
-                const precessions = frame.system.precessions(body.id);
-                if (!near && precessions.length > 0) {
+                if (!near && segment.precessions.length > 0) {
                     const turns = precessionTurnsThrough(
-                        body.orbit.elements,
-                        precessions,
+                        elements,
+                        segment.precessions,
                         t,
                     );
                     // Each turn is applied after the ones before it.

@@ -1,7 +1,10 @@
 import type { Burn, Elements } from "@cpluspatch/orbit";
 import type { Scenario } from "./scenario.ts";
 
-/** A change to a body's orbit at time `t`. Always empty in a `Document` until timeline events land. */
+/**
+ * A change to a body's orbit at time `t`, with `id` unique in the timeline. A body's orbit is its
+ * scenario orbit until its first event, then the result of each event in time order.
+ */
 export type TimelineEvent =
     | { type: "burn"; id: string; bodyId: string; t: number; dv: Burn }
     | {

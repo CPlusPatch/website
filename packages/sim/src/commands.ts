@@ -1,10 +1,9 @@
-import { applyBurn, type Burn, type Elements } from "@cpluspatch/orbit";
-import type { Document } from "./document.ts";
-import { precessionsOf } from "./perturb/index.ts";
-import { elementsAt } from "./precession.ts";
-import { expandBody, type Presets } from "./presets.ts";
+import type { Burn, Elements } from "@cpluspatch/orbit";
+import type { Document, TimelineEvent } from "./document.ts";
+import type { Presets } from "./presets.ts";
 import type { Body, Scenario } from "./scenario.ts";
 import { isOrbiting, subtreeIds, validateScenario } from "./scenario.ts";
+import { validateTimeline } from "./timeline/validate.ts";
 
 /** The fields of a body that `update-body` can change. */
 export type BodyPatch = Partial<
@@ -19,6 +18,8 @@ export type Command =
     | { type: "update-body"; id: string; patch: BodyPatch }
     | { type: "set-orbit"; bodyId: string; t: number; elements: Elements }
     | { type: "schedule-burn"; bodyId: string; t: number; dv: Burn }
+    /** Removes a timeline event, so the body's orbit follows the events that are left. */
+    | { type: "remove-event"; id: string }
     | { type: "load"; doc: Document };
 
 /** The document after a command, or every reason it can't be applied. */
@@ -28,49 +29,46 @@ export type DocumentResult =
 
 const PATCH_KEYS = ["name", "tags", "mass", "appearance", "preset"] as const;
 
-const BURN_FAILURES = {
-    escape: "the burn would leave the parent's gravity",
-    degenerate: "the burn would leave no orbit to describe",
-};
-
 const fail = (...errors: string[]): DocumentResult => ({ ok: false, errors });
 
-/** Validates `scenario`, since every change has to leave a scenario the loader would accept. */
+/** `doc`'s scenario with `timeline` checked against it. The scenario is already valid, so it's kept as it is. */
+const withTimeline = (
+    scenario: Scenario,
+    timeline: unknown,
+    presets: Presets,
+): DocumentResult => {
+    const events = validateTimeline(timeline, scenario, presets);
+
+    return events.ok
+        ? { ok: true, doc: { scenario, timeline: events.timeline } }
+        : fail(...events.errors);
+};
+
+/** Validates `scenario` and `timeline`, since every change has to leave a document the loader would accept. */
 const finish = (
     scenario: Scenario,
-    timeline: Document["timeline"],
+    timeline: unknown,
     presets: Presets,
 ): DocumentResult => {
     const result = validateScenario(scenario, { presets });
 
     return result.ok
-        ? { ok: true, doc: { scenario: result.scenario, timeline } }
+        ? withTimeline(result.scenario, timeline, presets)
         : fail(...result.errors);
 };
 
-/** `scenario` with body `id` on a fixed orbit of `elements`, dropping any perturbations. */
-const withOrbit = (
-    scenario: Scenario,
-    id: string,
-    elements: Elements,
-): Scenario => ({
-    ...scenario,
-    bodies: scenario.bodies.map((body) => {
-        if (body.id !== id || body.orbit === undefined) return body;
+/** An id for a new event: `e` and one more than the largest number among the existing `e<n>` ids. */
+const nextEventId = (timeline: readonly TimelineEvent[]): string => {
+    let largest = 0;
 
-        const { perturbations: _dropped, ...fixed } = body;
+    for (const { id } of timeline) {
+        const n = /^e(\d+)$/.exec(id)?.[1];
 
-        return { ...fixed, orbit: { ...body.orbit, elements } };
-    }),
-});
+        if (n !== undefined) largest = Math.max(largest, Number(n));
+    }
 
-const setOrbit = (
-    doc: Document,
-    bodyId: string,
-    elements: Elements,
-    presets: Presets,
-): DocumentResult =>
-    finish(withOrbit(doc.scenario, bodyId, elements), doc.timeline, presets);
+    return `e${largest + 1}`;
+};
 
 /** Applies `cmd` to `doc` without changing `doc`. Bad input returns errors, it never throws. */
 export const apply = (
@@ -82,6 +80,18 @@ export const apply = (
 
     if (cmd.type === "load") {
         return finish(cmd.doc.scenario, cmd.doc.timeline, presets);
+    }
+
+    if (cmd.type === "remove-event") {
+        if (!timeline.some((event) => event.id === cmd.id)) {
+            return fail(`id: there is no event ${JSON.stringify(cmd.id)}`);
+        }
+
+        return withTimeline(
+            scenario,
+            timeline.filter((event) => event.id !== cmd.id),
+            presets,
+        );
     }
 
     if (cmd.type === "add-body") {
@@ -141,7 +151,7 @@ export const apply = (
                     (candidate) => !gone.has(candidate.id),
                 ),
             },
-            timeline,
+            timeline.filter((event) => !gone.has(event.bodyId)),
             presets,
         );
     }
@@ -154,9 +164,24 @@ export const apply = (
         );
     }
 
-    // `t` isn't used until the timeline lands: the change applies now.
-    if (cmd.type === "set-orbit")
-        return setOrbit(doc, id, cmd.elements, presets);
+    const eventId = nextEventId(timeline);
+
+    if (cmd.type === "set-orbit") {
+        return withTimeline(
+            scenario,
+            [
+                ...timeline,
+                {
+                    type: "set-orbit",
+                    id: eventId,
+                    bodyId: id,
+                    t: cmd.t,
+                    elements: cmd.elements,
+                },
+            ],
+            presets,
+        );
+    }
 
     const parent = scenario.bodies.find(
         (candidate) => candidate.id === body.orbit.parent,
@@ -167,22 +192,12 @@ export const apply = (
             `bodyId: there is no body ${JSON.stringify(body.orbit.parent)}`,
         );
 
-    const burned = applyBurn(
-        elementsAt(
-            body.orbit.elements,
-            precessionsOf(body, expandBody(parent, presets)),
-            cmd.t,
-        ),
-        parent.mass.mu + body.mass.mu,
-        cmd.t,
-        cmd.dv,
+    return withTimeline(
+        scenario,
+        [
+            ...timeline,
+            { type: "burn", id: eventId, bodyId: id, t: cmd.t, dv: cmd.dv },
+        ],
+        presets,
     );
-
-    if (!burned.ok) {
-        return fail(
-            `bodyId: can't burn "${id}": ${BURN_FAILURES[burned.reason]}`,
-        );
-    }
-
-    return setOrbit(doc, id, burned.elements, presets);
 };

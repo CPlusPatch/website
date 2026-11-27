@@ -1,5 +1,5 @@
 import type { Elements } from "@cpluspatch/orbit";
-import type { OrbitingBody } from "@cpluspatch/sim";
+import type { OrbitingBody, Segment } from "@cpluspatch/sim";
 import type { InterleavedBufferAttribute } from "three";
 import type { Line2 } from "three/addons/lines/Line2.js";
 import type { LineFade } from "./fade-material.ts";
@@ -30,6 +30,8 @@ export type Orbit = {
     segments: InterleavedBufferAttribute["data"];
     /** Whether the segments hold the near layout. */
     near: boolean;
+    /** The segment the geometry was built from, or `null` if the next update must build it again. */
+    segment: Segment | null;
     /** What the colours show now, or `null` if they're stale. */
     paint: Paint | null;
     /** The linear colour at each step back along the trail. */
