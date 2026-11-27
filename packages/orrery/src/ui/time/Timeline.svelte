@@ -12,15 +12,11 @@ import {
     startTime,
 } from "../../persistence.ts";
 import { getDocument, getView } from "../../state/context.ts";
-import { clampT, tipText, windowHalf, windowLabel } from "../../timeline.ts";
-import {
-    type Colors,
-    drawTimeline,
-    EVENTS,
-    type Hit,
-    type NowMark,
-    type Saved,
-} from "./draw.ts";
+import { clampT, windowHalf, windowLabel } from "../../timeline.ts";
+import { readColors } from "./colors.ts";
+import { type Colors, drawTimeline, type NowMark, type Saved } from "./draw.ts";
+import { Scrubber } from "./scrubber.ts";
+import { ariaValues, keyStep, nowOffsetPx } from "./strip.ts";
 
 type Props = {
     storage: SavedStorage;
@@ -28,9 +24,6 @@ type Props = {
     /** Called after each draw with where the Now mark is. */
     onNow: (now: NowMark & { width: number }) => void;
 };
-
-/** The drag distance in px that makes a press a scrub and not a click. */
-const DRAG_PX = 3;
 
 const { storage, phone, onNow }: Props = $props();
 
@@ -44,43 +37,27 @@ let tip: HTMLElement | undefined;
 let width = 0;
 let height = 0;
 let ratio = 1;
-let hover: number | null = null;
 // Read on the first draw and again for a new scenario, not every frame.
 let colors: Colors | null = null;
 let saved: Saved[] = [];
-let hits: Hit[] = [];
 let dirty = true;
 let shown = "";
-let drag: {
-    x: number;
-    t: number;
-    paused: boolean;
-    moved: boolean;
-    flag: Hit | undefined;
-    /** The element holding the pointer, which gets the moves and the end. */
-    source: HTMLElement;
-    /** The scrub scale, fixed for the drag since holding the clock ends live. */
-    half: number;
-} | null = null;
 
-const readColors = (target: HTMLElement): Colors => {
-    const style = getComputedStyle(target);
-    const read = (name: string) => style.getPropertyValue(name).trim();
+const scrubber = new Scrubber({
+    view,
+    element: () => element,
+    canvas: () => canvas,
+    tip: () => tip,
+    width: () => width,
+    height: () => height,
+    half: () => windowNow().half,
+    markDirty: () => {
+        dirty = true;
+    },
+});
 
-    return {
-        rule: read("--orrery-rule"),
-        frame: read("--orrery-frame"),
-        dim: read("--orrery-dim"),
-        muted: read("--orrery-muted"),
-        go: read("--orrery-go"),
-        text: read("--orrery-text"),
-        signal: read("--orrery-signal"),
-        pick: read("--orrery-pick"),
-        ground: read("--orrery-ground"),
-        fontUi: read("--orrery-font-ui"),
-        fontData: read("--orrery-font-data"),
-    };
-};
+/** Makes a press-and-drag on `handle` scrub like the strip. A press without a drag is a click. */
+export const grab = scrubber.grab;
 
 const readSaved = () => {
     saved = readList(storage).map(({ savedAt, doc }) => ({
@@ -106,7 +83,7 @@ const draw = (nowT: number, live: boolean, half: number) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    colors ??= readColors(element);
+    colors ??= readColors(getComputedStyle(element));
     const picked = view.selected;
     const t = view.now();
     const { scenario } = documents.doc;
@@ -133,35 +110,35 @@ const draw = (nowT: number, live: boolean, half: number) => {
         windowText: windowLabel(view.clock.rate, live),
         nowT,
         saved,
-        hover,
+        hover: scrubber.hover,
         readout,
         bodyName,
     });
-    hits = drawn.hits;
+    scrubber.hits = drawn.hits;
     onNow({ ...drawn.now, width });
 };
 
 const showAria = (force: boolean, half: number) => {
     if (!element) return;
 
-    const t = view.now();
+    const values = ariaValues(view.now(), half);
 
-    element.setAttribute("aria-valuemin", String(Math.round(t - half)));
-    element.setAttribute("aria-valuemax", String(Math.round(t + half)));
-    element.setAttribute("aria-valuenow", String(Math.round(t)));
+    element.setAttribute("aria-valuemin", values.min);
+    element.setAttribute("aria-valuemax", values.max);
+    element.setAttribute("aria-valuenow", values.now);
     // A running clock would make a focused slider announce its text over and over.
     if (!force && !view.clock.paused && document.activeElement === element) {
         return;
     }
 
-    element.setAttribute("aria-valuetext", tipText(t, half));
+    element.setAttribute("aria-valuetext", values.text);
 };
 
 const frame = () => {
     const t = view.now();
     // The Now mark moves with real time, whatever the clock does.
     const { nowT, live, half } = windowNow();
-    const nowPx = Math.round(((nowT - t) * width) / (2 * half));
+    const nowPx = nowOffsetPx(nowT, t, width, half);
     const signature = `${t} ${view.clock.rate} ${live} ${nowPx}`;
     if (!dirty && signature === shown) return;
 
@@ -171,158 +148,11 @@ const frame = () => {
     draw(nowT, live, half);
 };
 
-const canvasLeft = () => canvas?.getBoundingClientRect().left ?? 0;
-const canvasTop = () => canvas?.getBoundingClientRect().top ?? 0;
-// The events row, with a few pixels of slack either side of a mark.
-const flagAt = (px: number, py: number) =>
-    py >= height - EVENTS
-        ? hits.find(({ from, to }) => px >= from - 2 && px <= to + 2)
-        : undefined;
-
-const showTip = (px: number, text: string) => {
-    if (!element || !tip) return;
-
-    // The tip is placed from the padding box, inside the forced-colors border.
-    const origin = element.getBoundingClientRect().left + element.clientLeft;
-
-    tip.hidden = false;
-    tip.textContent = text;
-    const tipWidth = tip.offsetWidth;
-    tip.style.left = `${Math.min(innerWidth - 4 - tipWidth, Math.max(4, origin + px - tipWidth / 2)) - origin}px`;
-};
-
-const hideTip = () => {
-    if (tip) tip.hidden = true;
-};
-
-const begin = (event: PointerEvent, source: HTMLElement) => {
-    if (event.button !== 0) return;
-
-    source.setPointerCapture(event.pointerId);
-    drag = {
-        x: event.clientX,
-        t: view.now(),
-        paused: view.clock.paused,
-        moved: false,
-        // A handle's press never picks a flag.
-        flag:
-            source === element
-                ? flagAt(
-                      event.clientX - canvasLeft(),
-                      event.clientY - canvasTop(),
-                  )
-                : undefined,
-        half: windowNow().half,
-        source,
-    };
-};
-
-const onMove = (event: PointerEvent) => {
-    const px = event.clientX - canvasLeft();
-    const py = event.clientY - canvasTop();
-
-    if (drag) {
-        hover = null;
-        const dx = event.clientX - drag.x;
-        if (!drag.moved && Math.abs(dx) < DRAG_PX) return;
-
-        if (!drag.moved) {
-            drag.moved = true;
-            view.setClock({ paused: true });
-        }
-        view.setClock({
-            t: clampT(drag.t + (dx / width) * 2 * drag.half),
-        });
-        // The clock already shows the date being dragged to.
-        hideTip();
-
-        return;
-    }
-    if (event.pointerType === "touch") return;
-
-    hover = px;
-    dirty = true;
-    const hit = flagAt(px, py);
-    element?.classList.toggle("orrery__timeline--flag", hit !== undefined);
-
-    const { half } = windowNow();
-    if (hit) showTip(hit.x, hit.tip);
-    else {
-        showTip(
-            px,
-            tipText(
-                clampT(view.now() + ((px - width / 2) / width) * 2 * half),
-                half,
-            ),
-        );
-    }
-};
-
-const onEnd = (event: PointerEvent) => {
-    const ended = drag;
-    drag = null;
-    if (!ended) return;
-
-    if (ended.moved) view.setClock({ paused: ended.paused });
-    else if (event.type === "pointerup" && ended.flag) {
-        view.setClock({ t: clampT(ended.flag.t) });
-    }
-    if (event.pointerType === "touch") hideTip();
-};
-
-/** Makes a press-and-drag on `handle` scrub like the strip. A press without a drag is a click. */
-export const grab = (handle: HTMLElement) => {
-    let moved = false;
-
-    const offs = [
-        on(handle, "pointerdown", (event) => begin(event, handle)),
-        on(handle, "pointermove", (event) => {
-            if (drag?.source === handle) onMove(event);
-        }),
-        ...(["pointerup", "pointercancel"] as const).map((type) =>
-            on(handle, type, (event) => {
-                if (drag?.source !== handle) return;
-
-                moved = drag.moved;
-                onEnd(event);
-                // The click that ends a drag comes right after, and mustn't open the editor.
-                if (moved) setTimeout(() => (moved = false));
-            }),
-        ),
-        // In the capture phase, so it runs before the handle's own click listeners.
-        on(
-            handle,
-            "click",
-            (event) => {
-                if (moved) event.stopImmediatePropagation();
-            },
-            { capture: true },
-        ),
-    ];
-
-    return () => {
-        for (const off of offs) off();
-    };
-};
-
-const onLeave = () => {
-    hover = null;
-    dirty = true;
-    element?.classList.remove("orrery__timeline--flag");
-    if (!drag) hideTip();
-};
-
 const onKeyDown = (event: KeyboardEvent) => {
     if (event.ctrlKey || event.altKey || event.metaKey) return;
 
     const { half } = windowNow();
-    const tick = half / 60;
-    const by = {
-        ArrowLeft: -tick,
-        ArrowRight: tick,
-        PageUp: 10 * tick,
-        PageDown: -10 * tick,
-    }[event.key];
+    const by = keyStep(event.key, half);
 
     if (by !== undefined) view.setClock({ t: clampT(view.now() + by) });
     else if (event.key === "Home") {
@@ -336,11 +166,11 @@ const onKeyDown = (event: KeyboardEvent) => {
 // Native listeners, so the pointer events and the keys behave as they did before the port.
 const listen: Attachment<HTMLElement> = (node) => {
     const offs = [
-        on(node, "pointerdown", (event) => begin(event, node)),
-        on(node, "pointermove", onMove),
-        on(node, "pointerup", onEnd),
-        on(node, "pointercancel", onEnd),
-        on(node, "pointerleave", onLeave),
+        on(node, "pointerdown", (event) => scrubber.begin(event, node)),
+        on(node, "pointermove", scrubber.onMove),
+        on(node, "pointerup", scrubber.onEnd),
+        on(node, "pointercancel", scrubber.onEnd),
+        on(node, "pointerleave", scrubber.onLeave),
         on(node, "keydown", onKeyDown),
         // The dialog says so at once. Another tab's save shows up on the next visit to the strip.
         on(node, "pointerenter", readSaved),
