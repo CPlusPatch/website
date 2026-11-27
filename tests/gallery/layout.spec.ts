@@ -7,9 +7,10 @@ import { stories } from "./stories.ts";
  * the page never scrolls sideways. A story that must be wider scrolls
  * inside itself.
  */
-const WIDTHS = PREVIEW_WIDTHS.flatMap((w) =>
-    "width" in w ? [{ id: w.id, px: Number.parseFloat(w.width) * 16 }] : [],
-);
+const WIDTHS = PREVIEW_WIDTHS.map((w) => ({
+    id: w.id,
+    px: Number.parseFloat(w.width) * 16,
+}));
 
 for (const story of stories) {
     test(story.id, async ({ page }) => {

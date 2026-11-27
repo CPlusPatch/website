@@ -1,21 +1,18 @@
 ---
-import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import { Icon } from "astro-icon/components";
 import { sourceOf, tagsOf } from "./components.ts";
 import { type StoryGroup, slug, storyPath } from "./story.ts";
 import StoryCell from "./story-cell.astro";
 import StoryPreview from "./story-preview.astro";
 import StoryTags from "./story-tags.astro";
-import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 
 /**
  * One group of stories, as a section of its component's page: a grid of
  * stories on their stages, or for a matrix() group, a table of them with
  * the two axes as its headings.
  *
- * A component of several groups gives each a heading, its source, and a
- * preview width of its own. A component of one is just the stories: the
- * page's header and toolbar already say the rest.
+ * A component of several groups gives each a heading and its source. A
+ * component of one is just the stories: the page's bar already says the rest.
  */
 interface Props {
     group: StoryGroup;
@@ -50,15 +47,6 @@ const at = (row: string, column: string) =>
             >
                 <a href={`#${group.id}`}>{group.title}</a>
             </h2>
-            <SegmentedControl
-                class="story-group__width"
-                name={`${PREVIEW_WIDTH_NAME}-${group.id}`}
-                label={`Preview width for ${group.title}`}
-                options={previewWidthOptions(true)}
-                value="auto"
-                size="sm"
-                variant="subtle"
-            />
             <p class="story-group__meta text-meta">
                 {source && <code>{sourceOf(group).split("/").at(-1)}</code>}
                 <span>
@@ -158,13 +146,10 @@ const at = (row: string, column: string) =>
     flex-direction: column;
     gap: var(--space-md);
 
-    /* --preview-width and --preview-frame come from PREVIEW_CSS (widths.ts). */
-
     .story-group__header {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr);
         align-items: center;
-        column-gap: var(--space-md);
         row-gap: var(--space-xs);
         padding-bottom: var(--space-sm);
         border-bottom: var(--border-width) solid var(--border-color);
@@ -239,27 +224,6 @@ const at = (row: string, column: string) =>
         }
     }
 
-    /* Quiet until wanted: shown on hover or focus, or while it overrides. */
-    .story-group__width {
-        grid-row: 1 / span 2;
-        grid-column: 2;
-        opacity: 0;
-        transition: opacity var(--transition);
-
-        &:has(input:not([value="auto"]):checked) {
-            opacity: 1;
-        }
-
-        @media (hover: none) {
-            opacity: 1;
-        }
-    }
-
-    &:hover .story-group__width,
-    &:focus-within .story-group__width {
-        opacity: 1;
-    }
-
     .story-group__meta {
         display: flex;
         flex-wrap: wrap;
@@ -276,22 +240,6 @@ const at = (row: string, column: string) =>
         grid-column: 1 / -1;
         margin: var(--space-xs) 0 0;
         color: var(--color-text-muted);
-    }
-
-    /* The width is the stories' own; a dotted frame marks a capped one. */
-    .story-group__body {
-        box-sizing: content-box;
-        width: calc(100% - 2 * var(--preview-gutter, 0px));
-        max-width: var(--preview-width, none);
-        margin-inline: auto;
-        padding-inline: var(--preview-gutter, 0);
-        border-inline: var(--border-width) var(--preview-frame, none)
-            var(--color-border-strong);
-        transition: max-width var(--transition);
-
-        @media (prefers-reduced-motion: reduce) {
-            transition: none;
-        }
     }
 
     /* compare.ts's frames of the section's own page, one per scheme or theme. */

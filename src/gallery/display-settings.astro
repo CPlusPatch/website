@@ -9,8 +9,7 @@ import type { ComponentProps } from "astro/types";
 /**
  * The site's Display menu, with every page effect, and on a component
  * page, a way to see its sections in other schemes, themes and styles (compare.ts).
- * The gallery's other settings (preview width, stage) are in each
- * component page's toolbar.
+ * The gallery's other settings (stage) are in each component page's toolbar.
  */
 type Props = Pick<ComponentProps<typeof DisplayMenu>, "collapseBelow">;
 
@@ -52,7 +51,7 @@ if (compare) initCompare(compare);
 
 <script>
 /*
- * Theme, overrides and preview width reflow the whole page, so what the reader was looking
+ * Theme and overrides reflow the whole page, so what the reader was looking
  * at moves. Keep track of the element under the sticky bar as they scroll
  * (a change's reflow can't be measured after the fact, as reading layout
  * flushes it), and put it back after each change. Fonts a theme loads late
@@ -61,7 +60,7 @@ if (compare) initCompare(compare);
 const settings = document.getElementById("display-settings");
 const bar = document.querySelector(".gallery__bar");
 const main = document.querySelector(".gallery__main");
-// A component page's toolbar: its width reflows too, and it can stick under the bar.
+// A component page's toolbar, which can stick under the bar.
 const toolbar = document.querySelector(".gallery-toolbar");
 
 let anchor: Element | null = null;

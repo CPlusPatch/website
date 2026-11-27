@@ -1,32 +1,18 @@
 ---
 import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
 import Toggle from "@cpluspatch/ui/astro/ui/toggle.astro";
-import { PREVIEW_WIDTH_NAME, previewWidthOptions } from "./widths.ts";
 
 /**
- * A component page's preview settings: the width every group defaults to,
- * what the stories stand on, and outlines on every box in them. Plain
- * radios and a checkbox that the CSS below reads through :has(), so they
- * need no JS (and aren't kept across pages).
+ * A component page's preview settings: what the stories stand on, and
+ * outlines on every box in them. Plain radios and a checkbox that the CSS
+ * below reads through :has(), so they need no JS (and aren't kept across
+ * pages).
  */
 ---
 
 <fieldset class="gallery-toolbar">
     <legend class="visually-hidden">Preview settings</legend>
     <div class="gallery-toolbar__row">
-        <div class="gallery-toolbar__item">
-            <span class="gallery-toolbar__label text-meta" aria-hidden="true">
-                Width
-            </span>
-            <SegmentedControl
-                name={PREVIEW_WIDTH_NAME}
-                label="Preview width"
-                options={previewWidthOptions()}
-                value="desktop"
-                size="sm"
-                variant="subtle"
-            />
-        </div>
         <div class="gallery-toolbar__item">
             <span class="gallery-toolbar__label text-meta" aria-hidden="true">
                 Stage

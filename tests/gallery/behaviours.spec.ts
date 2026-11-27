@@ -41,6 +41,52 @@ test("a toggle switches", async ({ page }) => {
     await expect(toggle).toBeChecked();
 });
 
+test("a preview frame pages to snap widths and steps by a rem", async ({
+    page,
+}) => {
+    await open(page, "preview-frame/default");
+    const range = page.getByRole("slider", { name: "Preview width" });
+    const content = page.locator(".preview-frame__content");
+
+    await range.focus();
+    await page.keyboard.press("PageDown");
+    await expect(range).toHaveAttribute("aria-valuetext", "48 rem, Tablet");
+    await expect(content).toHaveCSS("width", "768px");
+
+    await page.keyboard.press("ArrowLeft");
+    await expect(content).toHaveCSS("width", "752px");
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowRight");
+    await expect(content).toHaveCSS("width", "784px");
+});
+
+test("a preview frame's edge drags, and snaps to a width", async ({ page }) => {
+    await open(page, "preview-frame/default");
+    const range = page.getByRole("slider", { name: "Preview width" });
+    const content = page.locator(".preview-frame__content");
+    const edge = page.locator(".preview-frame__edge");
+
+    const frame = await content.boundingBox();
+    const grip = await edge.boundingBox();
+    if (!frame || !grip) throw new Error("The frame isn't on the page");
+
+    // 32.3rem is within half a rem of Phone, 32rem.
+    const grabbed = grip.x + grip.width / 2 - (frame.x + frame.width);
+    await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+        frame.x + 32.3 * 16 + grabbed,
+        grip.y + grip.height / 2,
+        {
+            steps: 5,
+        },
+    );
+    await page.mouse.up();
+
+    await expect(range).toHaveAttribute("aria-valuetext", "32 rem, Phone");
+    await expect(content).toHaveCSS("width", "512px");
+});
+
 test("a carousel moves by button and by key", async ({ page }) => {
     await open(page, "carousel/default");
     const index = page.locator("[data-carousel-index]");

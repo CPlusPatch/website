@@ -27,9 +27,7 @@ const { title, description, story, centre = false } = Astro.props;
 const options = {
     themes: THEMES.map((theme) => theme.value),
     styles: STYLES.map((style) => style.value),
-    widths: Object.fromEntries(
-        PREVIEW_WIDTHS.flatMap((w) => ("width" in w ? [[w.id, w.width]] : [])),
-    ),
+    widths: Object.fromEntries(PREVIEW_WIDTHS.map((w) => [w.id, w.width])),
 };
 ---
 

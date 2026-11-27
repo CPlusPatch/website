@@ -5,7 +5,6 @@ import Layout from "../layouts/base.astro";
 import DisplaySettings from "./display-settings.astro";
 import GalleryMenu from "./gallery-menu.astro";
 import GalleryNav from "./gallery-nav.astro";
-import { PREVIEW_CSS } from "./widths.ts";
 
 /**
  * Every gallery page's frame: a sticky bar (the gallery's name, where you
@@ -55,8 +54,6 @@ const main = title ?? "Component gallery";
     noindex
     skipTo={bare ? "stage" : "main"}
 >
-    <style is:inline set:html={PREVIEW_CSS} />
-
     <div class:list={["gallery", { "gallery--bare": bare }]} id="top">
         {bare ? (
             <main id="main" class="gallery__main" aria-label={main}>

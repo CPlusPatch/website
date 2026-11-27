@@ -27,6 +27,7 @@ import { masonry } from "./masonry.ts";
 import { mediaPlayer } from "./media-player.ts";
 import { messages } from "./messages.ts";
 import { postStories } from "./posts.ts";
+import { previewFrame } from "./preview-frame.ts";
 import { progress } from "./progress.ts";
 import { quotes } from "./quotes.ts";
 import { radio } from "./radio.ts";
@@ -55,6 +56,7 @@ export const groups: StoryGroup[] = [
     ...windows,
     ...taskbar,
     ...progress,
+    ...previewFrame,
     ...scrollCue,
     ...forms,
     ...attachments,
