@@ -25,6 +25,8 @@ const LOOKS = [
 const TOGETHER: Record<string, string[]> = {
     // A navbar per story, each with the same "Main" nav.
     navbar: ["landmark-unique"],
+    // Each story is a section named "README".
+    window: ["landmark-unique"],
 };
 
 for (const group of groups) {
