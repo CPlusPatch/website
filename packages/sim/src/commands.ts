@@ -32,7 +32,7 @@ const PATCH_KEYS = ["name", "tags", "mass", "appearance", "preset"] as const;
 const fail = (...errors: string[]): DocumentResult => ({ ok: false, errors });
 
 /** `doc`'s scenario with `timeline` checked against it. The scenario is already valid, so it's kept as it is. */
-const withTimeline = (
+export const withTimeline = (
     scenario: Scenario,
     timeline: unknown,
     presets: Presets,
