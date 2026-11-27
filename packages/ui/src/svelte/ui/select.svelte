@@ -14,7 +14,8 @@ interface Props extends HTMLSelectAttributes {
 const { label, options, value, class: className, ...rest }: Props = $props();
 </script>
 
-<select class={["select", className]} aria-label={label} {...rest}>
+<!-- `value` on the select too: browsers ignore `selected` once the user has picked. -->
+<select class={["select", className]} aria-label={label} {value} {...rest}>
     {#each options as option (option.value)}
         <option
             class="select__option"
