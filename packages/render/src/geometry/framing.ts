@@ -155,6 +155,51 @@ export const ease = (s: number): number => {
 /** The zoom-out to zoom-in ratio of a focus glide's path, the value van Wijk and Nuij found best. */
 const RHO = Math.SQRT2;
 
+// The path between two poses: view widths and the move in km (positions are in metres), and, for
+// a move that isn't in place, the path parameter at each end.
+const pathOf = (from: Pose, to: Pose, tanHalfFov: number) => {
+    const w0 = 2 * from.distance * tanHalfFov;
+    const w1 = 2 * to.distance * tanHalfFov;
+    const dx = to.position.x - from.position.x;
+    const dy = to.position.y - from.position.y;
+    const dz = to.position.z - from.position.z;
+    const u1 = Math.hypot(dx, dy, dz) / 1000;
+    if (u1 <= 1e-9 * Math.max(w0, w1))
+        return { w0, w1, dx, dy, dz, u1, ends: null };
+
+    const rho2 = RHO * RHO;
+    const b0 =
+        (w1 * w1 - w0 * w0 + rho2 * rho2 * u1 * u1) / (2 * w0 * rho2 * u1);
+    const b1 =
+        (w1 * w1 - w0 * w0 - rho2 * rho2 * u1 * u1) / (2 * w1 * rho2 * u1);
+
+    return {
+        w0,
+        w1,
+        dx,
+        dy,
+        dz,
+        u1,
+        ends: { r0: -Math.asinh(b0), r1: -Math.asinh(b1) },
+    };
+};
+
+/**
+ * The length of the focus path between two poses, in van Wijk and Nuij's units. A glide at
+ * constant perceived speed takes a time in proportion to it.
+ */
+export const focusLength = (
+    from: Pose,
+    to: Pose,
+    tanHalfFov: number,
+): number => {
+    const { w0, w1, ends } = pathOf(from, to, tanHalfFov);
+
+    return ends
+        ? Math.abs(ends.r1 - ends.r0) / RHO
+        : Math.abs(Math.log(w1 / w0)) / RHO;
+};
+
 /**
  * The pose at progress `s` between two poses, on van Wijk and Nuij's smooth zoom and pan path. A
  * far move pulls back so both ends stay in view, and a move in place zooms by ratio.
@@ -169,30 +214,21 @@ export const focusTween = (
     const k = ease(s);
     if (k === 1) return { distance: to.distance, position: { ...to.position } };
 
-    // View widths and the move in km; positions are in metres.
-    const w0 = 2 * from.distance * tanHalfFov;
-    const w1 = 2 * to.distance * tanHalfFov;
-    const dx = to.position.x - from.position.x;
-    const dy = to.position.y - from.position.y;
-    const dz = to.position.z - from.position.z;
-    const u1 = Math.hypot(dx, dy, dz) / 1000;
-
+    const { w0, w1, dx, dy, dz, u1, ends } = pathOf(from, to, tanHalfFov);
     let width: number;
     let p: number;
-    if (u1 <= 1e-9 * Math.max(w0, w1)) {
+    if (!ends) {
         width = w0 * (w1 / w0) ** k;
         p = k;
     } else {
-        const rho2 = RHO * RHO;
-        const b0 =
-            (w1 * w1 - w0 * w0 + rho2 * rho2 * u1 * u1) / (2 * w0 * rho2 * u1);
-        const b1 =
-            (w1 * w1 - w0 * w0 - rho2 * rho2 * u1 * u1) / (2 * w1 * rho2 * u1);
-        const r0 = -Math.asinh(b0);
-        const r = r0 + (-Math.asinh(b1) - r0) * k;
+        const { r0, r1 } = ends;
+        const r = r0 + (r1 - r0) * k;
 
         width = (w0 * Math.cosh(r0)) / Math.cosh(r);
-        p = ((w0 / rho2) * (Math.cosh(r0) * Math.tanh(r) - Math.sinh(r0))) / u1;
+        p =
+            ((w0 / (RHO * RHO)) *
+                (Math.cosh(r0) * Math.tanh(r) - Math.sinh(r0))) /
+            u1;
     }
 
     return {

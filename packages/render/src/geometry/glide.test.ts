@@ -9,7 +9,9 @@ import {
 import { Quaternion, Vector3 } from "three";
 import { ease, focusTween } from "./framing.ts";
 import {
+    FOCUS_MAX_SECONDS,
     FOCUS_SECONDS,
+    focusSeconds,
     type Glide,
     type GlideNow,
     stepGlide,
@@ -47,6 +49,7 @@ const move = (elapsed = 0) => ({
     from: { distance: 1000, position: { x: 0, y: 0, z: 0 } },
     target: "mars",
     distance: 200,
+    seconds: FOCUS_SECONDS,
     elapsed,
 });
 
@@ -139,7 +142,11 @@ Deno.test("a zoom snaps to its end once within the snap ratio", () => {
 });
 
 Deno.test("an aim swings toward behind by the eased share and ends at the full turn", () => {
-    const aim = { from: { x: 0, y: -1, z: 0 }, elapsed: 0 };
+    const aim = {
+        from: { x: 0, y: -1, z: 0 },
+        seconds: FOCUS_SECONDS,
+        elapsed: 0,
+    };
     const half = stepGlide({ ...none, aim }, FOCUS_SECONDS / 2, now);
     const angle = (Math.PI / 2) * ease(0.5);
 
@@ -160,6 +167,7 @@ Deno.test("a look lerps with the ease and ends at its goal", () => {
     const look = {
         from: { x: 0, y: 0, z: 0 },
         to: { x: 0, y: 0, z: -2 },
+        seconds: FOCUS_SECONDS,
         elapsed: 0,
     };
     const quarter = stepGlide({ ...none, look }, FOCUS_SECONDS / 4, now);
@@ -178,7 +186,11 @@ Deno.test("with no up glide the up is its goal", () => {
 });
 
 Deno.test("an up glide swings toward the goal and ends on it", () => {
-    const up = { from: { x: 0, y: 1, z: 0 }, elapsed: 0 };
+    const up = {
+        from: { x: 0, y: 1, z: 0 },
+        seconds: FOCUS_SECONDS,
+        elapsed: 0,
+    };
     const half = stepGlide({ ...none, up }, FOCUS_SECONDS / 2, now);
     const angle = (Math.PI / 2) * ease(0.5);
 
@@ -200,7 +212,14 @@ Deno.test("a swing to the opposite direction turns like three's setFromUnitVecto
         .applyQuaternion(new Quaternion().identity().slerp(turn, ease(0.5)));
 
     const step = stepGlide(
-        { ...none, aim: { from: { x: 0, y: 0, z: 1 }, elapsed: 0 } },
+        {
+            ...none,
+            aim: {
+                from: { x: 0, y: 0, z: 1 },
+                seconds: FOCUS_SECONDS,
+                elapsed: 0,
+            },
+        },
         FOCUS_SECONDS / 2,
         { ...now, behind: { x: 0, y: 0, z: -1 } },
     );
@@ -217,13 +236,18 @@ Deno.test("a step leaves its glide and vectors unchanged", () => {
     const glide: Glide<string> = {
         move: move(),
         zoom: { to: 500 },
-        aim: { from: { x: 0, y: -1, z: 0 }, elapsed: 0 },
+        aim: {
+            from: { x: 0, y: -1, z: 0 },
+            seconds: FOCUS_SECONDS,
+            elapsed: 0,
+        },
         look: {
             from: { x: 0, y: 0, z: 0 },
             to: { x: 0, y: 0, z: -1 },
+            seconds: FOCUS_SECONDS,
             elapsed: 0,
         },
-        up: { from: { x: 0, y: 1, z: 0 }, elapsed: 0 },
+        up: { from: { x: 0, y: 1, z: 0 }, seconds: FOCUS_SECONDS, elapsed: 0 },
     };
     const input = { ...now, moveTo: { ...goal } };
     const glideCopy = structuredClone(glide);
@@ -235,4 +259,28 @@ Deno.test("a step leaves its glide and vectors unchanged", () => {
     assertEquals(input, nowCopy);
     assert(step.glide !== glide);
     assert(step.glide.move?.target === glide.move?.target);
+});
+
+Deno.test("a focus glide takes longer the farther it goes, from the shortest time to the longest", () => {
+    const tan = Math.tan(Math.PI / 8);
+    const here = { distance: 1, position: { x: 0, y: 0, z: 0 } };
+    const near = { distance: 1, position: { x: 2e6, y: 0, z: 0 } };
+    const far = { distance: 1, position: { x: 2e11, y: 0, z: 0 } };
+
+    assertEquals(focusSeconds(here, here, tan), FOCUS_SECONDS);
+    assert(focusSeconds(here, near, tan) > FOCUS_SECONDS);
+    assert(focusSeconds(here, far, tan) > focusSeconds(here, near, tan));
+    assertEquals(
+        focusSeconds(here, { ...far, position: { x: 1e15, y: 0, z: 0 } }, tan),
+        FOCUS_MAX_SECONDS,
+    );
+});
+
+Deno.test("a move runs for its own time", () => {
+    const step = stepGlide({ ...none, move: { ...move(), seconds: 2 } }, 1, {
+        ...now,
+        moveTo: goal,
+    });
+
+    assertEquals(step.glide.move?.elapsed, 1);
 });

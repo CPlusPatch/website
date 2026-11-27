@@ -6,28 +6,44 @@
 
 import type { Vec3 } from "@cpluspatch/orbit";
 import { Quaternion, Vector3 } from "three";
-import { approachDistance, ease, focusTween, type Pose } from "./framing.ts";
+import {
+    approachDistance,
+    ease,
+    focusLength,
+    focusTween,
+    type Pose,
+} from "./framing.ts";
 
-/** How long a focus glide takes, in seconds. */
+/** How long the shortest focus glide, and a turn on its own, takes, in seconds. */
 export const FOCUS_SECONDS = 0.4;
+/** How many seconds a focus glide adds per unit of its path length. */
+export const FOCUS_SECONDS_PER_LENGTH = 0.07;
+/** How long the longest focus glide takes, in seconds. */
+export const FOCUS_MAX_SECONDS = 2.5;
 /** A key zoom closes all but `e^-4`, about 2%, of its gap in 0.2 s. */
 export const ZOOM_TAU_SECONDS = 0.05;
 /** A key zoom snaps to its end once the distance is within this log ratio of it. */
 export const ZOOM_SNAP = 1e-3;
 
-/** A direction that glides from `from` to a goal, as seconds in. */
-export type Turn = { from: Vec3; elapsed: number };
-/** A glide of the view to a moving target, as seconds in. */
+/** A direction that glides from `from` to a goal over `seconds`, as seconds in. */
+export type Turn = { from: Vec3; seconds: number; elapsed: number };
+/** A glide of the view to a moving target over `seconds`, as seconds in. */
 export type Move<T> = {
     from: Pose;
     target: T;
     distance: number;
+    seconds: number;
     elapsed: number;
 };
 /** A key zoom's end distance in km. */
 export type Zoom = { to: number };
 /** The look target's offset from the focus, in camera distances, gliding from `from` to `to`. */
-export type LookGlide = { from: Vec3; to: Vec3; elapsed: number };
+export type LookGlide = {
+    from: Vec3;
+    to: Vec3;
+    seconds: number;
+    elapsed: number;
+};
 
 /** The camera's running glides. `T` is the caller's move target; the stepper only carries it. */
 export type Glide<T> = {
@@ -73,6 +89,21 @@ export type GlideStep<T> = {
     ended: Move<T> | null;
 };
 
+/**
+ * How long a focus glide between two poses takes: longer for a longer path, so it keeps about the
+ * same perceived speed, as van Wijk and Nuij suggest, between the shortest and longest times.
+ */
+export const focusSeconds = (
+    from: Pose,
+    to: Pose,
+    tanHalfFov: number,
+): number =>
+    Math.min(
+        FOCUS_SECONDS +
+            FOCUS_SECONDS_PER_LENGTH * focusLength(from, to, tanHalfFov),
+        FOCUS_MAX_SECONDS,
+    );
+
 const turn = new Quaternion();
 const rest = new Quaternion();
 const swung = new Vector3();
@@ -105,7 +136,7 @@ export const stepGlide = <T>(
         if (!now.moveTo) throw new Error("A move is running without a target.");
 
         const elapsed = move.elapsed + dt;
-        const s = Math.min(elapsed / FOCUS_SECONDS, 1);
+        const s = Math.min(elapsed / move.seconds, 1);
         const pose = focusTween(
             move.from,
             { distance: move.distance, position: now.moveTo },
@@ -141,7 +172,7 @@ export const stepGlide = <T>(
     let direction = now.direction;
     if (aim) {
         const elapsed = aim.elapsed + dt;
-        const s = Math.min(elapsed / FOCUS_SECONDS, 1);
+        const s = Math.min(elapsed / aim.seconds, 1);
         direction = swing(aim.from, now.behind, ease(s));
         aim = s === 1 ? null : { ...aim, elapsed };
     }
@@ -149,7 +180,7 @@ export const stepGlide = <T>(
     let lookNow = now.look;
     if (look) {
         const elapsed = look.elapsed + dt;
-        const s = Math.min(elapsed / FOCUS_SECONDS, 1);
+        const s = Math.min(elapsed / look.seconds, 1);
         const k = ease(s);
         lookNow = {
             x: look.from.x + (look.to.x - look.from.x) * k,
@@ -162,7 +193,7 @@ export const stepGlide = <T>(
     let upNow = now.up;
     if (up) {
         const elapsed = up.elapsed + dt;
-        const s = Math.min(elapsed / FOCUS_SECONDS, 1);
+        const s = Math.min(elapsed / up.seconds, 1);
         if (s === 1) {
             up = null;
         } else {

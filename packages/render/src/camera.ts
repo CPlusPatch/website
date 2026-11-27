@@ -11,9 +11,15 @@ import {
     keepSizeDistanceKm,
     minDistanceKm,
     openingReachKm,
+    type Pose,
     reachKm,
 } from "./geometry/framing.ts";
-import { type Glide, stepGlide } from "./geometry/glide.ts";
+import {
+    FOCUS_SECONDS,
+    focusSeconds,
+    type Glide,
+    stepGlide,
+} from "./geometry/glide.ts";
 import { kmPerPx } from "./scale.ts";
 
 /** A state relative to the parent, in metres and metres per second. */
@@ -198,6 +204,7 @@ export const createRig = (
     const origin: Vec3 = { ...positionOf(focused) };
 
     const fovRad = (camera.fov * Math.PI) / 180;
+    const tanHalfFov = Math.tan(fovRad / 2);
     controls.minDistance = minDistanceKm(bodyOf(focused), fovRad);
 
     const fitTo = (reach: number) =>
@@ -229,8 +236,13 @@ export const createRig = (
         return true;
     };
 
+    // A turn that starts with a focus move lasts as long as it, so the two land together.
+    const turnSeconds = () => glide.move?.seconds ?? FOCUS_SECONDS;
+
     const startUpGlide = () => {
-        glide.up = reducedMotion() ? null : { from: plain(up), elapsed: 0 };
+        glide.up = reducedMotion()
+            ? null
+            : { from: plain(up), seconds: turnSeconds(), elapsed: 0 };
     };
 
     // The radius of the body the focus moves around. A followed point moves around the focused body.
@@ -251,7 +263,12 @@ export const createRig = (
             return;
         }
 
-        glide.look = { from: plain(look), to: plain(to), elapsed: 0 };
+        glide.look = {
+            from: plain(look),
+            to: plain(to),
+            seconds: turnSeconds(),
+            elapsed: 0,
+        };
     };
 
     const aimBehind = () => {
@@ -274,6 +291,7 @@ export const createRig = (
 
         glide.aim = {
             from: plain(proxy.position.clone().normalize()),
+            seconds: turnSeconds(),
             elapsed: 0,
         };
     };
@@ -377,6 +395,13 @@ export const createRig = (
         relative: () => bodyRelative(id),
     });
 
+    const moveSeconds = (from: Pose, target: Target, distance: number) =>
+        focusSeconds(
+            from,
+            { distance, position: target.position() },
+            tanHalfFov,
+        );
+
     const zoom = (steps: number) => {
         touched = true;
 
@@ -390,13 +415,17 @@ export const createRig = (
         // A focus glide owns the distance, so the press changes where it ends. The path depends on
         // both ends, so it restarts from here instead of jumping.
         if (glide.move) {
+            const from = {
+                distance: proxy.position.length(),
+                position: { ...origin },
+            };
+            const distance = clamp(glide.move.distance);
+
             glide.move = {
                 ...glide.move,
-                from: {
-                    distance: proxy.position.length(),
-                    position: { ...origin },
-                },
-                distance: clamp(glide.move.distance),
+                from,
+                distance,
+                seconds: moveSeconds(from, glide.move.target, distance),
                 elapsed: 0,
             };
 
@@ -427,13 +456,16 @@ export const createRig = (
             return;
         }
 
+        const from = {
+            distance: proxy.position.length(),
+            position: { ...origin },
+        };
+
         glide.move = {
-            from: {
-                distance: proxy.position.length(),
-                position: { ...origin },
-            },
+            from,
             target,
             distance,
+            seconds: moveSeconds(from, target, distance),
             elapsed: 0,
         };
         // The old minimum must not stop the camera on its way in.
@@ -576,7 +608,7 @@ export const createRig = (
                 up: plain(upGoal),
                 minDistance: controls.minDistance,
                 maxDistance: controls.maxDistance,
-                tanHalfFov: Math.tan(fovRad / 2),
+                tanHalfFov,
             });
             glide = step.glide;
             if (step.ended) controls.minDistance = step.ended.target.min();
