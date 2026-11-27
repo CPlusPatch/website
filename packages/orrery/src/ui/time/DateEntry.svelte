@@ -134,3 +134,70 @@ const onPaste = (event: ClipboardEvent) => {
     {@render segment("s")}
     <span class="orrery__date-utc">UTC</span>
 </div>
+
+<style>
+.orrery__date-entry {
+    display: flex;
+    align-items: center;
+    block-size: 40px;
+    padding: 0 8px;
+    border: 1px solid var(--orrery-control-frame);
+    background-color: var(--orrery-ground);
+    color: var(--orrery-dim);
+    font: 400 var(--orrery-size-md) var(--orrery-font-data);
+
+    &:focus-within {
+        outline: 2px solid var(--orrery-text);
+        outline-offset: 1px;
+    }
+
+    &:has([aria-invalid="true"]) {
+        border-color: var(--orrery-abort);
+    }
+}
+
+.orrery__date-sep {
+    padding-inline: 1px;
+}
+
+.orrery__date-gap {
+    inline-size: 14px;
+}
+
+.orrery__date-utc {
+    margin-inline-start: auto;
+    color: var(--orrery-muted);
+    font: 600 var(--orrery-size-xs) var(--orrery-font-ui);
+}
+
+.orrery__date-part {
+    inline-size: calc(2ch + 6px);
+    min-inline-size: 0;
+    padding: 4px 3px;
+    border: 0;
+    outline: none;
+    background: none;
+    color: var(--orrery-text);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    caret-color: var(--orrery-go);
+
+    &[data-part="y"] {
+        inline-size: calc(5ch + 6px);
+    }
+
+    &:focus {
+        background-color: var(--orrery-panel-raised);
+    }
+
+    &::selection {
+        background-color: var(--orrery-text);
+        color: var(--orrery-ground);
+    }
+
+    &[aria-invalid="true"] {
+        color: var(--orrery-abort);
+    }
+}
+</style>

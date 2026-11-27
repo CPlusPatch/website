@@ -65,3 +65,22 @@ onDestroy(() => clearTimeout(timer));
         {/if}
     {/key}
 </div>
+
+<style>
+/* Takes a row of the top panel, under the menus. */
+.orrery__notices {
+    flex: 1 0 100%;
+    max-inline-size: 40rem;
+
+    &:not(:has(> *)) {
+        display: none;
+    }
+}
+
+.orrery__alert {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+}
+</style>

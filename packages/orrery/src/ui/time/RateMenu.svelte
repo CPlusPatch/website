@@ -140,3 +140,103 @@ onMount(() =>
         {/each}
     </div>
 </div>
+
+<style>
+.orrery__rate {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    /* The width stays the same whatever the label says. */
+    min-inline-size: 7.75rem;
+    padding: 0 0.625rem;
+    font: 500 var(--orrery-size-sm) var(--orrery-font-data);
+    white-space: nowrap;
+
+    &[aria-expanded="true"] {
+        border-color: var(--orrery-muted);
+        background-color: var(--orrery-panel-hover);
+    }
+
+    /* The icon is raw HTML. */
+    :global(svg) {
+        flex: none;
+        inline-size: 12px;
+        block-size: 12px;
+        color: var(--orrery-muted);
+    }
+}
+
+/* TimeBar sets the reverse class on the clock. */
+:global(.orrery__clock--reverse) .orrery__rate {
+    border-color: var(--orrery-hold);
+}
+
+:global(.orrery__clock--reverse) .orrery__rate-label {
+    color: var(--orrery-hold);
+}
+
+.orrery__rate-menu {
+    position: absolute;
+    z-index: 4;
+    inset-inline-start: 0;
+    inset-block-end: calc(100% + 6px);
+    min-inline-size: 170px;
+    padding: 4px 0;
+    border: 1px solid var(--orrery-frame);
+    background-color: var(--orrery-panel-solid);
+}
+
+/* The sound menu renders its items with this class too, so it's global. */
+:global(.orrery__rate-item) {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    inline-size: 100%;
+    block-size: var(--orrery-control-lg);
+    padding: 0 var(--orrery-pad);
+    border: 0;
+    background: none;
+    color: var(--orrery-text);
+    font: 500 var(--orrery-size-sm) var(--orrery-font-data);
+    text-align: start;
+    cursor: pointer;
+
+    :global(svg) {
+        inline-size: 12px;
+        block-size: 12px;
+        visibility: hidden;
+    }
+
+    &[aria-checked="true"] :global(svg) {
+        visibility: visible;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--orrery-panel-raised);
+        }
+    }
+
+    &:focus-visible {
+        background-color: var(--orrery-panel-raised);
+    }
+
+    &:focus-visible {
+        outline: 1px solid var(--orrery-muted);
+        outline-offset: -1px;
+    }
+}
+
+@media (max-width: 720px) {
+    .orrery__rate {
+        min-inline-size: 7rem;
+        padding: 0 0.5rem;
+    }
+
+    :global(.orrery__rate-item) {
+        block-size: var(--control-height-md);
+    }
+}
+</style>

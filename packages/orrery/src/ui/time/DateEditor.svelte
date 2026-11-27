@@ -203,3 +203,75 @@ $effect(() => {
         </div>
     </form>
 </section>
+
+<style>
+.orrery__date-editor {
+    position: absolute;
+    z-index: 3;
+    inset-block-end: calc(100% + 8px);
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    inline-size: min(340px, 100% - 2 * var(--space-sm));
+    border: 1px solid var(--orrery-frame);
+    background-color: var(--orrery-panel-solid);
+}
+
+.orrery__date-form {
+    display: grid;
+    gap: 0.625rem;
+    padding: 0 var(--orrery-pad) var(--orrery-pad);
+}
+
+.orrery__date-hint {
+    margin: 0;
+    color: var(--orrery-dim);
+    font-size: var(--orrery-size-xs);
+
+    @media (pointer: coarse) {
+        display: none;
+    }
+}
+
+.orrery__date-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.orrery__date-iso {
+    color: var(--orrery-muted);
+    font: 400 var(--orrery-size-xs) var(--orrery-font-data);
+    white-space: nowrap;
+}
+
+.orrery__date-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-block-start: 0.25rem;
+
+    :global(.button) {
+        flex: 1;
+    }
+}
+
+/* With a side panel open, the editor stops at its edge. 170px is half its width. */
+@media (min-width: 721px) {
+    :global(.orrery:has(.orrery__panel--right > :not([hidden])))
+        .orrery__date-editor {
+        --half: min(170px, calc(50% - var(--space-sm)));
+
+        inset-inline-start: max(
+            calc(var(--half) + var(--space-sm)),
+            min(50%, 100% - var(--orrery-side-width) - var(--half))
+        );
+    }
+}
+
+@media (max-width: 720px) {
+    .orrery__date-editor {
+        inset-inline: 0;
+        translate: none;
+        inline-size: auto;
+    }
+}
+</style>
