@@ -39,6 +39,7 @@ const {
             class={swatchClasses(option)}
             style={swatchStyle(option)}
             title={option.label}
+            {...option.attributes}
             ><input
                 class="visually-hidden"
                 type="radio"

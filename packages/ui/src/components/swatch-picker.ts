@@ -8,6 +8,8 @@ export interface SwatchOption {
     color: string;
     /** Adds an inner chip, which makes the swatch a two-colour one (a theme). */
     accent?: string;
+    /** Attributes for the swatch's label, like a `data-theme-preview` that gives it a theme's tokens. */
+    attributes?: Record<string, string>;
 }
 
 /** The classes of a <SwatchPicker>. */

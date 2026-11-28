@@ -33,6 +33,7 @@ const { name, label, options, value, class: className, ...rest } = Astro.props;
             class:list={swatchClasses(option)}
             style={swatchStyle(option)}
             title={option.label}
+            {...option.attributes}
         >
             <input
                 class="visually-hidden"

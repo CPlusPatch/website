@@ -8,6 +8,7 @@ import Textarea from "@cpluspatch/ui/astro/ui/textarea.astro";
 import Tile from "@cpluspatch/ui/astro/ui/tile.astro";
 import TilePicker from "@cpluspatch/ui/astro/ui/tile-picker.astro";
 import Toggle from "@cpluspatch/ui/astro/ui/toggle.astro";
+import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 import type { ComponentProps } from "astro/types";
 import { type Story, type StoryGroup, story } from "../story.ts";
 import Stack from "../story-stack.astro";
@@ -95,6 +96,15 @@ const THEME_SWATCHES = [
         accent: "#cba6f7",
     },
 ];
+
+// The label's data-theme-preview gives it the theme's tokens, so its colours are the theme's.
+const THEME_PREVIEW_SWATCHES = THEMES.map(({ value, label }) => ({
+    value,
+    label,
+    color: "var(--color-bg)",
+    accent: "var(--color-primary)",
+    attributes: { "data-theme-preview": value },
+}));
 
 const SPECIMENS = [
     { value: "poster", caption: "Poster", font: "Impact, sans-serif" },
@@ -326,7 +336,7 @@ export const forms: StoryGroup[] = [
         title: "Swatch pickers",
         category: "forms",
         description:
-            "Colour swatches as plain radios. An option with an accent is a two-colour theme swatch.",
+            "Colour swatches as plain radios. An option with an accent is a two-colour theme swatch. An option's attributes go on its label.",
         min: 16,
         stories: [
             story("tones", SwatchPicker, {
@@ -340,6 +350,12 @@ export const forms: StoryGroup[] = [
                 label: "Theme",
                 options: THEME_SWATCHES,
                 value: "nord",
+            }),
+            story("theme-previews", SwatchPicker, {
+                name: "story-swatch-theme-previews",
+                label: "Theme",
+                options: THEME_PREVIEW_SWATCHES,
+                value: "default",
             }),
             story("disabled", SwatchPicker, {
                 name: "story-swatch-disabled",

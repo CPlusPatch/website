@@ -26,14 +26,11 @@
 
         .control-row__value,
         .control-row__note {
+            font-family: var(--font-mono);
             font-size: var(--font-size-xs);
+            font-variant-numeric: tabular-nums;
             color: var(--color-text-muted);
             text-align: end;
-        }
-
-        .control-row__value {
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
         }
 
         /* Only the control dims: the header stays readable. A disabled control dims itself. */
