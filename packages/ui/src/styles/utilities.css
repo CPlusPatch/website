@@ -91,6 +91,11 @@
         font: var(--type-ui);
         color: var(--color-text);
         caret-color: var(--field-accent);
+
+        /* iOS zooms the page into a focused field set under 16px. */
+        @media (pointer: coarse) {
+            font-size: var(--font-size-base);
+        }
         background-color: var(--color-surface-raised);
         border: var(--border-width) solid var(--color-border-strong);
         border-radius: var(--radius);
