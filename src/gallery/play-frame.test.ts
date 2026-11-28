@@ -2,6 +2,7 @@
 
 import { assertEquals } from "@std/assert";
 import {
+    frameUrl,
     isPlayMessage,
     isReadyMessage,
     playMessage,
@@ -33,4 +34,17 @@ Deno.test("a ready message is its own, and isn't a play message", () => {
     assertEquals(isReadyMessage(playMessage("")), false);
     assertEquals(isReadyMessage(undefined), false);
     assertEquals(isPlayMessage(readyMessage()), false);
+});
+
+Deno.test("frameUrl: the params, then the query on top", () => {
+    assertEquals(frameUrl("/a/", {}, ""), "/a/");
+    assertEquals(frameUrl("/a/", { theme: "nord" }, ""), "/a/?theme=nord");
+    assertEquals(
+        frameUrl("/a/", { theme: "nord", "font-size": "large" }, "x=1"),
+        "/a/?theme=nord&font-size=large&x=1",
+    );
+    assertEquals(
+        frameUrl("/a/", { scheme: "dark" }, "scheme=light"),
+        "/a/?scheme=light",
+    );
 });

@@ -37,7 +37,7 @@ const iconName = $derived(
 );
 const content = $derived(typeof values.slot === "string" ? values.slot : text);
 
-// Other params (theme, scheme) are the page's own, so they stay.
+// The look params (theme, scheme, style, spacing, radius, font-size) stay: they are the page's.
 const mirror = (query: string) => {
     const params = new URLSearchParams(location.search);
     for (const { key } of controls) params.delete(key);

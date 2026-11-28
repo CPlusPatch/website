@@ -24,8 +24,8 @@ export interface Copy {
 }
 
 /**
- * The copies a mode shows. Each frame reads the saved Display choices for
- * the rest, as any page does, so only the compared one goes in its URL.
+ * The copies a mode shows. Only the compared setting goes in a copy's URL:
+ * the rest come from the bench's look, which the bench adds.
  */
 export const copies = (mode: CompareMode): Copy[] => {
     switch (mode) {
@@ -48,7 +48,3 @@ export const copies = (mode: CompareMode): Copy[] => {
             return [];
     }
 };
-
-/** A page's URL with a copy's params. */
-export const copyUrl = (path: string, params: Record<string, string>) =>
-    `${path}?${new URLSearchParams(params)}`;

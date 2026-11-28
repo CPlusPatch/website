@@ -481,7 +481,11 @@ test.describe("a component's bench", () => {
 
         await inspector(page).getByRole("tab", { name: "Look" }).click();
         await inspector(page).getByText("Dots", { exact: true }).click();
-        await inspector(page).getByLabel("Outline boxes").check();
+        // The slider covers the input, so click the label as a reader would.
+        await inspector(page).locator("label.toggle").click();
+        await expect(
+            inspector(page).getByRole("switch", { name: "Outline boxes" }),
+        ).toBeChecked();
         await expect.poll(() => frameAttr(page, "galleryStage")).toBe("dots");
         await expect.poll(() => frameAttr(page, "galleryOutline")).toBe("");
 
@@ -793,6 +797,54 @@ test.describe("a component's bench", () => {
         const menu = page.locator("#display-settings");
         await expect(menu).toBeVisible();
         await expect(menu.getByText("Compare")).toHaveCount(0);
+    });
+
+    const frameRoot = (
+        page: import("@playwright/test").Page,
+        attr: "theme" | "overrideSpacing" | "scheme",
+    ) =>
+        stage(page).evaluate(
+            (frame: HTMLIFrameElement, key: string) =>
+                frame.contentDocument?.documentElement.dataset[key],
+            attr,
+        );
+
+    test("the Look tab styles the stage, shows it changed, and Reset clears it", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/sm/");
+        const look = inspector(page).getByRole("tab", { name: "Look" });
+        const dot = look.locator(".tab-list__dot");
+        await expect(dot).toHaveCount(0);
+
+        await look.click();
+        await inspector(page)
+            .locator('label:has(input[name$="-theme"][value="nord"])')
+            .click();
+        await inspector(page)
+            .locator('label:has(input[name$="-spacing"][value="compact"])')
+            .click();
+
+        await expect.poll(() => frameRoot(page, "theme")).toBe("nord");
+        await expect
+            .poll(() => frameRoot(page, "overrideSpacing"))
+            .toBe("compact");
+        const html = page.locator("html");
+        await expect(html).not.toHaveAttribute("data-theme");
+        await expect(html).not.toHaveAttribute("data-override-spacing");
+        await expect(dot).toHaveCount(1);
+
+        await inspector(page)
+            .getByRole("button", { name: "Reset look" })
+            .click();
+        await expect.poll(() => frameRoot(page, "theme")).toBeUndefined();
+        await expect
+            .poll(() => frameRoot(page, "overrideSpacing"))
+            .toBeUndefined();
+        await expect(dot).toHaveCount(0);
     });
 });
 

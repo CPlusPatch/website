@@ -1,9 +1,9 @@
 <script lang="ts">
 import SegmentedControl from "@cpluspatch/ui/svelte/ui/segmented-control.svelte";
 import type { Backdrop } from "./bench.ts";
-import { COMPARE_MODES, type CompareMode, copies, copyUrl } from "./compare.ts";
+import { COMPARE_MODES, type CompareMode, copies } from "./compare.ts";
 import { applyStage, fit } from "./fit-frame.ts";
-import { followQuery, sendQuery, splitUrl } from "./play-frame.ts";
+import { followQuery, frameUrl, sendQuery, splitUrl } from "./play-frame.ts";
 
 /**
  * The bench's compare strip: the current pick as copies in a row, in light
@@ -14,6 +14,8 @@ import { followQuery, sendQuery, splitUrl } from "./play-frame.ts";
 type Props = {
     /** The pick's page (pickPath), with its query if it has one. */
     url: string;
+    /** The look's URL params. Each copy's own and the query's win over them. */
+    params?: Record<string, string>;
     /** The pick's id, for the frames' titles. */
     title: string;
     /** The stage frame's width in px, once known. */
@@ -22,7 +24,7 @@ type Props = {
     onmode: (mode: CompareMode) => void;
 };
 
-const { url, title, width, mode, onmode }: Props = $props();
+const { url, params = {}, title, width, mode, onmode }: Props = $props();
 
 let row: HTMLElement | undefined = $state();
 
@@ -39,12 +41,9 @@ const frames = $derived(
     })),
 );
 
-/** A copy's page: the pick's, with the copy's params and the query. */
+/** A copy's page: the pick's, with the look, the copy's params and the query. */
 const srcOf = (frame: (typeof frames)[number]) =>
-    copyUrl(frame.path, {
-        ...frame.params,
-        ...Object.fromEntries(new URLSearchParams(frame.query)),
-    });
+    frameUrl(frame.path, { ...params, ...frame.params }, frame.query);
 
 const frameList = () =>
     Array.from(row?.querySelectorAll<HTMLIFrameElement>("iframe") ?? []);
@@ -58,22 +57,25 @@ export const setStage = (backdrop: Backdrop, outline: boolean) => {
     for (const frame of frameList()) applyStage(frame, backdrop, outline);
 };
 
-// Sets the src once: a later query goes as a message, not a navigation.
+// Sets the src once: a later query goes as a message, and a new look as a replace.
 const track = (
     frame: HTMLIFrameElement,
-    copy: { src: string; query: string },
+    copy: { src: string; query: string; look: string },
 ) => {
-    let query = copy.query;
+    let { query, look } = copy;
     fit(frame);
     const unfollow = followQuery(frame, () => query);
     frame.src = copy.src;
 
     return {
-        update: (next: { src: string; query: string }) => {
-            if (next.query === query) return;
+        update: (next: { src: string; query: string; look: string }) => {
+            const moved = next.look !== look;
+            if (!moved && next.query === query) return;
 
             query = next.query;
-            sendQuery(frame, query);
+            look = next.look;
+            if (moved) frame.contentWindow?.location.replace(next.src);
+            else sendQuery(frame, query);
         },
         destroy: unfollow,
     };
@@ -121,7 +123,11 @@ const track = (
                         inert
                         title={`${frame.label}: ${title}`}
                         loading="lazy"
-                        use:track={{ src: srcOf(frame), query: frame.query }}
+                        use:track={{
+                            src: srcOf(frame),
+                            query: frame.query,
+                            look: JSON.stringify(params),
+                        }}
                     ></iframe>
                 </figure>
             {/each}

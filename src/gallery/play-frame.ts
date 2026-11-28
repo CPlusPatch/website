@@ -36,6 +36,21 @@ export const splitUrl = (url: string): { path: string; query: string } => {
         : { path: url.slice(0, at), query: url.slice(at + 1) };
 };
 
+/**
+ * A frame's page URL: the page with the params and the query. The query's
+ * keys win over the params', as a control's value over the page's look.
+ */
+export const frameUrl = (
+    path: string,
+    params: Record<string, string>,
+    query: string,
+): string => {
+    const all = new URLSearchParams(params);
+    for (const [key, value] of new URLSearchParams(query)) all.set(key, value);
+
+    return all.size > 0 ? `${path}?${all}` : path;
+};
+
 /** Sends a frame's play page a query. A page that isn't one ignores it. */
 export const sendQuery = (frame: HTMLIFrameElement, query: string): void =>
     frame.contentWindow?.postMessage(playMessage(query), location.origin);

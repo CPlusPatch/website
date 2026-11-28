@@ -1,4 +1,5 @@
 ---
+import { OVERRIDES } from "@cpluspatch/ui/styles/overrides.ts";
 import { STYLES } from "@cpluspatch/ui/styles/styles/index.ts";
 import { THEMES } from "@cpluspatch/ui/styles/themes/index.ts";
 import Layout from "../layouts/base.astro";
@@ -9,9 +10,10 @@ import { PREVIEW_WIDTHS } from "./widths.ts";
  * of them. For opening from the gallery, and for tests and diffs to load
  * by URL.
  *
- * Query parameters pick the look without touching the saved Display
- * choices: ?theme=<theme>, ?style=<style>, ?scheme=light|dark, and ?width=<phone, tablet,
- * tiny, or a width in rem>. Without them, the saved choices apply.
+ * Query parameters pick the look: ?theme, ?style, ?scheme=light|dark,
+ * ?spacing, ?radius and ?font-size (an override's option, as in
+ * styles/overrides.ts), and ?width=<phone, tablet, tiny, or rem>. They don't
+ * touch the saved Display choices, which apply without them.
  */
 interface Props {
     title: string;
@@ -24,15 +26,29 @@ interface Props {
 
 const { title, description, story, centre = false } = Astro.props;
 
+const overrideValues = (name: string) =>
+    OVERRIDES.find((override) => override.name === name)?.options.map(
+        (option) => option.value,
+    ) ?? [];
+
 const options = {
     themes: THEMES.map((theme) => theme.value),
     styles: STYLES.map((style) => style.value),
+    spacing: overrideValues("override-spacing"),
+    radius: overrideValues("override-radius"),
+    fontSize: overrideValues("override-font-size"),
     widths: Object.fromEntries(PREVIEW_WIDTHS.map((w) => [w.id, w.width])),
 };
 ---
 
 {/* Framed in the bench, where a skip link would only be in the way. */}
-<Layout {title} {description} noindex analytics={false} skipTo={false}>
+<Layout
+    {title}
+    {description}
+    noindex
+    analytics={false}
+    skipTo={false}
+>
     {/* Before the story paints; ignores anything it doesn't know. */}
     <script is:inline define:vars={{ options }}>
     const params = new URLSearchParams(location.search);
@@ -43,6 +59,15 @@ const options = {
     if (options.styles.includes(style)) root.dataset.style = style;
     const scheme = params.get("scheme");
     if (scheme === "light" || scheme === "dark") root.dataset.scheme = scheme;
+    const spacing = params.get("spacing");
+    if (options.spacing.includes(spacing))
+        root.dataset.overrideSpacing = spacing;
+    const radius = params.get("radius");
+    if (options.radius.includes(radius)) root.dataset.overrideRadius = radius;
+    const fontSize = params.get("font-size");
+    if (options.fontSize.includes(fontSize)) {
+        root.dataset.overrideFontSize = fontSize;
+    }
     const width = params.get("width") ?? "";
     const rem =
         options.widths[width] ?? (/^\d+(\.\d+)?rem$/.test(width) && width);

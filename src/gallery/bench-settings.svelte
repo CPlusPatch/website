@@ -1,4 +1,5 @@
 <script lang="ts">
+import ControlRow from "@cpluspatch/ui/svelte/ui/control-row.svelte";
 import SegmentedControl from "@cpluspatch/ui/svelte/ui/segmented-control.svelte";
 import Toggle from "@cpluspatch/ui/svelte/ui/toggle.svelte";
 import type { Backdrop } from "./bench.ts";
@@ -12,61 +13,54 @@ type Props = {
     outline: boolean;
     onstage: (stage: Backdrop) => void;
     onoutline: (outline: boolean) => void;
+    /** Prefix of the control names. Unique among the settings in a page. */
+    name?: string;
 };
 
-const { stage, outline, onstage, onoutline }: Props = $props();
+const { stage, outline, onstage, onoutline, name = "bench" }: Props = $props();
+
+const BACKDROPS: { value: Backdrop; label: string }[] = [
+    { value: "plain", label: "Plain" },
+    { value: "dots", label: "Dots" },
+    { value: "surface", label: "Surface" },
+];
 </script>
 
 <div class="bench-settings">
-    <div class="bench-settings__item">
-        <span class="bench-settings__label text-meta" aria-hidden="true">
-            Backdrop
-        </span>
-        <div
-            onchange={(event) =>
-                onstage((event.target as HTMLInputElement).value as Backdrop)}
-        >
-            <SegmentedControl
-                name="bench-backdrop"
-                label="Backdrop"
-                options={[
-                    { value: "plain", label: "Plain" },
-                    { value: "dots", label: "Dots" },
-                    { value: "surface", label: "Surface" },
-                ]}
-                value={stage}
-                size="sm"
-                variant="subtle"
-            />
-        </div>
-    </div>
-    <Toggle
+    <ControlRow
+        label="Backdrop"
+        value={BACKDROPS.find((b) => b.value === stage)?.label}
+        onchange={(event) =>
+            onstage((event.target as HTMLInputElement).value as Backdrop)}
+    >
+        <SegmentedControl
+            name={`${name}-backdrop`}
+            label="Backdrop"
+            options={BACKDROPS}
+            value={stage}
+            size="sm"
+            variant="subtle"
+        />
+    </ControlRow>
+    <ControlRow
         label="Outline boxes"
-        name="bench-outline"
-        checked={outline}
+        value={outline ? "On" : "Off"}
         onchange={(event) =>
             onoutline((event.target as HTMLInputElement).checked)}
     >
-        Outline boxes
-    </Toggle>
+        <Toggle
+            label="Outline boxes"
+            name={`${name}-outline`}
+            checked={outline}
+        />
+    </ControlRow>
 </div>
 
 <style>
 .bench-settings {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     min-width: 0;
-    max-width: 100%;
-}
-
-.bench-settings__item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-xs);
-    min-width: 0;
-    max-width: 100%;
 }
 </style>

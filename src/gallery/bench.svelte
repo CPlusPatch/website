@@ -17,6 +17,7 @@ import BenchList from "./bench-list.svelte";
 import BenchStage from "./bench-stage.svelte";
 import { COMPARE_MODES, type CompareMode } from "./compare.ts";
 import { controlQuery } from "./controls.ts";
+import { DEFAULT_LOOK, type Look, lookParams, parseLook } from "./look.ts";
 import type { Tag } from "./story.ts";
 
 /**
@@ -25,8 +26,8 @@ import type { Tag } from "./story.ts";
  * into the frame. With it, the pick is the URL hash (`#<group>/<story>`,
  * `#<group>/<story>?<query>` for a controlled story with values set, or
  * `#<group>` for all of a group's stories), and each pick is one history
- * entry. This owns the page-wide wiring (hash, history, Display menu); the
- * parts only take props.
+ * entry. This owns the page-wide wiring (hash, history, the look the
+ * frames show); the parts only take props.
  */
 type Props = {
     /** The component's title, for the bar. */
@@ -70,6 +71,7 @@ let mounted = $state(false);
 let backdrop = $state<Backdrop>("plain");
 let outline = $state(false);
 let compare = $state<CompareMode>("schemes");
+let look = $state<Look>({ ...DEFAULT_LOOK });
 // The stage frame's width, which the compare strip's copies follow.
 let stageWidth = $state<number | null>(null);
 
@@ -79,6 +81,8 @@ const group = $derived(
 const id = $derived(pickId(current));
 const story = $derived(group.stories.find((s) => s.name === current.story));
 const path = $derived(pickPath(current, story));
+// The look reaches the frames as URL params, and not the bench page.
+const params = $derived(lookParams(look, compare));
 
 const fromHash = () => parseHash(groups, location.hash) ?? first;
 
@@ -122,6 +126,11 @@ const setCompare = (next: CompareMode) => {
     saveSetting("gallery-compare", next);
 };
 
+const setLook = (next: Look) => {
+    look = next;
+    saveSetting("gallery-look", JSON.stringify(next));
+};
+
 // A story link in a frame, as its hash. True if it's one of this page's.
 const followHash = (hash: string) => {
     if (!parseHash(groups, hash)) return false;
@@ -138,6 +147,8 @@ onMount(() => {
         (mode) => mode.value === readSetting("gallery-compare"),
     );
     if (savedCompare) compare = savedCompare.value;
+    const savedLook = readSetting("gallery-look");
+    if (savedLook) look = parseLook(savedLook);
     mounted = true;
 
     const onHashChange = () => {
@@ -185,6 +196,7 @@ onMount(() => {
                 <BenchStage
                     bind:this={stage}
                     url={path}
+                    {params}
                     title={id}
                     onhashlink={followHash}
                     onwidth={(px) => {
@@ -195,6 +207,7 @@ onMount(() => {
                     <BenchCompare
                         bind:this={compareStrip}
                         url={path}
+                        {params}
                         title={id}
                         width={stageWidth}
                         mode={compare}
@@ -214,6 +227,8 @@ onMount(() => {
                     {mounted}
                     {backdrop}
                     {outline}
+                    {look}
+                    {compare}
                     oncontrols={(values) => {
                         if (!story) return;
                         location.hash = pickHash({
@@ -223,6 +238,7 @@ onMount(() => {
                     }}
                     onstage={setStage}
                     onoutline={setOutline}
+                    onlook={setLook}
                 />
             </aside>
         </div>

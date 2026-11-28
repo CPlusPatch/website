@@ -7,12 +7,14 @@ import BenchControl from "../bench-control.svelte";
 import BenchControls from "../bench-controls.svelte";
 import BenchInspector from "../bench-inspector.svelte";
 import BenchList from "../bench-list.svelte";
+import BenchLook from "../bench-look.svelte";
 import BenchProps from "../bench-props.svelte";
 import BenchSettings from "../bench-settings.svelte";
 import BenchStage from "../bench-stage.svelte";
 import BenchTags from "../bench-tags.svelte";
 import BenchTiles from "../bench-tiles.svelte";
 import type { Control } from "../controls.ts";
+import { DEFAULT_LOOK } from "../look.ts";
 import PortView from "../port-view.svelte";
 import { type StoryGroup, storyPath, svelteStory } from "../story.ts";
 
@@ -195,9 +197,12 @@ const inspector = {
     mounted: true,
     backdrop: "plain",
     outline: false,
+    look: DEFAULT_LOOK,
+    compare: "off",
     oncontrols: ignore,
     onstage: ignore,
     onoutline: ignore,
+    onlook: ignore,
 } as const;
 
 export const bench: StoryGroup[] = [
@@ -356,6 +361,7 @@ export const bench: StoryGroup[] = [
                 ...inspector,
                 backdrop: "dots",
                 outline: true,
+                look: { ...DEFAULT_LOOK, theme: "nord", radius: "round" },
             }),
             svelteStory("fixed-props", BenchInspector, {
                 title: "Buttons",
@@ -604,6 +610,42 @@ export const bench: StoryGroup[] = [
         ],
     },
     {
+        id: "bench-look",
+        title: "Bench look",
+        category: "gallery",
+        description:
+            "The look settings of the stage and the compare copies: theme, mode, style, spacing, radius and font size.",
+        source: "src/gallery/bench-look.svelte",
+        min: 20,
+        stories: [
+            svelteStory("default", BenchLook, {
+                name: "bench-look-default",
+                look: DEFAULT_LOOK,
+                compare: "off",
+                onchange: ignore,
+            }),
+            svelteStory("changed", BenchLook, {
+                name: "bench-look-changed",
+                look: {
+                    theme: "nord",
+                    scheme: "dark",
+                    style: "print",
+                    spacing: "compact",
+                    radius: "round",
+                    fontSize: "large",
+                },
+                compare: "off",
+                onchange: ignore,
+            }),
+            svelteStory("compare-schemes", BenchLook, {
+                name: "bench-look-compare-schemes",
+                look: { ...DEFAULT_LOOK, scheme: "dark" },
+                compare: "schemes",
+                onchange: ignore,
+            }),
+        ],
+    },
+    {
         id: "bench-settings",
         title: "Bench settings",
         category: "gallery",
@@ -611,12 +653,14 @@ export const bench: StoryGroup[] = [
         min: 20,
         stories: [
             svelteStory("default", BenchSettings, {
+                name: "bench-default",
                 stage: "plain",
                 outline: false,
                 onstage: ignore,
                 onoutline: ignore,
             }),
             svelteStory("dots-and-outlines", BenchSettings, {
+                name: "bench-dots-and-outlines",
                 stage: "dots",
                 outline: true,
                 onstage: ignore,
