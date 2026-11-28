@@ -29,12 +29,12 @@
         /* palette:start -- generated from palette.config.ts by `deno run theme` */
 
         /* Neutrals */
-        --color-bg: light-dark(#f2f5f3, #0e0e0e);
-        --color-bg-alt: light-dark(#e7ebe8, #171717);
-        --color-surface: light-dark(#fafcfb, #1d1d1d);
-        --color-surface-raised: light-dark(#ffffff, #252525);
-        --color-text: light-dark(#131915, #d3d9d5);
-        --color-text-muted: light-dark(#606762, #88908a);
+        --color-bg: light-dark(#f8f5f1, #131110);
+        --color-bg-alt: light-dark(#f1ece7, #1b1917);
+        --color-surface: light-dark(#fdfbf8, #201f1d);
+        --color-surface-raised: light-dark(#ffffff, #292726);
+        --color-text: light-dark(#1e1a15, #e4e1dd);
+        --color-text-muted: light-dark(#68625b, #9f9a95);
 
         /*
          * Use --color-border-strong wherever the border itself is the affordance
@@ -42,32 +42,32 @@
          * for outlining surfaces already set apart by their background; see
          * `borders` in palette.config.ts.
          */
-        --color-border: light-dark(#a3a8a4, #474c48);
-        --color-border-strong: light-dark(#898f8b, #5b605c);
+        --color-border: light-dark(#b4afaa, #4a4641);
+        --color-border-strong: light-dark(#938d88, #64605a);
         /* biome-ignore format: generated, and the palette tool reads one declaration per line */
         --color-scanline: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.035));
 
         /* Role tier -- safe for text and for fills paired with --color-on-accent */
-        --color-primary: light-dark(#98194b, #f995af);
-        --color-primary-hover: light-dark(#790037, #ffb1c4);
-        --color-secondary: light-dark(#6d2aa8, #c8a3f8);
-        --color-secondary-hover: light-dark(#57048e, #d8bbff);
-        --color-destructive: light-dark(#9d1a1a, #f99a8f);
-        --color-destructive-hover: light-dark(#7d0007, #ffb5ab);
-        --color-warning: light-dark(#6b5113, #e3ae34);
-        --color-warning-hover: light-dark(#533b00, #ffbf00);
-        --color-success: light-dark(#176636, #3cd879);
-        --color-success-hover: light-dark(#004e24, #4fed8a);
+        --color-primary: light-dark(#a42053, #f88aa7);
+        --color-primary-hover: light-dark(#86003e, #ffacc0);
+        --color-secondary: light-dark(#733caa, #c49af8);
+        --color-secondary-hover: light-dark(#5c2290, #d6b7ff);
+        --color-destructive: light-dark(#a13215, #f89177);
+        --color-destructive-hover: light-dark(#821d00, #ffb19d);
+        --color-warning: light-dark(#884d16, #f89540);
+        --color-warning-hover: light-dark(#6d3800, #ffb57b);
+        --color-success: light-dark(#1a7037, #4fce74);
+        --color-success-hover: light-dark(#005724, #68e68a);
 
         /* One foreground for every role, because the role tier has a uniform L */
-        --color-on-accent: light-dark(#f2f5f3, #0e0e0e);
+        --color-on-accent: light-dark(#f8f5f1, #131110);
 
         /* Accent tier -- decoration only, never text */
-        --color-primary-accent: light-dark(#f77299, #f76492);
-        --color-secondary-accent: light-dark(#bb88f6, #b67ff6);
-        --color-destructive-accent: light-dark(#f7796d, #f76d61);
-        --color-warning-accent: light-dark(#cc9c2e, #c4972c);
-        --color-success-accent: light-dark(#35c26c, #32bb68);
+        --color-primary-accent: light-dark(#f37599, #e35d86);
+        --color-secondary-accent: light-dark(#b98af2, #a973e6);
+        --color-destructive-accent: light-dark(#f37e61, #e76444);
+        --color-warning-accent: light-dark(#e78a39, #ce7b32);
+        --color-success-accent: light-dark(#41c169, #39ac5c);
         /* palette:end */
     }
 }

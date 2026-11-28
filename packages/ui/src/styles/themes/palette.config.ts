@@ -26,9 +26,11 @@ import type { Tone } from "../../lib/tone.ts";
 const HUES: Theme<Tone>["hues"] = {
     primary: 3.8, // pink
     secondary: 303.7, // violet
-    destructive: 27.3, // red
-    warning: 84, // amber (was 91.9: read as olive/brown at the role tier)
-    success: 152, // green
+    destructive: 35, // red (was 27.3: read as a second pink next to primary in dark)
+    // Burnt orange. Amber can't exist at the role tier's L 0.48: hue 70 read as
+    // brown, and 84 and 91.9 before it as olive.
+    warning: 58,
+    success: 150, // green
 };
 
 export default definePalette<Tone>({
@@ -39,9 +41,9 @@ export default definePalette<Tone>({
      * trades vividness for contrast. The audit fails when you went too far.
      */
     tiers: {
-        role: { light: 0.45, dark: 0.78 },
-        hover: { light: 0.37, dark: 0.84 },
-        accent: { light: 0.72, dark: 0.7 },
+        role: { light: 0.48, dark: 0.76 },
+        hover: { light: 0.4, dark: 0.83 },
+        accent: { light: 0.72, dark: 0.66 },
     },
 
     /**
@@ -53,10 +55,12 @@ export default definePalette<Tone>({
      * Hover is the exception and takes the full in-gamut chroma. At the hover
      * lightness (0.84 dark) there is very little chroma headroom, and backing
      * off further turns a pink button near-white on hover.
+     *
+     * The cap was 0.19, which made dark success read as neon.
      */
     chroma: {
-        ratio: { role: 0.9, hover: 1, accent: 0.9 },
-        cap: 0.19,
+        ratio: { role: 0.9, hover: 1, accent: 0.85 },
+        cap: 0.17,
     },
 
     overlays: {
@@ -73,34 +77,38 @@ export default definePalette<Tone>({
             hues: HUES,
             /**
              * Neutrals are specified directly rather than derived -- they are
-             * tuned by eye for the paper-ish light scheme and a flat dark
-             * scheme.
+             * tuned by eye for a warm paper light scheme and a warm charcoal
+             * dark scheme. Warm, because the green-grey they replaced fought
+             * the pink primary. All of them share hue 70, so text and borders
+             * don't lean rose against the paper.
              *
-             * Note the dark backgrounds are achromatic (C = 0). At low
-             * lightness even C = 0.005 reads as a colour cast rather than as
-             * a warm/cool neutral. The dark *text* tones keep the 155 hue on
-             * purpose: a slight tint there reads as warmth, not as a cast.
+             * The dark backgrounds keep C at 0.004: at low lightness even
+             * 0.005 reads as a colour cast rather than as warmth. Dark bg
+             * sits above near-black so pastel text glows less.
              */
             neutrals: {
-                bg: { light: [0.9673, 0.0041, 157.2], dark: [0.1642, 0, 0] },
+                bg: { light: [0.972, 0.006, 70], dark: [0.18, 0.004, 70] },
                 "bg-alt": {
-                    light: [0.9362, 0.0058, 153.8],
-                    dark: [0.205, 0, 0],
+                    light: [0.946, 0.009, 70],
+                    dark: [0.215, 0.004, 70],
                 },
                 surface: {
-                    light: [0.9893, 0.0025, 165.1],
-                    dark: [0.2297, 0, 0],
+                    light: [0.988, 0.004, 70],
+                    dark: [0.24, 0.004, 70],
                 },
                 // One step above surface, for panels that sit on a surface
                 // (cards in a surface-coloured container, terminals in cards).
-                "surface-raised": { light: [1, 0, 0], dark: [0.2662, 0, 0] },
+                "surface-raised": {
+                    light: [1, 0, 0],
+                    dark: [0.275, 0.004, 70],
+                },
                 text: {
-                    light: [0.2056, 0.012, 156.0],
-                    dark: [0.8795, 0.0084, 157.1],
+                    light: [0.22, 0.012, 70],
+                    dark: [0.91, 0.006, 70],
                 },
                 "text-muted": {
-                    light: [0.5061, 0.0116, 154.9],
-                    dark: [0.6449, 0.0128, 153.5],
+                    light: [0.5, 0.013, 70],
+                    dark: [0.69, 0.009, 70],
                 },
             },
             /**
@@ -108,14 +116,14 @@ export default definePalette<Tone>({
              * rather than for a lightness, because the ratio is the thing
              * that matters.
              *
-             * 2.2 is deliberately under the 3:1 of WCAG 1.4.11: --color-border
+             * 2.0 is deliberately under the 3:1 of WCAG 1.4.11: --color-border
              * only ever outlines surfaces already distinguished by their
              * background. Anything where the border itself carries the
              * affordance (form controls) uses --color-border-strong at 3.0.
              */
             borders: {
-                border: { ratio: 2.2, chroma: 0.0085, hue: 152 },
-                "border-strong": { ratio: 3.0, chroma: 0.009, hue: 154 },
+                border: { ratio: 2.0, chroma: 0.01, hue: 70 },
+                "border-strong": { ratio: 3.0, chroma: 0.01, hue: 70 },
             },
         },
         {

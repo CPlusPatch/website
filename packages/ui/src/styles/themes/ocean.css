@@ -29,22 +29,22 @@
         --color-border-strong: light-dark(#858e96, #576167);
         /* biome-ignore format: generated, and the palette tool reads one declaration per line */
         --color-scanline: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.035));
-        --color-primary: light-dark(#155892, #83bdf8);
-        --color-primary-hover: light-dark(#004174, #a2cfff);
-        --color-secondary: light-dark(#176161, #3ccfcf);
-        --color-secondary-hover: light-dark(#004a4a, #00e7e7);
-        --color-destructive: light-dark(#9d1a1a, #f99a8f);
-        --color-destructive-hover: light-dark(#7d0007, #ffb5ab);
-        --color-warning: light-dark(#6b5113, #e3ae34);
-        --color-warning-hover: light-dark(#533b00, #ffbf00);
-        --color-success: light-dark(#176636, #3cd879);
-        --color-success-hover: light-dark(#004e24, #4fed8a);
+        --color-primary: light-dark(#18609f, #76b6f7);
+        --color-primary-hover: light-dark(#004982, #9cccff);
+        --color-secondary: light-dark(#1a6a6a, #39c8c8);
+        --color-secondary-hover: light-dark(#005353, #00e3e4);
+        --color-destructive: light-dark(#a13215, #f89177);
+        --color-destructive-hover: light-dark(#821d00, #ffb19d);
+        --color-warning: light-dark(#884d16, #f89540);
+        --color-warning-hover: light-dark(#6d3800, #ffb57b);
+        --color-success: light-dark(#1a7037, #4fce74);
+        --color-success-hover: light-dark(#005724, #68e68a);
         --color-on-accent: light-dark(#eff4f8, #091018);
-        --color-primary-accent: light-dark(#5caaf6, #4da3f6);
-        --color-secondary-accent: light-dark(#35baba, #32b3b3);
-        --color-destructive-accent: light-dark(#f7796d, #f76d61);
-        --color-warning-accent: light-dark(#cc9c2e, #c4972c);
-        --color-success-accent: light-dark(#35c26c, #32bb68);
+        --color-primary-accent: light-dark(#61aaf2, #3596ef);
+        --color-secondary-accent: light-dark(#41b9b9, #39a4a4);
+        --color-destructive-accent: light-dark(#f37e61, #e76444);
+        --color-warning-accent: light-dark(#e78a39, #ce7b32);
+        --color-success-accent: light-dark(#41c169, #39ac5c);
         /* palette:end */
     }
 }
