@@ -21,9 +21,12 @@ export const badges: StoryGroup[] = [
                 {
                     slot: "Badge",
                     controls: {
-                        variant: BADGE_VARIANTS,
-                        tone: TONES,
-                        size: SIZES,
+                        variant: {
+                            values: BADGE_VARIANTS,
+                            widget: "preview",
+                        },
+                        tone: { values: TONES, widget: "swatches" },
+                        size: { values: SIZES, widget: "sizes" },
                         icon: "icon",
                         slot: "text",
                     },

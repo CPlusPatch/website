@@ -204,6 +204,7 @@ onMount(() => {
             </div>
             <aside class="bench__inspector" aria-label="Inspector">
                 <BenchInspector
+                    {title}
                     {description}
                     {sources}
                     {site}

@@ -81,6 +81,97 @@ Deno.test("a choice the story's props don't set, or set outside its values, is a
     );
 });
 
+Deno.test("a choice may name the widget that draws it, which is kept on the control", () => {
+    const [control] = normaliseControls(
+        make(
+            { tone: "success" },
+            { tone: { values: ["primary", "success"], widget: "swatches" } },
+        ),
+    );
+
+    assertEquals(control, {
+        key: "tone",
+        kind: "choice",
+        values: ["primary", "success"],
+        value: "success",
+        widget: "swatches",
+    });
+});
+
+Deno.test("a choice with a widget is checked like a list, and swatches need tones", () => {
+    assertThrows(
+        () =>
+            normaliseControls(
+                make(
+                    { size: "xl" },
+                    { size: { values: ["sm", "lg"], widget: "sizes" } },
+                ),
+            ),
+        Error,
+        "isn't one of its values",
+    );
+    assertThrows(
+        () =>
+            normaliseControls(
+                make(
+                    { tone: "primary" },
+                    {
+                        tone: {
+                            values: ["primary", "plum"],
+                            widget: "swatches",
+                        },
+                    },
+                ),
+            ),
+        Error,
+        '"plum" isn\'t one',
+    );
+    // Other widgets don't care what the values are.
+    assertEquals(
+        normaliseControls(
+            make(
+                { size: "sm" },
+                { size: { values: ["sm", "lg"], widget: "preview" } },
+                { port: "button" },
+            ),
+        ).length,
+        1,
+    );
+});
+
+Deno.test("a preview widget needs the story to have a port", () => {
+    assertThrows(
+        () =>
+            normaliseControls(
+                make(
+                    { size: "sm" },
+                    { size: { values: ["sm", "lg"], widget: "preview" } },
+                ),
+            ),
+        Error,
+        '"preview" needs the story to have a port',
+    );
+});
+
+Deno.test("an unknown widget is an error", () => {
+    assertThrows(
+        () =>
+            normaliseControls(
+                make(
+                    { size: "sm" },
+                    {
+                        size: {
+                            values: ["sm"],
+                            widget: "dial",
+                        } as unknown as { values: string[]; widget: "sizes" },
+                    },
+                ),
+            ),
+        Error,
+        'unknown widget "dial"',
+    );
+});
+
 Deno.test("a boolean or text control needs the story to set one", () => {
     assertThrows(() => normaliseControls(make({}, { disabled: "boolean" })));
     assertThrows(() => normaliseControls(make({ a: 1 }, { a: "text" })));

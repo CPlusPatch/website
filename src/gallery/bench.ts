@@ -8,9 +8,10 @@ import {
     type ControlValues,
     controlQuery,
     parseControls,
+    portProps,
 } from "./controls.ts";
 import { contentSource, markup } from "./source.ts";
-import { storyPath, type Tag } from "./story.ts";
+import { type PortName, storyPath, type Tag } from "./story.ts";
 
 export type BenchStory = {
     name: string;
@@ -24,6 +25,8 @@ export type BenchStory = {
     controls: Control[];
     /** The page that renders a controlled story live (playPath). */
     play?: string;
+    /** The Svelte component that renders a controlled story live, for previews of a choice. */
+    port?: PortName;
     /** What a controlled story's live source starts from: its props, icon and slot. */
     live?: { props: Record<string, unknown>; icon?: string; slot?: string };
 };
@@ -155,4 +158,53 @@ export const firstPick = (groups: BenchGroup[]): Pick => {
         story: group.stories[0]?.name ?? null,
         query: "",
     };
+};
+
+/** What a preview tile draws: a story's port, with the props on stage. */
+export type Preview = { port: PortName; props: Record<string, unknown> };
+
+/** A controlled story's preview with the values on it, if it has a port. */
+export const previewOf = (
+    story: BenchStory,
+    values: ControlValues,
+): Preview | undefined =>
+    story.port && story.live
+        ? {
+              port: story.port,
+              props: portProps(story.live.props, story.controls, values),
+          }
+        : undefined;
+
+/**
+ * The names of the props a story sets but doesn't control, for the
+ * inspector's footnote. A prop set to undefined isn't set.
+ */
+export const fixedProps = (story: BenchStory): string[] => {
+    const controlled = new Set(story.controls.map(({ key }) => key));
+
+    return Object.entries(story.live?.props ?? {})
+        .filter(([key, value]) => value !== undefined && !controlled.has(key))
+        .map(([key]) => key);
+};
+
+/**
+ * The controls as rows of the inspector. An icon next to a text control
+ * share one row, since both are short.
+ */
+export const controlRows = (controls: Control[]): Control[][] => {
+    const rows: Control[][] = [];
+    for (const control of controls) {
+        const last = rows.at(-1);
+        const [first] = last ?? [];
+        const pairs =
+            last?.length === 1 &&
+            first &&
+            ((first.kind === "icon" && control.kind === "text") ||
+                (first.kind === "text" && control.kind === "icon"));
+
+        if (pairs) last.push(control);
+        else rows.push([control]);
+    }
+
+    return rows;
 };

@@ -93,5 +93,16 @@ for (const path of [
     });
 }
 
+test("the bench passes with the icon list open", async ({ page }) => {
+    await page.goto("/gallery/buttons/#button-variant/default");
+    const icon = page.getByRole("combobox", { name: "icon" });
+    await icon.focus();
+    await icon.press("ArrowDown");
+    await expect(page.getByRole("listbox", { name: "icon" })).toBeVisible();
+
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    expect(violations.map(summary)).toEqual([]);
+});
+
 const summary = (v: { id: string; nodes: { target: unknown }[] }) =>
     `${v.id}: ${v.nodes.map((n) => JSON.stringify(n.target)).join(" ")}`;

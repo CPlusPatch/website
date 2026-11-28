@@ -4,13 +4,17 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
     type BenchGroup,
     type BenchStory,
+    controlRows,
     firstPick,
+    fixedProps,
     liveSource,
     parseHash,
     pickHash,
     pickPath,
+    previewOf,
     valuesOf,
 } from "./bench.ts";
+import type { Control } from "./controls.ts";
 
 const empty: BenchGroup = {
     id: "empty",
@@ -204,4 +208,41 @@ Deno.test("the bench opens on the first group's first story, or the group when i
         query: "",
     });
     assertThrows(() => firstPick([]));
+});
+
+Deno.test("a story's fixed props are the ones it sets and doesn't control, but not undefined ones", () => {
+    const story: BenchStory = {
+        ...variant,
+        live: {
+            props: { variant: "solid", as: "a", href: "#", size: undefined },
+        },
+    };
+
+    assertEquals(fixedProps(story), ["as", "href"]);
+    assertEquals(fixedProps(variant), []);
+    assertEquals(fixedProps(plain("sm")), []);
+});
+
+Deno.test("an icon and a text control next to each other share a row", () => {
+    const choice = variant.controls[0] as Control;
+    const icon: Control = { key: "icon", kind: "icon", value: "" };
+    const slot: Control = { key: "slot", kind: "text", value: "Go" };
+    const label: Control = { key: "label", kind: "text", value: "" };
+
+    assertEquals(controlRows([choice, icon, slot]), [[choice], [icon, slot]]);
+    assertEquals(controlRows([slot, icon]), [[slot, icon]]);
+    assertEquals(controlRows([icon, choice, slot]), [[icon], [choice], [slot]]);
+    assertEquals(controlRows([slot, label]), [[slot], [label]]);
+    assertEquals(controlRows([icon, slot, label]), [[icon, slot], [label]]);
+    assertEquals(controlRows([]), []);
+});
+
+Deno.test("a preview is the port with the story's props and the values on stage, when there is a port", () => {
+    const withPort: BenchStory = { ...variant, port: "button" };
+
+    assertEquals(previewOf(withPort, valuesOf(withPort, "tone=danger")), {
+        port: "button",
+        props: { variant: "solid", tone: "danger" },
+    });
+    assertEquals(previewOf(variant, {}), undefined);
 });

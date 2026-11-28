@@ -21,7 +21,7 @@ import type {
     Component as SvelteComponent,
     ComponentProps as SvelteProps,
 } from "svelte";
-import type { ControlDecl } from "./controls.ts";
+import type { ChoiceWidget, ControlDecl } from "./controls.ts";
 
 /** Any `.astro` component. */
 // biome-ignore lint/suspicious/noExplicitAny: matches astro's own ComponentProps constraint
@@ -129,7 +129,12 @@ export interface StoryGroup {
 type ControlFor<V> =
     | ([Extract<V, string>] extends [never]
           ? never
-          : readonly Extract<V, string>[])
+          :
+                | readonly Extract<V, string>[]
+                | {
+                      values: readonly Extract<V, string>[];
+                      widget: ChoiceWidget;
+                  })
     | ([Extract<V, boolean>] extends [never] ? never : "boolean")
     | (string extends V ? "text" : never);
 

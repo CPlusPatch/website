@@ -85,6 +85,7 @@ Add a story for each state worth looking at, not each combination of props. The 
 - Put the group's own component in its first story: the gallery reads the group's source file from it.
 - To let the bench change a story's props live, add `controls` and a Svelte `port` (a name in `PORTS`, `src/gallery/ports.ts`). Each key of `controls` has a kind:
     - a list of strings to choose from: `variant: VARIANTS`
+    - a list with a widget that draws it, `{ values: TONES, widget: "swatches" }`. `swatches` draws a colour swatch per tone, so every value must be a tone. `preview` draws a tile per value, with the story's component in that value. `sizes` draws a tile per value with a box that shrinks down the list, so list the biggest first.
     - `"boolean"`, for a boolean prop that the story sets
     - `"text"`, for a string prop that the story sets
     - `slot: "text"` and `icon: "icon"` for the story's label and icon. Icons are the ones in `packages/ui/src/icons.ts`.

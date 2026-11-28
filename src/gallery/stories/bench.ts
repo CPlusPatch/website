@@ -1,11 +1,19 @@
-import type { BenchGroup, BenchStory } from "../bench.ts";
+import type { BenchGroup, BenchStory, Preview } from "../bench.ts";
+import BenchAbout from "../bench-about.svelte";
 import BenchBar from "../bench-bar.svelte";
+import BenchCode from "../bench-code.svelte";
 import BenchCompare from "../bench-compare.svelte";
+import BenchControl from "../bench-control.svelte";
 import BenchControls from "../bench-controls.svelte";
 import BenchInspector from "../bench-inspector.svelte";
 import BenchList from "../bench-list.svelte";
+import BenchProps from "../bench-props.svelte";
 import BenchSettings from "../bench-settings.svelte";
 import BenchStage from "../bench-stage.svelte";
+import BenchTags from "../bench-tags.svelte";
+import BenchTiles from "../bench-tiles.svelte";
+import type { Control } from "../controls.ts";
+import PortView from "../port-view.svelte";
 import { type StoryGroup, storyPath, svelteStory } from "../story.ts";
 
 const sizes: BenchGroup = {
@@ -60,11 +68,97 @@ const variant: BenchStory = {
     live: { props: { variant: "solid", tone: "primary" }, slot: "Button" },
 };
 
-const controlled: BenchGroup = {
+// What the Buttons page has: one of each widget.
+const buttonsDefault: BenchStory = {
+    name: "default",
+    tags: [],
+    source: '<Button variant="solid" tone="primary" size="default">\n    <Icon name="lucide:heart" />\n    Button\n</Button>',
+    component: "Button",
+    controls: [
+        {
+            key: "variant",
+            kind: "choice",
+            values: ["solid", "outline", "ghost", "link"],
+            value: "solid",
+            widget: "preview",
+        },
+        {
+            key: "tone",
+            kind: "choice",
+            values: [
+                "primary",
+                "secondary",
+                "destructive",
+                "warning",
+                "success",
+            ],
+            value: "primary",
+            widget: "swatches",
+        },
+        {
+            key: "size",
+            kind: "choice",
+            values: ["lg", "default", "sm"],
+            value: "default",
+            widget: "sizes",
+        },
+        { key: "disabled", kind: "boolean", value: false },
+        { key: "icon", kind: "icon", value: "lucide:heart" },
+        { key: "slot", kind: "text", value: "Button" },
+    ],
+    play: "/gallery/play/button-variant/default/",
+    port: "button",
+    live: {
+        props: {
+            variant: "solid",
+            tone: "primary",
+            size: "default",
+            disabled: false,
+        },
+        icon: "lucide:heart",
+        slot: "Button",
+    },
+};
+
+// Its props the controls don't reach: `as` and `href`.
+const anchor: BenchStory = {
+    name: "anchor",
+    tags: [],
+    source: '<Button as="a" href="#main">Anchor</Button>',
+    component: "Button",
+    controls: [
+        {
+            key: "variant",
+            kind: "choice",
+            values: ["solid", "outline"],
+            value: "solid",
+        },
+        { key: "slot", kind: "text", value: "Anchor" },
+    ],
+    play: "/gallery/play/button-size/anchor/",
+    port: "button",
+    live: {
+        props: { variant: "solid", as: "a", href: "#main" },
+        slot: "Anchor",
+    },
+};
+
+const widgets: BenchGroup = {
     id: "button-variant",
     title: "Variant and tone",
     tags: [],
-    stories: [variant],
+    stories: [buttonsDefault, anchor],
+};
+
+// What a preview tile draws, with the values on stage.
+const buttonPreview: Preview = {
+    port: "button",
+    props: {
+        variant: "solid",
+        tone: "primary",
+        size: "default",
+        disabled: false,
+    },
 };
 
 const groups: BenchGroup[] = [
@@ -89,6 +183,13 @@ const sources = ["packages/ui/src/astro/ui/button.astro"];
 
 // Stories render on the server only, so a pick goes nowhere.
 const ignore = () => undefined;
+
+const control = (key: string): Control => {
+    const found = buttonsDefault.controls.find((c) => c.key === key);
+    if (!found) throw new Error(`No "${key}" control`);
+
+    return found;
+};
 
 const inspector = {
     mounted: true,
@@ -208,6 +309,7 @@ export const bench: StoryGroup[] = [
         min: 20,
         stories: [
             svelteStory("story", BenchInspector, {
+                title: "Buttons",
                 description: "Buttons, and links that look like them.",
                 sources,
                 site: false,
@@ -221,6 +323,7 @@ export const bench: StoryGroup[] = [
                 ...inspector,
             }),
             svelteStory("all-stories", BenchInspector, {
+                title: "Buttons",
                 description: "Buttons, and links that look like them.",
                 sources,
                 site: false,
@@ -230,6 +333,7 @@ export const bench: StoryGroup[] = [
                 ...inspector,
             }),
             svelteStory("site-only", BenchInspector, {
+                title: "Terminal",
                 sources: ["src/components/blocks/terminal/terminal.astro"],
                 site: true,
                 tags: ["live"],
@@ -238,19 +342,103 @@ export const bench: StoryGroup[] = [
                 ...inspector,
             }),
             svelteStory("with-controls", BenchInspector, {
+                title: "Buttons",
                 description: "Buttons, and links that look like them.",
                 sources,
                 site: false,
                 tags: [],
-                group: controlled,
+                group: widgets,
                 current: {
                     group: "button-variant",
                     story: "default",
-                    query: "variant=outline&tone=destructive",
+                    query: "variant=outline&tone=destructive&size=sm",
                 },
                 ...inspector,
                 backdrop: "dots",
                 outline: true,
+            }),
+            svelteStory("fixed-props", BenchInspector, {
+                title: "Buttons",
+                sources,
+                site: false,
+                tags: [],
+                group: widgets,
+                current: {
+                    group: "button-variant",
+                    story: "anchor",
+                    query: "",
+                },
+                ...inspector,
+            }),
+        ],
+    },
+    {
+        id: "bench-about",
+        title: "Bench about",
+        category: "gallery",
+        source: "src/gallery/bench-about.svelte",
+        min: 20,
+        stories: [
+            svelteStory("default", BenchAbout, {
+                title: "Buttons",
+                description: "Buttons, and links that look like them.",
+                sources,
+                site: false,
+                tags: [],
+                storyTags: [],
+            }),
+            svelteStory("site-only-with-tags", BenchAbout, {
+                title: "Terminal",
+                sources: ["src/components/blocks/terminal/terminal.astro"],
+                site: true,
+                tags: ["live"],
+                storyTags: ["animated"],
+            }),
+        ],
+    },
+    {
+        id: "bench-tags",
+        title: "Bench tags",
+        category: "gallery",
+        source: "src/gallery/bench-tags.svelte",
+        stories: [
+            svelteStory("both", BenchTags, { tags: ["animated", "live"] }),
+        ],
+    },
+    {
+        id: "bench-props",
+        title: "Bench props",
+        category: "gallery",
+        source: "src/gallery/bench-props.svelte",
+        min: 20,
+        stories: [
+            svelteStory("controls", BenchProps, {
+                group: widgets,
+                story: buttonsDefault,
+                values: { variant: "outline", tone: "success", size: "sm" },
+                mounted: true,
+                onchange: ignore,
+            }),
+            svelteStory("fixed-props", BenchProps, {
+                group: widgets,
+                story: anchor,
+                values: { variant: "solid", slot: "Anchor" },
+                mounted: true,
+                onchange: ignore,
+            }),
+            svelteStory("no-controls", BenchProps, {
+                group: sizes,
+                story: sizes.stories[1],
+                values: {},
+                mounted: true,
+                onchange: ignore,
+            }),
+            svelteStory("all-stories", BenchProps, {
+                group: { ...sizes, tags: ["animated"] },
+                values: {},
+                mounted: true,
+                href: `/gallery/story/${sizes.id}/`,
+                onchange: ignore,
             }),
         ],
     },
@@ -270,6 +458,148 @@ export const bench: StoryGroup[] = [
                 controls: variant.controls,
                 values: { variant: "outline", tone: "destructive" },
                 onchange: ignore,
+            }),
+            svelteStory("every-widget", BenchControls, {
+                controls: buttonsDefault.controls,
+                values: {
+                    variant: "ghost",
+                    tone: "secondary",
+                    size: "lg",
+                    disabled: true,
+                    icon: "lucide:bookmark",
+                    slot: "Save",
+                },
+                preview: buttonPreview,
+                onchange: ignore,
+            }),
+        ],
+    },
+    {
+        id: "bench-control",
+        title: "Bench control",
+        category: "gallery",
+        source: "src/gallery/bench-control.svelte",
+        min: 20,
+        stories: [
+            svelteStory("segmented", BenchControl, {
+                control: variant.controls[0] as Control,
+                value: "outline",
+                onchange: ignore,
+            }),
+            svelteStory("select", BenchControl, {
+                control: {
+                    key: "tone",
+                    kind: "choice",
+                    values: [
+                        "primary",
+                        "secondary",
+                        "destructive",
+                        "warning",
+                        "success",
+                    ],
+                    value: "primary",
+                },
+                value: "warning",
+                onchange: ignore,
+            }),
+            svelteStory("swatches", BenchControl, {
+                control: control("tone"),
+                value: "success",
+                onchange: ignore,
+            }),
+            svelteStory("preview", BenchControl, {
+                control: control("variant"),
+                value: "outline",
+                preview: buttonPreview,
+                onchange: ignore,
+            }),
+            svelteStory("sizes", BenchControl, {
+                control: control("size"),
+                value: "sm",
+                onchange: ignore,
+            }),
+            svelteStory("boolean", BenchControl, {
+                control: control("disabled"),
+                value: true,
+                onchange: ignore,
+            }),
+            svelteStory("text", BenchControl, {
+                control: control("slot"),
+                value: "Save",
+                onchange: ignore,
+            }),
+            svelteStory("icon", BenchControl, {
+                control: control("icon"),
+                value: "lucide:bookmark",
+                onchange: ignore,
+            }),
+        ],
+    },
+    {
+        id: "bench-tiles",
+        title: "Bench tiles",
+        category: "gallery",
+        source: "src/gallery/bench-tiles.svelte",
+        min: 20,
+        stories: [
+            svelteStory("preview", BenchTiles, {
+                name: "story-bench-preview",
+                label: "variant",
+                prop: "variant",
+                values: ["solid", "outline", "ghost", "link"],
+                value: "outline",
+                widget: "preview",
+                preview: buttonPreview,
+            }),
+            svelteStory("sizes", BenchTiles, {
+                name: "story-bench-sizes",
+                label: "size",
+                prop: "size",
+                values: ["lg", "default", "sm"],
+                value: "default",
+                widget: "sizes",
+            }),
+            svelteStory("many-sizes", BenchTiles, {
+                name: "story-bench-many-sizes",
+                label: "size",
+                prop: "size",
+                values: ["xl", "lg", "default", "sm", "xs"],
+                value: "sm",
+                widget: "sizes",
+            }),
+        ],
+    },
+    {
+        id: "bench-code",
+        title: "Bench code",
+        category: "gallery",
+        source: "src/gallery/bench-code.svelte",
+        min: 20,
+        stories: [
+            svelteStory("default", BenchCode, {
+                source: buttonsDefault.source,
+            }),
+            svelteStory("long-line", BenchCode, {
+                source: '<Button variant="outline" tone="secondary" aria-label="A label long enough to wrap in the column">Save</Button>',
+            }),
+        ],
+    },
+    {
+        id: "port-view",
+        title: "Port view",
+        category: "gallery",
+        source: "src/gallery/port-view.svelte",
+        stories: [
+            svelteStory("button", PortView, {
+                port: "button",
+                props: { variant: "outline", tone: "secondary" },
+                icon: "lucide:heart",
+                text: "Button",
+            }),
+            svelteStory("badge", PortView, {
+                port: "badge",
+                props: { variant: "solid", tone: "success" },
+                text: "Badge",
             }),
         ],
     },

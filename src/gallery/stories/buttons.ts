@@ -26,9 +26,9 @@ export const buttons: StoryGroup[] = [
                     icon: "lucide:heart",
                     slot: "Button",
                     controls: {
-                        variant: VARIANTS,
-                        tone: TONES,
-                        size: SIZES,
+                        variant: { values: VARIANTS, widget: "preview" },
+                        tone: { values: TONES, widget: "swatches" },
+                        size: { values: SIZES, widget: "sizes" },
                         disabled: "boolean",
                         icon: "icon",
                         slot: "text",

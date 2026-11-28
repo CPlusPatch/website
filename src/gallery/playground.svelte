@@ -1,9 +1,13 @@
 <script lang="ts">
-import Icon from "@cpluspatch/ui/svelte/icon.svelte";
 import { onMount } from "svelte";
-import { type Control, controlQuery, parseControls } from "./controls.ts";
+import {
+    type Control,
+    controlQuery,
+    parseControls,
+    portProps,
+} from "./controls.ts";
 import { isPlayMessage, readyMessage } from "./play-frame.ts";
-import { PORTS } from "./ports.ts";
+import PortView from "./port-view.svelte";
 import type { PortName } from "./story.ts";
 
 /**
@@ -23,19 +27,11 @@ type Props = {
 
 const { port, props, controls, icon, text }: Props = $props();
 
-const Port = $derived(PORTS[port]);
 // Island props never change, so the defaults are read once.
 // svelte-ignore state_referenced_locally
 let values = $state(parseControls(controls, ""));
 
-const portProps = $derived({
-    ...props,
-    ...Object.fromEntries(
-        controls
-            .filter(({ key }) => key !== "slot" && key !== "icon")
-            .map(({ key }) => [key, values[key]]),
-    ),
-});
+const viewProps = $derived(portProps(props, controls, values));
 const iconName = $derived(
     typeof values.icon === "string" ? values.icon : (icon ?? ""),
 );
@@ -78,11 +74,4 @@ onMount(() => {
 });
 </script>
 
-<Port {...portProps}>
-    {#if iconName}
-        <Icon name={iconName as `lucide:x`} aria-hidden="true" />
-    {/if}
-    {#if content}
-        {content}
-    {/if}
-</Port>
+<PortView {port} props={viewProps} icon={iconName} text={content} />

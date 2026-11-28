@@ -7,16 +7,37 @@
  */
 
 import { isIconName } from "../../packages/ui/src/icons.ts";
+import { TONES } from "../../packages/ui/src/lib/tone.ts";
 import type { Story } from "./story.ts";
 
 /**
- * How a prop is controlled: a list of strings to choose from, or one of the
- * other kinds by name. `slot` and `icon` stand for the story's own content.
+ * How the inspector draws a choice: tone swatches, tiles that preview the
+ * component with each value, or tiles of boxes that grow with the value.
  */
-export type ControlDecl = readonly string[] | "boolean" | "text" | "icon";
+export type ChoiceWidget = (typeof WIDGETS)[number];
+
+const WIDGETS = ["swatches", "preview", "sizes"] as const;
+
+/**
+ * How a prop is controlled: a list of strings to choose from (with a widget
+ * to draw it, if the default doesn't fit), or one of the other kinds by
+ * name. `slot` and `icon` stand for the story's own content.
+ */
+export type ControlDecl =
+    | readonly string[]
+    | { values: readonly string[]; widget: ChoiceWidget }
+    | "boolean"
+    | "text"
+    | "icon";
 
 export type Control =
-    | { key: string; kind: "choice"; values: string[]; value: string }
+    | {
+          key: string;
+          kind: "choice";
+          values: string[];
+          value: string;
+          widget?: ChoiceWidget;
+      }
     | { key: string; kind: "boolean"; value: boolean }
     | { key: string; kind: "text" | "icon"; value: string };
 
@@ -34,7 +55,13 @@ const isIcon = (name: string) =>
     (name.startsWith(ICON_PREFIX) &&
         isIconName(name.slice(ICON_PREFIX.length)));
 
-type Controlled = Pick<Story, "name" | "props" | "icon" | "slot" | "controls">;
+const isList = (decl: ControlDecl): decl is readonly string[] =>
+    Array.isArray(decl);
+
+type Controlled = Pick<
+    Story,
+    "name" | "props" | "icon" | "slot" | "controls" | "port"
+>;
 
 /**
  * A story's controls as a list in declared order, each with its default.
@@ -85,15 +112,60 @@ export const normaliseControls = (story: Controlled): Control[] => {
         }
         if (typeof decl === "string") throw fail(`unknown kind "${decl}"`);
 
-        if (typeof prop !== "string" || !decl.includes(prop)) {
+        const { values, widget } = isList(decl)
+            ? { values: decl, widget: undefined }
+            : decl;
+
+        if (
+            widget !== undefined &&
+            !(WIDGETS as readonly string[]).includes(widget)
+        ) {
+            throw fail(`unknown widget "${widget}"`);
+        }
+        // The tiles draw the story through its port.
+        if (widget === "preview" && !story.port)
+            throw fail(`"preview" needs the story to have a port`);
+        if (widget === "swatches") {
+            const other = values.find(
+                (v) => !(TONES as readonly string[]).includes(v),
+            );
+            if (other !== undefined) {
+                throw fail(`"swatches" needs tones, and "${other}" isn't one`);
+            }
+        }
+        const listed = values.join(", ");
+        if (typeof prop !== "string" || !values.includes(prop)) {
             throw fail(
-                `${JSON.stringify(prop)} isn't one of its values: ${decl.join(", ")}`,
+                `${JSON.stringify(prop)} isn't one of its values: ${listed}`,
             );
         }
 
-        return { key, kind: "choice", values: [...decl], value: String(prop) };
+        return {
+            key,
+            kind: "choice",
+            values: [...values],
+            value: String(prop),
+            ...(widget && { widget }),
+        };
     });
 };
+
+/**
+ * The props a story's port is rendered with: the story's own, then the
+ * controls' values. `slot` and `icon` are content, so they aren't props.
+ */
+export const portProps = (
+    props: Record<string, unknown>,
+    controls: Control[],
+    values: ControlValues,
+): Record<string, unknown> => ({
+    ...props,
+    ...Object.fromEntries(
+        controls
+            .filter(({ key }) => key !== "slot" && key !== "icon")
+            .map(({ key }) => [key, values[key]]),
+    ),
+});
 
 const parseOne = (control: Control, raw: string | null): string | boolean => {
     if (raw === null) return control.value;

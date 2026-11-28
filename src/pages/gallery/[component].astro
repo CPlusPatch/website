@@ -59,6 +59,7 @@ const groups: BenchGroup[] = component.groups.map((group) => ({
             controls,
             ...(controls.length > 0 && {
                 play: playPath(group.id, story.name),
+                port: story.port,
                 live: {
                     props: story.props,
                     icon: story.icon,

@@ -315,7 +315,7 @@ test.describe("a component's bench", () => {
                 true;
         });
 
-        await variant.getByText("outline", { exact: true }).click();
+        await variant.getByTitle("outline", { exact: true }).click();
         await expect(page).toHaveURL(
             /#button-variant\/default\?variant=outline$/,
         );
@@ -343,6 +343,68 @@ test.describe("a component's bench", () => {
         await expect.poll(() => frameSearch(page)).toBe("");
     });
 
+    test("Back puts the icon combobox and the frame back", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        await expect.poll(() => frameButton(page)).toContain("heart");
+        const icon = inspector(page).getByRole("combobox", { name: "icon" });
+        await expect(icon).toHaveValue("lucide:heart");
+
+        await icon.fill("bookm");
+        await icon.press("ArrowDown");
+        await icon.press("Enter");
+        await expect(page).toHaveURL(/\?icon=lucide%3Abookmark$/);
+        await expect(icon).toHaveValue("lucide:bookmark");
+        await expect.poll(() => frameButton(page)).toContain("bookmark");
+
+        await page.goBack();
+        await expect(page).toHaveURL(/#button-variant\/default$/);
+        await expect(icon).toHaveValue("lucide:heart");
+        await expect.poll(() => frameButton(page)).toContain("heart");
+    });
+
+    test("Back puts the boolean switch and the frame back", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const button = page
+            .frameLocator('iframe[name="stage"]')
+            .locator("main button");
+        const disabled = inspector(page).getByRole("switch", {
+            name: "disabled",
+        });
+        await expect(button).toBeEnabled();
+
+        await inspector(page)
+            .locator("label.toggle")
+            .filter({ has: page.getByRole("switch", { name: "disabled" }) })
+            .click();
+        await expect(disabled).toBeChecked();
+        await expect(button).toBeDisabled();
+
+        await page.goBack();
+        await expect(page).toHaveURL(/#button-variant\/default$/);
+        await expect(disabled).not.toBeChecked();
+        await expect(button).toBeEnabled();
+    });
+
+    test("Back puts the slot text and the frame back", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const button = page
+            .frameLocator('iframe[name="stage"]')
+            .locator("main button");
+        const input = inspector(page).getByRole("textbox", { name: "slot" });
+        await expect(input).toHaveValue("Button");
+
+        await input.fill("Save");
+        await input.press("Enter");
+        await expect(button).toHaveText("Save");
+
+        await page.goBack();
+        await expect(page).toHaveURL(/#button-variant\/default$/);
+        await expect(input).toHaveValue("Button");
+        await expect(button).toHaveText("Button");
+    });
+
     test("loads a controlled story's values from the hash", async ({
         page,
     }) => {
@@ -366,8 +428,10 @@ test.describe("a component's bench", () => {
                 .getByLabel("ghost"),
         ).toBeChecked();
         await expect(
-            controls.getByRole("combobox", { name: "tone" }),
-        ).toHaveValue("destructive");
+            controls
+                .getByRole("group", { name: "tone" })
+                .getByRole("radio", { name: "destructive" }),
+        ).toBeChecked();
     });
 
     test("turns a boolean control on, in the frame and the hash", async ({
@@ -415,6 +479,7 @@ test.describe("a component's bench", () => {
             .toBe("/gallery/story/button-size/sm/");
         expect(await frameAttr(page, "galleryStage")).toBeUndefined();
 
+        await inspector(page).getByRole("tab", { name: "Look" }).click();
         await inspector(page).getByText("Dots", { exact: true }).click();
         await inspector(page).getByLabel("Outline boxes").check();
         await expect.poll(() => frameAttr(page, "galleryStage")).toBe("dots");
@@ -434,6 +499,235 @@ test.describe("a component's bench", () => {
             .toBe("/gallery/story/button-size/lg/");
         await expect.poll(() => frameAttr(page, "galleryStage")).toBe("dots");
         await expect.poll(() => frameAttr(page, "galleryOutline")).toBe("");
+    });
+
+    const frameButton = (page: import("@playwright/test").Page) =>
+        stage(page).evaluate(
+            (frame: HTMLIFrameElement) =>
+                frame.contentDocument?.querySelector("main button")?.outerHTML,
+        );
+
+    test("picks a tone swatch and a variant tile, in the frame and the hash", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        await expect
+            .poll(() => frameButtonClass(page))
+            .toContain("tone-primary");
+
+        await inspector(page)
+            .getByRole("group", { name: "tone" })
+            .getByTitle("success", { exact: true })
+            .click();
+        await expect(page).toHaveURL(/\?tone=success$/);
+        await expect
+            .poll(() => frameButtonClass(page))
+            .toContain("tone-success");
+
+        await inspector(page)
+            .getByRole("group", { name: "variant" })
+            .getByTitle("ghost", { exact: true })
+            .click();
+        await expect(page).toHaveURL(/\?variant=ghost&tone=success$/);
+        await expect
+            .poll(() => frameButtonClass(page))
+            .toContain("button--ghost");
+    });
+
+    test("picks a size tile, in the frame and the hash", async ({ page }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        await inspector(page)
+            .getByRole("group", { name: "size" })
+            .getByTitle("sm", { exact: true })
+            .click();
+
+        await expect(page).toHaveURL(/\?size=sm$/);
+        await expect
+            .poll(() => frameButtonClass(page))
+            .toContain("button--size-sm");
+    });
+
+    test("picks an icon in the combobox by typing, in the frame and the hash", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        await expect.poll(() => frameButton(page)).toContain("<svg");
+        const before = await frameButton(page);
+
+        const icon = inspector(page).getByRole("combobox", { name: "icon" });
+        await icon.fill("bookm");
+        await icon.press("ArrowDown");
+        await icon.press("Enter");
+
+        await expect(page).toHaveURL(/\?icon=lucide%3Abookmark$/);
+        await expect.poll(() => frameButton(page)).not.toBe(before);
+        await expect(icon).toHaveValue("lucide:bookmark");
+
+        // None takes the icon off.
+        await icon.fill("none");
+        await icon.press("ArrowDown");
+        await icon.press("Enter");
+        await expect(page).toHaveURL(/\?icon=$/);
+        await expect.poll(() => frameButton(page)).not.toContain("<svg");
+    });
+
+    test("the tiles' previews aren't focusable, and a click on one picks it", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const variant = inspector(page).getByRole("group", { name: "variant" });
+        await expect(variant.getByRole("radio")).toHaveCount(4);
+        await expect(variant.locator("button, a[href]")).toHaveCount(0);
+
+        await variant.locator(".tile__preview").nth(1).click();
+        await expect(page).toHaveURL(/\?variant=outline$/);
+    });
+
+    test("copies the story's source from the Code section", async ({
+        page,
+        context,
+    }) => {
+        await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+        await page.goto(
+            "/gallery/buttons/#button-variant/default?tone=success",
+        );
+        const code = inspector(page).locator(".bench-code");
+        await expect(code.locator("pre")).toContainText('tone="success"');
+
+        await code.getByRole("button", { name: "Copy code" }).click();
+
+        await expect(code.getByRole("status")).toHaveText("Copied");
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+            await code.locator("pre code").innerText(),
+        );
+        await expect(code.getByRole("status")).toHaveText("", {
+            timeout: 5000,
+        });
+    });
+
+    test("says in words when the copy fails", async ({ page }) => {
+        await page.addInitScript(() => {
+            navigator.clipboard.writeText = () =>
+                Promise.reject(new Error("denied"));
+        });
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const code = inspector(page).locator(".bench-code");
+        await expect(code.locator("pre")).toContainText("<Button");
+
+        await code.getByRole("button", { name: "Copy code" }).click();
+
+        const status = code.getByRole("status");
+        await expect(status).toHaveText(
+            "Couldn't copy. Select the code instead.",
+        );
+        await expect(status).toBeVisible();
+        // Longer than a success, which has gone by now.
+        await page.waitForTimeout(2000);
+        await expect(status).toBeVisible();
+        await expect(status).toHaveText("", { timeout: 5000 });
+    });
+
+    test("opens the About disclosure to the component's files", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const about = inspector(page).locator("details.bench-about");
+        await expect(about).not.toHaveAttribute("open");
+        await expect(about.locator("summary")).toContainText("About Buttons");
+        await expect(about.locator("summary")).toContainText("button.astro");
+        await expect(about.getByText("ui/button.astro")).toBeHidden();
+
+        await about.locator("summary").click();
+
+        await expect(about).toHaveAttribute("open");
+        await expect(
+            about.locator(".bench-about__meta code").first(),
+        ).toContainText("packages/ui/src/astro/ui/button.astro");
+    });
+
+    test("says what each tag means in the open About disclosure", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/stat/#stat");
+        const about = inspector(page).locator("details.bench-about");
+        const hint = about.getByText("Moves on its own");
+        await expect(hint).toBeHidden();
+
+        await about.locator("summary").click();
+
+        await expect(hint).toBeVisible();
+        await expect(about.locator(".bench-about__tags")).toContainText(
+            "animated",
+        );
+    });
+
+    test("switches the inspector's tabs by click and by arrow keys", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-variant/default");
+        const panel = (name: string) =>
+            inspector(page).getByRole("tabpanel", { name });
+        const props = inspector(page).getByRole("tab", { name: "Props" });
+        const look = inspector(page).getByRole("tab", { name: "Look" });
+        await expect(props).toHaveAttribute("aria-selected", "true");
+        await expect(panel("Props")).toBeVisible();
+        await expect(panel("Look")).toBeHidden();
+
+        await look.click();
+        await expect(look).toHaveAttribute("aria-selected", "true");
+        await expect(panel("Look")).toBeVisible();
+        await expect(panel("Props")).toBeHidden();
+
+        await look.press("ArrowLeft");
+        await expect(props).toBeFocused();
+        await expect(props).toHaveAttribute("aria-selected", "true");
+        await expect(panel("Props")).toBeVisible();
+
+        await props.press("ArrowRight");
+        await expect(look).toBeFocused();
+        await expect(panel("Look")).toBeVisible();
+    });
+
+    test("says there are no controls for a story without them, and when no story is on stage", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect(inspector(page)).toContainText(
+            "The sm story has no controls.",
+        );
+
+        await page.goto("/gallery/buttons/#button-size");
+        await expect(inspector(page)).toContainText(
+            "Controls appear when one story is on stage.",
+        );
+    });
+
+    test("opens all of a group's stories alone from Props, with no Code section", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-size");
+        const open = inspector(page).getByRole("link", { name: "Open alone" });
+        await expect(open).toHaveAttribute(
+            "href",
+            "/gallery/story/button-size/",
+        );
+        await expect(inspector(page).locator(".bench-code")).toHaveCount(0);
+
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect(inspector(page).locator(".bench-code")).toBeVisible();
+        await expect(open).toBeVisible();
+    });
+
+    test("lists the props a story sets and doesn't control", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/story/bench-props/fixed-props/");
+        await expect(page.locator("#main")).toContainText(
+            "The story fixes as and href.",
+        );
+
+        await page.goto("/gallery/buttons/#button-variant/default");
+        await expect(inspector(page)).not.toContainText("The story fixes");
     });
 
     const copies = (page: import("@playwright/test").Page) =>
