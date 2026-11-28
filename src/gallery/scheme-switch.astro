@@ -1,0 +1,76 @@
+---
+import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
+
+/**
+ * The gallery page's own light and dark switch, in its bars. It sets
+ * `data-scheme` on the page's <html>, and never on the stage's frames: those
+ * follow the bench's Look. The pick is kept for the tab in sessionStorage
+ * (`gallery-scheme`), which gallery-layout.astro's head applies before paint.
+ */
+type Props = {
+    /**
+     * The radio group's name. `scheme` is the one the colour override reads
+     * through :has() (styles/overrides.ts), so the pick works with no script,
+     * and the one the script below drives. The Display menu is off gallery
+     * pages, so nothing else uses it there. Any other name makes the switch
+     * inert, for a story on a page that has the real one.
+     */
+    name?: string;
+};
+
+const { name = "scheme" } = Astro.props;
+---
+
+{/* Neither is checked here: the page follows the system until a script runs. */}
+<SegmentedControl
+    {name}
+    label="Page colours"
+    size="sm"
+    options={[
+        { value: "light", label: "Light", icon: "lucide:sun" },
+        { value: "dark", label: "Dark", icon: "lucide:moon" },
+    ]}
+/>
+
+<script>
+const KEY = "gallery-scheme";
+
+const system = () =>
+    matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+const saved = () => {
+    try {
+        const value = sessionStorage.getItem(KEY);
+
+        return value === "light" || value === "dark" ? value : null;
+    } catch {
+        // Storage can be blocked (private mode).
+        return null;
+    }
+};
+
+const radios = document.querySelectorAll<HTMLInputElement>(
+    'input[name="scheme"]',
+);
+const show = (scheme: string) => {
+    for (const radio of radios) radio.checked = radio.value === scheme;
+};
+
+show(saved() ?? system());
+// A checked radio pins the scheme through :has(), so follow the system until a pick.
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (!saved()) show(system());
+});
+
+for (const radio of radios) {
+    radio.addEventListener("change", () => {
+        document.documentElement.dataset.scheme = radio.value;
+
+        try {
+            sessionStorage.setItem(KEY, radio.value);
+        } catch {
+            // The pick still applies to this page.
+        }
+    });
+}
+</script>

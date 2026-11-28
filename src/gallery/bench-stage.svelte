@@ -36,9 +36,6 @@ let shown = splitUrl(initial);
 // svelte-ignore state_referenced_locally
 let shownParams = JSON.stringify(params);
 
-/** Loads the page in the frame again, for a changed Display choice. */
-export const reload = () => frame?.contentWindow?.location.reload();
-
 export const setStage = (backdrop: Backdrop, outline: boolean) =>
     applyStage(frame, backdrop, outline);
 

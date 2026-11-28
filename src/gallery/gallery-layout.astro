@@ -2,14 +2,15 @@
 import Sidebar from "@cpluspatch/ui/astro/sections/sidebar/sidebar.astro";
 import SidebarLayout from "@cpluspatch/ui/astro/sections/sidebar/sidebar-layout.astro";
 import Layout from "../layouts/base.astro";
-import DisplaySettings from "./display-settings.astro";
 import GalleryMenu from "./gallery-menu.astro";
 import GalleryNav from "./gallery-nav.astro";
+import SchemeSwitch from "./scheme-switch.astro";
 
 /**
  * Every gallery page's frame: a sticky bar (the gallery's name, where you
- * are, and the Display menu), and a way to every component: a sidebar that
- * gives way to a menu in the bar on narrow screens, or just the menu.
+ * are, and the light and dark switch), and a way to every component: a
+ * sidebar that gives way to a menu in the bar on narrow screens, or just
+ * the menu.
  * A `bare` page has neither: it fills the viewport and brings its own bar.
  */
 interface Props {
@@ -29,8 +30,8 @@ interface Props {
     /**
      * No bar, width cap or page padding: the page fills the viewport and
      * carries its own bar, with the Components menu (gallery-menu.astro) and
-     * the Display menu. The skip link goes to its `#stage`. Ignores `sidebar`
-     * and `menu`.
+     * the light and dark switch (scheme-switch.astro). The skip link goes to
+     * its `#stage`. Ignores `sidebar` and `menu`.
      */
     bare?: boolean;
 }
@@ -53,7 +54,17 @@ const main = title ?? "Component gallery";
     {description}
     noindex
     skipTo={bare ? "stage" : "main"}
+    savedDisplay={false}
 >
+    {/* The page's own scheme, before first paint. */}
+    <script slot="head" is:inline>
+    try {
+        const scheme = sessionStorage.getItem("gallery-scheme");
+        if (scheme === "light" || scheme === "dark") {
+            document.documentElement.dataset.scheme = scheme;
+        }
+    } catch {}
+    </script>
     <div class:list={["gallery", { "gallery--bare": bare }]} id="top">
         {bare ? (
             <main id="main" class="gallery__main" aria-label={main}>
@@ -77,7 +88,7 @@ const main = title ?? "Component gallery";
                             }
                         />
                     )}
-                    <DisplaySettings collapseBelow="30rem" />
+                    <SchemeSwitch />
                 </header>
 
                 {sidebar ? (

@@ -48,11 +48,6 @@ const srcOf = (frame: (typeof frames)[number]) =>
 const frameList = () =>
     Array.from(row?.querySelectorAll<HTMLIFrameElement>("iframe") ?? []);
 
-/** Loads every copy again, for a changed Display choice. */
-export const reload = () => {
-    for (const frame of frameList()) frame.contentWindow?.location.reload();
-};
-
 export const setStage = (backdrop: Backdrop, outline: boolean) => {
     for (const frame of frameList()) applyStage(frame, backdrop, outline);
 };

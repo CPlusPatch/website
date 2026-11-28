@@ -39,46 +39,21 @@ for (const story of stories) {
     });
 }
 
-test("the Display menu changes the scheme and theme", async ({ page }) => {
+test("the scheme switch changes the page's colours", async ({ page }) => {
     await page.goto("/gallery/");
     const background = () =>
         page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
-    await page.getByRole("button", { name: "Display" }).click();
-    const pick = (name: string, value: string) =>
+    const pick = (value: string) =>
         page
-            .locator(`label:has(input[name="${name}"][value="${value}"])`)
+            .locator("header")
+            .getByRole("group", { name: "Page colours" })
+            .locator(`label:has(input[value="${value}"])`)
             .click();
-    await pick("scheme", "light");
+    await pick("light");
     const light = await background();
-    await pick("scheme", "dark");
-    const dark = await background();
-    expect(dark).not.toBe(light);
-
-    await pick("theme", "nord");
-    expect(await background()).not.toBe(dark);
-});
-
-test("the Display menu changes the style", async ({ page }) => {
-    await page.goto("/gallery/");
-    const look = () =>
-        page.evaluate(() =>
-            [
-                getComputedStyle(document.body).fontFamily,
-                getComputedStyle(document.documentElement).getPropertyValue(
-                    "--radius",
-                ),
-            ].join(),
-        );
-    const poster = await look();
-
-    await page.getByRole("button", { name: "Display" }).click();
-    for (const style of ["soft", "print", "mono"]) {
-        await page
-            .locator(`label:has(input[name="style"][value="${style}"])`)
-            .click();
-        expect(await look()).not.toBe(poster);
-    }
+    await pick("dark");
+    expect(await background()).not.toBe(light);
 });
 
 test("the index shows every component, and no filter", async ({ page }) => {

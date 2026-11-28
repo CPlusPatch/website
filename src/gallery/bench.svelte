@@ -154,20 +154,10 @@ onMount(() => {
     const onHashChange = () => {
         current = fromHash();
     };
-    // A Display choice was just saved: reload the frames to pick it up.
-    const onDisplayChange = (event: Event) => {
-        if (!(event.target as Element).closest(".display-menu")) return;
-        requestAnimationFrame(() => {
-            stage?.reload();
-            compareStrip?.reload();
-        });
-    };
     window.addEventListener("hashchange", onHashChange);
-    document.addEventListener("change", onDisplayChange);
 
     return () => {
         window.removeEventListener("hashchange", onHashChange);
-        document.removeEventListener("change", onDisplayChange);
     };
 });
 </script>

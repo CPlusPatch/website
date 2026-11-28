@@ -23,6 +23,11 @@ export interface Props {
     canonical?: boolean;
     /** Off for pages that are only parts of others, like gallery stories. */
     analytics?: boolean;
+    /**
+     * Apply the Display choices saved in localStorage before first paint.
+     * Off for the component gallery, which always has the default look.
+     */
+    savedDisplay?: boolean;
     /** A 1200×630 PNG under public/ for share cards, with its alt text. */
     image?: { path: string; alt: string };
 }
@@ -33,6 +38,7 @@ const {
     noindex = false,
     canonical: hasCanonical = true,
     analytics = true,
+    savedDisplay = true,
     image = {
         path: "/og.png",
         alt: "Hi, I'm CPlusPatch. I write software. Beside it, a terminal showing neofetch.",
@@ -50,8 +56,11 @@ const ogImage = new URL(image.path, Astro.site ?? Astro.url);
 <link rel="icon" href="/favicon.ico">
 <meta name="generator" content={Astro.generator}>
 
-{/* The saved theme and overrides, before first paint */}
-<script is:inline set:html={themeInitScript} />
+{/*
+ * The saved theme and overrides, before first paint. The overrides' CSS stays
+ * without it: the gallery's story pages read theirs from URL params.
+ */}
+{savedDisplay && <script is:inline set:html={themeInitScript} />}
 <style is:inline set:html={OVERRIDES_CSS} />
 
 <title>{pageTitle}</title>

@@ -94,6 +94,8 @@ Add a story for each state worth looking at, not each combination of props. The 
 - Tag a story that keeps moving on its own (autoplay, a count-up) as `animated`, and one that fetches data as `live`. The tests let only `animated` stories keep moving, and never compare `live` ones as pictures.
 - Each group gets a page at `/gallery/<group-id>/`. To put several groups on one page, list them together in `src/gallery/components.ts`.
 
-Each story also has a bare page at `/gallery/story/<group-id>/<story>/`, and each group at `/gallery/story/<group-id>/`. Tests load these. They take `?theme=`, `?style=`, `?scheme=light|dark` and `?width=` (`tablet`, `phone`, `tiny` or rem) without changing the saved Display settings. `/gallery/manifest.json` lists every story.
+Each story also has a bare page at `/gallery/story/<group-id>/<story>/`, and each group at `/gallery/story/<group-id>/`. Tests load these. They take `?theme=`, `?style=`, `?scheme=light|dark`, `?spacing=`, `?radius=`, `?font-size=` and `?width=` (`tablet`, `phone`, `tiny` or rem). `spacing`, `radius` and `font-size` take an override's option, like `?spacing=compact`. Gallery pages ignore the Display choices a visitor saved on the site, so without params they have the default look. `/gallery/manifest.json` lists every story.
+
+On a component's page, the inspector's Look tab sets these params for the stage and the compare strip, and never for the page itself. The sun and moon switch in the bar sets the page's own light or dark scheme for the tab, and leaves the stage alone.
 
 To check a change, see [Development workflow](workflow.md).

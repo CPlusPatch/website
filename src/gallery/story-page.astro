@@ -12,8 +12,8 @@ import { PREVIEW_WIDTHS } from "./widths.ts";
  *
  * Query parameters pick the look: ?theme, ?style, ?scheme=light|dark,
  * ?spacing, ?radius and ?font-size (an override's option, as in
- * styles/overrides.ts), and ?width=<phone, tablet, tiny, or rem>. They don't
- * touch the saved Display choices, which apply without them.
+ * styles/overrides.ts), and ?width=<phone, tablet, tiny, or rem>. Without
+ * them the page has the default look, as saved Display choices don't apply.
  */
 interface Props {
     title: string;
@@ -48,6 +48,7 @@ const options = {
     noindex
     analytics={false}
     skipTo={false}
+    savedDisplay={false}
 >
     {/* Before the story paints; ignores anything it doesn't know. */}
     <script is:inline define:vars={{ options }}>

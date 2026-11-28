@@ -11,9 +11,9 @@ import {
     tagsOf,
 } from "../../gallery/components.ts";
 import { normaliseControls } from "../../gallery/controls.ts";
-import DisplaySettings from "../../gallery/display-settings.astro";
 import GalleryLayout from "../../gallery/gallery-layout.astro";
 import GalleryMenu from "../../gallery/gallery-menu.astro";
+import SchemeSwitch from "../../gallery/scheme-switch.astro";
 import { displayName, storySource } from "../../gallery/source.ts";
 import { playPath } from "../../gallery/story.ts";
 
@@ -92,7 +92,7 @@ const groups: BenchGroup[] = component.groups.map((group) => ({
     >
         <Fragment slot="actions">
             <GalleryMenu current={component.id} />
-            <DisplaySettings collapseBelow="30rem" />
+            <SchemeSwitch />
         </Fragment>
     </Bench>
 </GalleryLayout>

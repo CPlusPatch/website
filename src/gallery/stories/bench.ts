@@ -16,7 +16,8 @@ import BenchTiles from "../bench-tiles.svelte";
 import type { Control } from "../controls.ts";
 import { DEFAULT_LOOK } from "../look.ts";
 import PortView from "../port-view.svelte";
-import { type StoryGroup, storyPath, svelteStory } from "../story.ts";
+import SchemeSwitch from "../scheme-switch.astro";
+import { type StoryGroup, story, storyPath, svelteStory } from "../story.ts";
 
 const sizes: BenchGroup = {
     id: "button-size",
@@ -666,6 +667,18 @@ export const bench: StoryGroup[] = [
                 onstage: ignore,
                 onoutline: ignore,
             }),
+        ],
+    },
+    {
+        id: "scheme-switch",
+        title: "Scheme switch",
+        category: "gallery",
+        source: "src/gallery/scheme-switch.astro",
+        description:
+            "The gallery page's light and dark switch. Here its radios have another group name, so picking one changes nothing.",
+        min: 10,
+        stories: [
+            story("default", SchemeSwitch, { name: "story-scheme-switch" }),
         ],
     },
 ];

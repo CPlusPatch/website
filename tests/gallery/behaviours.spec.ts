@@ -246,9 +246,9 @@ test.describe("a component's bench", () => {
         ).toBeVisible();
         await page.keyboard.press("Escape");
 
-        await page.getByRole("button", { name: "Display" }).click();
-        await expect(page.locator("#display-settings")).toBeVisible();
-        await page.keyboard.press("Escape");
+        await expect(
+            page.getByRole("group", { name: "Page colours" }),
+        ).toBeVisible();
 
         await page.locator('a[rel="next"]').click();
         await expect(page).toHaveURL(/\/gallery\/[a-z-]+\/(#.*)?$/);
@@ -790,15 +790,6 @@ test.describe("a component's bench", () => {
         await expect(copies(page)).toHaveCount(THEMES.length);
     });
 
-    test("has no Compare row in the Display menu", async ({ page }) => {
-        await page.goto("/gallery/buttons/#button-size/sm");
-        await page.getByRole("button", { name: "Display" }).click();
-
-        const menu = page.locator("#display-settings");
-        await expect(menu).toBeVisible();
-        await expect(menu.getByText("Compare")).toHaveCount(0);
-    });
-
     const frameRoot = (
         page: import("@playwright/test").Page,
         attr: "theme" | "overrideSpacing" | "scheme",
@@ -808,6 +799,37 @@ test.describe("a component's bench", () => {
                 frame.contentDocument?.documentElement.dataset[key],
             attr,
         );
+
+    test("the scheme switch sets the page's scheme and not the stage's, and keeps it for the tab", async ({
+        page,
+    }) => {
+        await page.goto("/gallery/buttons/#button-size/sm");
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/sm/");
+        const colours = page.getByRole("group", { name: "Page colours" });
+        const html = page.locator("html");
+
+        // The system scheme, light here, until a pick.
+        await expect(
+            colours.getByRole("radio", { name: "Light" }),
+        ).toBeChecked();
+        await expect(html).not.toHaveAttribute("data-scheme");
+
+        await colours.getByTitle("Dark").click();
+        await expect(html).toHaveAttribute("data-scheme", "dark");
+        expect(await frameRoot(page, "scheme")).toBeUndefined();
+
+        await page.reload();
+        await expect(html).toHaveAttribute("data-scheme", "dark");
+        await expect(
+            colours.getByRole("radio", { name: "Dark" }),
+        ).toBeChecked();
+        await expect
+            .poll(() => framePath(page))
+            .toBe("/gallery/story/button-size/sm/");
+        expect(await frameRoot(page, "scheme")).toBeUndefined();
+    });
 
     test("the Look tab styles the stage, shows it changed, and Reset clears it", async ({
         page,
@@ -846,6 +868,23 @@ test.describe("a component's bench", () => {
             .toBeUndefined();
         await expect(dot).toHaveCount(0);
     });
+});
+
+test("gallery pages ignore the saved Display choices", async ({ page }) => {
+    await page.addInitScript(() =>
+        localStorage.setItem("display", JSON.stringify({ theme: "nord" })),
+    );
+
+    for (const path of [
+        "/gallery/",
+        "/gallery/buttons/",
+        "/gallery/story/button-size/sm/",
+    ]) {
+        await page.goto(path);
+        await expect(page.locator("html"), path).not.toHaveAttribute(
+            "data-theme",
+        );
+    }
 });
 
 test("tabs switch panels by click and by keys", async ({ page }) => {

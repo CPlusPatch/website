@@ -20,7 +20,7 @@ type Props = {
     previous?: { href: string; title: string };
     /** The component after this one in its category, if any. */
     next?: { href: string; title: string };
-    /** The Components and Display menus, from the page. */
+    /** The Components menu and the page's colour switch, from the page. */
     actions?: Snippet;
 };
 
