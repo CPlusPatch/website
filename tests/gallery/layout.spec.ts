@@ -57,3 +57,72 @@ for (const story of stories) {
         }
     });
 }
+
+/** Stories known to hold a button with an icon and a one-line label. */
+const MEASURED_ICON_LABELS = new Set([
+    "button-variant/default",
+    "button-size/icon-end",
+]);
+
+/**
+ * An icon in a button is centred on its label's capital letters, not on the
+ * line box, which carries the font's empty space below the baseline.
+ */
+for (const story of stories) {
+    test(`${story.id} centres a button's icon on its label's capitals`, async ({
+        page,
+    }) => {
+        await page.goto(story.path);
+        const off = await page.evaluate(() => {
+            const canvas = document.createElement("canvas").getContext("2d");
+            if (!canvas) throw new Error("no canvas");
+            const results: string[] = [];
+            let checked = 0;
+            for (const button of document.querySelectorAll(
+                ".button:not([aria-busy='true'])",
+            )) {
+                const svg = button.querySelector(":scope > svg");
+                const text = [...button.childNodes].find(
+                    (node) =>
+                        node.nodeType === Node.TEXT_NODE &&
+                        node.textContent?.trim(),
+                );
+                if (!svg || !text) continue;
+
+                const range = document.createRange();
+                range.selectNodeContents(text);
+                // The text's content area, which starts at the font's ascent.
+                const lines = range.getClientRects();
+                // The icon sits beside the whole block of a wrapped label.
+                const first = lines[0];
+                if (lines.length !== 1 || !first) continue;
+                const top = first.top;
+                const style = getComputedStyle(button);
+                const size = Number.parseFloat(style.fontSize);
+                canvas.font = style.font;
+                // Layout rounds the ascent like this, and the range's top includes it.
+                const ascent = canvas.measureText("H").fontBoundingBoxAscent;
+                // Canvas rounds a glyph's height to whole pixels, so measure it large and scale it.
+                canvas.font = `${style.fontWeight} 1000px ${style.fontFamily}`;
+                const capHeight =
+                    (canvas.measureText("H").actualBoundingBoxAscent / 1000) *
+                    size;
+                const cap = top + ascent - capHeight / 2;
+                const box = svg.getBoundingClientRect();
+                const icon = box.top + box.height / 2;
+                checked += 1;
+                if (Math.abs(icon - cap) > 0.5) {
+                    results.push(
+                        `${button.className}: icon ${icon.toFixed(2)}, capitals ${cap.toFixed(2)}`,
+                    );
+                }
+            }
+            return { results, checked };
+        });
+        expect(off.results).toEqual([]);
+        // Guards against the selectors above matching nothing.
+        if (MEASURED_ICON_LABELS.has(story.id)) {
+            expect(off.checked).toBeGreaterThan(0);
+        }
+    });
+}
