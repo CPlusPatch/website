@@ -12,6 +12,7 @@
 import { initAudioPlayers } from "./audio-player.ts";
 import { initCarousels } from "./carousel.ts";
 import { initCodes } from "./code.ts";
+import { initComboboxes } from "./combobox.ts";
 import { initDisplayMenus } from "./display-menu.ts";
 import { initDropdowns } from "./dropdown.ts";
 import { initHeatmaps } from "./heatmap.ts";
@@ -25,12 +26,19 @@ import { initPreviewFrames } from "./preview-frame.ts";
 import { initScrollCues } from "./scroll-cue.ts";
 import { initSidebarNavs } from "./sidebar-nav.ts";
 import { initStats } from "./stat.ts";
+import { initTabLists } from "./tabs.ts";
 
 export { initAudioPlayer, initAudioPlayers } from "./audio-player.ts";
 export type { Behaviour } from "./behaviour.ts";
 export { behaviour } from "./behaviour.ts";
 export { initCarousel, initCarousels } from "./carousel.ts";
 export { initCode, initCodes } from "./code.ts";
+export {
+    filterOptions,
+    initCombobox,
+    initComboboxes,
+    nextActiveIndex,
+} from "./combobox.ts";
 export { initDisplayMenu, initDisplayMenus } from "./display-menu.ts";
 export { initDropdown, initDropdowns } from "./dropdown.ts";
 export { initHeatmap, initHeatmaps } from "./heatmap.ts";
@@ -62,6 +70,7 @@ export {
 export { initScrollCue, initScrollCues } from "./scroll-cue.ts";
 export { initSidebarNav, initSidebarNavs } from "./sidebar-nav.ts";
 export { initStat, initStats } from "./stat.ts";
+export { initTabList, initTabLists, nextTabIndex } from "./tabs.ts";
 export type {
     Program,
     TerminalOptions,
@@ -82,6 +91,7 @@ export const initAll = (scope: ParentNode = document): (() => void) => {
         initAudioPlayers,
         initCarousels,
         initCodes,
+        initComboboxes,
         initDisplayMenus,
         initDropdowns,
         initHeatmaps,
@@ -95,6 +105,7 @@ export const initAll = (scope: ParentNode = document): (() => void) => {
         initScrollCues,
         initSidebarNavs,
         initStats,
+        initTabLists,
     ].map((init) => init(scope));
     return () => {
         for (const cleanup of cleanups) cleanup();

@@ -1,0 +1,74 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import {
+    type TabItem,
+    tabId,
+    tabListClasses,
+    tabPanelId,
+} from "../../components/tab-list.ts";
+
+export type { TabItem };
+
+/**
+ * A bar of tabs that choose which panel shows. The default slot is for
+ * actions at the right end of the bar, outside the tablist. Each tab
+ * controls a <TabPanel> that has this `id` as its `tabs` and the tab's
+ * value as its `value`, wherever it is in the page.
+ *
+ * Without JS the tabs stay hidden, so only the selected panel shows.
+ */
+interface Props extends Omit<HTMLAttributes<"div">, "id"> {
+    /** Prefix of the tab and panel ids. Unique in the page. */
+    id: string;
+    /** Accessible name of the tablist. */
+    label: string;
+    items: TabItem[];
+    /** The selected tab. Defaults to the first. */
+    value?: string;
+}
+
+const {
+    id,
+    label,
+    items,
+    value = items[0]?.value,
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+<div class:list={tabListClasses(className)} {...rest}>
+    <div class="tab-list__tabs" role="tablist" aria-label={label}>
+        {items.map((item) => (
+            <button
+                type="button"
+                role="tab"
+                class="tab-list__tab"
+                id={tabId(id, item.value)}
+                data-value={item.value}
+                aria-controls={tabPanelId(id, item.value)}
+                aria-selected={item.value === value ? "true" : "false"}
+                tabindex={item.value === value ? 0 : -1}
+            >
+                {item.label}
+                {item.changed && (
+                    <>
+                        <span class="tab-list__dot" aria-hidden="true"></span>
+                        <span class="visually-hidden"> (changed)</span>
+                    </>
+                )}
+            </button>
+        ))}
+    </div>
+    {Astro.slots.has("default") && (
+        <div class="tab-list__actions">
+            <slot />
+        </div>
+    )}
+</div>
+
+<script>
+import { initTabLists } from "../../behaviours/tabs.ts";
+
+initTabLists();
+</script>

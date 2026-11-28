@@ -1,0 +1,39 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tabId, tabPanelId } from "../../components/tab-list.ts";
+import { tabPanelClasses } from "../../components/tab-panel.ts";
+
+/**
+ * The content of one tab of a <TabList>. Shown only while `selected`: the
+ * list's script hides and shows it as the tab changes.
+ */
+interface Props extends HTMLAttributes<"div"> {
+    /** The `id` of the <TabList> that controls this panel. */
+    tabs: string;
+    /** The value of its tab. */
+    value: string;
+    selected?: boolean;
+}
+
+const {
+    tabs,
+    value,
+    selected = false,
+    class: className,
+    ...rest
+} = Astro.props;
+---
+
+{/* biome-ignore-start lint/a11y/noNoninteractiveTabindex: a panel with no focusable content must be reachable by keyboard */}
+<div
+    class:list={tabPanelClasses(className)}
+    role="tabpanel"
+    id={tabPanelId(tabs, value)}
+    aria-labelledby={tabId(tabs, value)}
+    tabindex="0"
+    hidden={!selected}
+    {...rest}
+>
+    <slot />
+</div>
+{/* biome-ignore-end lint/a11y/noNoninteractiveTabindex: see above */}

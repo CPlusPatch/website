@@ -6,6 +6,13 @@ import { badgeClasses } from "./badge.ts";
 import { buttonClasses, isAnchor } from "./button.ts";
 import { cardClasses } from "./card.ts";
 import { autoplaySeconds } from "./carousel.ts";
+import {
+    comboboxClasses,
+    comboboxListId,
+    comboboxOptionId,
+    comboboxPrefix,
+    showsValue,
+} from "./combobox.ts";
 import { controlRowClasses, controlRowLabelClasses } from "./control-row.ts";
 import { cornerWindowClasses } from "./corner-window.ts";
 import { dialogClasses } from "./dialog.ts";
@@ -20,6 +27,8 @@ import {
     swatchPickerClasses,
     swatchStyle,
 } from "./swatch-picker.ts";
+import { tabId, tabListClasses, tabPanelId } from "./tab-list.ts";
+import { tabPanelClasses } from "./tab-panel.ts";
 import { tileClasses, tileTitle } from "./tile.ts";
 import { tilePickerClasses } from "./tile-picker.ts";
 import { toggleClasses } from "./toggle.ts";
@@ -263,4 +272,21 @@ Deno.test("counts are compact beside an action, whole in the stats row, and abse
     assertEquals(formatCount(1204), "1.2K");
     assertEquals(formatCount(38900), "38.9K");
     assertEquals(formatCount(1204, { compact: false }), "1,204");
+});
+
+Deno.test("tab classes and ids", () => {
+    assertEquals(tabListClasses("x"), ["tab-list", "x"]);
+    assertEquals(tabPanelClasses(), ["tab-panel"]);
+    assertEquals(tabId("inspector", "look"), "inspector-tab-look");
+    assertEquals(tabPanelId("inspector", "look"), "inspector-panel-look");
+});
+
+Deno.test("combobox classes and ids", () => {
+    assertEquals(comboboxClasses("x"), ["combobox", "x"]);
+    assertEquals(comboboxPrefix("icons", "icon"), "icons");
+    assertEquals(comboboxPrefix(undefined, "icon"), "combobox-icon");
+    assertEquals(comboboxListId("icons"), "icons-listbox");
+    assertEquals(comboboxOptionId("icons", 3), "icons-option-3");
+    assertEquals(showsValue({ value: "heart", label: "Heart" }), false);
+    assertEquals(showsValue({ value: "eu-west", label: "Europe" }), true);
 });

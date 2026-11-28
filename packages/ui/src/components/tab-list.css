@@ -1,0 +1,87 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    /* The bar's border runs under the tabs and the actions; the selected tab's underline sits on it. */
+    .tab-list {
+        display: flex;
+        align-items: stretch;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        min-width: 0;
+        min-height: 2rem;
+        border-bottom: var(--border-width) solid var(--color-border);
+
+        .tab-list__tabs {
+            display: flex;
+            min-width: 0;
+        }
+
+        /* The tabs need script to switch panels, so they wait for data-ready. */
+        &:not([data-ready]) .tab-list__tabs {
+            display: none;
+        }
+
+        .tab-list__tab {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            /* Over the bar's border, so the underline replaces it. */
+            margin-bottom: calc(var(--border-width) * -1);
+            padding: var(--space-xs) var(--space-sm);
+            font: var(--type-label);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+            white-space: nowrap;
+            background: none;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: color var(--transition);
+
+            &[aria-selected="true"] {
+                color: var(--color-text);
+                border-bottom-color: var(--color-primary);
+            }
+
+            @media (hover: hover) {
+                &:hover {
+                    color: var(--color-text);
+                }
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--color-primary);
+                outline-offset: -2px;
+            }
+
+            /* Lines the first label up with the panel below; its ring moves out so it clears the text. */
+            &:first-child {
+                padding-inline-start: 0;
+
+                &:focus-visible {
+                    outline-offset: 2px;
+                }
+            }
+        }
+
+        .tab-list__dot {
+            flex: none;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+        }
+
+        .tab-list__actions {
+            display: flex;
+            align-items: center;
+            flex: none;
+            margin-inline-start: auto;
+            padding-bottom: var(--border-width);
+
+            &:empty {
+                display: none;
+            }
+        }
+    }
+}

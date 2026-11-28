@@ -1,0 +1,12 @@
+@layer ui.preflight, ui.tokens, ui.themes, ui.base, ui.components, ui.utilities;
+
+@layer ui.components {
+    .tab-panel {
+        padding-block-start: var(--space-sm);
+    }
+
+    .tab-panel:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+}

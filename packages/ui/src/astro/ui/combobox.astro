@@ -1,0 +1,109 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import {
+    type ComboboxOption,
+    comboboxClasses,
+    comboboxListId,
+    comboboxOptionId,
+    comboboxPrefix,
+    showsValue,
+} from "../../components/combobox.ts";
+import Icon from "../icon.astro";
+
+export type { ComboboxOption };
+
+/**
+ * A text field with a list of options to pick from, which narrows as you
+ * type. Only an option can be the value: leaving the field puts the last
+ * pick back. The input holds the option's value, so it submits with a form.
+ * A pick fires a bubbling `comboboxchange` event on the root, with the value
+ * in `detail.value`.
+ *
+ * Without JS it's a plain text field.
+ */
+interface Props extends Omit<HTMLAttributes<"div">, "id"> {
+    name: string;
+    /** Accessible name. Comboboxes have no visible label of their own. */
+    label: string;
+    options: ComboboxOption[];
+    /** The picked option's value. */
+    value?: string;
+    placeholder?: string;
+    /** Prefix of the listbox and option ids. Unique in the page; made from `name` if left out. */
+    id?: string;
+}
+
+const {
+    name,
+    label,
+    options,
+    value,
+    placeholder,
+    id,
+    class: className,
+    ...rest
+} = Astro.props;
+
+const prefix = comboboxPrefix(id, name);
+const picked = options.find((option) => option.value === value);
+---
+
+<div class:list={comboboxClasses(className)} {...rest}>
+    {picked?.icon && (
+        <span class="combobox__icon" aria-hidden="true">
+            <Icon name={picked.icon} aria-hidden="true" />
+        </span>
+    )}
+    <input
+        class="field combobox__input"
+        type="text"
+        role="combobox"
+        aria-label={label}
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls={comboboxListId(prefix)}
+        autocomplete="off"
+        name={name}
+        value={picked?.value ?? ""}
+        placeholder={placeholder}
+    >
+    <span class="combobox__chevron" aria-hidden="true">
+        <Icon name="lucide:chevron-down" aria-hidden="true" />
+    </span>
+    {/* biome-ignore-start lint/a11y/noNoninteractiveElementToInteractiveRole: it's a <ul> so the list keeps its semantics */}
+    {/* biome-ignore-start lint/a11y/useFocusableInteractive: the options are never focused; the input points at them with aria-activedescendant */}
+    <ul
+        class="combobox__listbox"
+        role="listbox"
+        id={comboboxListId(prefix)}
+        aria-label={label}
+        hidden
+    >
+        {options.map((option, index) => (
+            <li
+                class="combobox__option"
+                role="option"
+                id={comboboxOptionId(prefix, index)}
+                data-value={option.value}
+                aria-selected={option === picked ? "true" : "false"}
+            >
+                {option.icon && <Icon name={option.icon} aria-hidden="true" />}
+                <span class="combobox__label">{option.label}</span>
+                {showsValue(option) && (
+                    <span class="combobox__value" aria-hidden="true">
+                        {option.value}
+                    </span>
+                )}
+            </li>
+        ))}
+    </ul>
+    {/* biome-ignore-end lint/a11y/useFocusableInteractive: see above */}
+    {/* biome-ignore-end lint/a11y/noNoninteractiveElementToInteractiveRole: see above */}
+    <div class="combobox__empty" role="status"></div>
+</div>
+
+<script>
+import { initComboboxes } from "../../behaviours/combobox.ts";
+
+initComboboxes();
+</script>
