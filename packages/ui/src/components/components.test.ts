@@ -187,6 +187,14 @@ Deno.test("segmented control classes", () => {
         "segmented--size-sm",
         "segmented--subtle",
     ]);
+    assertEquals(
+        segmentedClasses({ fill: true }).includes("segmented--fill"),
+        true,
+    );
+    assertEquals(
+        segmentedClasses({ fill: false }).includes("segmented--fill"),
+        false,
+    );
 });
 
 Deno.test("swatches", () => {

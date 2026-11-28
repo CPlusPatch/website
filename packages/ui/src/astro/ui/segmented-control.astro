@@ -23,8 +23,10 @@ interface Props extends Omit<HTMLAttributes<"fieldset">, "name"> {
     /** The initially checked option, if any. */
     value?: string;
     size?: SegmentedSize;
-    /** `subtle` marks the checked option with a quiet fill, not the accent. */
+    /** `subtle` marks the checked option with a thin neutral bar, not the accent. */
     variant?: SegmentedVariant;
+    /** Stretch to the container, the options sharing the width. */
+    fill?: boolean;
 }
 
 const {
@@ -34,36 +36,45 @@ const {
     value,
     size = "default",
     variant = "solid",
+    fill = false,
     class: className,
     ...rest
 } = Astro.props;
 ---
 
 <fieldset
-    class:list={segmentedClasses({ size, variant, class: className })}
+    class:list={segmentedClasses({ size, variant, fill, class: className })}
     {...rest}
 >
     <legend class="visually-hidden">{label}</legend>
-    {options.map((option) => (
-        <label
-            class="segmented__option"
-            title={option.icon ? option.label : undefined}
-        >
-            <input
-                class="visually-hidden"
-                type="radio"
-                name={name}
-                value={option.value}
-                checked={option.value === value}
+    <div class="segmented__options">
+        {options.map((option) => (
+            <label
+                class="segmented__option"
+                title={
+                    option.icon && !option.showLabel ? option.label : undefined
+                }
             >
-            {option.icon ? (
-                <>
-                    <Icon name={option.icon} aria-hidden="true" />
+                <input
+                    class="visually-hidden"
+                    type="radio"
+                    name={name}
+                    value={option.value}
+                    checked={option.value === value}
+                >
+                {option.icon && <Icon name={option.icon} aria-hidden="true" />}
+                {option.icon && !option.showLabel ? (
                     <span class="visually-hidden">{option.label}</span>
-                </>
-            ) : (
-                <span class="segmented__text">{option.label}</span>
-            )}
-        </label>
-    ))}
+                ) : (
+                    <span class="segmented__text">{option.label}</span>
+                )}
+            </label>
+        ))}
+    </div>
 </fieldset>
+
+<script>
+import { initSegmentedControls } from "../../behaviours/segmented-control.ts";
+
+initSegmentedControls();
+</script>

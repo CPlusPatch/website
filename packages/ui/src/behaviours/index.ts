@@ -24,6 +24,7 @@ import { initNavbars } from "./navbar.ts";
 import { initPauseButtons } from "./pause-button.ts";
 import { initPreviewFrames } from "./preview-frame.ts";
 import { initScrollCues } from "./scroll-cue.ts";
+import { initSegmentedControls } from "./segmented-control.ts";
 import { initSidebarNavs } from "./sidebar-nav.ts";
 import { initStats } from "./stat.ts";
 import { initTabLists } from "./tabs.ts";
@@ -68,6 +69,10 @@ export {
     initPreviewFrames,
 } from "./preview-frame.ts";
 export { initScrollCue, initScrollCues } from "./scroll-cue.ts";
+export {
+    initSegmentedControl,
+    initSegmentedControls,
+} from "./segmented-control.ts";
 export { initSidebarNav, initSidebarNavs } from "./sidebar-nav.ts";
 export { initStat, initStats } from "./stat.ts";
 export { initTabList, initTabLists, nextTabIndex } from "./tabs.ts";
@@ -103,6 +108,7 @@ export const initAll = (scope: ParentNode = document): (() => void) => {
         initPauseButtons,
         initPreviewFrames,
         initScrollCues,
+        initSegmentedControls,
         initSidebarNavs,
         initStats,
         initTabLists,

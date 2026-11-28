@@ -4,16 +4,35 @@
     .segmented {
         --segmented-height: var(--control-height-md);
         --segmented-inner-radius: calc(var(--radius) - var(--border-width));
-        --segmented-pick-fill: var(--pick-fill);
-        --segmented-pick-border: var(--color-primary);
+        --segmented-bar: var(--color-primary);
+        --segmented-bar-size: 3px;
+        --segmented-edge: var(--color-border-strong);
+        --segmented-edge-size: calc(2 * var(--border-width));
+        --segmented-wash-pick: color-mix(
+            in oklab,
+            var(--color-text) 10%,
+            var(--color-surface)
+        );
+        --segmented-wash-hover: color-mix(
+            in oklab,
+            var(--color-text) 5%,
+            var(--color-surface)
+        );
+        --segmented-curve: cubic-bezier(0.2, 0, 0, 1);
 
-        position: relative;
         display: inline-flex;
+        max-width: 100%;
         min-width: 0;
         margin: 0;
-        padding: 0;
-        background-color: var(--color-surface);
-        border: var(--border-width) solid var(--color-border-strong);
+
+        /* The padding shows the border colour. The edge is a strip on the bottom, so it runs the full width. */
+        padding: var(--border-width) var(--border-width) 0;
+        background:
+            linear-gradient(var(--segmented-edge) 0 0) bottom / 100%
+            var(--segmented-edge-size) no-repeat,
+            linear-gradient(var(--color-surface) 0 0) content-box,
+            var(--color-border);
+        border: 0;
         border-radius: var(--radius);
 
         &.segmented--size-sm {
@@ -22,43 +41,121 @@
 
         /* A neutral pick, for controls that sit among many (inspectors, menus). */
         &.segmented--subtle {
-            --segmented-pick-fill: var(--color-surface-raised);
-            --segmented-pick-border: var(--color-border-strong);
+            --segmented-bar: var(--color-text);
+            --segmented-bar-size: 2px;
+        }
+
+        &.segmented--fill {
+            display: flex;
+            width: 100%;
         }
 
         &:disabled {
-            opacity: 0.5;
+            --segmented-bar: var(--color-border);
+            --segmented-edge: var(--color-border);
+            --segmented-edge-size: var(--border-width);
+
+            color: var(--color-border-strong);
+        }
+
+        /* The scroller: it clips the washes and the bar to the rounded corners. */
+        .segmented__options {
+            position: relative;
+            display: grid;
+            flex: 1 1 auto;
+            grid-auto-flow: column;
+            /* Equal columns the width of the widest label. min-width would hide the label from 1fr's minimum. */
+            grid-auto-columns: minmax(max-content, 1fr);
+            min-width: 0;
+            overflow-x: auto;
+            overscroll-behavior-inline: contain;
+            scrollbar-width: none;
+            border-radius: var(--segmented-inner-radius);
+
+            /* No background: the fade shows the fieldset's surface, and its edge stays unmasked. */
+            padding-block-end: var(--segmented-edge-size);
+
+            /* Fade the edge that hides options. Without overflow there's no timeline. */
+            @supports (animation-timeline: scroll()) {
+                --segmented-fade: var(--space-md);
+
+                mask-image: linear-gradient(
+                    to right,
+                    transparent,
+                    #000 var(--segmented-fade-start),
+                    #000 calc(100% - var(--segmented-fade-end)),
+                    transparent
+                );
+                animation-name: segmented-fade;
+                animation-timing-function: linear;
+                animation-fill-mode: both;
+                animation-timeline: scroll(self inline);
+
+                &:dir(rtl) {
+                    mask-image: linear-gradient(
+                        to left,
+                        transparent,
+                        #000 var(--segmented-fade-start),
+                        #000 calc(100% - var(--segmented-fade-end)),
+                        transparent
+                    );
+                }
+            }
         }
 
         .segmented__option {
             position: relative;
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
+            gap: var(--space-xs);
             min-width: var(--segmented-height);
-            height: var(--segmented-height);
+
+            /* The top border and the edge are outside the options. */
+            height: calc(
+                var(--segmented-height) -
+                var(--border-width) -
+                var(--segmented-edge-size)
+            );
             padding-inline: var(--space-sm);
             font: var(--type-label);
             color: var(--color-text-muted);
             cursor: pointer;
             transition:
-                color var(--transition),
-                background-color var(--transition);
+                background-color var(--transition),
+                color var(--transition);
 
-            /* Every corner, since the pick doesn't sit against a divider. */
-            border-radius: var(--segmented-inner-radius);
-
-            /* Without anchor positioning, the checked option draws the pick itself. */
+            /* Without anchor positioning, the checked option draws the bar over the edge. */
             &:has(:checked) {
                 color: var(--color-text);
-                background-color: var(--segmented-pick-fill);
-                box-shadow: inset 0 0 0 var(--border-width)
-                    var(--segmented-pick-border);
+                background-color: var(--segmented-wash-pick);
+                box-shadow:
+                    0 var(--segmented-edge-size) 0 0 var(--segmented-bar),
+                    inset 0
+                    calc(var(--segmented-edge-size) - var(--segmented-bar-size))
+                    0 var(--segmented-bar);
             }
 
-            &:has(:focus-visible) {
-                outline: 2px solid var(--color-primary);
-                outline-offset: 2px;
+            /* Inside the option, since the scroller would clip a ring outside it. */
+            &:has(:focus-visible)::before {
+                content: "";
+                position: absolute;
+                inset: 2px;
+                border: 2px solid var(--color-primary);
+                pointer-events: none;
+            }
+
+            /* The bar reaches up past the edge, so the ring keeps 2px clear of it. */
+            &:has(:checked:focus-visible)::before {
+                inset-block-end: calc(
+                    2px +
+                    var(--segmented-bar-size) -
+                    var(--segmented-edge-size)
+                );
+            }
+
+            > :is(svg, .segmented__text) {
+                transition: translate var(--transition);
             }
         }
 
@@ -66,8 +163,14 @@
         @media (hover: hover) {
             &:not(:disabled) .segmented__option:hover:not(:has(:checked)) {
                 color: var(--color-text);
-                background-color: var(--hover-fill);
+                background-color: var(--segmented-wash-hover);
             }
+        }
+
+        &:not(:disabled)
+            .segmented__option:active
+            > :is(svg, .segmented__text) {
+            translate: 0 1px;
         }
 
         /* The small size changes only the label's size (see typography.css). */
@@ -82,6 +185,7 @@
         }
 
         &:disabled .segmented__option {
+            color: var(--color-border-strong);
             cursor: not-allowed;
         }
 
@@ -89,42 +193,108 @@
             white-space: nowrap;
         }
 
-        /* The pick is one layer under the options that slides to the checked one. */
+        /* The bar is one layer over the options that travels to the checked one. */
         @supports (anchor-scope: all) {
-            anchor-scope: --segmented-pick;
+            .segmented__options {
+                anchor-scope: --segmented-pick;
 
-            &:has(:checked)::before {
-                content: "";
-                position: absolute;
-                position-anchor: --segmented-pick;
-                inset: anchor(top) anchor(right) anchor(bottom) anchor(left);
-                background-color: var(--segmented-pick-fill);
-                border: var(--border-width) solid var(--segmented-pick-border);
-                border-radius: var(--segmented-inner-radius);
-                transition:
-                    left var(--transition),
-                    right var(--transition);
+                &:has(:checked)::after {
+                    content: "";
+                    position: absolute;
+                    position-anchor: --segmented-pick;
+                    inset-block-end: 0;
+                    left: anchor(left);
+                    right: anchor(right);
+                    height: var(--segmented-bar-size);
+                    background-color: var(--segmented-bar);
+                }
             }
 
             .segmented__option:has(:checked) {
                 anchor-name: --segmented-pick;
-                background-color: transparent;
                 box-shadow: none;
+            }
+
+            /* The edge that leads the move goes first, so the bar stretches then catches up. */
+            @media (prefers-reduced-motion: no-preference) {
+                .segmented__options::after {
+                    transition:
+                        left 200ms var(--segmented-curve),
+                        right 200ms var(--segmented-curve);
+                }
+
+                &[data-direction="forward"]:dir(ltr) .segmented__options::after,
+                &[data-direction="back"]:dir(rtl) .segmented__options::after {
+                    transition:
+                        right 160ms var(--segmented-curve),
+                        left 200ms var(--segmented-curve) 80ms;
+                }
+
+                &[data-direction="back"]:dir(ltr) .segmented__options::after,
+                &[data-direction="forward"]:dir(rtl)
+                    .segmented__options::after {
+                    transition:
+                        left 160ms var(--segmented-curve),
+                        right 200ms var(--segmented-curve) 80ms;
+                }
             }
         }
 
-        /* Forced colours drop the fill and the shadow, so the pick turns Highlight. */
+        /* Forced colours drop the fills and shadows, so the pick turns Highlight and the frame is a border. */
         @media (forced-colors: active) {
+            padding: 0;
+            background: none;
+            border: var(--border-width) solid CanvasText;
+
+            .segmented__options {
+                padding-block-end: 0;
+            }
+
+            .segmented__option {
+                height: calc(var(--segmented-height) - 2 * var(--border-width));
+            }
+
             .segmented__option:has(:checked) {
                 color: HighlightText;
                 background-color: Highlight;
                 forced-color-adjust: none;
             }
 
-            &:has(:checked)::before {
-                background-color: Highlight;
+            .segmented__options:has(:checked)::after {
+                background-color: HighlightText;
                 forced-color-adjust: none;
             }
+        }
+    }
+
+    /* Registered, so the fade lengths can animate. */
+    @property --segmented-fade-start {
+        syntax: "<length>";
+        inherits: false;
+        initial-value: 0px;
+    }
+
+    @property --segmented-fade-end {
+        syntax: "<length>";
+        inherits: false;
+        initial-value: 0px;
+    }
+
+    @keyframes segmented-fade {
+        0% {
+            --segmented-fade-start: 0px;
+            --segmented-fade-end: var(--segmented-fade);
+        }
+
+        5%,
+        95% {
+            --segmented-fade-start: var(--segmented-fade);
+            --segmented-fade-end: var(--segmented-fade);
+        }
+
+        100% {
+            --segmented-fade-start: var(--segmented-fade);
+            --segmented-fade-end: 0px;
         }
     }
 }

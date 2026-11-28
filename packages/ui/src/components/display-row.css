@@ -41,7 +41,6 @@
             justify-self: stretch;
 
             .segmented__option {
-                flex: 1 1 auto;
                 padding-inline: var(--space-xs);
             }
         }
