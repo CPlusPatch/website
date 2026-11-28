@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" role="img" aria-label="A glider">
     <title>A glider</title>
     <style>
-        path { fill: #98194b; }
+        path { fill: #a42053; }
         @media (prefers-color-scheme: dark) {
-            path { fill: #f995af; }
+            path { fill: #f88aa7; }
         }
     </style>
     <path d="M6 2h4v4H6zM10 6h4v4h-4zM2 10h12v4H2z" />

@@ -5,8 +5,8 @@
 Source code for my website, and the components it's built from.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CPlusPatch/website/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/CPlusPatch/website/actions/workflows/ci.yml)
-[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-98194b?style=flat-square)](LICENSE)
-[![UI library: LGPL v3](https://img.shields.io/badge/ui%20library-LGPL%20v3-98194b?style=flat-square)](packages/ui/COPYING.LESSER)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-a42053?style=flat-square)](LICENSE)
+[![UI library: LGPL v3](https://img.shields.io/badge/ui%20library-LGPL%20v3-a42053?style=flat-square)](packages/ui/COPYING.LESSER)
 [![Astro](https://img.shields.io/badge/Astro-7-bc52ee?style=flat-square&logo=astro&logoColor=white)](https://astro.build)
 [![Deno](https://img.shields.io/badge/Deno-2-000000?style=flat-square&logo=deno&logoColor=white)](https://deno.com)
 
