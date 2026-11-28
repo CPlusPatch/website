@@ -158,6 +158,21 @@ const boxTiles = (name: string, checked: string): Story[] =>
         ),
     );
 
+// Built-in icons, so the labelled story is checked for parity.
+const LAYOUT_OPTIONS = [
+    { value: "list", label: "List", icon: "lucide:menu", showLabel: true },
+    {
+        value: "grid",
+        label: "Grid",
+        icon: "lucide:layout-grid",
+        showLabel: true,
+    },
+];
+
+const PERIOD_OPTIONS = ["Day", "Week", "Month", "Quarter", "Year"].map(
+    (label) => ({ value: label.toLowerCase(), label }),
+);
+
 const ALIGN_OPTIONS = [
     { value: "left", label: "Align left", icon: "lucide:align-left" },
     { value: "center", label: "Align center", icon: "lucide:align-center" },
@@ -301,7 +316,7 @@ export const forms: StoryGroup[] = [
         title: "Segmented controls",
         category: "forms",
         description:
-            "Plain radios: they submit with a form and can drive CSS via :has().",
+            "One raised bar of plain radios: they submit with a form and can drive CSS via :has(). Too many options scroll inside the bar.",
         stories: [
             story("text", SegmentedControl, {
                 name: "story-segmented-text",
@@ -329,6 +344,62 @@ export const forms: StoryGroup[] = [
                 value: "grid",
                 disabled: true,
             }),
+            story("subtle", SegmentedControl, {
+                name: "story-segmented-subtle",
+                label: "View",
+                options: VIEW_OPTIONS,
+                value: "grid",
+                variant: "subtle",
+                size: "sm",
+            }),
+            story("icon-label", SegmentedControl, {
+                name: "story-segmented-icon-label",
+                label: "Layout",
+                options: LAYOUT_OPTIONS,
+                value: "grid",
+            }),
+            story("none-picked", SegmentedControl, {
+                name: "story-segmented-none",
+                label: "View",
+                options: VIEW_OPTIONS,
+            }),
+            story("fill", SegmentedControl, {
+                name: "story-segmented-fill",
+                label: "View",
+                options: VIEW_OPTIONS,
+                value: "list",
+                fill: true,
+            }),
+            story("overflow", SegmentedControl, {
+                name: "story-segmented-overflow",
+                label: "Period",
+                options: PERIOD_OPTIONS,
+                value: "year",
+                style: "max-width: 14rem",
+            }),
+            story(
+                "playground",
+                SegmentedControl,
+                {
+                    name: "story-segmented-playground",
+                    label: "View",
+                    options: VIEW_OPTIONS,
+                    value: "grid",
+                    variant: "solid",
+                    size: "default",
+                    disabled: false,
+                    fill: false,
+                },
+                {
+                    controls: {
+                        variant: ["solid", "subtle"],
+                        size: ["sm", "default"],
+                        disabled: "boolean",
+                        fill: "boolean",
+                    },
+                    port: "segmented-control",
+                },
+            ),
         ],
     },
     {
