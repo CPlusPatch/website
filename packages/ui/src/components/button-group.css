@@ -23,7 +23,7 @@
             }
 
             /* The overlapped edge belongs to whichever button is being used. */
-            &:hover,
+            &:hover:not(:disabled, [aria-disabled="true"]),
             &:focus-visible,
             &[aria-pressed="true"] {
                 position: relative;

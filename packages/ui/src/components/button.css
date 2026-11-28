@@ -5,97 +5,178 @@
         --button-color: var(--tone);
         --button-color-hover: var(--tone-hover);
 
+        /* What the states below change. A solid button at rest is the default. */
+        --button-fg: var(--color-on-accent);
+        --button-bg: var(--button-color);
+        --button-border: var(--button-color);
+
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        height: var(--control-height-md);
+        max-width: 100%;
+        min-height: var(--control-height-md);
         gap: var(--space-sm);
-        padding: var(--space-sm) var(--space-md);
+        padding: var(--space-xs) var(--space-md);
         font: var(--type-label);
+        text-align: center;
         text-decoration: none;
-        color: var(--color-on-accent);
-        background-color: var(--button-color);
-        border: 1px solid var(--button-color);
+        color: var(--button-fg);
+        background-color: var(--button-bg);
+        border: var(--border-width) solid var(--button-border);
         border-radius: var(--radius);
         cursor: pointer;
         transition:
             background-color var(--transition),
             border-color var(--transition),
             color var(--transition),
+            text-decoration-thickness var(--transition),
             translate var(--transition);
 
         svg {
             width: 1.2em;
             height: 1.2em;
-            margin-bottom: 0.1em;
             flex: none;
         }
 
-        &.button--outline,
-        &.button--ghost,
-        &.button--link {
-            color: var(--button-color);
-            background-color: transparent;
+        &.button--outline {
+            --button-fg: var(--button-color);
+            --button-bg: transparent;
+        }
+
+        /* A neutral label is muted, so its edge needs more than the tone. */
+        &.button--outline.tone-neutral {
+            --button-border: var(--color-border-strong);
         }
 
         &.button--ghost,
         &.button--link {
-            border-color: transparent;
+            --button-fg: var(--button-color);
+            --button-bg: transparent;
+            --button-border: transparent;
         }
 
         /* Sizes change only the label's size (see typography.css). */
         &.button--size-sm {
+            min-height: var(--control-height-sm);
             padding: var(--space-xs) var(--space-sm);
             font-size: var(--font-size-xs);
-            height: var(--control-height-sm);
         }
 
         &.button--size-lg {
-            padding: var(--space-sm) var(--space-md-lg);
+            /* At least 44px on a coarse pointer, where the token is 3rem. */
+            min-height: max(2.5rem, var(--control-height-lg));
+            padding: var(--space-xs) var(--space-md-lg);
             font-size: var(--font-size-base);
-            height: var(--control-height-lg);
         }
 
         &.button--size-icon,
         &.button--size-icon-sm,
         &.button--size-icon-lg {
             width: var(--control-height-md);
-            height: var(--control-height-md);
+            min-height: var(--control-height-md);
             padding: 0;
-
-            svg {
-                margin-bottom: 0;
-            }
         }
 
         &.button--size-icon-sm {
             width: var(--control-height-sm);
-            height: var(--control-height-sm);
+            min-height: var(--control-height-sm);
         }
 
         &.button--size-icon-lg {
-            width: var(--control-height-lg);
-            height: var(--control-height-lg);
+            /* Matches size-lg, so the two line up in a row. */
+            width: max(2.5rem, var(--control-height-lg));
+            min-height: max(2.5rem, var(--control-height-lg));
             font-size: var(--font-size-base);
         }
 
-        &:hover {
-            background-color: var(--button-color-hover);
-            border-color: var(--button-color-hover);
-            color: var(--color-on-accent);
+        /* Text in a sentence: no box, so the focus ring sits evenly around it. */
+        &.button--link {
+            min-height: 0;
+            padding: 0;
+            border: 0;
+            text-decoration: underline;
+            text-decoration-thickness: max(1px, 0.0625em);
+            text-underline-offset: 0.2em;
 
-            &.button--outline,
-            &.button--ghost,
-            &.button--link {
-                color: var(--color-on-accent);
-                border-color: var(--button-color-hover);
+            &:focus-visible {
+                outline-offset: 3px;
+            }
+        }
+
+        /*
+         * Hover. A bordered button never gets a tint as well: outline changes
+         * its edge and label, ghost (which has no edge) gets the tint.
+         */
+        @media (hover: hover) {
+            &:where(
+                    :not(:disabled, [aria-disabled="true"], [aria-busy="true"])
+                ):hover {
+                --button-bg: var(--button-color-hover);
+                --button-border: var(--button-color-hover);
+
+                &.button--outline {
+                    --button-fg: var(--button-color-hover);
+                    --button-bg: transparent;
+                    --button-border: var(--button-color-hover);
+                }
+
+                &.button--ghost {
+                    --button-fg: var(--button-color-hover);
+                    --button-bg: color-mix(
+                        in oklab,
+                        var(--button-color) 12%,
+                        transparent
+                    );
+                    --button-border: transparent;
+                }
+
+                &.button--link {
+                    --button-fg: var(--button-color-hover);
+                    --button-bg: transparent;
+                    --button-border: transparent;
+                    text-decoration-thickness: max(2px, 0.125em);
+                }
+            }
+        }
+
+        /* Pressed: outline fills in, ghost gets a deeper tint. */
+        &.button--outline[aria-pressed="true"] {
+            --button-fg: var(--color-on-accent);
+            --button-bg: var(--button-color);
+            --button-border: var(--button-color);
+        }
+
+        /*
+         * The darker label and the bar tell it apart from a hovered neighbour's
+         * tint. The bar is a shadow, so it never reads as a border.
+         */
+        &.button--ghost[aria-pressed="true"] {
+            --button-fg: var(--button-color-hover);
+            box-shadow: inset 0 -2px 0 var(--button-color);
+            --button-bg: color-mix(
+                in oklab,
+                var(--button-color) 18%,
+                transparent
+            );
+        }
+
+        @media (hover: hover) {
+            &.button--outline[aria-pressed="true"]:where(
+                    :not(:disabled, [aria-disabled="true"], [aria-busy="true"])
+                ):hover {
+                --button-fg: var(--color-on-accent);
+                --button-bg: var(--button-color-hover);
+                --button-border: var(--button-color-hover);
             }
 
-            &.button--link {
-                color: var(--button-color-hover);
-                background-color: transparent;
-                border-color: transparent;
-                text-decoration: underline;
+            &.button--ghost[aria-pressed="true"]:where(
+                    :not(:disabled, [aria-disabled="true"], [aria-busy="true"])
+                ):hover {
+                --button-bg: color-mix(
+                    in oklab,
+                    var(--button-color) 18%,
+                    transparent
+                );
             }
         }
 
@@ -113,15 +194,104 @@
             display: block;
         }
 
-        &:active:where(:not(:disabled, [aria-disabled="true"])) {
+        &:active:where(
+                :not(:disabled, [aria-disabled="true"], [aria-busy="true"])
+            ) {
             translate: 0 1px;
         }
 
-        &:disabled,
-        &[aria-disabled="true"] {
-            opacity: 0.5;
+        /* A button is a flat, muted version of itself; the label alone says why. */
+        &:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]) {
+            --button-fg: var(--color-border-strong);
             cursor: not-allowed;
+
+            /*
+             * Opaque, so nothing behind the button shows through. The fill keeps
+             * the button's shape in dark mode, where --color-bg-alt doesn't, so
+             * the label steps up to stay readable on it.
+             */
+            &.button--solid,
+            &:not(.button--outline, .button--ghost, .button--link) {
+                --button-fg: var(--color-text-muted);
+                --button-bg: var(--color-border);
+                --button-border: var(--color-border);
+            }
+
+            &.button--outline {
+                --button-bg: transparent;
+                --button-border: var(--color-border);
+            }
+
+            &.button--ghost,
+            &.button--link {
+                --button-bg: transparent;
+                --button-border: transparent;
+            }
+
+            /* A pressed toggle stays visibly on while disabled. */
+            &:is(.button--outline, .button--ghost)[aria-pressed="true"] {
+                --button-bg: var(--color-bg-alt);
+                --button-border: var(--color-bg-alt);
+            }
+
+            &.button--ghost[aria-pressed="true"] {
+                box-shadow: inset 0 -2px 0 var(--color-border-strong);
+            }
+        }
+
+        /* A disabled link can't be followed. A button has no href, so it keeps its cursor. */
+        &:is(a)[aria-disabled="true"] {
             pointer-events: none;
+        }
+
+        /*
+         * Busy keeps the content so the width holds, hides it, and draws a
+         * spinner over it in the label's colour.
+         */
+        &[aria-busy="true"] {
+            position: relative;
+            color: transparent;
+            cursor: progress;
+
+            & > * {
+                visibility: hidden;
+            }
+
+            &::after {
+                position: absolute;
+                inset: 0;
+                box-sizing: border-box;
+                width: 1.2em;
+                height: 1.2em;
+                margin: auto;
+                content: "";
+                border: 2px solid var(--button-fg);
+                border-block-start-color: transparent;
+                border-radius: 50%;
+                animation: button-spin 0.8s linear infinite;
+
+                @media (prefers-reduced-motion: reduce) {
+                    animation: none;
+                }
+            }
+
+            /* Forced colours would repaint the transparent label over the spinner. */
+            @media (forced-colors: active) {
+                forced-color-adjust: none;
+                background-color: ButtonFace;
+                border-color: ButtonText;
+
+                &::after {
+                    border-color: ButtonText;
+                    border-block-start-color: transparent;
+                }
+            }
+        }
+    }
+
+    @keyframes button-spin {
+        to {
+            rotate: 360deg;
         }
     }
 }

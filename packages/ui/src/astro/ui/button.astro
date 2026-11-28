@@ -23,6 +23,11 @@ type Props = Omit<HTMLAttributes<"button">, "type"> &
         variant?: ButtonVariant;
         tone?: ButtonTone;
         size?: ButtonSize;
+        /**
+         * Shows a spinner in place of the content, at the same size. Sets
+         * aria-busy and aria-disabled; the caller still ignores clicks while it is set.
+         */
+        busy?: boolean;
     };
 
 const {
@@ -31,6 +36,7 @@ const {
     variant = "solid",
     tone = "primary",
     size = "default",
+    busy = false,
     class: className,
     ...rest
 } = Astro.props;
@@ -38,14 +44,22 @@ const {
 const isAnchor = linkRequested(as, rest.href);
 
 const classes = buttonClasses({ variant, tone, size, class: className });
+const busyAttributes = busy
+    ? ({ "aria-busy": "true", "aria-disabled": "true" } as const)
+    : {};
 ---
 
 {isAnchor ? (
-    <a class:list={classes} {...rest}>
+    <a class:list={classes} {...rest} {...busyAttributes}>
         <slot />
     </a>
 ) : (
-    <button type={type ?? "button"} class:list={classes} {...rest}>
+    <button
+        type={type ?? "button"}
+        class:list={classes}
+        {...rest}
+        {...busyAttributes}
+    >
         <slot />
     </button>
 )}

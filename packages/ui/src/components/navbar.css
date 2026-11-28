@@ -73,11 +73,10 @@
                 --button-color: var(--color-text-muted);
                 --button-color-hover: var(--color-text);
                 position: relative;
-                height: auto;
-
-                &:hover {
-                    text-decoration: none;
-                }
+                min-height: var(--control-height-md);
+                padding: var(--space-sm) var(--space-md);
+                border: var(--border-width) solid transparent;
+                text-decoration: none;
 
                 /* Inside the link, which runs from the bar's top to its border. */
                 &:focus-visible {
@@ -104,7 +103,15 @@
         /* The one link in the accent, at the end with the actions. */
         .navbar__final-link {
             --button-color: var(--color-primary);
-            padding-inline: var(--space-xs);
+            min-height: var(--control-height-md);
+            padding: var(--space-xs);
+            border: var(--border-width) solid transparent;
+            text-decoration: none;
+
+            /* Undoes the link variant's offset, which is for underlined text. */
+            &.button:focus-visible {
+                outline-offset: 2px;
+            }
         }
 
         @container not (max-width: 52rem) {

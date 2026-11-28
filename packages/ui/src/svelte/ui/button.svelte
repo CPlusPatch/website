@@ -25,6 +25,11 @@ type Props = Omit<HTMLButtonAttributes, "type"> &
         variant?: ButtonVariant;
         tone?: ButtonTone;
         size?: ButtonSize;
+        /**
+         * Shows a spinner in place of the content, at the same size. Sets
+         * aria-busy and aria-disabled; the caller still ignores clicks while it is set.
+         */
+        busy?: boolean;
         children?: Snippet;
     };
 
@@ -34,11 +39,15 @@ const {
     variant = "solid",
     tone = "primary",
     size = "default",
+    busy = false,
     class: className,
     children,
     ...rest
 }: Props = $props();
 
+const busyAttributes = $derived(
+    busy ? ({ "aria-busy": "true", "aria-disabled": "true" } as const) : {},
+);
 const isAnchor = $derived(linkRequested(as, rest.href));
 const classes = $derived(
     buttonClasses({ variant, tone, size, class: className as string }),
@@ -47,7 +56,7 @@ const classes = $derived(
 
 {#if isAnchor}
     <!-- biome-ignore lint/a11y/useValidAnchor: href comes from the rest props -->
-    <a class={classes} {...rest as HTMLAnchorAttributes}>
+    <a class={classes} {...rest as HTMLAnchorAttributes} {...busyAttributes}>
         {@render children?.()}
     </a>
 {:else}
@@ -55,6 +64,7 @@ const classes = $derived(
         type={type ?? "button"}
         class={classes}
         {...rest as HTMLButtonAttributes}
+        {...busyAttributes}
     >
         {@render children?.()}
     </button>

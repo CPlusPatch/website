@@ -83,9 +83,4 @@ const boxStyle = (option: string) => {
     aspect-ratio: 3 / 2;
     border: 1.5px solid currentColor;
 }
-
-/* A link only underlines on hover, so at rest its tile looks like ghost's. */
-:global(.bench-tiles .button--link) {
-    text-decoration: underline;
-}
 </style>
