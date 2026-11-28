@@ -501,3 +501,156 @@ test.describe("a component's bench", () => {
         await expect(menu.getByText("Compare")).toHaveCount(0);
     });
 });
+
+test("tabs switch panels by click and by keys", async ({ page }) => {
+    await open(page, "tabs/default");
+    const props = page.getByRole("tab", { name: "Props" });
+    const look = page.getByRole("tab", { name: "Look" });
+    const propsPanel = page.getByRole("tabpanel", { name: "Props" });
+    const lookPanel = page.getByRole("tabpanel", { name: "Look" });
+    await expect(propsPanel).toBeVisible();
+    await expect(lookPanel).toBeHidden();
+
+    await look.click();
+    await expect(look).toHaveAttribute("aria-selected", "true");
+    await expect(lookPanel).toBeVisible();
+    await expect(propsPanel).toBeHidden();
+
+    await page.keyboard.press("ArrowLeft");
+    await expect(props).toBeFocused();
+    await expect(props).toHaveAttribute("aria-selected", "true");
+    await expect(propsPanel).toBeVisible();
+    await expect(lookPanel).toBeHidden();
+
+    await page.keyboard.press("End");
+    await expect(look).toBeFocused();
+    await expect(lookPanel).toBeVisible();
+
+    await page.keyboard.press("Home");
+    await expect(props).toBeFocused();
+    await expect(propsPanel).toBeVisible();
+});
+
+test.describe("a combobox", () => {
+    const setup = async (page: import("@playwright/test").Page) => {
+        await open(page, "combobox/icons");
+
+        return {
+            input: page.getByRole("combobox", { name: "Icon" }),
+            list: page.getByRole("listbox", { name: "Icon" }),
+            options: page.getByRole("option"),
+        };
+    };
+
+    test("filters as you type", async ({ page }) => {
+        const { input, list, options } = await setup(page);
+        await expect(input).toHaveValue("heart");
+        await expect(list).toBeHidden();
+
+        await input.fill("ma");
+        await expect(input).toHaveAttribute("aria-expanded", "true");
+        await expect(options).toHaveText([/^Bookmark/, /^Maximize/]);
+        await expect(options.first()).toHaveAttribute("data-active", "");
+
+        await input.fill("zzz");
+        await expect(list).toBeHidden();
+        await expect(page.getByRole("status")).toHaveText("No matches");
+    });
+
+    test("picks with the arrows and Enter", async ({ page }) => {
+        const { input, list, options } = await setup(page);
+        await input.fill("ma");
+        await page.keyboard.press("ArrowDown");
+        await expect(input).toHaveAttribute(
+            "aria-activedescendant",
+            (await options.nth(1).getAttribute("id")) ?? "",
+        );
+
+        await page.keyboard.press("Enter");
+        await expect(input).toHaveValue("maximize");
+        await expect(list).toBeHidden();
+        await expect(page.locator(".combobox__icon svg")).toHaveAttribute(
+            "data-icon",
+            "lucide:maximize",
+        );
+
+        await input.press("ArrowDown");
+        await expect(options.filter({ hasText: "Maximize" })).toHaveAttribute(
+            "aria-selected",
+            "true",
+        );
+    });
+
+    test("closes on Escape, then puts the pick back", async ({ page }) => {
+        const { input, list } = await setup(page);
+        await input.fill("ma");
+        await expect(list).toBeVisible();
+
+        await page.keyboard.press("Escape");
+        await expect(list).toBeHidden();
+        await expect(input).toHaveValue("ma");
+
+        await page.keyboard.press("Escape");
+        await expect(input).toHaveValue("heart");
+    });
+
+    test("puts the pick back when the focus leaves", async ({ page }) => {
+        const { input, list } = await setup(page);
+        await input.fill("junk");
+        await page.keyboard.press("Tab");
+        await expect(list).toBeHidden();
+        await expect(input).toHaveValue("heart");
+    });
+
+    test("picks by click", async ({ page }) => {
+        const { input, list } = await setup(page);
+        await input.click();
+        await page.keyboard.press("ArrowDown");
+        await expect(list).toBeVisible();
+
+        await page.getByRole("option", { name: "Play" }).click();
+        await expect(input).toHaveValue("play");
+        await expect(list).toBeHidden();
+    });
+
+    test("reopens on the pick, scrolled into view", async ({ page }) => {
+        await open(page, "combobox/text");
+        const input = page.getByRole("combobox", { name: "Font" });
+        const list = page.getByRole("listbox", { name: "Font" });
+        await input.click();
+        await page.keyboard.press("ArrowDown");
+        await page.getByRole("option", { name: "Display" }).click();
+        await expect(list).toBeHidden();
+
+        await page.keyboard.press("ArrowDown");
+        const display = page.getByRole("option", { name: "Display" });
+        await expect(input).toHaveAttribute(
+            "aria-activedescendant",
+            (await display.getAttribute("id")) ?? "",
+        );
+        await expect(display).toBeInViewport({ ratio: 1 });
+    });
+
+    test("hovering an option makes it the active one", async ({ page }) => {
+        const { input, options } = await setup(page);
+        await input.click();
+        await page.keyboard.press("ArrowDown");
+        await options.nth(2).hover();
+
+        await expect(options.nth(2)).toHaveAttribute("data-active", "");
+        await expect(page.locator("[data-active]")).toHaveCount(1);
+        await expect(input).toHaveAttribute(
+            "aria-activedescendant",
+            (await options.nth(2).getAttribute("id")) ?? "",
+        );
+    });
+
+    test("the chevron toggles the list", async ({ page }) => {
+        const { list } = await setup(page);
+        await page.locator(".combobox__chevron").click();
+        await expect(list).toBeVisible();
+
+        await page.locator(".combobox__chevron").click();
+        await expect(list).toBeHidden();
+    });
+});

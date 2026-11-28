@@ -34,12 +34,15 @@ type Component = (args: any) => any;
 export type PortName =
     | "badge"
     | "button"
+    | "combobox"
     | "control-row"
     | "input"
     | "preview-frame"
     | "segmented-control"
     | "select"
     | "swatch-picker"
+    | "tab-list"
+    | "tab-panel"
     | "tile"
     | "tile-picker"
     | "toggle";

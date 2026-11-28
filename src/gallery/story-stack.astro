@@ -1,0 +1,10 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/** A plain box for stories that need a parent for several siblings, like tabs and their panels. */
+type Props = HTMLAttributes<"div">;
+
+const props = Astro.props;
+---
+
+<div {...props}><slot /></div>

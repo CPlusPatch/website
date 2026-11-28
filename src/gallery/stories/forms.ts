@@ -1,3 +1,4 @@
+import Combobox from "@cpluspatch/ui/astro/ui/combobox.astro";
 import ControlRow from "@cpluspatch/ui/astro/ui/control-row.astro";
 import Input from "@cpluspatch/ui/astro/ui/input.astro";
 import SegmentedControl from "@cpluspatch/ui/astro/ui/segmented-control.astro";
@@ -7,7 +8,9 @@ import Textarea from "@cpluspatch/ui/astro/ui/textarea.astro";
 import Tile from "@cpluspatch/ui/astro/ui/tile.astro";
 import TilePicker from "@cpluspatch/ui/astro/ui/tile-picker.astro";
 import Toggle from "@cpluspatch/ui/astro/ui/toggle.astro";
+import type { ComponentProps } from "astro/types";
 import { type Story, type StoryGroup, story } from "../story.ts";
+import Stack from "../story-stack.astro";
 
 const SELECT_OPTIONS = [
     { value: "one", label: "Option one" },
@@ -20,6 +23,53 @@ const VIEW_OPTIONS = [
     { value: "grid", label: "Grid" },
     { value: "board", label: "Board" },
 ];
+
+/** Names the Svelte icon draws itself, as parity needs. */
+const ICON_NAMES = [
+    "heart",
+    "bookmark",
+    "file",
+    "copy",
+    "play",
+    "pause",
+    "menu",
+    "message-circle",
+    "layout-grid",
+    "maximize",
+    "minimize",
+    "volume-2",
+];
+
+const sentence = (name: string) =>
+    name.charAt(0).toUpperCase() + name.slice(1).replaceAll("-", " ");
+
+const ICON_OPTIONS = ICON_NAMES.map((name) => ({
+    value: name,
+    label: sentence(name),
+    icon: `lucide:${name}`,
+}));
+
+const FONT_OPTIONS = [
+    { value: "sans", label: "Sans" },
+    { value: "serif", label: "Serif" },
+    { value: "mono", label: "Mono" },
+    { value: "rounded", label: "Rounded" },
+    { value: "slab", label: "Slab" },
+    { value: "script", label: "Script" },
+    { value: "display", label: "Display" },
+];
+
+/** A combobox in a box with room for its open list, which floats over the page. */
+const comboboxStory = (
+    name: string,
+    props: ComponentProps<typeof Combobox>,
+): Story =>
+    story(
+        name,
+        Stack,
+        { style: `${INSPECTOR_WIDTH}; min-height: 15rem` },
+        { children: [story("field", Combobox, props)] },
+    );
 
 const TONE_SWATCHES = [
     { value: "primary", label: "Primary", color: "var(--color-primary)" },
@@ -297,6 +347,37 @@ export const forms: StoryGroup[] = [
                 options: TONE_SWATCHES,
                 value: "success",
                 disabled: true,
+            }),
+        ],
+    },
+    {
+        id: "combobox",
+        title: "Comboboxes",
+        category: "forms",
+        description:
+            "A text field with a list to pick from, which narrows as you type. Only an option can be the value, so leaving the field puts the last pick back.",
+        min: 20,
+        stories: [
+            comboboxStory("icons", {
+                id: "story-combobox-icons",
+                name: "story-combobox-icons",
+                label: "Icon",
+                options: ICON_OPTIONS,
+                value: "heart",
+            }),
+            comboboxStory("text", {
+                id: "story-combobox-text",
+                name: "story-combobox-text",
+                label: "Font",
+                options: FONT_OPTIONS,
+                value: "serif",
+            }),
+            comboboxStory("empty", {
+                id: "story-combobox-empty",
+                name: "story-combobox-empty",
+                label: "Icon",
+                options: ICON_OPTIONS,
+                placeholder: "heart",
             }),
         ],
     },
