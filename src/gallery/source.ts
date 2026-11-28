@@ -10,6 +10,7 @@ import type { Story } from "./story.ts";
 const MAX_STRING = 80;
 const MAX_ITEMS = 4;
 const MAX_DEPTH = 2;
+const MAX_TAG = 40;
 
 /**
  * Astro names a compiled component after its file (`$$button-group`, or
@@ -91,11 +92,20 @@ export const markup = (
     const attributes = Object.entries(props)
         .filter(([, v]) => v !== undefined)
         .map(attribute);
-    const open = [name, ...attributes].join(" ");
+    const inline = [name, ...attributes].join(" ");
+    // A long tag puts one attribute per line, so it doesn't wrap back to column 0.
+    const long = inline.length > MAX_TAG;
+    const open = long ? `${name}\n${indent(attributes.join("\n"))}` : inline;
 
     if (!body.length) return `<${open} />`;
     const [only] = body;
-    if (body.length === 1 && only && !only.includes("\n") && only.length < 40) {
+    if (
+        !long &&
+        body.length === 1 &&
+        only &&
+        !only.includes("\n") &&
+        only.length < 40
+    ) {
         return `<${open}>${only}</${name}>`;
     }
     return `<${open}>\n${indent(body.join("\n"))}\n</${name}>`;
