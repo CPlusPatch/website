@@ -208,6 +208,7 @@ const onfocusout = (event: FocusEvent) => {
         aria-controls={comboboxListId(prefix)}
         aria-activedescendant={current ? comboboxOptionId(prefix, options.indexOf(current)) : undefined}
         autocomplete="off"
+        spellcheck="false"
         {name}
         value={draft ?? picked?.value ?? ""}
         {placeholder}

@@ -76,6 +76,12 @@
             overflow-y: auto;
             overscroll-behavior: contain;
             list-style: none;
+
+            /* A narrow field mustn't squash its rows: the list grows to fit them, up to a cap. */
+            inset-inline-end: auto;
+            inline-size: max-content;
+            min-inline-size: 100%;
+            max-inline-size: min(22rem, calc(100vw - 2 * var(--space-md)));
         }
 
         /* Always in the page for screen readers to catch the text arriving; blank, it has no box. */
@@ -107,6 +113,10 @@
             padding: var(--space-xs) var(--space-sm);
             font: var(--type-ui);
             cursor: pointer;
+
+            svg {
+                flex: none;
+            }
 
             &[hidden] {
                 display: none;
@@ -165,6 +175,8 @@
             font-size: var(--font-size-xs);
             font-weight: 400;
             color: var(--color-text-muted);
+            flex: none;
+            white-space: nowrap;
         }
 
         /* Muted text on the hover fill is under 4.5:1 in dark. */

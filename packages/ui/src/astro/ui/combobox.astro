@@ -63,6 +63,7 @@ const picked = options.find((option) => option.value === value);
         aria-expanded="false"
         aria-controls={comboboxListId(prefix)}
         autocomplete="off"
+        spellcheck="false"
         name={name}
         value={picked?.value ?? ""}
         placeholder={placeholder}
